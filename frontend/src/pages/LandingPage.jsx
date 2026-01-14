@@ -419,12 +419,46 @@ export const LandingPage = () => {
         <div className="max-w-4xl mx-auto px-6 text-center">
           <p className="text-amber-400 tracking-[0.3em] text-sm mb-3">PRIVATE INQUIRY</p>
           <h2 className="text-4xl md:text-5xl font-serif mb-6">
-            Join the <span className="italic text-amber-400">Exclusive List</span>
+            {leadType === 'buyer' ? (
+              <>Access <span className="italic text-amber-400">Exclusive Auctions</span></>
+            ) : (
+              <>List Your <span className="italic text-amber-400">Off-Market Property</span></>
+            )}
           </h2>
-          <p className="text-white/70 mb-10 max-w-2xl mx-auto">
-            Get exclusive access to off-market listings, private showings, and insider market updates 
-            before they become public. Your privacy is our priority.
+          <p className="text-white/70 mb-8 max-w-2xl mx-auto">
+            {leadType === 'buyer' 
+              ? 'Get exclusive access to luxury property auctions, private viewings, and priority bidding opportunities.'
+              : 'Sell your property discreetly to qualified buyers without public listings. Maximum privacy, premium results.'
+            }
           </p>
+          
+          {/* Buyer/Seller Toggle */}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex bg-[#0d1f3c]/80 rounded-lg p-1 border border-amber-400/20">
+              <button
+                type="button"
+                onClick={() => setLeadType('buyer')}
+                className={`px-6 py-3 rounded-md text-sm font-medium transition-all ${
+                  leadType === 'buyer' 
+                    ? 'bg-amber-400 text-black' 
+                    : 'text-white/70 hover:text-white'
+                }`}
+              >
+                I Want to Buy
+              </button>
+              <button
+                type="button"
+                onClick={() => setLeadType('seller')}
+                className={`px-6 py-3 rounded-md text-sm font-medium transition-all ${
+                  leadType === 'seller' 
+                    ? 'bg-amber-400 text-black' 
+                    : 'text-white/70 hover:text-white'
+                }`}
+              >
+                I Want to Sell
+              </button>
+            </div>
+          </div>
           
           <form onSubmit={async (e) => {
             e.preventDefault();
@@ -434,9 +468,28 @@ export const LandingPage = () => {
             }
             setSubmitting(true);
             try {
-              await publicAPI.submitLead({ name, email, phone, interest, source: 'landing_page' });
-              toast.success('Thank you! We\'ll be in touch shortly.');
-              setName(''); setEmail(''); setPhone(''); setInterest('');
+              const leadData = {
+                name,
+                email,
+                phone,
+                lead_type: leadType,
+                source: 'landing_page',
+                ...(leadType === 'buyer' ? {
+                  budget: buyerBudget,
+                  areas_of_interest: buyerAreas
+                } : {
+                  property_address: sellerAddress,
+                  estimated_value: sellerEstValue
+                })
+              };
+              await publicAPI.submitLead(leadData);
+              toast.success(leadType === 'buyer' 
+                ? 'Thank you! You\'ll receive auction invitations soon.' 
+                : 'Thank you! An agent will contact you about your property.'
+              );
+              setName(''); setEmail(''); setPhone('');
+              setBuyerBudget(''); setBuyerAreas('');
+              setSellerAddress(''); setSellerEstValue('');
             } catch (error) {
               toast.error('Something went wrong. Please try again.');
             } finally {
@@ -461,33 +514,69 @@ export const LandingPage = () => {
                 className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400"
               />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input 
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="Phone Number"
-                className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400"
-              />
-              <select
-                value={interest}
-                onChange={(e) => setInterest(e.target.value)}
-                className="w-full h-10 px-3 rounded-md bg-[#0d1f3c]/80 border border-amber-400/20 text-white focus:border-amber-400 focus:outline-none"
-              >
-                <option value="" className="bg-[#0d1f3c]">I'm interested in...</option>
-                <option value="buying" className="bg-[#0d1f3c]">Buying a property</option>
-                <option value="selling" className="bg-[#0d1f3c]">Selling my property</option>
-                <option value="both" className="bg-[#0d1f3c]">Both buying & selling</option>
-                <option value="investment" className="bg-[#0d1f3c]">Investment opportunities</option>
-              </select>
-            </div>
+            <Input 
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="Phone Number"
+              className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400"
+            />
+            
+            {/* Buyer-specific fields */}
+            {leadType === 'buyer' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <select
+                  value={buyerBudget}
+                  onChange={(e) => setBuyerBudget(e.target.value)}
+                  className="w-full h-10 px-3 rounded-md bg-[#0d1f3c]/80 border border-amber-400/20 text-white focus:border-amber-400 focus:outline-none"
+                >
+                  <option value="" className="bg-[#0d1f3c]">Budget Range</option>
+                  <option value="10-25m" className="bg-[#0d1f3c]">$10M - $25M</option>
+                  <option value="25-50m" className="bg-[#0d1f3c]">$25M - $50M</option>
+                  <option value="50-100m" className="bg-[#0d1f3c]">$50M - $100M</option>
+                  <option value="100m+" className="bg-[#0d1f3c]">$100M+</option>
+                </select>
+                <Input 
+                  type="text"
+                  value={buyerAreas}
+                  onChange={(e) => setBuyerAreas(e.target.value)}
+                  placeholder="Preferred Areas (e.g., Palm Beach)"
+                  className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400"
+                />
+              </div>
+            )}
+            
+            {/* Seller-specific fields */}
+            {leadType === 'seller' && (
+              <div className="space-y-4">
+                <Input 
+                  type="text"
+                  value={sellerAddress}
+                  onChange={(e) => setSellerAddress(e.target.value)}
+                  placeholder="Property Address"
+                  className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400"
+                />
+                <select
+                  value={sellerEstValue}
+                  onChange={(e) => setSellerEstValue(e.target.value)}
+                  className="w-full h-10 px-3 rounded-md bg-[#0d1f3c]/80 border border-amber-400/20 text-white focus:border-amber-400 focus:outline-none"
+                >
+                  <option value="" className="bg-[#0d1f3c]">Estimated Property Value</option>
+                  <option value="10-25m" className="bg-[#0d1f3c]">$10M - $25M</option>
+                  <option value="25-50m" className="bg-[#0d1f3c]">$25M - $50M</option>
+                  <option value="50-100m" className="bg-[#0d1f3c]">$50M - $100M</option>
+                  <option value="100m+" className="bg-[#0d1f3c]">$100M+</option>
+                </select>
+              </div>
+            )}
+            
             <Button 
               type="submit" 
               disabled={submitting}
               className="w-full bg-amber-400 text-black hover:bg-amber-300 py-6 text-base"
             >
               {submitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
-              REQUEST PRIVATE ACCESS
+              {leadType === 'buyer' ? 'REQUEST AUCTION ACCESS' : 'SUBMIT MY PROPERTY'}
             </Button>
           </form>
 
