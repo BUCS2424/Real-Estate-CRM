@@ -228,13 +228,11 @@ export const ContactsPage = () => {
                     data-testid="contact-email-input"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
+                <div className="col-span-2">
+                  <PhoneVerification
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    data-testid="contact-phone-input"
+                    onChange={(phone) => setFormData({ ...formData, phone })}
+                    label="Phone (requires verification)"
                   />
                 </div>
                 <div>
