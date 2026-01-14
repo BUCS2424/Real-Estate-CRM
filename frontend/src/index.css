@@ -163,3 +163,35 @@ code, .mono {
 .btn-active:active {
     transform: scale(0.95);
 }
+
+/* Canary Yellow Hover Effect for Buttons */
+button:hover, 
+[role="button"]:hover,
+.btn:hover {
+    --hover-color: 51 100% 50%;
+}
+
+/* Primary button hover */
+.bg-primary:hover {
+    background-color: hsl(51 100% 50%) !important;
+    color: hsl(220 30% 10%) !important;
+    border-color: hsl(51 100% 45%) !important;
+}
+
+/* Outline/Ghost button hover */
+button[data-variant="outline"]:hover,
+button[data-variant="ghost"]:hover,
+.hover\:bg-muted:hover {
+    background-color: hsl(51 100% 50% / 0.15) !important;
+}
+
+/* Sidebar nav hover */
+.hover\:bg-sidebar-accent:hover {
+    background-color: hsl(51 100% 50% / 0.15) !important;
+}
+
+/* Card interactive hover */
+.card-interactive:hover {
+    border-color: hsl(51 100% 50% / 0.5);
+    box-shadow: 0 4px 6px -1px hsl(51 100% 50% / 0.1), 0 2px 4px -1px hsl(51 100% 50% / 0.06);
+}
