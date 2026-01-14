@@ -813,15 +813,13 @@ export const BookingPage = () => {
                       placeholder="email@example.com"
                     />
                   </div>
-                  <div>
-                    <Label>Phone</Label>
-                    <Input
-                      value={newBooking.booker_phone}
-                      onChange={(e) => setNewBooking(prev => ({ ...prev, booker_phone: e.target.value }))}
-                      placeholder="(555) 123-4567"
-                    />
-                  </div>
                 </div>
+                <PhoneVerification
+                  value={newBooking.booker_phone}
+                  onChange={(phone) => setNewBooking(prev => ({ ...prev, booker_phone: phone }))}
+                  onVerified={() => setPhoneVerified(true)}
+                  label="Phone (requires verification)"
+                />
               </div>
             )}
 
