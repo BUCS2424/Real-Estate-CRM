@@ -1174,6 +1174,73 @@ async def check_phone_verified(phone_number: str):
     })
     return {"verified": verification is not None}
 
+# ============ EMAIL VERIFICATION (MOCKED - Replace with SendGrid/SMTP later) ============
+
+@api_router.post("/email/send-code")
+async def send_email_verification_code(request: dict):
+    """Send a verification code to email (MOCKED - shows code in response for testing)"""
+    email = request.get("email", "").strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Invalid email address")
+    
+    # Generate 6-digit code
+    code = str(random.randint(100000, 999999))
+    
+    # Store in database with 10-minute expiry
+    await db.email_verifications.delete_many({"email": email})  # Clear old codes
+    await db.email_verifications.insert_one({
+        "email": email,
+        "code": code,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat(),
+        "verified": False
+    })
+    
+    # MOCKED: Return code in response (remove this when using real email service)
+    logger.info(f"[MOCK EMAIL] Verification code for {email}: {code}")
+    return {
+        "status": "sent",
+        "message": "Verification code sent to your email",
+        "mock_code": code  # Remove this line when integrating real email
+    }
+
+@api_router.post("/email/verify-code")
+async def verify_email_code(request: dict):
+    """Verify the email code"""
+    email = request.get("email", "").strip().lower()
+    code = request.get("code", "").strip()
+    
+    verification = await db.email_verifications.find_one({
+        "email": email,
+        "code": code,
+        "verified": False
+    })
+    
+    if not verification:
+        raise HTTPException(status_code=400, detail="Invalid or expired code")
+    
+    # Check expiry
+    expires_at = datetime.fromisoformat(verification["expires_at"].replace("Z", "+00:00"))
+    if datetime.now(timezone.utc) > expires_at:
+        raise HTTPException(status_code=400, detail="Code expired. Please request a new one.")
+    
+    # Mark as verified
+    await db.email_verifications.update_one(
+        {"email": email, "code": code},
+        {"$set": {"verified": True, "verified_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"valid": True, "message": "Email verified"}
+
+@api_router.get("/email/check/{email}")
+async def check_email_verified(email: str):
+    """Check if an email has been verified"""
+    verification = await db.email_verifications.find_one({
+        "email": email.lower(),
+        "verified": True
+    })
+    return {"verified": verification is not None}
+
 # ============ PUBLIC LISTINGS ROUTES (No Auth Required) ============
 
 @api_router.get("/public/listings")
