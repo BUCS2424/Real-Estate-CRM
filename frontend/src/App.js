@@ -21,6 +21,7 @@ import { BookingPage } from './pages/BookingPage';
 import { PublicBookingPage } from './pages/PublicBookingPage';
 import { ListingsPage } from './pages/ListingsPage';
 import { LandingPage } from './pages/LandingPage';
+import { PropertyDetailPage } from './pages/PropertyDetailPage';
 
 // Settings Pages
 import { SettingsOverview } from './pages/settings/SettingsOverview';
