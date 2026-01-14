@@ -774,6 +774,278 @@ async def remove_blocked_date(date: str, current_user: dict = Depends(get_curren
         raise HTTPException(status_code=404, detail="Blocked date not found")
     return {"message": "Blocked date removed"}
 
+# ============ PROPERTY LISTINGS ROUTES ============
+
+@api_router.get("/listings")
+async def get_listings(current_user: dict = Depends(get_current_user)):
+    """Get all property listings"""
+    listings = await db.property_listings.find({"created_by": current_user["id"]}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return listings
+
+@api_router.get("/listings/{listing_id}")
+async def get_listing(listing_id: str, current_user: dict = Depends(get_current_user)):
+    """Get a single property listing"""
+    listing = await db.property_listings.find_one({"id": listing_id, "created_by": current_user["id"]}, {"_id": 0})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    return listing
+
+@api_router.post("/listings")
+async def create_listing(listing: PropertyListingCreate, current_user: dict = Depends(get_current_user)):
+    """Create a new property listing"""
+    now = datetime.now(timezone.utc).isoformat()
+    doc = {
+        "id": str(uuid.uuid4()),
+        "address": listing.address,
+        "city": listing.city,
+        "state": listing.state,
+        "zip_code": listing.zip_code,
+        "country": listing.country,
+        "price": listing.price,
+        "bedrooms": listing.bedrooms,
+        "bathrooms": listing.bathrooms,
+        "sqft": listing.sqft,
+        "lot_size": listing.lot_size,
+        "property_type": listing.property_type,
+        "status": listing.status,
+        "description": listing.description,
+        "features": listing.features,
+        "images": [img.dict() for img in listing.images],
+        "mls_id": listing.mls_id,
+        "year_built": listing.year_built,
+        "garage": listing.garage,
+        "contact_id": listing.contact_id,
+        "created_by": current_user["id"],
+        "created_at": now,
+        "updated_at": now
+    }
+    await db.property_listings.insert_one(doc)
+    return {k: v for k, v in doc.items() if k != "_id"}
+
+@api_router.put("/listings/{listing_id}")
+async def update_listing(listing_id: str, listing: PropertyListingCreate, current_user: dict = Depends(get_current_user)):
+    """Update a property listing"""
+    existing = await db.property_listings.find_one({"id": listing_id, "created_by": current_user["id"]})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    update_data = {
+        "address": listing.address,
+        "city": listing.city,
+        "state": listing.state,
+        "zip_code": listing.zip_code,
+        "country": listing.country,
+        "price": listing.price,
+        "bedrooms": listing.bedrooms,
+        "bathrooms": listing.bathrooms,
+        "sqft": listing.sqft,
+        "lot_size": listing.lot_size,
+        "property_type": listing.property_type,
+        "status": listing.status,
+        "description": listing.description,
+        "features": listing.features,
+        "images": [img.dict() for img in listing.images],
+        "mls_id": listing.mls_id,
+        "year_built": listing.year_built,
+        "garage": listing.garage,
+        "contact_id": listing.contact_id,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.property_listings.update_one({"id": listing_id}, {"$set": update_data})
+    return {"message": "Listing updated", **update_data, "id": listing_id}
+
+@api_router.delete("/listings/{listing_id}")
+async def delete_listing(listing_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a property listing"""
+    result = await db.property_listings.delete_one({"id": listing_id, "created_by": current_user["id"]})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    return {"message": "Listing deleted"}
+
+@api_router.post("/listings/{listing_id}/generate-description")
+async def generate_listing_description(listing_id: str, current_user: dict = Depends(get_current_user)):
+    """Generate AI description for a property listing based on its details"""
+    listing = await db.property_listings.find_one({"id": listing_id, "created_by": current_user["id"]}, {"_id": 0})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    # Build prompt with property details
+    features_text = ", ".join(listing.get("features", [])) if listing.get("features") else "Not specified"
+    prompt = f"""Write a compelling, professional real estate listing description for this property:
+
+Address: {listing.get('address', 'N/A')}, {listing.get('city', '')}, {listing.get('state', '')} {listing.get('zip_code', '')}
+Price: ${listing.get('price', 0):,.0f}
+Property Type: {listing.get('property_type', 'single_family').replace('_', ' ').title()}
+Bedrooms: {listing.get('bedrooms', 0)}
+Bathrooms: {listing.get('bathrooms', 0)}
+Square Feet: {listing.get('sqft', 0):,}
+Lot Size: {listing.get('lot_size', 'N/A')}
+Year Built: {listing.get('year_built', 'N/A')}
+Garage: {listing.get('garage', 0)} car
+Features: {features_text}
+
+Write an engaging 2-3 paragraph description highlighting the property's best features, location benefits, and lifestyle appeal. Use descriptive language that appeals to luxury home buyers. Do not include the price or basic stats in the description as those are shown separately."""
+
+    try:
+        llm = LlmChat(api_key=os.environ.get("EMERGENT_LLM_KEY"))
+        response = await llm.send_message_async(
+            model="gpt-4o",
+            messages=[UserMessage(content=prompt)]
+        )
+        description = response.content
+        
+        # Update the listing with new description
+        await db.property_listings.update_one(
+            {"id": listing_id},
+            {"$set": {"description": description, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        return {"description": description}
+    except Exception as e:
+        logger.error(f"AI generation error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate description")
+
+@api_router.post("/listings/lookup-address")
+async def lookup_address_info(address: dict, current_user: dict = Depends(get_current_user)):
+    """Use AI to extract property information from an address (simulated web lookup)"""
+    full_address = address.get("address", "")
+    if not full_address:
+        raise HTTPException(status_code=400, detail="Address is required")
+    
+    prompt = f"""Given this property address: "{full_address}"
+
+Parse and extract the following information in JSON format:
+- address (street address only)
+- city
+- state (2-letter code)
+- zip_code
+- country (default to USA if not specified)
+
+Also, based on typical properties in this area, suggest reasonable estimates for:
+- estimated_price (number, based on typical home values in this area)
+- property_type (one of: single_family, condo, townhouse, land, commercial)
+- typical_sqft (estimated square footage for this area)
+- typical_bedrooms
+- typical_bathrooms
+
+Return ONLY valid JSON, no markdown or explanation."""
+
+    try:
+        llm = LlmChat(api_key=os.environ.get("EMERGENT_LLM_KEY"))
+        response = await llm.send_message_async(
+            model="gpt-4o",
+            messages=[UserMessage(content=prompt)]
+        )
+        
+        # Parse JSON from response
+        import json
+        content = response.content.strip()
+        if content.startswith("```"):
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
+        
+        data = json.loads(content)
+        return data
+    except Exception as e:
+        logger.error(f"Address lookup error: {str(e)}")
+        # Return parsed address at minimum
+        return {"address": full_address, "error": "Could not fully parse address"}
+
+# ============ MEDIA/STORAGE ROUTES ============
+
+@api_router.get("/media")
+async def get_media_files(folder: str = "general", current_user: dict = Depends(get_current_user)):
+    """Get all media files in a folder"""
+    files = await db.media_files.find(
+        {"uploaded_by": current_user["id"], "folder": folder}, 
+        {"_id": 0}
+    ).sort("uploaded_at", -1).to_list(1000)
+    return files
+
+@api_router.get("/media/folders")
+async def get_storage_folders(current_user: dict = Depends(get_current_user)):
+    """Get all storage folders"""
+    folders = await db.storage_folders.find(
+        {"created_by": current_user["id"]}, 
+        {"_id": 0}
+    ).to_list(100)
+    # Always include default folders
+    default_folders = [
+        {"id": "general", "name": "General", "parent_id": None, "is_system": True},
+        {"id": "listings", "name": "Listings", "parent_id": None, "is_system": True},
+        {"id": "contacts", "name": "Contacts", "parent_id": None, "is_system": True}
+    ]
+    return default_folders + folders
+
+@api_router.post("/media/folders")
+async def create_storage_folder(name: str, parent_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    """Create a new storage folder"""
+    doc = {
+        "id": str(uuid.uuid4()),
+        "name": name,
+        "parent_id": parent_id,
+        "created_by": current_user["id"],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.storage_folders.insert_one(doc)
+    return {k: v for k, v in doc.items() if k != "_id"}
+
+@api_router.delete("/media/folders/{folder_id}")
+async def delete_storage_folder(folder_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a storage folder"""
+    if folder_id in ["general", "listings", "contacts"]:
+        raise HTTPException(status_code=400, detail="Cannot delete system folders")
+    result = await db.storage_folders.delete_one({"id": folder_id, "created_by": current_user["id"]})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Folder not found")
+    return {"message": "Folder deleted"}
+
+@api_router.post("/media/upload")
+async def upload_media_file(file_data: dict, current_user: dict = Depends(get_current_user)):
+    """Register an uploaded media file (actual upload handled client-side to cloud storage)"""
+    doc = {
+        "id": str(uuid.uuid4()),
+        "filename": file_data.get("filename"),
+        "url": file_data.get("url"),
+        "file_type": file_data.get("file_type", "image"),
+        "size": file_data.get("size", 0),
+        "folder": file_data.get("folder", "general"),
+        "listing_id": file_data.get("listing_id"),
+        "uploaded_by": current_user["id"],
+        "uploaded_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.media_files.insert_one(doc)
+    return {k: v for k, v in doc.items() if k != "_id"}
+
+@api_router.delete("/media/{file_id}")
+async def delete_media_file(file_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a media file"""
+    result = await db.media_files.delete_one({"id": file_id, "uploaded_by": current_user["id"]})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="File not found")
+    return {"message": "File deleted"}
+
+@api_router.get("/storage/stats")
+async def get_storage_stats(current_user: dict = Depends(get_current_user)):
+    """Get storage usage statistics"""
+    pipeline = [
+        {"$match": {"uploaded_by": current_user["id"]}},
+        {"$group": {
+            "_id": "$folder",
+            "count": {"$sum": 1},
+            "total_size": {"$sum": "$size"}
+        }}
+    ]
+    stats = await db.media_files.aggregate(pipeline).to_list(100)
+    total_files = sum(s["count"] for s in stats)
+    total_size = sum(s["total_size"] for s in stats)
+    return {
+        "total_files": total_files,
+        "total_size": total_size,
+        "by_folder": {s["_id"]: {"count": s["count"], "size": s["total_size"]} for s in stats}
+    }
+
 # ============ PHONE VERIFICATION (MOCKED - Replace with Twilio later) ============
 import random
 
