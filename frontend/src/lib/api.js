@@ -83,6 +83,33 @@ export const settingsAPI = {
   update: (data) => api.put('/settings', data),
 };
 
+// Booking
+export const bookingAPI = {
+  getSettings: () => api.get('/booking/settings'),
+  updateSettings: (data) => api.put('/booking/settings', data),
+  getBookings: () => api.get('/booking/list'),
+  updateBookingStatus: (id, status) => api.patch(`/booking/${id}/status`, { status }),
+  deleteBooking: (id) => api.delete(`/booking/${id}`),
+  getBlockedDates: () => api.get('/booking/blocked-dates'),
+  addBlockedDate: (data) => api.post('/booking/blocked-dates', data),
+  removeBlockedDate: (date) => api.delete(`/booking/blocked-dates/${date}`),
+};
+
+// Public Booking (no auth required)
+export const publicBookingAPI = {
+  getAgentInfo: (code) => axios.get(`${API_URL}/public/booking/${code}`),
+  getAvailableSlots: (code, date) => axios.get(`${API_URL}/public/booking/${code}/available-slots?date=${date}`),
+  createBooking: (code, data) => axios.post(`${API_URL}/public/booking/${code}`, data),
+};
+
+// Notifications
+export const notificationsAPI = {
+  list: () => api.get('/notifications'),
+  markRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllRead: () => api.patch('/notifications/read-all'),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+};
+
 // Dashboard
 export const dashboardAPI = {
   stats: () => api.get('/dashboard/stats'),
