@@ -258,6 +258,77 @@ class PhoneVerifyCodeRequest(BaseModel):
     phone_number: str
     code: str
 
+# ============ PROPERTY LISTING MODELS ============
+
+class PropertyImage(BaseModel):
+    id: str
+    url: str
+    caption: Optional[str] = None
+    order: int = 0
+
+class PropertyListingCreate(BaseModel):
+    address: str
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip_code: Optional[str] = None
+    country: str = "USA"
+    price: float = 0
+    bedrooms: int = 0
+    bathrooms: float = 0
+    sqft: int = 0
+    lot_size: Optional[str] = None
+    property_type: str = "single_family"  # single_family, condo, townhouse, land, commercial
+    status: str = "draft"  # draft, active, pending, sold
+    description: Optional[str] = None
+    features: List[str] = []
+    images: List[PropertyImage] = []
+    mls_id: Optional[str] = None
+    year_built: Optional[int] = None
+    garage: Optional[int] = None
+    contact_id: Optional[str] = None  # Link to CRM contact
+
+class PropertyListingResponse(BaseModel):
+    id: str
+    address: str
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip_code: Optional[str] = None
+    country: str
+    price: float
+    bedrooms: int
+    bathrooms: float
+    sqft: int
+    lot_size: Optional[str] = None
+    property_type: str
+    status: str
+    description: Optional[str] = None
+    features: List[str] = []
+    images: List[dict] = []
+    mls_id: Optional[str] = None
+    year_built: Optional[int] = None
+    garage: Optional[int] = None
+    contact_id: Optional[str] = None
+    created_by: str
+    created_at: str
+    updated_at: str
+
+class MediaFile(BaseModel):
+    id: str
+    filename: str
+    url: str
+    file_type: str  # image, document, video
+    size: int
+    folder: str = "general"
+    uploaded_by: str
+    uploaded_at: str
+
+class StorageFolder(BaseModel):
+    id: str
+    name: str
+    parent_id: Optional[str] = None
+    created_by: str
+    created_at: str
+
 # ============ AUTH HELPERS ============
 
 def hash_password(password: str) -> str:
