@@ -1198,19 +1198,32 @@ async def get_public_listing(listing_id: str):
 
 @api_router.post("/public/leads")
 async def submit_public_lead(lead_data: dict):
-    """Submit a lead from the public landing page"""
+    """Submit a lead from the public landing page - supports buyer and seller leads"""
+    lead_type = lead_data.get("lead_type", "buyer")
+    
     doc = {
         "id": str(uuid.uuid4()),
         "name": lead_data.get("name"),
         "email": lead_data.get("email"),
         "phone": lead_data.get("phone"),
-        "interest": lead_data.get("interest"),
+        "lead_type": lead_type,  # 'buyer' or 'seller'
         "source": lead_data.get("source", "website"),
         "property_id": lead_data.get("property_id"),
         "message": lead_data.get("message"),
         "status": "new",
         "created_at": datetime.now(timezone.utc).isoformat()
     }
+    
+    # Buyer-specific fields
+    if lead_type == "buyer":
+        doc["budget"] = lead_data.get("budget")
+        doc["areas_of_interest"] = lead_data.get("areas_of_interest")
+    
+    # Seller-specific fields
+    if lead_type == "seller":
+        doc["property_address"] = lead_data.get("property_address")
+        doc["estimated_value"] = lead_data.get("estimated_value")
+    
     await db.leads.insert_one(doc)
     return {"message": "Thank you for your inquiry", "id": doc["id"]}
 
