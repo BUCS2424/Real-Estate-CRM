@@ -20,6 +20,7 @@ import { AdminUsersPage } from './pages/AdminUsersPage';
 import { BookingPage } from './pages/BookingPage';
 import { PublicBookingPage } from './pages/PublicBookingPage';
 import { ListingsPage } from './pages/ListingsPage';
+import { LandingPage } from './pages/LandingPage';
 
 // Settings Pages
 import { SettingsOverview } from './pages/settings/SettingsOverview';
