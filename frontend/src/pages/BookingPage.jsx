@@ -78,6 +78,25 @@ export const BookingPage = () => {
   const [isBlockDateOpen, setIsBlockDateOpen] = useState(false);
   const [blockDateInput, setBlockDateInput] = useState('');
   const [blockReason, setBlockReason] = useState('');
+  
+  // Create Booking Modal State
+  const [isCreateBookingOpen, setIsCreateBookingOpen] = useState(false);
+  const [contacts, setContacts] = useState([]);
+  const [contactSearch, setContactSearch] = useState('');
+  const [useExistingLead, setUseExistingLead] = useState(true);
+  const [newBooking, setNewBooking] = useState({
+    selectedContactId: '',
+    booker_name: '',
+    booker_email: '',
+    booker_phone: '',
+    booking_date: '',
+    booking_time: '',
+    notes: '',
+    video_platform: 'none',
+    zoom_link: '',
+    duration: 30
+  });
+  const [creatingBooking, setCreatingBooking] = useState(false);
 
   useEffect(() => {
     fetchData();
