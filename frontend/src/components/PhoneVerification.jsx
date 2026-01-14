@@ -145,12 +145,13 @@ export const PhoneVerification = ({
               onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
               placeholder="Enter 6-digit code"
               maxLength={6}
-              className="font-mono text-center tracking-widest"
+              className={`font-mono text-center tracking-widest ${inputClasses}`}
             />
             <Button 
               type="button" 
               onClick={handleVerifyCode}
               disabled={loading || code.length !== 6}
+              className={darkMode ? 'bg-amber-400 text-black hover:bg-amber-300' : ''}
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm'}
             </Button>
@@ -158,7 +159,7 @@ export const PhoneVerification = ({
           <button 
             type="button"
             onClick={handleResend}
-            className="text-xs text-primary hover:underline"
+            className={`text-xs hover:underline ${darkMode ? 'text-amber-400' : 'text-primary'}`}
           >
             Didn't receive code? Resend
           </button>
@@ -166,7 +167,7 @@ export const PhoneVerification = ({
       )}
 
       {step === 'verified' && (
-        <p className="text-xs text-green-600 flex items-center gap-1">
+        <p className="text-xs text-green-500 flex items-center gap-1">
           <CheckCircle2 className="w-3 h-3" />
           Phone number verified successfully
         </p>
