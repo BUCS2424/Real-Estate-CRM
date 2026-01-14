@@ -10,7 +10,8 @@ import {
   ChevronRight,
   Building2,
   CalendarCheck,
-  Home
+  Home,
+  UserPlus
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
