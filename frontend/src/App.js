@@ -69,6 +69,7 @@ function App() {
               <Route path="/tasks" element={<TasksPage />} />
               <Route path="/bookings" element={<BookingPage />} />
               <Route path="/listings" element={<ListingsPage />} />
+              <Route path="/leads" element={<LeadsPage />} />
               <Route path="/writer" element={<AIWriterPage />} />
               <Route path="/admin/users" element={<AdminUsersPage />} />
               <Route path="/admin" element={<Navigate to="/admin/users" replace />} />
