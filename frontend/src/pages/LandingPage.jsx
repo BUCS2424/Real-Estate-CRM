@@ -137,11 +137,33 @@ const formatPrice = (price) => {
 };
 
 export const LandingPage = () => {
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [interest, setInterest] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [listings, setListings] = useState([]);
+  const [loadingListings, setLoadingListings] = useState(true);
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+
+  // Fetch listings from database
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        const res = await publicAPI.getListings(12);
+        setListings(res.data || []);
+      } catch (error) {
+        console.error('Failed to load listings');
+      } finally {
+        setLoadingListings(false);
+      }
+    };
+    fetchListings();
+  }, []);
 
   const checkScrollButtons = () => {
     if (scrollRef.current) {
