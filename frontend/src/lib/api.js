@@ -140,6 +140,11 @@ export const mediaAPI = {
   getStats: () => api.get('/storage/stats'),
 };
 
+// Public APIs (no auth required)
+export const publicAPI = {
+  getListings: (limit = 12) => api.get(`/public/listings?limit=${limit}`),
+};
+
 // Dashboard
 export const dashboardAPI = {
   stats: () => api.get('/dashboard/stats'),
