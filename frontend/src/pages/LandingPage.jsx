@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { publicAPI } from '../lib/api';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -12,10 +13,12 @@ import {
   ArrowRight,
   Play,
   Menu,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { toast } from 'sonner';
 
 // Sample Florida luxury listings data
 const SAMPLE_LISTINGS = [
