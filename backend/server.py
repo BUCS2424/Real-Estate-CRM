@@ -571,6 +571,286 @@ async def update_settings(settings_update: SettingsUpdate, current_user: dict = 
     settings = await db.settings.find_one({"user_id": current_user["id"]}, {"_id": 0})
     return SettingsResponse(**settings)
 
+# ============ BOOKING ROUTES ============
+
+def generate_booking_link(user_id: str) -> str:
+    """Generate a unique booking link for the agent"""
+    return f"/book/{user_id[:8]}"
+
+@api_router.get("/booking/settings")
+async def get_booking_settings(current_user: dict = Depends(get_current_user)):
+    settings = await db.booking_settings.find_one({"user_id": current_user["id"]}, {"_id": 0})
+    if not settings:
+        # Create default booking settings
+        default_slots = [
+            {"day_of_week": i, "start_time": "09:00", "end_time": "17:00", "is_available": i < 5}
+            for i in range(7)
+        ]
+        settings = {
+            "id": str(uuid.uuid4()),
+            "user_id": current_user["id"],
+            "meeting_duration": 30,
+            "buffer_time": 15,
+            "advance_booking_days": 30,
+            "availability_slots": default_slots,
+            "booking_page_title": "Book a Meeting",
+            "booking_page_description": "Schedule a time to discuss your real estate needs",
+            "confirmation_message": "Thank you for booking! We'll see you soon.",
+            "email_notifications": True,
+            "sms_notifications": False,
+            "booking_link": generate_booking_link(current_user["id"])
+        }
+        await db.booking_settings.insert_one(settings)
+    return {k: v for k, v in settings.items() if k != "_id"}
+
+@api_router.put("/booking/settings")
+async def update_booking_settings(settings: BookingSettingsCreate, current_user: dict = Depends(get_current_user)):
+    update_data = settings.model_dump()
+    update_data["booking_link"] = generate_booking_link(current_user["id"])
+    
+    await db.booking_settings.update_one(
+        {"user_id": current_user["id"]},
+        {"$set": update_data},
+        upsert=True
+    )
+    updated = await db.booking_settings.find_one({"user_id": current_user["id"]}, {"_id": 0})
+    return {k: v for k, v in updated.items() if k != "_id"}
+
+@api_router.get("/booking/list")
+async def get_my_bookings(current_user: dict = Depends(get_current_user)):
+    bookings = await db.bookings.find({"agent_id": current_user["id"]}, {"_id": 0}).sort("booking_date", 1).to_list(1000)
+    return bookings
+
+@api_router.patch("/booking/{booking_id}/status")
+async def update_booking_status(booking_id: str, status_update: BookingStatusUpdate, current_user: dict = Depends(get_current_user)):
+    if status_update.status not in ["pending", "confirmed", "cancelled", "completed"]:
+        raise HTTPException(status_code=400, detail="Invalid status")
+    result = await db.bookings.update_one(
+        {"id": booking_id, "agent_id": current_user["id"]},
+        {"$set": {"status": status_update.status}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    return {"message": "Booking status updated"}
+
+@api_router.delete("/booking/{booking_id}")
+async def delete_booking(booking_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.bookings.delete_one({"id": booking_id, "agent_id": current_user["id"]})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    return {"message": "Booking deleted"}
+
+@api_router.get("/booking/blocked-dates")
+async def get_blocked_dates(current_user: dict = Depends(get_current_user)):
+    blocked = await db.blocked_dates.find({"user_id": current_user["id"]}, {"_id": 0}).to_list(100)
+    return blocked
+
+@api_router.post("/booking/blocked-dates")
+async def add_blocked_date(blocked: BlockedDateCreate, current_user: dict = Depends(get_current_user)):
+    doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": current_user["id"],
+        "date": blocked.date,
+        "reason": blocked.reason,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.blocked_dates.insert_one(doc)
+    return {k: v for k, v in doc.items() if k != "_id"}
+
+@api_router.delete("/booking/blocked-dates/{date}")
+async def remove_blocked_date(date: str, current_user: dict = Depends(get_current_user)):
+    result = await db.blocked_dates.delete_one({"user_id": current_user["id"], "date": date})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Blocked date not found")
+    return {"message": "Blocked date removed"}
+
+# ============ PUBLIC BOOKING ROUTES (No Auth Required) ============
+
+@api_router.get("/public/booking/{agent_code}")
+async def get_public_booking_page(agent_code: str):
+    """Get public booking page info for an agent"""
+    # Find agent by the first 8 chars of their ID
+    user = await db.users.find_one({"id": {"$regex": f"^{agent_code}"}}, {"_id": 0, "password_hash": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    settings = await db.booking_settings.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not settings:
+        raise HTTPException(status_code=404, detail="Booking not available")
+    
+    return {
+        "agent_name": user["name"],
+        "agent_email": user["email"],
+        "booking_page_title": settings.get("booking_page_title", "Book a Meeting"),
+        "booking_page_description": settings.get("booking_page_description", ""),
+        "meeting_duration": settings.get("meeting_duration", 30),
+        "availability_slots": settings.get("availability_slots", []),
+        "advance_booking_days": settings.get("advance_booking_days", 30),
+    }
+
+@api_router.get("/public/booking/{agent_code}/available-slots")
+async def get_available_slots(agent_code: str, date: str):
+    """Get available time slots for a specific date"""
+    user = await db.users.find_one({"id": {"$regex": f"^{agent_code}"}}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    settings = await db.booking_settings.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not settings:
+        raise HTTPException(status_code=404, detail="Booking not available")
+    
+    # Check if date is blocked
+    blocked = await db.blocked_dates.find_one({"user_id": user["id"], "date": date})
+    if blocked:
+        return {"slots": [], "message": "This date is not available"}
+    
+    # Parse the date and get day of week
+    try:
+        booking_date = datetime.strptime(date, "%Y-%m-%d")
+        day_of_week = booking_date.weekday()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    
+    # Find availability for this day
+    availability = None
+    for slot in settings.get("availability_slots", []):
+        if slot.get("day_of_week") == day_of_week and slot.get("is_available", True):
+            availability = slot
+            break
+    
+    if not availability:
+        return {"slots": [], "message": "No availability on this day"}
+    
+    # Get existing bookings for this date
+    existing_bookings = await db.bookings.find({
+        "agent_id": user["id"],
+        "booking_date": date,
+        "status": {"$ne": "cancelled"}
+    }, {"_id": 0}).to_list(100)
+    
+    booked_times = {b["booking_time"] for b in existing_bookings}
+    
+    # Generate available slots
+    duration = settings.get("meeting_duration", 30)
+    buffer = settings.get("buffer_time", 15)
+    start_time = datetime.strptime(availability["start_time"], "%H:%M")
+    end_time = datetime.strptime(availability["end_time"], "%H:%M")
+    
+    slots = []
+    current_time = start_time
+    while current_time + timedelta(minutes=duration) <= end_time:
+        time_str = current_time.strftime("%H:%M")
+        if time_str not in booked_times:
+            slots.append({
+                "time": time_str,
+                "available": True
+            })
+        current_time += timedelta(minutes=duration + buffer)
+    
+    return {"slots": slots, "date": date}
+
+@api_router.post("/public/booking/{agent_code}")
+async def create_public_booking(agent_code: str, booking: BookingCreate):
+    """Create a booking (public endpoint)"""
+    user = await db.users.find_one({"id": {"$regex": f"^{agent_code}"}}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    settings = await db.booking_settings.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not settings:
+        raise HTTPException(status_code=404, detail="Booking not available")
+    
+    # Check if slot is still available
+    existing = await db.bookings.find_one({
+        "agent_id": user["id"],
+        "booking_date": booking.booking_date,
+        "booking_time": booking.booking_time,
+        "status": {"$ne": "cancelled"}
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="This time slot is no longer available")
+    
+    booking_id = str(uuid.uuid4())
+    booking_doc = {
+        "id": booking_id,
+        "agent_id": user["id"],
+        "booker_name": booking.booker_name,
+        "booker_email": booking.booker_email,
+        "booker_phone": booking.booker_phone,
+        "booking_date": booking.booking_date,
+        "booking_time": booking.booking_time,
+        "duration": settings.get("meeting_duration", 30),
+        "notes": booking.notes,
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.bookings.insert_one(booking_doc)
+    
+    # Create notification for the agent
+    notification_doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "type": "booking",
+        "title": "New Booking Request",
+        "message": f"{booking.booker_name} has booked a meeting on {booking.booking_date} at {booking.booking_time}",
+        "data": {"booking_id": booking_id},
+        "read": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.notifications.insert_one(notification_doc)
+    
+    # Create a task for follow-up
+    task_doc = {
+        "id": str(uuid.uuid4()),
+        "title": f"Meeting with {booking.booker_name}",
+        "description": f"Scheduled meeting on {booking.booking_date} at {booking.booking_time}. Contact: {booking.booker_email}",
+        "contact_id": None,
+        "deal_id": None,
+        "status": "todo",
+        "priority": "high",
+        "due_date": booking.booking_date,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_by": user["id"]
+    }
+    await db.tasks.insert_one(task_doc)
+    
+    return {
+        "message": "Booking created successfully",
+        "booking_id": booking_id,
+        "confirmation_message": settings.get("confirmation_message", "Thank you for booking!")
+    }
+
+# ============ NOTIFICATIONS ROUTES ============
+
+@api_router.get("/notifications")
+async def get_notifications(current_user: dict = Depends(get_current_user)):
+    notifications = await db.notifications.find(
+        {"user_id": current_user["id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    return notifications
+
+@api_router.patch("/notifications/{notification_id}/read")
+async def mark_notification_read(notification_id: str, current_user: dict = Depends(get_current_user)):
+    await db.notifications.update_one(
+        {"id": notification_id, "user_id": current_user["id"]},
+        {"$set": {"read": True}}
+    )
+    return {"message": "Notification marked as read"}
+
+@api_router.patch("/notifications/read-all")
+async def mark_all_notifications_read(current_user: dict = Depends(get_current_user)):
+    await db.notifications.update_many(
+        {"user_id": current_user["id"]},
+        {"$set": {"read": True}}
+    )
+    return {"message": "All notifications marked as read"}
+
+@api_router.get("/notifications/unread-count")
+async def get_unread_count(current_user: dict = Depends(get_current_user)):
+    count = await db.notifications.count_documents({"user_id": current_user["id"], "read": False})
+    return {"count": count}
+
 # ============ USER MANAGEMENT (SUPERUSER ONLY) ============
 
 @api_router.get("/users", response_model=List[UserResponse])
