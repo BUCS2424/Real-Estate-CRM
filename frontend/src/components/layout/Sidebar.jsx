@@ -19,6 +19,7 @@ const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/contacts', icon: Users, label: 'Contacts' },
   { path: '/deals', icon: Briefcase, label: 'Deals Pipeline' },
+  { path: '/listings', icon: Home, label: 'Listings' },
   { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
   { path: '/bookings', icon: CalendarCheck, label: 'Bookings' },
   { path: '/writer', icon: FileText, label: 'AI Writer' },
