@@ -1,34 +1,63 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
-}
-
-.App-header {
-    background-color: #0f0f10;
+/* App-specific styles */
+.App {
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
 }
 
-.App-link {
-    color: #61dafb;
+/* Kanban card drag styles */
+.kanban-card-dragging {
+    transform: rotate(3deg);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
+/* Smooth transitions for theme changes */
+body, .bg-background, .bg-card, .bg-muted {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Custom focus ring */
+*:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+}
+
+/* Responsive typography */
+@media (max-width: 640px) {
+    h1 {
+        font-size: 1.75rem;
     }
-    to {
-        transform: rotate(360deg);
+    h2 {
+        font-size: 1.5rem;
     }
+}
+
+/* Kanban column scroll behavior */
+.kanban-column {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+/* Task/Deal cards hover effect */
+.card-hover:hover {
+    transform: translateY(-2px);
+}
+
+/* Loading spinner */
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Glassmorphism effect */
+.glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.dark .glass {
+    background: rgba(0, 0, 0, 0.2);
 }
