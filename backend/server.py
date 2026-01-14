@@ -223,6 +223,10 @@ class BookingCreate(BaseModel):
     booking_date: str  # YYYY-MM-DD
     booking_time: str  # HH:MM
     notes: Optional[str] = None
+    video_link: Optional[str] = None
+    video_platform: Optional[str] = None  # 'saysme', 'zoom', or None
+    contact_id: Optional[str] = None
+    duration: int = 30
 
 class BookingResponse(BaseModel):
     id: str
@@ -235,6 +239,9 @@ class BookingResponse(BaseModel):
     duration: int
     notes: Optional[str] = None
     status: str  # pending, confirmed, cancelled, completed
+    video_link: Optional[str] = None
+    video_platform: Optional[str] = None
+    contact_id: Optional[str] = None
     created_at: str
 
 class BookingStatusUpdate(BaseModel):
