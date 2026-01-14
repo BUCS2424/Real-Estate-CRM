@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { publicAPI } from '../lib/api';
+import { publicAPI, propertySubmissionsAPI } from '../lib/api';
 import { 
   ChevronLeft, 
   ChevronRight, 
