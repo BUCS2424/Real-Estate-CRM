@@ -183,6 +183,67 @@ class StatusUpdate(BaseModel):
 class LeadScoreUpdate(BaseModel):
     lead_score: int
 
+# ============ BOOKING MODELS ============
+
+class AvailabilitySlot(BaseModel):
+    day_of_week: int  # 0=Monday, 6=Sunday
+    start_time: str  # HH:MM format
+    end_time: str  # HH:MM format
+    is_available: bool = True
+
+class BookingSettingsCreate(BaseModel):
+    meeting_duration: int = 30  # minutes
+    buffer_time: int = 15  # minutes between meetings
+    advance_booking_days: int = 30  # how far in advance can book
+    availability_slots: List[AvailabilitySlot] = []
+    booking_page_title: str = "Book a Meeting"
+    booking_page_description: str = "Schedule a time to discuss your real estate needs"
+    confirmation_message: str = "Thank you for booking! We'll see you soon."
+    email_notifications: bool = True
+    sms_notifications: bool = False
+
+class BookingSettingsResponse(BaseModel):
+    id: str
+    user_id: str
+    meeting_duration: int
+    buffer_time: int
+    advance_booking_days: int
+    availability_slots: List[dict]
+    booking_page_title: str
+    booking_page_description: str
+    confirmation_message: str
+    email_notifications: bool
+    sms_notifications: bool
+    booking_link: str
+
+class BookingCreate(BaseModel):
+    booker_name: str
+    booker_email: EmailStr
+    booker_phone: Optional[str] = None
+    booking_date: str  # YYYY-MM-DD
+    booking_time: str  # HH:MM
+    notes: Optional[str] = None
+
+class BookingResponse(BaseModel):
+    id: str
+    agent_id: str
+    booker_name: str
+    booker_email: str
+    booker_phone: Optional[str] = None
+    booking_date: str
+    booking_time: str
+    duration: int
+    notes: Optional[str] = None
+    status: str  # pending, confirmed, cancelled, completed
+    created_at: str
+
+class BookingStatusUpdate(BaseModel):
+    status: str
+
+class BlockedDateCreate(BaseModel):
+    date: str  # YYYY-MM-DD
+    reason: Optional[str] = None
+
 # ============ AUTH HELPERS ============
 
 def hash_password(password: str) -> str:
