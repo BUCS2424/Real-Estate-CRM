@@ -346,7 +346,7 @@ export const LandingPage = () => {
                   alt={listing.address}
                   className="w-full h-[280px] object-cover transition-transform duration-700 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628] via-transparent to-transparent" />
                 <div className="absolute top-4 left-4">
                   <span className="bg-amber-400 text-black text-xs font-medium px-3 py-1 rounded">
                     OFF MARKET
