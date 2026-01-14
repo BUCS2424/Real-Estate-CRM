@@ -161,7 +161,7 @@ export const AIWriterPage = () => {
     setPrompt(template.prompt);
   };
 
-  const selectedContactData = selectedContact ? contacts.find(c => c.id === selectedContact) : null;
+  const selectedContactData = selectedContact && selectedContact !== 'none' ? contacts.find(c => c.id === selectedContact) : null;
 
   if (loading) {
     return (
