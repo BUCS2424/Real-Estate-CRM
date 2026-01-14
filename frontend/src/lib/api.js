@@ -162,6 +162,16 @@ export const leadsAPI = {
   delete: (id) => api.delete(`/leads/${id}`),
 };
 
+// Property Submissions (seller workflow)
+export const propertySubmissionsAPI = {
+  submit: (data) => axios.post(`${API_URL}/public/property-submissions`, data),
+  list: (status) => api.get(`/property-submissions${status ? `?status=${status}` : ''}`),
+  get: (id) => api.get(`/property-submissions/${id}`),
+  update: (id, data) => api.patch(`/property-submissions/${id}`, data),
+  convert: (id) => api.post(`/property-submissions/${id}/convert`),
+  delete: (id) => api.delete(`/property-submissions/${id}`),
+};
+
 // Dashboard
 export const dashboardAPI = {
   stats: () => api.get('/dashboard/stats'),
