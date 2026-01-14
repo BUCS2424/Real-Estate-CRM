@@ -11,12 +11,17 @@ export const PhoneVerification = ({
   onChange, 
   onVerified, 
   required = false,
-  label = "Phone Number"
+  label = "Phone Number",
+  darkMode = false
 }) => {
   const [step, setStep] = useState('input'); // 'input', 'verify', 'verified'
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [mockCode, setMockCode] = useState('');
+
+  const inputClasses = darkMode 
+    ? "bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400"
+    : "";
 
   const handleSendCode = async () => {
     if (!value || value.length < 10) {
