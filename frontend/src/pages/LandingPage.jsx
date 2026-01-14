@@ -494,30 +494,48 @@ export const LandingPage = () => {
                 return;
               }
               
-              const leadData = {
-                name,
-                email,
-                phone,
-                lead_type: leadType,
-                source: 'landing_page',
-                email_verified: emailVerified,
-                phone_verified: phoneVerified,
-                ...(leadType === 'buyer' ? {
+              if (leadType === 'buyer') {
+                // Submit buyer lead
+                const leadData = {
+                  name, email, phone,
+                  lead_type: 'buyer',
+                  source: 'landing_page',
+                  email_verified: emailVerified,
+                  phone_verified: phoneVerified,
                   budget: buyerBudget,
                   areas_of_interest: buyerAreas
-                } : {
+                };
+                await publicAPI.submitLead(leadData);
+                toast.success('Thank you! You\'ll receive auction invitations soon.');
+              } else {
+                // Submit seller property submission
+                const submissionData = {
+                  seller_name: name,
+                  seller_email: email,
+                  seller_phone: phone,
                   property_address: sellerAddress,
-                  estimated_value: sellerEstValue
-                })
-              };
-              await publicAPI.submitLead(leadData);
-              toast.success(leadType === 'buyer' 
-                ? 'Thank you! You\'ll receive auction invitations soon.' 
-                : 'Thank you! An agent will contact you about your property.'
-              );
+                  city: sellerCity,
+                  state: sellerState,
+                  property_type: sellerPropertyType,
+                  bedrooms: sellerBedrooms ? parseInt(sellerBedrooms) : null,
+                  bathrooms: sellerBathrooms ? parseFloat(sellerBathrooms) : null,
+                  sqft: sellerSqft ? parseInt(sellerSqft) : null,
+                  asking_price: sellerAskingPrice ? parseFloat(sellerAskingPrice.replace(/[^0-9.]/g, '')) : null,
+                  timeline: sellerTimeline,
+                  description: sellerDescription,
+                  email_verified: emailVerified,
+                  phone_verified: phoneVerified
+                };
+                await propertySubmissionsAPI.submit(submissionData);
+                toast.success('Property submitted! Our team will review and contact you soon.');
+              }
+              
+              // Reset form
               setName(''); setEmail(''); setPhone('');
               setBuyerBudget(''); setBuyerAreas('');
-              setSellerAddress(''); setSellerEstValue('');
+              setSellerAddress(''); setSellerCity(''); setSellerState('FL');
+              setSellerPropertyType('single_family'); setSellerBedrooms(''); setSellerBathrooms('');
+              setSellerSqft(''); setSellerAskingPrice(''); setSellerTimeline(''); setSellerDescription('');
               setEmailVerified(false); setPhoneVerified(false);
             } catch (error) {
               toast.error('Something went wrong. Please try again.');
