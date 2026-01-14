@@ -267,51 +267,58 @@ export const LandingPage = () => {
           className="flex gap-6 overflow-x-auto scrollbar-hide px-6 pb-4"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {[...SAMPLE_LISTINGS, ...SAMPLE_LISTINGS].map((listing, index) => (
-            <div 
-              key={`${listing.id}-${index}`}
-              className="flex-shrink-0 w-[350px] md:w-[400px] group cursor-pointer"
-            >
-              <div className="relative overflow-hidden rounded-lg mb-4">
-                <img 
-                  src={listing.image} 
-                  alt={listing.address}
-                  className="w-full h-[280px] object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628] via-transparent to-transparent" />
-                <div className="absolute top-4 left-4">
-                  <span className="bg-amber-400 text-black text-xs font-medium px-3 py-1 rounded">
-                    OFF MARKET
+          {loadingListings ? (
+            <div className="flex items-center justify-center w-full py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
+            </div>
+          ) : (
+            [...(listings.length > 0 ? listings : FALLBACK_LISTINGS), ...(listings.length > 0 ? listings : FALLBACK_LISTINGS)].map((listing, index) => (
+              <div 
+                key={`${listing.id}-${index}`}
+                className="flex-shrink-0 w-[350px] md:w-[400px] group cursor-pointer"
+                onClick={() => navigate(`/property/${listing.id}`)}
+              >
+                <div className="relative overflow-hidden rounded-lg mb-4">
+                  <img 
+                    src={listing.images?.[0]?.url || 'https://images.unsplash.com/photo-1578439297699-eb414262c2de?w=800&q=80'} 
+                    alt={listing.address}
+                    className="w-full h-[280px] object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628] via-transparent to-transparent" />
+                  <div className="absolute top-4 left-4">
+                    <span className="bg-amber-400 text-black text-xs font-medium px-3 py-1 rounded">
+                      OFF MARKET
+                    </span>
+                  </div>
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <p className="text-2xl font-serif mb-1">{formatPrice(listing.price)}</p>
+                    <p className="text-white/70 text-sm">{listing.address}</p>
+                    <p className="text-white/50 text-sm">{listing.city}, {listing.state}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6 text-sm text-white/60">
+                  <span className="flex items-center gap-1">
+                    <Bed className="w-4 h-4" /> {listing.bedrooms} Beds
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Bath className="w-4 h-4" /> {listing.bathrooms} Baths
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Square className="w-4 h-4" /> {listing.sqft?.toLocaleString()} SF
                   </span>
                 </div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <p className="text-2xl font-serif mb-1">{formatPrice(listing.price)}</p>
-                  <p className="text-white/70 text-sm">{listing.address}</p>
-                  <p className="text-white/50 text-sm">{listing.city}, {listing.state}</p>
-                </div>
               </div>
-              <div className="flex items-center gap-6 text-sm text-white/60">
-                <span className="flex items-center gap-1">
-                  <Bed className="w-4 h-4" /> {listing.bedrooms} Beds
-                </span>
-                <span className="flex items-center gap-1">
-                  <Bath className="w-4 h-4" /> {listing.bathrooms} Baths
-                </span>
-                <span className="flex items-center gap-1">
-                  <Square className="w-4 h-4" /> {listing.sqft.toLocaleString()} SF
-                </span>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         <div className="text-center mt-12">
-          <Link to="/login">
+          <a href="#contact">
             <Button variant="outline" className="border-amber-400/50 text-amber-400 hover:bg-amber-400 hover:text-black px-8">
-              VIEW ALL LISTINGS
+              REQUEST PRIVATE SHOWING
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-          </Link>
+          </a>
         </div>
       </section>
 
