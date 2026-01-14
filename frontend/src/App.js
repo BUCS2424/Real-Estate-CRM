@@ -112,6 +112,7 @@ function App() {
                 <Route path="developer/email" element={<EmailSettings />} />
                 <Route path="developer/custom-code" element={<CustomCode />} />
                 <Route path="developer/system-messages" element={<SystemMessages />} />
+                <Route path="developer/pwa" element={<PWASettings />} />
               </Route>
             </Route>
 
