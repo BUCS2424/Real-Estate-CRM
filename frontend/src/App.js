@@ -22,6 +22,7 @@ import { PublicBookingPage } from './pages/PublicBookingPage';
 import { ListingsPage } from './pages/ListingsPage';
 import { LandingPage } from './pages/LandingPage';
 import { PropertyDetailPage } from './pages/PropertyDetailPage';
+import { LeadsPage } from './pages/LeadsPage';
 
 // Settings Pages
 import { SettingsOverview } from './pages/settings/SettingsOverview';
