@@ -209,6 +209,83 @@ export const BookingPage = () => {
     }));
   };
 
+  // Create Booking Handlers
+  const handleOpenCreateBooking = () => {
+    setNewBooking({
+      selectedContactId: '',
+      booker_name: '',
+      booker_email: '',
+      booker_phone: '',
+      booking_date: selectedDate.toISOString().split('T')[0],
+      booking_time: '09:00',
+      notes: '',
+      video_platform: 'none',
+      zoom_link: '',
+      duration: bookingSettings?.meeting_duration || 30
+    });
+    setUseExistingLead(true);
+    setContactSearch('');
+    setIsCreateBookingOpen(true);
+  };
+
+  const handleSelectContact = (contact) => {
+    setNewBooking(prev => ({
+      ...prev,
+      selectedContactId: contact.id,
+      booker_name: contact.name,
+      booker_email: contact.email || '',
+      booker_phone: contact.phone || ''
+    }));
+    setContactSearch('');
+  };
+
+  const handleCreateBooking = async () => {
+    if (!newBooking.booker_name || !newBooking.booker_email || !newBooking.booking_date || !newBooking.booking_time) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    setCreatingBooking(true);
+    try {
+      // Build video link
+      let videoLink = null;
+      if (newBooking.video_platform === 'saysme') {
+        const roomId = `fusion-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        videoLink = `https://meet.saysme.org/${roomId}`;
+      } else if (newBooking.video_platform === 'zoom' && newBooking.zoom_link) {
+        videoLink = newBooking.zoom_link;
+      }
+
+      const bookingData = {
+        booker_name: newBooking.booker_name,
+        booker_email: newBooking.booker_email,
+        booker_phone: newBooking.booker_phone,
+        booking_date: newBooking.booking_date,
+        booking_time: newBooking.booking_time,
+        notes: newBooking.notes,
+        video_link: videoLink,
+        video_platform: newBooking.video_platform !== 'none' ? newBooking.video_platform : null,
+        contact_id: newBooking.selectedContactId || null,
+        duration: newBooking.duration
+      };
+
+      const res = await bookingAPI.createBooking(bookingData);
+      setBookings(prev => [...prev, res.data]);
+      setIsCreateBookingOpen(false);
+      toast.success('Booking created successfully!');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to create booking');
+    } finally {
+      setCreatingBooking(false);
+    }
+  };
+
+  const filteredContacts = contacts.filter(c => 
+    c.name?.toLowerCase().includes(contactSearch.toLowerCase()) ||
+    c.email?.toLowerCase().includes(contactSearch.toLowerCase()) ||
+    c.company?.toLowerCase().includes(contactSearch.toLowerCase())
+  );
+
   const getBookingsForDate = (date) => {
     const dateStr = date.toISOString().split('T')[0];
     return bookings.filter(b => b.booking_date === dateStr);
