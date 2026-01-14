@@ -1174,6 +1174,211 @@ async def check_phone_verified(phone_number: str):
     })
     return {"verified": verification is not None}
 
+# ============ PUBLIC LISTINGS ROUTES (No Auth Required) ============
+
+@api_router.get("/public/listings")
+async def get_public_listings(limit: int = 12):
+    """Get published property listings for public display"""
+    listings = await db.property_listings.find(
+        {"status": "active"},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    return listings
+
+@api_router.post("/listings/seed-sample")
+async def seed_sample_listings(current_user: dict = Depends(get_current_user)):
+    """Seed sample Florida luxury listings for demo purposes"""
+    sample_listings = [
+        {
+            "id": str(uuid.uuid4()),
+            "address": "1200 S Ocean Blvd",
+            "city": "Palm Beach",
+            "state": "FL",
+            "zip_code": "33480",
+            "country": "USA",
+            "price": 45000000,
+            "bedrooms": 8,
+            "bathrooms": 12,
+            "sqft": 18500,
+            "lot_size": "1.2 acres",
+            "property_type": "single_family",
+            "status": "active",
+            "description": "An extraordinary oceanfront estate on prestigious South Ocean Boulevard, this Palm Beach masterpiece offers unparalleled luxury living. With 200 feet of pristine beach frontage, the residence features a grand foyer, formal living spaces, gourmet chef's kitchen, and a spectacular infinity pool overlooking the Atlantic. The estate includes a private beach cabana, tennis court, and meticulously landscaped grounds.",
+            "features": ["Oceanfront", "Private Beach", "Infinity Pool", "Tennis Court", "Wine Cellar", "Smart Home", "Guest House"],
+            "images": [{"id": "1", "url": "https://images.unsplash.com/photo-1578439297699-eb414262c2de?w=800&q=80", "caption": "Exterior", "order": 0}],
+            "year_built": 2019,
+            "garage": 6,
+            "created_by": current_user["id"],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "address": "45 Star Island Dr",
+            "city": "Miami Beach",
+            "state": "FL",
+            "zip_code": "33139",
+            "country": "USA",
+            "price": 65000000,
+            "bedrooms": 11,
+            "bathrooms": 14,
+            "sqft": 22000,
+            "lot_size": "1.8 acres",
+            "property_type": "single_family",
+            "status": "active",
+            "description": "Welcome to Star Island's most magnificent estate—a trophy property offering complete privacy and breathtaking Biscayne Bay views. This newly constructed modern masterpiece features soaring ceilings, walls of glass, and seamless indoor-outdoor living. Amenities include a resort-style pool, private dock for a 100-foot yacht, rooftop terrace, home theater, and a wellness spa.",
+            "features": ["Waterfront", "Private Dock", "Resort Pool", "Home Theater", "Spa", "Rooftop Terrace", "Staff Quarters"],
+            "images": [{"id": "1", "url": "https://images.unsplash.com/photo-1607142426460-0185c446f1d7?w=800&q=80", "caption": "Exterior", "order": 0}],
+            "year_built": 2022,
+            "garage": 8,
+            "created_by": current_user["id"],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "address": "2800 Gordon Dr",
+            "city": "Naples",
+            "state": "FL",
+            "zip_code": "34102",
+            "country": "USA",
+            "price": 38500000,
+            "bedrooms": 6,
+            "bathrooms": 8,
+            "sqft": 12000,
+            "lot_size": "0.8 acres",
+            "property_type": "single_family",
+            "status": "active",
+            "description": "Situated in the ultra-exclusive Port Royal community, this Gulf-front estate epitomizes Naples luxury. The British West Indies architecture blends seamlessly with lush tropical landscaping. Features include a gourmet kitchen, wine room, library, and expansive outdoor entertaining areas. The private beach, heated pool, and boat dock complete this exceptional offering.",
+            "features": ["Gulf Front", "Private Beach", "Boat Dock", "Wine Room", "Library", "Heated Pool", "Outdoor Kitchen"],
+            "images": [{"id": "1", "url": "https://images.unsplash.com/photo-1623701675999-9406ece2d150?w=800&q=80", "caption": "Exterior", "order": 0}],
+            "year_built": 2017,
+            "garage": 4,
+            "created_by": current_user["id"],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "address": "100 Arvida Pkwy",
+            "city": "Coral Gables",
+            "state": "FL",
+            "zip_code": "33156",
+            "country": "USA",
+            "price": 29000000,
+            "bedrooms": 7,
+            "bathrooms": 9,
+            "sqft": 14500,
+            "lot_size": "1.5 acres",
+            "property_type": "single_family",
+            "status": "active",
+            "description": "A stunning Mediterranean Revival estate in the prestigious Gables Estates guard-gated community. This waterfront sanctuary offers 150 feet on the bay with a private dock and direct ocean access. The home features imported stone floors, custom millwork, a chef's dream kitchen, and a two-story library. The resort-style grounds include a pool, spa, cabana, and championship tennis court.",
+            "features": ["Waterfront", "Gated Community", "Tennis Court", "Pool & Spa", "Direct Ocean Access", "Two-Story Library", "Cabana"],
+            "images": [{"id": "1", "url": "https://images.unsplash.com/photo-1600137444380-ce5aea5c43c8?w=800&q=80", "caption": "Exterior", "order": 0}],
+            "year_built": 2015,
+            "garage": 5,
+            "created_by": current_user["id"],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "address": "3100 N Ocean Blvd",
+            "city": "Fort Lauderdale",
+            "state": "FL",
+            "zip_code": "33308",
+            "country": "USA",
+            "price": 52000000,
+            "bedrooms": 9,
+            "bathrooms": 11,
+            "sqft": 19800,
+            "lot_size": "2.1 acres",
+            "property_type": "single_family",
+            "status": "active",
+            "description": "An architectural triumph on Fort Lauderdale's prestigious beach. This contemporary oceanfront compound spans two acres with 300 feet of beach frontage. The main residence and guest house feature floor-to-ceiling glass, disappearing walls, and the finest finishes. Amenities include an oceanfront pool, professional gym, recording studio, and a 12-car collector's garage.",
+            "features": ["Oceanfront", "Guest House", "Recording Studio", "Collector Garage", "Professional Gym", "Oceanfront Pool", "Beach Frontage"],
+            "images": [{"id": "1", "url": "https://images.unsplash.com/photo-1745261394567-9dba1a4b7bb7?w=800&q=80", "caption": "Exterior", "order": 0}],
+            "year_built": 2021,
+            "garage": 12,
+            "created_by": current_user["id"],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "address": "888 S Ocean Blvd",
+            "city": "Boca Raton",
+            "state": "FL",
+            "zip_code": "33432",
+            "country": "USA",
+            "price": 34500000,
+            "bedrooms": 7,
+            "bathrooms": 10,
+            "sqft": 15200,
+            "lot_size": "1.1 acres",
+            "property_type": "single_family",
+            "status": "active",
+            "description": "Perched on a bluff overlooking the Atlantic, this newly constructed modern estate redefines oceanfront luxury in Boca Raton. Clean lines, expansive glass, and an open floor plan create a seamless connection to the sea. The property features a negative-edge pool, outdoor summer kitchen, private beach access, and a separate staff wing.",
+            "features": ["Oceanfront", "Modern Design", "Negative-Edge Pool", "Private Beach Access", "Staff Wing", "Summer Kitchen", "Smart Home"],
+            "images": [{"id": "1", "url": "https://images.unsplash.com/photo-1765279162736-14c7d64ff820?w=800&q=80", "caption": "Exterior", "order": 0}],
+            "year_built": 2023,
+            "garage": 4,
+            "created_by": current_user["id"],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "address": "150 Clarendon Ave",
+            "city": "Palm Beach",
+            "state": "FL",
+            "zip_code": "33480",
+            "country": "USA",
+            "price": 78000000,
+            "bedrooms": 12,
+            "bathrooms": 16,
+            "sqft": 28000,
+            "lot_size": "3.2 acres",
+            "property_type": "single_family",
+            "status": "active",
+            "description": "The crown jewel of Palm Beach—a historic lakefront estate meticulously restored and expanded to modern standards. Set on over 3 acres with 450 feet of Lake Worth frontage, the property includes the main mansion, two guest houses, a pool pavilion, and formal gardens designed by a renowned landscape architect. A private dock accommodates large yachts.",
+            "features": ["Lakefront", "Historic Estate", "Guest Houses", "Formal Gardens", "Private Dock", "Pool Pavilion", "450ft Frontage"],
+            "images": [{"id": "1", "url": "https://images.unsplash.com/photo-1663998468593-1f104e7c9213?w=800&q=80", "caption": "Exterior", "order": 0}],
+            "year_built": 1928,
+            "garage": 8,
+            "created_by": current_user["id"],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "address": "5000 Island Estates Dr",
+            "city": "Aventura",
+            "state": "FL",
+            "zip_code": "33160",
+            "country": "USA",
+            "price": 41000000,
+            "bedrooms": 8,
+            "bathrooms": 10,
+            "sqft": 16500,
+            "lot_size": "0.9 acres",
+            "property_type": "single_family",
+            "status": "active",
+            "description": "A spectacular contemporary waterfront residence on the exclusive Island Estates. This smart home features floor-to-ceiling windows, a dramatic floating staircase, and museum-quality gallery spaces. The outdoor oasis includes an infinity pool, covered terraces, and a 90-foot dock. Minutes to Bal Harbour shops and world-class dining.",
+            "features": ["Waterfront", "Contemporary Design", "Infinity Pool", "Private Dock", "Gallery Spaces", "Smart Home", "Floating Staircase"],
+            "images": [{"id": "1", "url": "https://images.unsplash.com/photo-1729606559667-fcab83917423?w=800&q=80", "caption": "Exterior", "order": 0}],
+            "year_built": 2020,
+            "garage": 6,
+            "created_by": current_user["id"],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+    ]
+    
+    # Insert all sample listings
+    await db.property_listings.insert_many(sample_listings)
+    return {"message": f"Successfully created {len(sample_listings)} sample listings"}
+
 # ============ PUBLIC BOOKING ROUTES (No Auth Required) ============
 
 @api_router.get("/public/booking/{agent_code}")
