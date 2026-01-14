@@ -110,11 +110,6 @@ export const LoginPage = () => {
               Create account
             </Link>
           </div>
-          <div className="mt-4 p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground">
-            <p className="font-medium mb-1">Demo Credentials:</p>
-            <p>Email: mel@a2gdesigns.com</p>
-            <p>Password: BigDaddy2016!!</p>
-          </div>
         </CardContent>
       </Card>
     </div>
