@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Database, Download, Upload, Clock, HardDrive, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Progress } from '../../components/ui/progress';
-import { Badge } from '../../components/ui/badge';
-import { Switch } from '../../components/ui/switch';
-import { Label } from '../../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
+import { Progress } from '../../../components/ui/progress';
+import { Badge } from '../../../components/ui/badge';
+import { Switch } from '../../../components/ui/switch';
+import { Label } from '../../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
 import { toast } from 'sonner';
 
 export const DatabaseBackup = () => {

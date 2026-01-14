@@ -1,8 +1,8 @@
 import React from 'react';
 import { Users, Circle, Clock, Monitor, MapPin } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
-import { Badge } from '../../components/ui/badge';
-import { Avatar, AvatarFallback } from '../../components/ui/avatar';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
+import { Badge } from '../../../components/ui/badge';
+import { Avatar, AvatarFallback } from '../../../components/ui/avatar';
 
 export const OnlineStaff = () => {
   const onlineUsers = [

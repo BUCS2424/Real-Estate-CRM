@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Activity, Search, Filter, User, Clock, FileText, Settings, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
-import { Input } from '../../components/ui/input';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
+import { Input } from '../../../components/ui/input';
+import { Button } from '../../../components/ui/button';
+import { Badge } from '../../../components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
 
 export const AuditLog = () => {
   const [filter, setFilter] = useState('all');

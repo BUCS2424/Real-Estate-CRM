@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Code, Save, AlertTriangle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Textarea } from '../../components/ui/textarea';
-import { Label } from '../../components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
+import { Textarea } from '../../../components/ui/textarea';
+import { Label } from '../../../components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '../../../components/ui/alert';
 import { toast } from 'sonner';
 
 export const CustomCode = () => {

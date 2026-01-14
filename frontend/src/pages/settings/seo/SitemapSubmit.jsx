@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Map, RefreshCw, CheckCircle2, AlertCircle, ExternalLink, Upload } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { Switch } from '../../components/ui/switch';
-import { Label } from '../../components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
+import { Badge } from '../../../components/ui/badge';
+import { Switch } from '../../../components/ui/switch';
+import { Label } from '../../../components/ui/label';
 import { toast } from 'sonner';
 
 export const SitemapSubmit = () => {

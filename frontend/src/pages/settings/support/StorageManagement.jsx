@@ -1,9 +1,9 @@
 import React from 'react';
 import { HardDrive, File, Image, FileText, Trash2, Download, Upload } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Progress } from '../../components/ui/progress';
-import { Badge } from '../../components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
+import { Progress } from '../../../components/ui/progress';
+import { Badge } from '../../../components/ui/badge';
 
 export const StorageManagement = () => {
   const storageData = {

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { FileCode, Save, Globe, Search, Image } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import { Textarea } from '../../components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
+import { Input } from '../../../components/ui/input';
+import { Label } from '../../../components/ui/label';
+import { Textarea } from '../../../components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
 import { toast } from 'sonner';
 
 export const MetaInformation = () => {
