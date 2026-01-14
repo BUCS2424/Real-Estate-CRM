@@ -19,6 +19,7 @@ import { Button } from '../ui/button';
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/contacts', icon: Users, label: 'Contacts' },
+  { path: '/leads', icon: UserPlus, label: 'Leads' },
   { path: '/deals', icon: Briefcase, label: 'Deals Pipeline' },
   { path: '/listings', icon: Home, label: 'Listings' },
   { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
