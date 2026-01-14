@@ -332,19 +332,12 @@ export const PublicBookingPage = () => {
                     />
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor="phone">Phone (optional)</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="phone"
-                      value={formData.booker_phone}
-                      onChange={(e) => setFormData({ ...formData, booker_phone: e.target.value })}
-                      placeholder="(555) 123-4567"
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
+                <PhoneVerification
+                  value={formData.booker_phone}
+                  onChange={(phone) => setFormData({ ...formData, booker_phone: phone })}
+                  onVerified={() => setPhoneVerified(true)}
+                  label="Phone (requires verification)"
+                />
                 <div>
                   <Label htmlFor="notes">Notes (optional)</Label>
                   <div className="relative">
