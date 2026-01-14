@@ -1,0 +1,202 @@
+{
+  "summary": {
+    "tests_run": 32,
+    "tests_passed": 32,
+    "success_rate": 100.0,
+    "timestamp": "2026-01-14T19:17:34.525254"
+  },
+  "results": [
+    {
+      "test": "API Connectivity",
+      "success": true,
+      "details": "API is accessible",
+      "timestamp": "2026-01-14T19:17:28.243574"
+    },
+    {
+      "test": "Seed Initial Data",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:28.287526"
+    },
+    {
+      "test": "Superuser Login",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:28.589343"
+    },
+    {
+      "test": "Token Extraction",
+      "success": true,
+      "details": "User ID: f5e1f9b4-57df-4279-aca8-5f8ea4f10bcf",
+      "timestamp": "2026-01-14T19:17:28.590019"
+    },
+    {
+      "test": "Get Current User",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:28.631474"
+    },
+    {
+      "test": "Dashboard Stats",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:28.675609"
+    },
+    {
+      "test": "Dashboard Stats Structure",
+      "success": true,
+      "details": "All required keys present",
+      "timestamp": "2026-01-14T19:17:28.676153"
+    },
+    {
+      "test": "Create Contact",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:28.721224"
+    },
+    {
+      "test": "List Contacts",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:28.761465"
+    },
+    {
+      "test": "Get Contact",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:28.802089"
+    },
+    {
+      "test": "Update Contact",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:28.846915"
+    },
+    {
+      "test": "Update Lead Score",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:28.884204"
+    },
+    {
+      "test": "Delete Contact",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:28.921556"
+    },
+    {
+      "test": "Create Deal",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:28.956484"
+    },
+    {
+      "test": "List Deals",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:28.993559"
+    },
+    {
+      "test": "Get Deal",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:29.030988"
+    },
+    {
+      "test": "Update Deal Stage",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:29.066698"
+    },
+    {
+      "test": "Delete Deal",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:29.106013"
+    },
+    {
+      "test": "Create Task",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:29.143038"
+    },
+    {
+      "test": "List Tasks",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:29.180231"
+    },
+    {
+      "test": "Update Task Status",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:29.221068"
+    },
+    {
+      "test": "Delete Task",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:29.258836"
+    },
+    {
+      "test": "Create Article",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:29.308324"
+    },
+    {
+      "test": "List Articles",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:29.346625"
+    },
+    {
+      "test": "Update Article",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:29.384779"
+    },
+    {
+      "test": "Delete Article",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:29.421844"
+    },
+    {
+      "test": "AI Content Generation",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:34.385305"
+    },
+    {
+      "test": "AI Content Structure",
+      "success": true,
+      "details": "Content generated successfully",
+      "timestamp": "2026-01-14T19:17:34.385926"
+    },
+    {
+      "test": "Get Settings",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:34.443749"
+    },
+    {
+      "test": "Update Settings",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:34.486126"
+    },
+    {
+      "test": "List Users",
+      "success": true,
+      "details": "Status: 200",
+      "timestamp": "2026-01-14T19:17:34.523773"
+    },
+    {
+      "test": "Users List Structure",
+      "success": true,
+      "details": "Found 2 users",
+      "timestamp": "2026-01-14T19:17:34.524355"
+    }
+  ]
+}
