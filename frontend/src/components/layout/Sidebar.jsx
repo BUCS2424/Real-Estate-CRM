@@ -11,7 +11,8 @@ import {
   Building2,
   CalendarCheck,
   Home,
-  UserPlus
+  UserPlus,
+  FileInput
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
@@ -20,6 +21,7 @@ const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/contacts', icon: Users, label: 'Contacts' },
   { path: '/leads', icon: UserPlus, label: 'Leads' },
+  { path: '/property-submissions', icon: FileInput, label: 'Submissions' },
   { path: '/deals', icon: Briefcase, label: 'Deals Pipeline' },
   { path: '/listings', icon: Home, label: 'Listings' },
   { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
