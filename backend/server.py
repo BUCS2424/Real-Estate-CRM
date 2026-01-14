@@ -251,6 +251,13 @@ class BlockedDateCreate(BaseModel):
     date: str  # YYYY-MM-DD
     reason: Optional[str] = None
 
+class PhoneVerificationRequest(BaseModel):
+    phone_number: str
+
+class PhoneVerifyCodeRequest(BaseModel):
+    phone_number: str
+    code: str
+
 # ============ AUTH HELPERS ============
 
 def hash_password(password: str) -> str:
