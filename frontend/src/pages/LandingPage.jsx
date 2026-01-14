@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { EmailVerification } from '../components/EmailVerification';
+import { PhoneVerification } from '../components/PhoneVerification';
 import { toast } from 'sonner';
 
 // Fallback listings if database is empty
