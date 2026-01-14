@@ -715,6 +715,231 @@ export const BookingPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Create Booking Dialog */}
+      <Dialog open={isCreateBookingOpen} onOpenChange={setIsCreateBookingOpen}>
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-serif flex items-center gap-2">
+              <CalendarIcon className="w-5 h-5" />
+              Create New Booking
+            </DialogTitle>
+            <DialogDescription>Schedule a meeting with a lead or new contact</DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-5">
+            {/* Lead Selection Toggle */}
+            <div className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg">
+              <div 
+                className={`flex-1 p-3 rounded-md cursor-pointer transition-all ${useExistingLead ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+                onClick={() => setUseExistingLead(true)}
+              >
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  <span className="font-medium">Select Existing Lead</span>
+                </div>
+              </div>
+              <div 
+                className={`flex-1 p-3 rounded-md cursor-pointer transition-all ${!useExistingLead ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+                onClick={() => setUseExistingLead(false)}
+              >
+                <div className="flex items-center gap-2">
+                  <UserPlus className="w-4 h-4" />
+                  <span className="font-medium">Enter New Contact</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Existing Lead Search */}
+            {useExistingLead && (
+              <div className="space-y-2">
+                <Label>Search Contacts</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    value={contactSearch}
+                    onChange={(e) => setContactSearch(e.target.value)}
+                    placeholder="Search by name, email, or company..."
+                    className="pl-10"
+                  />
+                </div>
+                {contactSearch && filteredContacts.length > 0 && (
+                  <div className="border rounded-lg max-h-40 overflow-y-auto">
+                    {filteredContacts.slice(0, 5).map(contact => (
+                      <div 
+                        key={contact.id}
+                        className="p-3 hover:bg-muted cursor-pointer border-b last:border-b-0"
+                        onClick={() => handleSelectContact(contact)}
+                      >
+                        <p className="font-medium">{contact.name}</p>
+                        <p className="text-sm text-muted-foreground">{contact.email} {contact.company && `• ${contact.company}`}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {newBooking.selectedContactId && (
+                  <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{newBooking.booker_name}</p>
+                        <p className="text-sm text-muted-foreground">{newBooking.booker_email}</p>
+                      </div>
+                      <Badge variant="secondary">Selected</Badge>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Manual Entry Fields */}
+            {!useExistingLead && (
+              <div className="space-y-3">
+                <div>
+                  <Label>Name *</Label>
+                  <Input
+                    value={newBooking.booker_name}
+                    onChange={(e) => setNewBooking(prev => ({ ...prev, booker_name: e.target.value }))}
+                    placeholder="Contact name"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Email *</Label>
+                    <Input
+                      type="email"
+                      value={newBooking.booker_email}
+                      onChange={(e) => setNewBooking(prev => ({ ...prev, booker_email: e.target.value }))}
+                      placeholder="email@example.com"
+                    />
+                  </div>
+                  <div>
+                    <Label>Phone</Label>
+                    <Input
+                      value={newBooking.booker_phone}
+                      onChange={(e) => setNewBooking(prev => ({ ...prev, booker_phone: e.target.value }))}
+                      placeholder="(555) 123-4567"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Date & Time */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Date *</Label>
+                <Input
+                  type="date"
+                  value={newBooking.booking_date}
+                  onChange={(e) => setNewBooking(prev => ({ ...prev, booking_date: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label>Time *</Label>
+                <Input
+                  type="time"
+                  value={newBooking.booking_time}
+                  onChange={(e) => setNewBooking(prev => ({ ...prev, booking_time: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            {/* Duration */}
+            <div>
+              <Label>Duration</Label>
+              <Select 
+                value={String(newBooking.duration)} 
+                onValueChange={(v) => setNewBooking(prev => ({ ...prev, duration: parseInt(v) }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="15">15 minutes</SelectItem>
+                  <SelectItem value="30">30 minutes</SelectItem>
+                  <SelectItem value="45">45 minutes</SelectItem>
+                  <SelectItem value="60">1 hour</SelectItem>
+                  <SelectItem value="90">1.5 hours</SelectItem>
+                  <SelectItem value="120">2 hours</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Video Call Options */}
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <Video className="w-4 h-4" />
+                Video Call Option
+              </Label>
+              <div className="space-y-2">
+                <div 
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${newBooking.video_platform === 'none' ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}`}
+                  onClick={() => setNewBooking(prev => ({ ...prev, video_platform: 'none' }))}
+                >
+                  <div className={`w-4 h-4 rounded-full border-2 ${newBooking.video_platform === 'none' ? 'border-primary bg-primary' : 'border-muted-foreground'}`}>
+                    {newBooking.video_platform === 'none' && <Check className="w-3 h-3 text-primary-foreground" />}
+                  </div>
+                  <span>No Video Call (In-person or phone)</span>
+                </div>
+                
+                <div 
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${newBooking.video_platform === 'saysme' ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}`}
+                  onClick={() => setNewBooking(prev => ({ ...prev, video_platform: 'saysme' }))}
+                >
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${newBooking.video_platform === 'saysme' ? 'border-primary bg-primary' : 'border-muted-foreground'}`}>
+                    {newBooking.video_platform === 'saysme' && <Check className="w-3 h-3 text-primary-foreground" />}
+                  </div>
+                  <div className="flex-1">
+                    <span className="font-medium">SaysMe Meet</span>
+                    <p className="text-xs text-muted-foreground">Auto-generate meet.saysme.org link</p>
+                  </div>
+                </div>
+                
+                <div 
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${newBooking.video_platform === 'zoom' ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}`}
+                  onClick={() => setNewBooking(prev => ({ ...prev, video_platform: 'zoom' }))}
+                >
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${newBooking.video_platform === 'zoom' ? 'border-primary bg-primary' : 'border-muted-foreground'}`}>
+                    {newBooking.video_platform === 'zoom' && <Check className="w-3 h-3 text-primary-foreground" />}
+                  </div>
+                  <div className="flex-1">
+                    <span className="font-medium">Zoom</span>
+                    <p className="text-xs text-muted-foreground">Use your Zoom meeting link</p>
+                  </div>
+                </div>
+
+                {newBooking.video_platform === 'zoom' && (
+                  <div className="pl-7">
+                    <Input
+                      value={newBooking.zoom_link}
+                      onChange={(e) => setNewBooking(prev => ({ ...prev, zoom_link: e.target.value }))}
+                      placeholder="https://zoom.us/j/..."
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div>
+              <Label>Notes</Label>
+              <Textarea
+                value={newBooking.notes}
+                onChange={(e) => setNewBooking(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Any additional notes..."
+                rows={2}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setIsCreateBookingOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreateBooking} disabled={creatingBooking}>
+              {creatingBooking ? 'Creating...' : 'Create Booking'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
