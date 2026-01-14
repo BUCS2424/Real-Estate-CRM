@@ -87,7 +87,7 @@ export const AIWriterPage = () => {
     try {
       const response = await aiAPI.generate({
         prompt,
-        contact_id: selectedContact || null,
+        contact_id: selectedContact === 'none' ? null : selectedContact || null,
         article_type: articleType
       });
       setGeneratedContent(response.data.content);
