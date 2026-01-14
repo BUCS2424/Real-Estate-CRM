@@ -1649,6 +1649,11 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     # Get high priority tasks
     high_priority_tasks = await db.tasks.count_documents({"priority": "high", "status": {"$ne": "done"}})
     
+    # Get lead counts
+    buyer_leads = await db.leads.count_documents({"lead_type": "buyer"})
+    seller_leads = await db.leads.count_documents({"lead_type": "seller"})
+    new_leads = await db.leads.count_documents({"status": "new"})
+    
     return {
         "contacts": contacts_count,
         "deals": deals_count,
@@ -1656,8 +1661,53 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
         "articles": articles_count,
         "pipeline_value": pipeline_value,
         "deals_by_stage": deals_by_stage,
-        "high_priority_tasks": high_priority_tasks
+        "high_priority_tasks": high_priority_tasks,
+        "buyer_leads": buyer_leads,
+        "seller_leads": seller_leads,
+        "new_leads": new_leads
     }
+
+# ============ LEADS MANAGEMENT ============
+
+@api_router.get("/leads")
+async def get_leads(lead_type: str = None, status: str = None, current_user: dict = Depends(get_current_user)):
+    """Get all leads with optional filtering"""
+    query = {}
+    if lead_type:
+        query["lead_type"] = lead_type
+    if status:
+        query["status"] = status
+    
+    leads = await db.leads.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return leads
+
+@api_router.get("/leads/{lead_id}")
+async def get_lead(lead_id: str, current_user: dict = Depends(get_current_user)):
+    """Get a single lead"""
+    lead = await db.leads.find_one({"id": lead_id}, {"_id": 0})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    return lead
+
+@api_router.patch("/leads/{lead_id}")
+async def update_lead(lead_id: str, update_data: dict, current_user: dict = Depends(get_current_user)):
+    """Update a lead's status or notes"""
+    allowed_fields = ["status", "notes", "assigned_to"]
+    update = {k: v for k, v in update_data.items() if k in allowed_fields}
+    update["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.leads.update_one({"id": lead_id}, {"$set": update})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    return {"message": "Lead updated"}
+
+@api_router.delete("/leads/{lead_id}")
+async def delete_lead(lead_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a lead"""
+    result = await db.leads.delete_one({"id": lead_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    return {"message": "Lead deleted"}
 
 # ============ SEED DATA ============
 
