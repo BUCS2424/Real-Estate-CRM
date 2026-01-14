@@ -946,7 +946,11 @@ async def lookup_address_info(address: dict, current_user: dict = Depends(get_cu
         logger.warning(f"Web search failed: {str(e)}")
     
     # Step 2: Use AI to analyze the address and any search results
-    prompt = f"""You are a real estate data expert. Analyze this property address and provide detailed information.
+    system_message = """You are a real estate data expert with comprehensive knowledge of property markets across the United States.
+You provide accurate property valuations, market analysis, and detailed property information based on addresses.
+Always return data in valid JSON format."""
+
+    prompt = f"""Analyze this property address and provide detailed information.
 
 Property Address: "{full_address}"
 
@@ -973,17 +977,22 @@ Based on the address and your knowledge of real estate markets, provide the foll
     "market_trends": "brief market trend description for this area"
 }}
 
-Use realistic values based on actual real estate market data for this location. If this is a known address with public listing data, use that information. Return ONLY valid JSON."""
+Use realistic values based on actual real estate market data for this location. Return ONLY valid JSON, no markdown code blocks."""
 
     try:
-        llm = LlmChat(api_key=os.environ.get("EMERGENT_LLM_KEY"))
-        response = await llm.send_message_async(
-            model="gpt-4o",
-            messages=[UserMessage(content=prompt)]
+        api_key = os.environ.get("EMERGENT_LLM_KEY")
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"address-lookup-{uuid.uuid4()}",
+            system_message=system_message
         )
+        chat.with_model("openai", "gpt-4o")
+        
+        user_message = UserMessage(text=prompt)
+        response = await chat.send_message(user_message)
         
         # Parse JSON from response
-        content = response.content.strip()
+        content = response.strip()
         if content.startswith("```"):
             lines = content.split("\n")
             content = "\n".join(lines[1:-1])
@@ -994,11 +1003,10 @@ Use realistic values based on actual real estate market data for this location. 
         return data
     except json.JSONDecodeError as e:
         logger.error(f"JSON parse error: {str(e)}")
-        # Try to extract basic info
         return {
             "address": full_address,
             "error": "Could not parse property data",
-            "raw_response": response.content if 'response' in locals() else None
+            "raw_response": response if 'response' in locals() else None
         }
     except Exception as e:
         logger.error(f"Address lookup error: {str(e)}")
