@@ -49,13 +49,21 @@ export const LandingPage = () => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [interest, setInterest] = useState('');
+  const [leadType, setLeadType] = useState('buyer');
   const [submitting, setSubmitting] = useState(false);
   const [listings, setListings] = useState([]);
   const [loadingListings, setLoadingListings] = useState(true);
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+
+  // Buyer-specific fields
+  const [buyerBudget, setBuyerBudget] = useState('');
+  const [buyerAreas, setBuyerAreas] = useState('');
+  
+  // Seller-specific fields
+  const [sellerAddress, setSellerAddress] = useState('');
+  const [sellerEstValue, setSellerEstValue] = useState('');
 
   // Fetch listings from database
   useEffect(() => {
