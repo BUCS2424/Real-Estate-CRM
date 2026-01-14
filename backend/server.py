@@ -1827,6 +1827,126 @@ async def delete_lead(lead_id: str, current_user: dict = Depends(get_current_use
         raise HTTPException(status_code=404, detail="Lead not found")
     return {"message": "Lead deleted"}
 
+# ============ PROPERTY SUBMISSIONS ============
+
+@api_router.post("/public/property-submissions")
+async def submit_property(submission: PropertySubmissionCreate):
+    """Public endpoint for sellers to submit their property for consideration"""
+    doc = {
+        "id": str(uuid.uuid4()),
+        "seller_name": submission.seller_name,
+        "seller_email": submission.seller_email.lower(),
+        "seller_phone": submission.seller_phone,
+        "property_address": submission.property_address,
+        "city": submission.city,
+        "state": submission.state,
+        "zip_code": submission.zip_code,
+        "property_type": submission.property_type,
+        "bedrooms": submission.bedrooms,
+        "bathrooms": submission.bathrooms,
+        "sqft": submission.sqft,
+        "year_built": submission.year_built,
+        "estimated_value": submission.estimated_value,
+        "asking_price": submission.asking_price,
+        "description": submission.description,
+        "reason_for_selling": submission.reason_for_selling,
+        "timeline": submission.timeline,
+        "additional_info": submission.additional_info,
+        "email_verified": submission.email_verified,
+        "phone_verified": submission.phone_verified,
+        "status": "pending",
+        "notes": None,
+        "assigned_to": None,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.property_submissions.insert_one(doc)
+    logger.info(f"New property submission from {submission.seller_email}: {submission.property_address}")
+    return {"message": "Property submitted successfully. Our team will review and contact you soon.", "id": doc["id"]}
+
+@api_router.get("/property-submissions")
+async def list_property_submissions(
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all property submissions (admin only)"""
+    query = {}
+    if status:
+        query["status"] = status
+    submissions = await db.property_submissions.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return submissions
+
+@api_router.get("/property-submissions/{submission_id}")
+async def get_property_submission(submission_id: str, current_user: dict = Depends(get_current_user)):
+    """Get a single property submission"""
+    submission = await db.property_submissions.find_one({"id": submission_id}, {"_id": 0})
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    return submission
+
+@api_router.patch("/property-submissions/{submission_id}")
+async def update_property_submission(submission_id: str, updates: dict, current_user: dict = Depends(get_current_user)):
+    """Update a property submission status or notes"""
+    allowed_fields = ["status", "notes", "assigned_to"]
+    update_data = {k: v for k, v in updates.items() if k in allowed_fields}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.property_submissions.update_one(
+        {"id": submission_id},
+        {"$set": update_data}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    return {"message": "Submission updated"}
+
+@api_router.post("/property-submissions/{submission_id}/convert")
+async def convert_submission_to_listing(submission_id: str, current_user: dict = Depends(get_current_user)):
+    """Convert an approved submission into a property listing"""
+    submission = await db.property_submissions.find_one({"id": submission_id}, {"_id": 0})
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    
+    # Create listing from submission
+    listing = {
+        "id": str(uuid.uuid4()),
+        "address": submission["property_address"],
+        "city": submission.get("city"),
+        "state": submission.get("state"),
+        "zip_code": submission.get("zip_code"),
+        "country": "USA",
+        "price": submission.get("asking_price") or 0,
+        "bedrooms": submission.get("bedrooms") or 0,
+        "bathrooms": submission.get("bathrooms") or 0,
+        "sqft": submission.get("sqft") or 0,
+        "property_type": submission.get("property_type", "single_family"),
+        "status": "draft",
+        "description": submission.get("description") or "",
+        "features": [],
+        "images": [],
+        "year_built": submission.get("year_built"),
+        "created_by": current_user["id"],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "source_submission_id": submission_id
+    }
+    await db.property_listings.insert_one(listing)
+    
+    # Update submission status
+    await db.property_submissions.update_one(
+        {"id": submission_id},
+        {"$set": {"status": "converted", "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"message": "Submission converted to listing", "listing_id": listing["id"]}
+
+@api_router.delete("/property-submissions/{submission_id}")
+async def delete_property_submission(submission_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a property submission"""
+    result = await db.property_submissions.delete_one({"id": submission_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    return {"message": "Submission deleted"}
+
 # ============ SEED DATA ============
 
 @api_router.post("/seed")
