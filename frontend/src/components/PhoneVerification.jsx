@@ -33,13 +33,7 @@ export const PhoneVerification = ({
     try {
       const res = await phoneAPI.sendCode(value);
       setStep('verify');
-      // Show mock code in toast for testing (remove when using real Twilio)
-      if (res.data.mock_code) {
-        setMockCode(res.data.mock_code);
-        toast.info(`[TEST MODE] Your code is: ${res.data.mock_code}`, { duration: 10000 });
-      } else {
-        toast.success('Verification code sent!');
-      }
+      toast.success('Verification code sent!');
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to send code');
     } finally {
@@ -133,11 +127,6 @@ export const PhoneVerification = ({
           <p className={`text-sm ${darkMode ? 'text-white/70' : 'text-muted-foreground'}`}>
             Enter the 6-digit code sent to {value}
           </p>
-          {mockCode && (
-            <p className={`text-xs p-2 rounded ${darkMode ? 'text-amber-400 bg-amber-400/10' : 'text-amber-600 bg-amber-50'}`}>
-              [TEST MODE] Code: <span className="font-mono font-bold">{mockCode}</span>
-            </p>
-          )}
           <div className="flex gap-2">
             <Input
               type="text"
