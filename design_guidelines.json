@@ -1,0 +1,150 @@
+{
+  "identity": {
+    "name": "Fusion Builder - The Estate Architect",
+    "persona": "E1: The Anti-AI Designer",
+    "vibe": "Luxury Real Estate meets High-Speed Tech. Trust, Authority, but with a modern, fluid edge.",
+    "archetype": "Organic & Earthy (Light) / Jewel & Luxury (Dark)"
+  },
+  "typography": {
+    "headings": {
+      "family": "Playfair Display, serif",
+      "usage": "All H1-H3 headings. Use font-weight 600 or 700.",
+      "letterSpacing": "-0.02em"
+    },
+    "body": {
+      "family": "Manrope, sans-serif",
+      "usage": "Body text, UI elements, data grids.",
+      "weights": "400 (regular), 500 (medium), 600 (semibold)"
+    },
+    "mono": {
+      "family": "JetBrains Mono, monospace",
+      "usage": "IDs, API keys, Code snippets in AI writer."
+    },
+    "installation": "Import via Google Fonts in index.css: @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');"
+  },
+  "colors": {
+    "light": {
+      "background": "40 20% 98%",
+      "foreground": "220 30% 10%",
+      "card": "0 0% 100%",
+      "card_foreground": "220 30% 10%",
+      "popover": "0 0% 100%",
+      "popover_foreground": "220 30% 10%",
+      "primary": "160 40% 25%",
+      "primary_foreground": "0 0% 100%",
+      "secondary": "40 10% 90%",
+      "secondary_foreground": "220 30% 10%",
+      "muted": "40 10% 94%",
+      "muted_foreground": "220 10% 40%",
+      "accent": "25 80% 50%",
+      "accent_foreground": "0 0% 100%",
+      "destructive": "0 84.2% 60.2%",
+      "destructive_foreground": "0 0% 98%",
+      "border": "40 10% 85%",
+      "input": "40 10% 85%",
+      "ring": "160 40% 25%"
+    },
+    "dark": {
+      "background": "220 30% 8%",
+      "foreground": "40 10% 90%",
+      "card": "220 25% 12%",
+      "card_foreground": "40 10% 90%",
+      "popover": "220 25% 12%",
+      "popover_foreground": "40 10% 90%",
+      "primary": "40 30% 80%",
+      "primary_foreground": "220 30% 10%",
+      "secondary": "220 20% 18%",
+      "secondary_foreground": "40 10% 90%",
+      "muted": "220 20% 18%",
+      "muted_foreground": "220 10% 60%",
+      "accent": "25 80% 55%",
+      "accent_foreground": "0 0% 100%",
+      "destructive": "0 62.8% 30.6%",
+      "destructive_foreground": "0 0% 98%",
+      "border": "220 20% 20%",
+      "input": "220 20% 20%",
+      "ring": "40 30% 80%"
+    },
+    "chart_palette": [
+      "160 40% 40%",
+      "25 80% 55%",
+      "220 40% 50%",
+      "40 60% 60%",
+      "280 30% 50%"
+    ]
+  },
+  "layout_strategies": {
+    "dashboard": {
+      "name": "The Control Room",
+      "grid": "grid-cols-1 md:grid-cols-4 gap-6",
+      "spacing": "p-6 md:p-8",
+      "rules": [
+        "Dense data display.",
+        "Use 'Cardless' widgets for secondary metrics (just text + icon).",
+        "Primary charts get full cards with 'Glassmorphism' headers."
+      ]
+    },
+    "kanban": {
+      "name": "The Flow State",
+      "structure": "flex h-full overflow-x-auto gap-6 p-6",
+      "column_style": "min-w-[300px] bg-muted/50 rounded-xl p-4 backdrop-blur-sm border border-border/50",
+      "card_style": "bg-card p-4 rounded-lg shadow-sm hover:shadow-md transition-all border border-border/50 cursor-grab active:cursor-grabbing"
+    },
+    "ai_writer": {
+      "name": "The Split Brain",
+      "structure": "grid grid-cols-1 lg:grid-cols-12 h-[calc(100vh-4rem)]",
+      "left_panel": "col-span-4 border-r border-border p-6 overflow-y-auto bg-muted/10 (Context/CRM Data)",
+      "right_panel": "col-span-8 p-8 lg:p-12 bg-background (The Editor)"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "rounded-full px-8 font-medium shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all active:scale-95",
+      "secondary": "rounded-full border border-border bg-transparent hover:bg-muted transition-all",
+      "ghost": "rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+    },
+    "cards": {
+      "default": "rounded-xl border border-border/60 bg-card shadow-sm",
+      "interactive": "hover:border-primary/50 hover:shadow-md transition-all duration-300 group"
+    },
+    "inputs": {
+      "style": "h-11 rounded-lg border-border/80 bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+    }
+  },
+  "motion": {
+    "library": "framer-motion",
+    "physics_drag": {
+      "description": "Physics-based drag with tilt and snap.",
+      "implementation_guide": "Use framer-motion's 'drag' prop. Calculate 'rotate' based on 'dragElastic' or velocity. Use 'layout' prop for the 100ms snap reordering.",
+      "code_snippet_concept": "<motion.div layout transition={{ type: 'spring', stiffness: 300, damping: 30 }} whileDrag={{ scale: 1.05, rotate: 2, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }} ... />"
+    },
+    "page_transition": {
+      "initial": { "opacity": 0, "y": 20 },
+      "animate": { "opacity": 1, "y": 0 },
+      "exit": { "opacity": 0, "y": -20 },
+      "transition": { "duration": 0.3, "ease": "easeOut" }
+    }
+  },
+  "images": {
+    "dashboard_hero": "https://images.unsplash.com/photo-1628745750131-e5cfc5e70ced?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "login_bg": "https://images.unsplash.com/photo-1640109478916-f445f8f19b11?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "user_avatars": [
+      "https://images.unsplash.com/photo-1763478958776-ebd04b6459ee?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "https://images.unsplash.com/photo-1730851357916-3802b6405271?crop=entropy&cs=srgb&fm=jpg&q=85"
+    ],
+    "placeholders": {
+      "property": "https://images.unsplash.com/photo-1668089677938-b52086753f77?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "office": "https://images.unsplash.com/photo-1652878530627-cc6f063e3947?crop=entropy&cs=srgb&fm=jpg&q=85"
+    }
+  },
+  "universal_guidelines": [
+    "Use 'sonner' for all toast notifications.",
+    "All interactive elements MUST have 'data-testid'.",
+    "Do not use generic gradients. Use solid colors or subtle noise textures.",
+    "Ensure 100% accessibility contrast in both Light and Dark modes.",
+    "For the AI Writer, use a 'Typewriter' aesthetic (clean, minimal, focus mode).",
+    "Settings Cog: Place in the User Menu dropdown (Top Right).",
+    "Role-Based UI: Hide 'Admin' settings for 'Client' role users."
+  ],
+  "instructions_to_main_agent": "1. Update tailwind.config.js with the provided colors and fonts. 2. Install 'framer-motion' and 'lucide-react'. 3. Create the 'Layout' component with the Sidebar and Topbar. 4. Implement the 'Kanban' board using @dnd-kit or react-beautiful-dnd wrapped in framer-motion for the physics. 5. Build the 'AI Article Writer' with a split-pane layout."
+}
