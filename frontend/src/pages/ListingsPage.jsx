@@ -122,6 +122,12 @@ export const ListingsPage = () => {
     try {
       const res = await listingsAPI.lookupAddress(formData.address);
       const data = res.data;
+      
+      if (data.error) {
+        toast.warning(`Partial data loaded: ${data.error}`);
+      }
+      
+      // Update form with all available data
       setFormData(prev => ({
         ...prev,
         address: data.address || prev.address,
@@ -134,8 +140,19 @@ export const ListingsPage = () => {
         sqft: data.typical_sqft || prev.sqft,
         bedrooms: data.typical_bedrooms || prev.bedrooms,
         bathrooms: data.typical_bathrooms || prev.bathrooms,
+        lot_size: data.lot_size || prev.lot_size,
+        year_built: data.year_built_estimate ? data.year_built_estimate.split('-')[0] : prev.year_built,
       }));
-      toast.success('Address info loaded!');
+      
+      // Show additional info in a toast
+      if (data.neighborhood_info) {
+        toast.info(`Area Info: ${data.neighborhood_info}`, { duration: 5000 });
+      }
+      if (data.market_trends) {
+        toast.info(`Market: ${data.market_trends}`, { duration: 5000 });
+      }
+      
+      toast.success('Property data loaded from AI lookup!');
     } catch (error) {
       toast.error('Failed to lookup address');
     } finally {
