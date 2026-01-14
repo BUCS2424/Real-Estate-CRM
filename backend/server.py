@@ -329,6 +329,57 @@ class StorageFolder(BaseModel):
     created_by: str
     created_at: str
 
+# ============ PROPERTY SUBMISSION MODELS ============
+
+class PropertySubmissionCreate(BaseModel):
+    """Model for seller property submissions from landing page"""
+    seller_name: str
+    seller_email: str
+    seller_phone: Optional[str] = None
+    property_address: str
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip_code: Optional[str] = None
+    property_type: str = "single_family"
+    bedrooms: Optional[int] = None
+    bathrooms: Optional[float] = None
+    sqft: Optional[int] = None
+    year_built: Optional[int] = None
+    estimated_value: Optional[str] = None
+    asking_price: Optional[float] = None
+    description: Optional[str] = None
+    reason_for_selling: Optional[str] = None
+    timeline: Optional[str] = None  # immediate, 1-3 months, 3-6 months, flexible
+    additional_info: Optional[str] = None
+    email_verified: bool = False
+    phone_verified: bool = False
+
+class PropertySubmissionResponse(BaseModel):
+    id: str
+    seller_name: str
+    seller_email: str
+    seller_phone: Optional[str]
+    property_address: str
+    city: Optional[str]
+    state: Optional[str]
+    zip_code: Optional[str]
+    property_type: str
+    bedrooms: Optional[int]
+    bathrooms: Optional[float]
+    sqft: Optional[int]
+    year_built: Optional[int]
+    estimated_value: Optional[str]
+    asking_price: Optional[float]
+    description: Optional[str]
+    reason_for_selling: Optional[str]
+    timeline: Optional[str]
+    additional_info: Optional[str]
+    status: str  # pending, reviewing, approved, rejected, converted
+    notes: Optional[str]
+    assigned_to: Optional[str]
+    created_at: str
+    updated_at: str
+
 # ============ AUTH HELPERS ============
 
 def hash_password(password: str) -> str:
