@@ -647,6 +647,31 @@ async def delete_booking(booking_id: str, current_user: dict = Depends(get_curre
         raise HTTPException(status_code=404, detail="Booking not found")
     return {"message": "Booking deleted"}
 
+@api_router.post("/booking/create")
+async def create_agent_booking(booking: BookingCreate, current_user: dict = Depends(get_current_user)):
+    """Create a booking directly by the agent"""
+    settings = await db.booking_settings.find_one({"user_id": current_user["id"]}, {"_id": 0})
+    duration = booking.duration if booking.duration else (settings.get("meeting_duration", 30) if settings else 30)
+    
+    doc = {
+        "id": str(uuid.uuid4()),
+        "agent_id": current_user["id"],
+        "booker_name": booking.booker_name,
+        "booker_email": booking.booker_email,
+        "booker_phone": booking.booker_phone,
+        "booking_date": booking.booking_date,
+        "booking_time": booking.booking_time,
+        "duration": duration,
+        "notes": booking.notes,
+        "video_link": booking.video_link,
+        "video_platform": booking.video_platform,
+        "contact_id": booking.contact_id,
+        "status": "confirmed",  # Agent-created bookings are auto-confirmed
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.bookings.insert_one(doc)
+    return {k: v for k, v in doc.items() if k != "_id"}
+
 @api_router.get("/booking/blocked-dates")
 async def get_blocked_dates(current_user: dict = Depends(get_current_user)):
     blocked = await db.blocked_dates.find({"user_id": current_user["id"]}, {"_id": 0}).to_list(100)
