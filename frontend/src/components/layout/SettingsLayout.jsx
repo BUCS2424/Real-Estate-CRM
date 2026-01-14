@@ -93,26 +93,6 @@ const MenuSection = ({ section }) => {
   );
   const SectionIcon = section.icon;
 
-  if (section.isAccordion === false) {
-    return (
-      <div className="space-y-1">
-        <div className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-foreground">
-          <SectionIcon className="w-4 h-4" />
-          {section.category}
-        </div>
-        <div className="ml-2 space-y-1">
-          {section.items.map((item) => (
-            <MenuItem 
-              key={item.path} 
-              item={item} 
-              isActive={location.pathname === item.path}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger asChild>
