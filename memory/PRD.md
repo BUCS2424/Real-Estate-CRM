@@ -154,3 +154,65 @@ Build a unified workspace platform called "Fusion Builder All In One CRM" for re
   - Lists (Bullet, Numbered)
   - Blockquotes
   - Template variables support
+
+---
+
+## Update: January 14-15, 2026 - Real Estate Landing Page & Lead Management
+
+### Public-Facing Website:
+- ✅ **Luxury Landing Page** - "Fusion Luxury Estates" with dark navy blue (#0a1628) and gold/amber theme
+- ✅ **Property Carousel** - Scrolling display of luxury listings from database
+- ✅ **Property Detail Pages** - Dynamic pages for each listing
+- ✅ **Dual Lead Capture Forms** - Separate flows for Buyers (auction access) and Sellers (off-market listings)
+
+### Lead Management System:
+- ✅ **Lead Capture API** - Public endpoint for website forms
+- ✅ **Admin Leads Page** - `/leads` route with:
+  - Statistics cards (Total, Buyers, Sellers, New)
+  - Filterable tabs (All, Buyers, Sellers)
+  - Status management (New, Contacted, Qualified, Converted, Lost)
+  - Lead detail modal with notes
+  - Search and filter functionality
+
+### Phone & Email Verification (MOCKED):
+- ✅ **PhoneVerification Component** - Reusable verification with send/verify flow
+- ✅ **EmailVerification Component** - Reusable verification with send/verify flow
+- ✅ **Backend Mock System** - Codes logged to server (replace with Twilio/SendGrid later)
+- ✅ Clean UI - No "test" wording visible to users
+
+### AI Real Estate Features:
+- ✅ **Address Lookup AI** - Uses web search + LLM to fetch real property data when adding listings
+
+### Branding Updates:
+- ✅ Removed all "Emergent" branding
+- ✅ Footer now shows "Powered By: A2G"
+- ✅ Removed demo credentials from login page
+- ✅ Canary yellow button hovers with dark text
+
+---
+
+## Prioritized Backlog (Updated)
+
+### P0 - Verified Complete
+- [x] Lead capture from landing page
+- [x] Admin leads management page
+- [x] Phone/email verification (mocked)
+- [x] Property listings with AI lookup
+
+### P1 - High Priority (Next)
+- [ ] Booking notifications (email, SMS, desktop, PWA)
+- [ ] PWA settings for installable app
+- [ ] Lead auction/bidding system for buyers
+- [ ] Property submission workflow for sellers
+
+### P2 - Medium Priority
+- [ ] Backend refactor (split server.py into routers)
+- [ ] Dark mode toggle implementation
+- [ ] Storage/media management in admin settings
+- [ ] Property filtering/search on landing page
+
+### P3 - Future Backlog
+- [ ] Connect AI writer to CRM context
+- [ ] Automated task generation from deals
+- [ ] Multi-item drag-and-drop on Kanban boards
+- [ ] Advanced reporting & analytics
