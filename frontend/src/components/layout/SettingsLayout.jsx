@@ -20,7 +20,8 @@ import {
   Cog,
   Mail,
   MessageSquare,
-  BarChart3
+  BarChart3,
+  Smartphone
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
