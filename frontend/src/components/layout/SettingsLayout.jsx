@@ -28,6 +28,16 @@ import { ScrollArea } from '../ui/scroll-area';
 
 const settingsMenu = [
   {
+    category: 'Developer Settings',
+    icon: Code,
+    items: [
+      { path: '/settings/developer/general', label: 'General Settings', icon: Cog },
+      { path: '/settings/developer/email', label: 'Email / SMTP', icon: Mail },
+      { path: '/settings/developer/custom-code', label: 'Custom Code', icon: Code },
+      { path: '/settings/developer/system-messages', label: 'System Messages', icon: MessageSquare },
+    ]
+  },
+  {
     category: 'Admin',
     icon: Shield,
     items: [
@@ -59,16 +69,6 @@ const settingsMenu = [
       { path: '/settings/seo/structured-data', label: 'Structured Data', icon: Code },
     ]
   },
-  {
-    category: 'Developer Settings',
-    icon: Code,
-    items: [
-      { path: '/settings/developer/general', label: 'General Settings', icon: Cog },
-      { path: '/settings/developer/email', label: 'Email / SMTP', icon: Mail },
-      { path: '/settings/developer/custom-code', label: 'Custom Code', icon: Code },
-      { path: '/settings/developer/system-messages', label: 'System Messages', icon: MessageSquare },
-    ]
-  }
 ];
 
 const MenuItem = ({ item, isActive }) => (
