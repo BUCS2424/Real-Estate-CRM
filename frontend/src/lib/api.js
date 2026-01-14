@@ -118,6 +118,13 @@ export const phoneAPI = {
   checkVerified: (phone_number) => api.get(`/phone/check/${encodeURIComponent(phone_number)}`),
 };
 
+// Email Verification
+export const emailAPI = {
+  sendCode: (email) => api.post('/email/send-code', { email }),
+  verifyCode: (email, code) => api.post('/email/verify-code', { email, code }),
+  checkVerified: (email) => api.get(`/email/check/${encodeURIComponent(email)}`),
+};
+
 // Property Listings
 export const listingsAPI = {
   list: () => api.get('/listings'),
