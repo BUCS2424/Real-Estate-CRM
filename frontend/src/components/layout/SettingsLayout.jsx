@@ -116,15 +116,21 @@ const MenuSection = ({ section }) => {
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted rounded-lg transition-colors">
-        <div className="flex items-center gap-2">
-          <SectionIcon className="w-4 h-4" />
-          {section.category}
-        </div>
-        <ChevronDown className={cn(
-          "w-4 h-4 transition-transform duration-200",
-          isOpen && "rotate-180"
-        )} />
+      <CollapsibleTrigger asChild>
+        <button 
+          type="button"
+          className="flex items-center justify-between w-full px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted rounded-lg transition-colors"
+          data-testid={`settings-accordion-${section.category.toLowerCase().replace(/\s+/g, '-')}`}
+        >
+          <div className="flex items-center gap-2">
+            <SectionIcon className="w-4 h-4" />
+            {section.category}
+          </div>
+          <ChevronDown className={cn(
+            "w-4 h-4 transition-transform duration-200",
+            isOpen && "rotate-180"
+          )} />
+        </button>
       </CollapsibleTrigger>
       <CollapsibleContent className="ml-2 space-y-1 mt-1">
         {section.items.map((item) => (
