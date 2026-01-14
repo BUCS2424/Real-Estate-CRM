@@ -50,6 +50,11 @@ import { SystemMessages } from './pages/settings/developer/SystemMessages';
 import './App.css';
 
 function App() {
+  // Register service worker on app load
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
+
   return (
     <ThemeProvider>
       <AuthProvider>
