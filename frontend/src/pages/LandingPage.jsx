@@ -418,18 +418,70 @@ export const LandingPage = () => {
             before they become public. Your privacy is our priority.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto mb-8">
-            <Input 
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 flex-1 focus:border-amber-400"
-            />
-            <Button className="bg-amber-400 text-black hover:bg-amber-300 px-8">
-              SUBSCRIBE
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            if (!name || !email) {
+              toast.error('Please enter your name and email');
+              return;
+            }
+            setSubmitting(true);
+            try {
+              await publicAPI.submitLead({ name, email, phone, interest, source: 'landing_page' });
+              toast.success('Thank you! We\'ll be in touch shortly.');
+              setName(''); setEmail(''); setPhone(''); setInterest('');
+            } catch (error) {
+              toast.error('Something went wrong. Please try again.');
+            } finally {
+              setSubmitting(false);
+            }
+          }} className="max-w-lg mx-auto space-y-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input 
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your Name *"
+                required
+                className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400"
+              />
+              <Input 
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email Address *"
+                required
+                className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400"
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input 
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Phone Number"
+                className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400"
+              />
+              <select
+                value={interest}
+                onChange={(e) => setInterest(e.target.value)}
+                className="w-full h-10 px-3 rounded-md bg-[#0d1f3c]/80 border border-amber-400/20 text-white focus:border-amber-400 focus:outline-none"
+              >
+                <option value="" className="bg-[#0d1f3c]">I'm interested in...</option>
+                <option value="buying" className="bg-[#0d1f3c]">Buying a property</option>
+                <option value="selling" className="bg-[#0d1f3c]">Selling my property</option>
+                <option value="both" className="bg-[#0d1f3c]">Both buying & selling</option>
+                <option value="investment" className="bg-[#0d1f3c]">Investment opportunities</option>
+              </select>
+            </div>
+            <Button 
+              type="submit" 
+              disabled={submitting}
+              className="w-full bg-amber-400 text-black hover:bg-amber-300 py-6 text-base"
+            >
+              {submitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
+              REQUEST PRIVATE ACCESS
             </Button>
-          </div>
+          </form>
 
           <div className="flex flex-col sm:flex-row gap-8 justify-center items-center text-white/60">
             <a href="tel:+15551234567" className="flex items-center gap-2 hover:text-amber-400 transition-colors">
