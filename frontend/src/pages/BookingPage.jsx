@@ -104,14 +104,16 @@ export const BookingPage = () => {
 
   const fetchData = async () => {
     try {
-      const [settingsRes, bookingsRes, blockedRes] = await Promise.all([
+      const [settingsRes, bookingsRes, blockedRes, contactsRes] = await Promise.all([
         bookingAPI.getSettings(),
         bookingAPI.getBookings(),
-        bookingAPI.getBlockedDates()
+        bookingAPI.getBlockedDates(),
+        contactsAPI.list()
       ]);
       setBookingSettings(settingsRes.data);
       setBookings(bookingsRes.data);
       setBlockedDates(blockedRes.data);
+      setContacts(contactsRes.data || []);
     } catch (error) {
       toast.error('Failed to load booking data');
     } finally {
