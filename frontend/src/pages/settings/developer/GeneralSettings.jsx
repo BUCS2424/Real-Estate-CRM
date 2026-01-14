@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 export const GeneralSettings = () => {
   const [settings, setSettings] = useState({
     siteName: 'Fusion Builder CRM',
-    siteUrl: 'https://fusionbuilder.preview.emergentagent.com',
+    siteUrl: 'https://smartcrm-24.preview.emergentagent.com',
     supportEmail: 'support@fusionbuilder.com',
     timezone: 'America/New_York',
     dateFormat: 'MM/DD/YYYY',
