@@ -323,6 +323,10 @@ export const BookingPage = () => {
           <p className="text-muted-foreground mt-1">Manage your appointments and availability</p>
         </div>
         <div className="flex gap-3">
+          <Button onClick={handleOpenCreateBooking} data-testid="create-booking-btn">
+            <Plus className="w-4 h-4 mr-2" />
+            Create Booking
+          </Button>
           <Button variant="outline" onClick={() => setIsBlockDateOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Block Date
