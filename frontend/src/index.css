@@ -164,65 +164,16 @@ code, .mono {
     transform: scale(0.95);
 }
 
-/* Canary Yellow Hover Effect for Buttons - Bright Yellow with Dark Text */
+/* Canary Yellow Hover Effect - ONLY for Primary (Blue) Buttons */
 :root {
     --canary-yellow: 54 100% 62%;
     --canary-yellow-dark-text: 220 30% 15%;
 }
 
-/* Primary button hover - brighter canary yellow with dark text */
-button.bg-primary:hover,
-.bg-primary:hover,
-button[class*="bg-primary"]:hover {
+/* Primary (blue) button hover - brighter canary yellow with dark text */
+.bg-primary:hover {
     background-color: hsl(var(--canary-yellow)) !important;
     color: hsl(var(--canary-yellow-dark-text)) !important;
     border-color: hsl(54 100% 55%) !important;
     transition: all 0.2s ease;
-}
-
-/* Default and secondary buttons hover */
-button:not([class*="ghost"]):not([class*="outline"]):not([class*="destructive"]):not([class*="link"]):hover {
-    background-color: hsl(var(--canary-yellow)) !important;
-    color: hsl(var(--canary-yellow-dark-text)) !important;
-    transition: all 0.2s ease;
-}
-
-/* Outline button hover */
-button[class*="outline"]:hover,
-.border:hover {
-    background-color: hsl(var(--canary-yellow) / 0.2) !important;
-    border-color: hsl(var(--canary-yellow)) !important;
-    color: hsl(var(--canary-yellow-dark-text)) !important;
-    transition: all 0.2s ease;
-}
-
-/* Ghost button hover */
-button[class*="ghost"]:hover {
-    background-color: hsl(var(--canary-yellow) / 0.15) !important;
-    color: hsl(var(--canary-yellow-dark-text)) !important;
-    transition: all 0.2s ease;
-}
-
-/* Sidebar nav hover */
-.hover\:bg-sidebar-accent:hover {
-    background-color: hsl(var(--canary-yellow) / 0.2) !important;
-    color: hsl(var(--canary-yellow-dark-text)) !important;
-}
-
-/* Card interactive hover */
-.card-interactive:hover {
-    border-color: hsl(var(--canary-yellow) / 0.6);
-    box-shadow: 0 4px 6px -1px hsl(var(--canary-yellow) / 0.15), 0 2px 4px -1px hsl(var(--canary-yellow) / 0.1);
-}
-
-/* Tab trigger hover */
-button[role="tab"]:hover {
-    background-color: hsl(var(--canary-yellow) / 0.15) !important;
-    color: hsl(var(--canary-yellow-dark-text)) !important;
-}
-
-/* Destructive button keeps red but adds yellow border on hover */
-button[class*="destructive"]:hover {
-    border-color: hsl(var(--canary-yellow)) !important;
-    box-shadow: 0 0 0 2px hsl(var(--canary-yellow) / 0.3);
 }
