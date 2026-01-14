@@ -118,6 +118,28 @@ export const phoneAPI = {
   checkVerified: (phone_number) => api.get(`/phone/check/${encodeURIComponent(phone_number)}`),
 };
 
+// Property Listings
+export const listingsAPI = {
+  list: () => api.get('/listings'),
+  get: (id) => api.get(`/listings/${id}`),
+  create: (data) => api.post('/listings', data),
+  update: (id, data) => api.put(`/listings/${id}`, data),
+  delete: (id) => api.delete(`/listings/${id}`),
+  generateDescription: (id) => api.post(`/listings/${id}/generate-description`),
+  lookupAddress: (address) => api.post('/listings/lookup-address', { address }),
+};
+
+// Media & Storage
+export const mediaAPI = {
+  list: (folder = 'general') => api.get(`/media?folder=${folder}`),
+  getFolders: () => api.get('/media/folders'),
+  createFolder: (name, parent_id) => api.post(`/media/folders?name=${encodeURIComponent(name)}${parent_id ? `&parent_id=${parent_id}` : ''}`),
+  deleteFolder: (id) => api.delete(`/media/folders/${id}`),
+  upload: (data) => api.post('/media/upload', data),
+  delete: (id) => api.delete(`/media/${id}`),
+  getStats: () => api.get('/storage/stats'),
+};
+
 // Dashboard
 export const dashboardAPI = {
   stats: () => api.get('/dashboard/stats'),
