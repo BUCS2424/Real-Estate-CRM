@@ -47,9 +47,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
+import { Checkbox } from '../components/ui/checkbox';
 import { toast } from 'sonner';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+const VIDEO_PLATFORMS = {
+  none: { label: 'No Video Call', url: null },
+  saysme: { label: 'SaysMe Meet', url: 'https://meet.saysme.org' },
+  zoom: { label: 'Zoom', url: null } // Agent provides their own Zoom link
+};
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
