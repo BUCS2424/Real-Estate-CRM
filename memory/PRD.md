@@ -82,10 +82,34 @@ Build a unified workspace platform called "Fusion Builder All In One CRM" for re
 - **Fonts:** Playfair Display (headings), Manrope (body), JetBrains Mono (code)
 
 ## Next Tasks
-1. Add email sending capability for AI-generated content
-2. Implement automated task triggers based on deal stages
-3. Add calendar view for task due dates
-4. Property listing database integration
+1. Complete booking notifications (email, SMS, desktop, PWA)
+2. Implement backend for placeholder settings pages
+3. Add email sending capability for AI-generated content
+4. Implement automated task triggers based on deal stages
+
+---
+
+## Update: January 14, 2026 - Booking System & UI Enhancement
+
+### New Features Added:
+- **Canary Yellow Button Hover** - Bright yellow (#FFE547) with dark text on primary blue buttons only
+- **Booking Calendar Page** - Full booking management for agents
+- **Create Booking Modal** with:
+  - Select existing lead OR enter new contact
+  - Date & Time picker
+  - Duration selection (15 min to 2 hours)
+  - **Video Call Options**: No video, SaysMe Meet (auto-generate link), Zoom (custom link)
+  - Notes field
+- **Public Booking Page** for clients to book appointments
+- **Bookings** added to main navigation sidebar
+
+### Booking Features:
+- Calendar view with booked/blocked date indicators
+- List view for all bookings
+- Availability settings (weekly schedule)
+- Block specific dates
+- Copy shareable booking link
+- Booking status management (pending, confirmed, cancelled, completed)
 
 ---
 
