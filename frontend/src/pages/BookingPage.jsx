@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { bookingAPI } from '../lib/api';
+import { bookingAPI, contactsAPI } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   Calendar as CalendarIcon, 
@@ -18,7 +18,10 @@ import {
   Bell,
   Plus,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Video,
+  UserPlus,
+  Search
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
