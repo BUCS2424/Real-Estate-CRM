@@ -598,20 +598,91 @@ export const LandingPage = () => {
                   type="text"
                   value={sellerAddress}
                   onChange={(e) => setSellerAddress(e.target.value)}
-                  placeholder="Property Address"
+                  placeholder="Property Address *"
+                  required
                   className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400"
                 />
+                <div className="grid grid-cols-2 gap-4">
+                  <Input 
+                    type="text"
+                    value={sellerCity}
+                    onChange={(e) => setSellerCity(e.target.value)}
+                    placeholder="City"
+                    className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400"
+                  />
+                  <select
+                    value={sellerState}
+                    onChange={(e) => setSellerState(e.target.value)}
+                    className="h-10 px-3 rounded-md bg-[#0d1f3c]/80 border border-amber-400/20 text-white focus:border-amber-400 focus:outline-none"
+                  >
+                    <option value="FL" className="bg-[#0d1f3c]">Florida</option>
+                    <option value="CA" className="bg-[#0d1f3c]">California</option>
+                    <option value="NY" className="bg-[#0d1f3c]">New York</option>
+                    <option value="TX" className="bg-[#0d1f3c]">Texas</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <select
+                    value={sellerPropertyType}
+                    onChange={(e) => setSellerPropertyType(e.target.value)}
+                    className="h-10 px-3 rounded-md bg-[#0d1f3c]/80 border border-amber-400/20 text-white focus:border-amber-400 focus:outline-none"
+                  >
+                    <option value="single_family" className="bg-[#0d1f3c]">Single Family</option>
+                    <option value="condo" className="bg-[#0d1f3c]">Condo/Penthouse</option>
+                    <option value="townhouse" className="bg-[#0d1f3c]">Townhouse</option>
+                    <option value="estate" className="bg-[#0d1f3c]">Estate</option>
+                    <option value="land" className="bg-[#0d1f3c]">Land</option>
+                  </select>
+                  <Input 
+                    type="text"
+                    value={sellerAskingPrice}
+                    onChange={(e) => setSellerAskingPrice(e.target.value)}
+                    placeholder="Asking Price ($)"
+                    className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400"
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <Input 
+                    type="number"
+                    value={sellerBedrooms}
+                    onChange={(e) => setSellerBedrooms(e.target.value)}
+                    placeholder="Beds"
+                    className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400"
+                  />
+                  <Input 
+                    type="number"
+                    value={sellerBathrooms}
+                    onChange={(e) => setSellerBathrooms(e.target.value)}
+                    placeholder="Baths"
+                    step="0.5"
+                    className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400"
+                  />
+                  <Input 
+                    type="number"
+                    value={sellerSqft}
+                    onChange={(e) => setSellerSqft(e.target.value)}
+                    placeholder="Sq Ft"
+                    className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400"
+                  />
+                </div>
                 <select
-                  value={sellerEstValue}
-                  onChange={(e) => setSellerEstValue(e.target.value)}
+                  value={sellerTimeline}
+                  onChange={(e) => setSellerTimeline(e.target.value)}
                   className="w-full h-10 px-3 rounded-md bg-[#0d1f3c]/80 border border-amber-400/20 text-white focus:border-amber-400 focus:outline-none"
                 >
-                  <option value="" className="bg-[#0d1f3c]">Estimated Property Value</option>
-                  <option value="10-25m" className="bg-[#0d1f3c]">$10M - $25M</option>
-                  <option value="25-50m" className="bg-[#0d1f3c]">$25M - $50M</option>
-                  <option value="50-100m" className="bg-[#0d1f3c]">$50M - $100M</option>
-                  <option value="100m+" className="bg-[#0d1f3c]">$100M+</option>
+                  <option value="" className="bg-[#0d1f3c]">Selling Timeline</option>
+                  <option value="immediate" className="bg-[#0d1f3c]">Immediate</option>
+                  <option value="1-3_months" className="bg-[#0d1f3c]">1-3 Months</option>
+                  <option value="3-6_months" className="bg-[#0d1f3c]">3-6 Months</option>
+                  <option value="flexible" className="bg-[#0d1f3c]">Flexible</option>
                 </select>
+                <textarea
+                  value={sellerDescription}
+                  onChange={(e) => setSellerDescription(e.target.value)}
+                  placeholder="Tell us about your property (optional)"
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-md bg-[#0d1f3c]/80 border border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400 focus:outline-none resize-none"
+                />
               </div>
             )}
             
