@@ -8,7 +8,8 @@ import {
   FileText, 
   ChevronLeft,
   ChevronRight,
-  Building2
+  Building2,
+  CalendarCheck
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
@@ -18,6 +19,7 @@ const navItems = [
   { path: '/contacts', icon: Users, label: 'Contacts' },
   { path: '/deals', icon: Briefcase, label: 'Deals Pipeline' },
   { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
+  { path: '/bookings', icon: CalendarCheck, label: 'Bookings' },
   { path: '/writer', icon: FileText, label: 'AI Writer' },
 ];
 

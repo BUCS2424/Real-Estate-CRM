@@ -17,6 +17,8 @@ import { DealsPage } from './pages/DealsPage';
 import { TasksPage } from './pages/TasksPage';
 import { AIWriterPage } from './pages/AIWriterPage';
 import { AdminUsersPage } from './pages/AdminUsersPage';
+import { BookingPage } from './pages/BookingPage';
+import { PublicBookingPage } from './pages/PublicBookingPage';
 
 // Settings Pages
 import { SettingsOverview } from './pages/settings/SettingsOverview';
@@ -50,6 +52,7 @@ function App() {
             {/* Public Routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/book/:agentCode" element={<PublicBookingPage />} />
 
             {/* Protected Routes */}
             <Route element={<MainLayout />}>
@@ -58,6 +61,7 @@ function App() {
               <Route path="/contacts/:id" element={<ContactsPage />} />
               <Route path="/deals" element={<DealsPage />} />
               <Route path="/tasks" element={<TasksPage />} />
+              <Route path="/bookings" element={<BookingPage />} />
               <Route path="/writer" element={<AIWriterPage />} />
               <Route path="/admin/users" element={<AdminUsersPage />} />
               <Route path="/admin" element={<Navigate to="/admin/users" replace />} />
