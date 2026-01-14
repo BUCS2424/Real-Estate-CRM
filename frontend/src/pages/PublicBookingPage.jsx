@@ -6,7 +6,6 @@ import {
   Clock, 
   User, 
   Mail, 
-  Phone, 
   MessageSquare,
   CheckCircle2,
   ChevronLeft,
@@ -21,6 +20,7 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
 import { Calendar } from '../components/ui/calendar';
+import { PhoneVerification } from '../components/PhoneVerification';
 import { toast } from 'sonner';
 
 export const PublicBookingPage = () => {
@@ -35,6 +35,7 @@ export const PublicBookingPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState('');
+  const [phoneVerified, setPhoneVerified] = useState(false);
   const [formData, setFormData] = useState({
     booker_name: '',
     booker_email: '',
