@@ -115,7 +115,7 @@ export const AIWriterPage = () => {
       await articlesAPI.create({
         title,
         content: generatedContent,
-        contact_id: selectedContact || null,
+        contact_id: selectedContact === 'none' ? null : selectedContact || null,
         article_type: articleType,
         status: 'draft'
       });
