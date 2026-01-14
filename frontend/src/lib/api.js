@@ -143,6 +143,8 @@ export const mediaAPI = {
 // Public APIs (no auth required)
 export const publicAPI = {
   getListings: (limit = 12) => api.get(`/public/listings?limit=${limit}`),
+  getListing: (id) => api.get(`/public/listings/${id}`),
+  submitLead: (data) => api.post('/public/leads', data),
 };
 
 // Dashboard
