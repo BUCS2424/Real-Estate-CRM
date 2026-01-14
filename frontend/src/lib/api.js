@@ -88,6 +88,7 @@ export const bookingAPI = {
   getSettings: () => api.get('/booking/settings'),
   updateSettings: (data) => api.put('/booking/settings', data),
   getBookings: () => api.get('/booking/list'),
+  createBooking: (data) => api.post('/booking/create', data),
   updateBookingStatus: (id, status) => api.patch(`/booking/${id}/status`, { status }),
   deleteBooking: (id) => api.delete(`/booking/${id}`),
   getBlockedDates: () => api.get('/booking/blocked-dates'),
