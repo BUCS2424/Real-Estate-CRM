@@ -65,7 +65,15 @@ export const LandingPage = () => {
   
   // Seller-specific fields
   const [sellerAddress, setSellerAddress] = useState('');
-  const [sellerEstValue, setSellerEstValue] = useState('');
+  const [sellerCity, setSellerCity] = useState('');
+  const [sellerState, setSellerState] = useState('FL');
+  const [sellerPropertyType, setSellerPropertyType] = useState('single_family');
+  const [sellerBedrooms, setSellerBedrooms] = useState('');
+  const [sellerBathrooms, setSellerBathrooms] = useState('');
+  const [sellerSqft, setSellerSqft] = useState('');
+  const [sellerAskingPrice, setSellerAskingPrice] = useState('');
+  const [sellerTimeline, setSellerTimeline] = useState('');
+  const [sellerDescription, setSellerDescription] = useState('');
 
   // Verification states
   const [emailVerified, setEmailVerified] = useState(false);
