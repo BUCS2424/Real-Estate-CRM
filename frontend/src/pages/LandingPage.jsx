@@ -20,8 +20,8 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { toast } from 'sonner';
 
-// Sample Florida luxury listings data
-const SAMPLE_LISTINGS = [
+// Fallback listings if database is empty
+const FALLBACK_LISTINGS = [
   {
     id: '1',
     address: '1200 S Ocean Blvd',
@@ -31,100 +31,7 @@ const SAMPLE_LISTINGS = [
     bedrooms: 8,
     bathrooms: 12,
     sqft: 18500,
-    lot_size: '1.2 acres',
-    image: 'https://images.unsplash.com/photo-1578439297699-eb414262c2de?w=800&q=80',
-    status: 'off_market'
-  },
-  {
-    id: '2',
-    address: '45 Star Island Dr',
-    city: 'Miami Beach',
-    state: 'FL',
-    price: 65000000,
-    bedrooms: 11,
-    bathrooms: 14,
-    sqft: 22000,
-    lot_size: '1.8 acres',
-    image: 'https://images.unsplash.com/photo-1607142426460-0185c446f1d7?w=800&q=80',
-    status: 'off_market'
-  },
-  {
-    id: '3',
-    address: '2800 Gordon Dr',
-    city: 'Naples',
-    state: 'FL',
-    price: 38500000,
-    bedrooms: 6,
-    bathrooms: 8,
-    sqft: 12000,
-    lot_size: '0.8 acres',
-    image: 'https://images.unsplash.com/photo-1623701675999-9406ece2d150?w=800&q=80',
-    status: 'off_market'
-  },
-  {
-    id: '4',
-    address: '100 Arvida Pkwy',
-    city: 'Coral Gables',
-    state: 'FL',
-    price: 29000000,
-    bedrooms: 7,
-    bathrooms: 9,
-    sqft: 14500,
-    lot_size: '1.5 acres',
-    image: 'https://images.unsplash.com/photo-1600137444380-ce5aea5c43c8?w=800&q=80',
-    status: 'off_market'
-  },
-  {
-    id: '5',
-    address: '3100 N Ocean Blvd',
-    city: 'Fort Lauderdale',
-    state: 'FL',
-    price: 52000000,
-    bedrooms: 9,
-    bathrooms: 11,
-    sqft: 19800,
-    lot_size: '2.1 acres',
-    image: 'https://images.unsplash.com/photo-1745261394567-9dba1a4b7bb7?w=800&q=80',
-    status: 'off_market'
-  },
-  {
-    id: '6',
-    address: '888 S Ocean Blvd',
-    city: 'Boca Raton',
-    state: 'FL',
-    price: 34500000,
-    bedrooms: 7,
-    bathrooms: 10,
-    sqft: 15200,
-    lot_size: '1.1 acres',
-    image: 'https://images.unsplash.com/photo-1765279162736-14c7d64ff820?w=800&q=80',
-    status: 'off_market'
-  },
-  {
-    id: '7',
-    address: '150 Clarendon Ave',
-    city: 'Palm Beach',
-    state: 'FL',
-    price: 78000000,
-    bedrooms: 12,
-    bathrooms: 16,
-    sqft: 28000,
-    lot_size: '3.2 acres',
-    image: 'https://images.unsplash.com/photo-1663998468593-1f104e7c9213?w=800&q=80',
-    status: 'off_market'
-  },
-  {
-    id: '8',
-    address: '5000 Island Estates Dr',
-    city: 'Aventura',
-    state: 'FL',
-    price: 41000000,
-    bedrooms: 8,
-    bathrooms: 10,
-    sqft: 16500,
-    lot_size: '0.9 acres',
-    image: 'https://images.unsplash.com/photo-1729606559667-fcab83917423?w=800&q=80',
-    status: 'off_market'
+    images: [{ url: 'https://images.unsplash.com/photo-1578439297699-eb414262c2de?w=800&q=80' }]
   }
 ];
 
