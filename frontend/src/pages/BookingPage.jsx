@@ -11,7 +11,6 @@ import {
   ExternalLink,
   User,
   Mail,
-  Phone,
   Trash2,
   CheckCircle2,
   XCircle,
@@ -47,7 +46,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
-import { Checkbox } from '../components/ui/checkbox';
+import { PhoneVerification } from '../components/PhoneVerification';
 import { toast } from 'sonner';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
