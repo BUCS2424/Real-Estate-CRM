@@ -199,7 +199,7 @@ export const AIWriterPage = () => {
                     <SelectValue placeholder="Select a contact" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No specific contact</SelectItem>
+                    <SelectItem value="none">No specific contact</SelectItem>
                     {contacts.map(c => (
                       <SelectItem key={c.id} value={c.id}>
                         <div className="flex items-center gap-2">
