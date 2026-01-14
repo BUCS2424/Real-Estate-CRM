@@ -111,6 +111,13 @@ export const notificationsAPI = {
   getUnreadCount: () => api.get('/notifications/unread-count'),
 };
 
+// Phone Verification
+export const phoneAPI = {
+  sendCode: (phone_number) => api.post('/phone/send-code', { phone_number }),
+  verifyCode: (phone_number, code) => api.post('/phone/verify-code', { phone_number, code }),
+  checkVerified: (phone_number) => api.get(`/phone/check/${encodeURIComponent(phone_number)}`),
+};
+
 // Dashboard
 export const dashboardAPI = {
   stats: () => api.get('/dashboard/stats'),
