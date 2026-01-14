@@ -474,12 +474,26 @@ export const LandingPage = () => {
             }
             setSubmitting(true);
             try {
+              // Check verifications
+              if (!emailVerified) {
+                toast.error('Please verify your email address');
+                setSubmitting(false);
+                return;
+              }
+              if (phone && !phoneVerified) {
+                toast.error('Please verify your phone number');
+                setSubmitting(false);
+                return;
+              }
+              
               const leadData = {
                 name,
                 email,
                 phone,
                 lead_type: leadType,
                 source: 'landing_page',
+                email_verified: emailVerified,
+                phone_verified: phoneVerified,
                 ...(leadType === 'buyer' ? {
                   budget: buyerBudget,
                   areas_of_interest: buyerAreas
@@ -496,36 +510,35 @@ export const LandingPage = () => {
               setName(''); setEmail(''); setPhone('');
               setBuyerBudget(''); setBuyerAreas('');
               setSellerAddress(''); setSellerEstValue('');
+              setEmailVerified(false); setPhoneVerified(false);
             } catch (error) {
               toast.error('Something went wrong. Please try again.');
             } finally {
               setSubmitting(false);
             }
           }} className="max-w-lg mx-auto space-y-4 mb-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input 
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your Name *"
-                required
-                className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400"
-              />
-              <Input 
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email Address *"
-                required
-                className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400"
-              />
-            </div>
             <Input 
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="Phone Number"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your Name *"
+              required
               className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 focus:border-amber-400"
+            />
+            <EmailVerification
+              value={email}
+              onChange={setEmail}
+              onVerified={() => setEmailVerified(true)}
+              required
+              label={null}
+              darkMode
+            />
+            <PhoneVerification
+              value={phone}
+              onChange={setPhone}
+              onVerified={() => setPhoneVerified(true)}
+              label={null}
+              darkMode
             />
             
             {/* Buyer-specific fields */}
