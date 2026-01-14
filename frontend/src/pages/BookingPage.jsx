@@ -225,6 +225,7 @@ export const BookingPage = () => {
     });
     setUseExistingLead(true);
     setContactSearch('');
+    setPhoneVerified(false);
     setIsCreateBookingOpen(true);
   };
 
