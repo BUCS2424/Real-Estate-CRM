@@ -147,6 +147,14 @@ export const publicAPI = {
   submitLead: (data) => api.post('/public/leads', data),
 };
 
+// Leads Management
+export const leadsAPI = {
+  list: (lead_type, status) => api.get(`/leads${lead_type || status ? '?' : ''}${lead_type ? `lead_type=${lead_type}` : ''}${lead_type && status ? '&' : ''}${status ? `status=${status}` : ''}`),
+  get: (id) => api.get(`/leads/${id}`),
+  update: (id, data) => api.patch(`/leads/${id}`, data),
+  delete: (id) => api.delete(`/leads/${id}`),
+};
+
 // Dashboard
 export const dashboardAPI = {
   stats: () => api.get('/dashboard/stats'),
