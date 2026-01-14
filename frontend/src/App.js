@@ -120,6 +120,7 @@ function App() {
           </Routes>
         </BrowserRouter>
         <Toaster position="top-right" richColors />
+        <PWAInstallBanner />
       </AuthProvider>
     </ThemeProvider>
   );
