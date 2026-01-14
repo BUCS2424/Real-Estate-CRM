@@ -703,6 +703,74 @@ async def remove_blocked_date(date: str, current_user: dict = Depends(get_curren
         raise HTTPException(status_code=404, detail="Blocked date not found")
     return {"message": "Blocked date removed"}
 
+# ============ PHONE VERIFICATION (MOCKED - Replace with Twilio later) ============
+import random
+
+@api_router.post("/phone/send-code")
+async def send_phone_verification_code(request: PhoneVerificationRequest):
+    """Send a verification code to phone number (MOCKED - shows code in response for testing)"""
+    phone = request.phone_number.strip()
+    if not phone or len(phone) < 10:
+        raise HTTPException(status_code=400, detail="Invalid phone number")
+    
+    # Generate 6-digit code
+    code = str(random.randint(100000, 999999))
+    
+    # Store in database with 5-minute expiry
+    await db.phone_verifications.delete_many({"phone_number": phone})  # Clear old codes
+    await db.phone_verifications.insert_one({
+        "phone_number": phone,
+        "code": code,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat(),
+        "verified": False
+    })
+    
+    # MOCKED: Return code in response (remove this when using real Twilio)
+    logger.info(f"[MOCK SMS] Verification code for {phone}: {code}")
+    return {
+        "status": "sent",
+        "message": "Verification code sent",
+        "mock_code": code  # Remove this line when integrating real Twilio
+    }
+
+@api_router.post("/phone/verify-code")
+async def verify_phone_code(request: PhoneVerifyCodeRequest):
+    """Verify the phone code"""
+    phone = request.phone_number.strip()
+    code = request.code.strip()
+    
+    verification = await db.phone_verifications.find_one({
+        "phone_number": phone,
+        "code": code,
+        "verified": False
+    })
+    
+    if not verification:
+        raise HTTPException(status_code=400, detail="Invalid or expired code")
+    
+    # Check expiry
+    expires_at = datetime.fromisoformat(verification["expires_at"].replace("Z", "+00:00"))
+    if datetime.now(timezone.utc) > expires_at:
+        raise HTTPException(status_code=400, detail="Code expired. Please request a new one.")
+    
+    # Mark as verified
+    await db.phone_verifications.update_one(
+        {"phone_number": phone, "code": code},
+        {"$set": {"verified": True, "verified_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"valid": True, "message": "Phone number verified"}
+
+@api_router.get("/phone/check/{phone_number}")
+async def check_phone_verified(phone_number: str):
+    """Check if a phone number has been verified"""
+    verification = await db.phone_verifications.find_one({
+        "phone_number": phone_number,
+        "verified": True
+    })
+    return {"verified": verification is not None}
+
 # ============ PUBLIC BOOKING ROUTES (No Auth Required) ============
 
 @api_router.get("/public/booking/{agent_code}")
