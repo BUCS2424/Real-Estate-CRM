@@ -511,7 +511,9 @@ export const LandingPage = () => {
               <a href="#" className="hover:text-amber-400 transition-colors">Terms</a>
               <a href="#" className="hover:text-amber-400 transition-colors">Contact</a>
             </div>
-            <p className="text-sm text-white/30">© 2025 Fusion Luxury Estates. All rights reserved.</p>
+            <p className="text-sm text-white/30">
+            © 2025 Fusion Luxury Estates. Powered By: <a href="https://a2gdesigns.com" target="_blank" rel="noopener noreferrer" className="text-amber-400/70 hover:text-amber-400 transition-colors">A2G</a>
+          </p>
           </div>
         </div>
       </footer>

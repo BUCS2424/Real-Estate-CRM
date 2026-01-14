@@ -376,7 +376,9 @@ export const PropertyDetailPage = () => {
       {/* Footer */}
       <footer className="py-8 border-t border-amber-400/10 bg-[#071020]">
         <div className="max-w-7xl mx-auto px-6 text-center">
-          <p className="text-white/30 text-sm">© 2025 Fusion Luxury Estates. All rights reserved.</p>
+          <p className="text-white/30 text-sm">
+            © 2025 Fusion Luxury Estates. Powered By: <a href="https://a2gdesigns.com" target="_blank" rel="noopener noreferrer" className="text-amber-400/70 hover:text-amber-400 transition-colors">A2G</a>
+          </p>
         </div>
       </footer>
     </div>
