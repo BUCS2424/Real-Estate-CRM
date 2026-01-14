@@ -907,28 +907,64 @@ Write an engaging 2-3 paragraph description highlighting the property's best fea
 
 @api_router.post("/listings/lookup-address")
 async def lookup_address_info(address: dict, current_user: dict = Depends(get_current_user)):
-    """Use AI to extract property information from an address (simulated web lookup)"""
+    """Search the web for real property information and use AI to extract details"""
+    import aiohttp
+    import json
+    
     full_address = address.get("address", "")
     if not full_address:
         raise HTTPException(status_code=400, detail="Address is required")
     
-    prompt = f"""Given this property address: "{full_address}"
+    # Step 1: Search the web for property information
+    search_results = ""
+    try:
+        # Use a web search to find property listings
+        search_query = f"{full_address} property listing real estate zillow redfin realtor"
+        
+        async with aiohttp.ClientSession() as session:
+            # Try to get data from multiple sources
+            search_url = f"https://api.duckduckgo.com/?q={search_query}&format=json&no_html=1"
+            async with session.get(search_url, timeout=10) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    if data.get("Abstract"):
+                        search_results += f"Summary: {data['Abstract']}\n"
+                    if data.get("RelatedTopics"):
+                        for topic in data["RelatedTopics"][:5]:
+                            if isinstance(topic, dict) and topic.get("Text"):
+                                search_results += f"- {topic['Text']}\n"
+    except Exception as e:
+        logger.warning(f"Web search failed: {str(e)}")
+    
+    # Step 2: Use AI to analyze the address and any search results
+    prompt = f"""You are a real estate data expert. Analyze this property address and provide detailed information.
 
-Parse and extract the following information in JSON format:
-- address (street address only)
-- city
-- state (2-letter code)
-- zip_code
-- country (default to USA if not specified)
+Property Address: "{full_address}"
 
-Also, based on typical properties in this area, suggest reasonable estimates for:
-- estimated_price (number, based on typical home values in this area)
-- property_type (one of: single_family, condo, townhouse, land, commercial)
-- typical_sqft (estimated square footage for this area)
-- typical_bedrooms
-- typical_bathrooms
+{f"Additional web search context:{chr(10)}{search_results}" if search_results else ""}
 
-Return ONLY valid JSON, no markdown or explanation."""
+Based on the address and your knowledge of real estate markets, provide the following information in JSON format:
+
+{{
+    "address": "street address only",
+    "city": "city name",
+    "state": "2-letter state code", 
+    "zip_code": "ZIP code",
+    "country": "USA",
+    "estimated_price": number (realistic market value based on location),
+    "property_type": "single_family" or "condo" or "townhouse" or "land" or "commercial",
+    "typical_sqft": number (typical for this area/property type),
+    "typical_bedrooms": number,
+    "typical_bathrooms": number,
+    "lot_size": "estimated lot size with units",
+    "year_built_estimate": "estimated year range",
+    "neighborhood_info": "brief description of the area",
+    "nearby_amenities": ["list", "of", "nearby", "amenities"],
+    "school_district": "school district if known",
+    "market_trends": "brief market trend description for this area"
+}}
+
+Use realistic values based on actual real estate market data for this location. If this is a known address with public listing data, use that information. Return ONLY valid JSON."""
 
     try:
         llm = LlmChat(api_key=os.environ.get("EMERGENT_LLM_KEY"))
@@ -938,19 +974,26 @@ Return ONLY valid JSON, no markdown or explanation."""
         )
         
         # Parse JSON from response
-        import json
         content = response.content.strip()
         if content.startswith("```"):
-            content = content.split("```")[1]
+            lines = content.split("\n")
+            content = "\n".join(lines[1:-1])
             if content.startswith("json"):
                 content = content[4:]
         
         data = json.loads(content)
         return data
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON parse error: {str(e)}")
+        # Try to extract basic info
+        return {
+            "address": full_address,
+            "error": "Could not parse property data",
+            "raw_response": response.content if 'response' in locals() else None
+        }
     except Exception as e:
         logger.error(f"Address lookup error: {str(e)}")
-        # Return parsed address at minimum
-        return {"address": full_address, "error": "Could not fully parse address"}
+        return {"address": full_address, "error": str(e)}
 
 # ============ MEDIA/STORAGE ROUTES ============
 
