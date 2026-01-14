@@ -84,15 +84,17 @@ export const PhoneVerification = ({
 
   return (
     <div className="space-y-2">
-      <Label className="flex items-center gap-2">
-        <Phone className="w-4 h-4" />
-        {label} {required && <span className="text-destructive">*</span>}
-        {step === 'verified' && (
-          <span className="flex items-center gap-1 text-green-600 text-xs font-normal">
-            <CheckCircle2 className="w-3 h-3" /> Verified
-          </span>
-        )}
-      </Label>
+      {label && (
+        <Label className={`flex items-center gap-2 ${darkMode ? 'text-white/80' : ''}`}>
+          <Phone className="w-4 h-4" />
+          {label} {required && <span className="text-destructive">*</span>}
+          {step === 'verified' && (
+            <span className="flex items-center gap-1 text-green-500 text-xs font-normal">
+              <CheckCircle2 className="w-3 h-3" /> Verified
+            </span>
+          )}
+        </Label>
+      )}
       
       <div className="flex gap-2">
         <div className="relative flex-1">
@@ -101,7 +103,7 @@ export const PhoneVerification = ({
             value={value}
             onChange={handlePhoneChange}
             placeholder="+1 (555) 123-4567"
-            className={step === 'verified' ? 'border-green-500 bg-green-50' : ''}
+            className={`${inputClasses} ${step === 'verified' ? 'border-green-500' : ''}`}
             disabled={step === 'verify'}
           />
         </div>
@@ -112,7 +114,7 @@ export const PhoneVerification = ({
             variant="outline" 
             onClick={handleSendCode}
             disabled={loading}
-            className="shrink-0"
+            className={`shrink-0 ${darkMode ? 'border-amber-400/50 text-amber-400 hover:bg-amber-400 hover:text-black' : ''}`}
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -127,12 +129,12 @@ export const PhoneVerification = ({
       </div>
 
       {step === 'verify' && (
-        <div className="space-y-2 p-3 bg-muted/50 rounded-lg border animate-fade-in">
-          <p className="text-sm text-muted-foreground">
+        <div className={`space-y-2 p-3 rounded-lg border animate-fade-in ${darkMode ? 'bg-[#071020] border-amber-400/20' : 'bg-muted/50'}`}>
+          <p className={`text-sm ${darkMode ? 'text-white/70' : 'text-muted-foreground'}`}>
             Enter the 6-digit code sent to {value}
           </p>
           {mockCode && (
-            <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
+            <p className={`text-xs p-2 rounded ${darkMode ? 'text-amber-400 bg-amber-400/10' : 'text-amber-600 bg-amber-50'}`}>
               [TEST MODE] Code: <span className="font-mono font-bold">{mockCode}</span>
             </p>
           )}
