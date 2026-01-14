@@ -62,7 +62,6 @@ const settingsMenu = [
   {
     category: 'Developer Settings',
     icon: Code,
-    isAccordion: false,
     items: [
       { path: '/settings/developer/general', label: 'General Settings', icon: Cog },
       { path: '/settings/developer/email', label: 'Email / SMTP', icon: Mail },
