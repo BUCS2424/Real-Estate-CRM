@@ -871,6 +871,11 @@ async def generate_listing_description(listing_id: str, current_user: dict = Dep
     
     # Build prompt with property details
     features_text = ", ".join(listing.get("features", [])) if listing.get("features") else "Not specified"
+    
+    system_message = """You are an expert luxury real estate copywriter. 
+You write compelling, evocative property descriptions that highlight lifestyle benefits and unique features.
+Your writing appeals to high-end buyers and creates emotional connections with properties."""
+
     prompt = f"""Write a compelling, professional real estate listing description for this property:
 
 Address: {listing.get('address', 'N/A')}, {listing.get('city', '')}, {listing.get('state', '')} {listing.get('zip_code', '')}
@@ -887,12 +892,16 @@ Features: {features_text}
 Write an engaging 2-3 paragraph description highlighting the property's best features, location benefits, and lifestyle appeal. Use descriptive language that appeals to luxury home buyers. Do not include the price or basic stats in the description as those are shown separately."""
 
     try:
-        llm = LlmChat(api_key=os.environ.get("EMERGENT_LLM_KEY"))
-        response = await llm.send_message_async(
-            model="gpt-4o",
-            messages=[UserMessage(content=prompt)]
+        api_key = os.environ.get("EMERGENT_LLM_KEY")
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"listing-desc-{listing_id}-{uuid.uuid4()}",
+            system_message=system_message
         )
-        description = response.content
+        chat.with_model("openai", "gpt-4o")
+        
+        user_message = UserMessage(text=prompt)
+        description = await chat.send_message(user_message)
         
         # Update the listing with new description
         await db.property_listings.update_one(
