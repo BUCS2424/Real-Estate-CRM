@@ -180,9 +180,9 @@ export const LandingPage = () => {
   }, [canScrollRight]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="min-h-screen bg-[#0a1628] text-white">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/80 to-transparent">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-[#0a1628]/95 to-transparent backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
@@ -217,7 +217,7 @@ export const LandingPage = () => {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-black/95 backdrop-blur-lg border-t border-white/10">
+          <div className="md:hidden bg-[#0a1628]/98 backdrop-blur-lg border-t border-amber-400/10">
             <div className="px-6 py-4 space-y-4">
               <a href="#listings" className="block text-sm tracking-wide hover:text-amber-400">LISTINGS</a>
               <a href="#about" className="block text-sm tracking-wide hover:text-amber-400">ABOUT</a>
@@ -240,7 +240,7 @@ export const LandingPage = () => {
             backgroundImage: 'url(https://images.unsplash.com/photo-1578439297699-eb414262c2de?w=1920&q=80)',
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0a1628]/70 via-[#0a1628]/50 to-[#0a1628]" />
         </div>
         
         <div className="relative z-10 text-center max-w-5xl mx-auto px-6">
@@ -277,7 +277,7 @@ export const LandingPage = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 border-y border-white/10 bg-black/50">
+      <section className="py-16 border-y border-amber-400/10 bg-[#071020]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
@@ -384,7 +384,7 @@ export const LandingPage = () => {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-20 md:py-32 bg-gradient-to-b from-transparent via-amber-950/10 to-transparent">
+      <section id="about" className="py-20 md:py-32 bg-gradient-to-b from-transparent via-[#0d1f3c]/50 to-transparent">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
@@ -403,15 +403,15 @@ export const LandingPage = () => {
                 discretion and professionalism.
               </p>
               <div className="flex flex-wrap gap-4">
-                <div className="bg-white/5 border border-white/10 rounded-lg px-6 py-4">
+                <div className="bg-[#0d1f3c]/80 border border-amber-400/20 rounded-lg px-6 py-4 backdrop-blur-sm">
                   <p className="text-amber-400 font-serif text-2xl">Palm Beach</p>
                   <p className="text-white/50 text-sm">Island Estates</p>
                 </div>
-                <div className="bg-white/5 border border-white/10 rounded-lg px-6 py-4">
+                <div className="bg-[#0d1f3c]/80 border border-amber-400/20 rounded-lg px-6 py-4 backdrop-blur-sm">
                   <p className="text-amber-400 font-serif text-2xl">Miami Beach</p>
                   <p className="text-white/50 text-sm">Star Island</p>
                 </div>
-                <div className="bg-white/5 border border-white/10 rounded-lg px-6 py-4">
+                <div className="bg-[#0d1f3c]/80 border border-amber-400/20 rounded-lg px-6 py-4 backdrop-blur-sm">
                   <p className="text-amber-400 font-serif text-2xl">Naples</p>
                   <p className="text-white/50 text-sm">Port Royal</p>
                 </div>
@@ -456,7 +456,7 @@ export const LandingPage = () => {
                   alt={market.name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628] via-[#0a1628]/30 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6">
                   <h3 className="text-2xl font-serif mb-1">{market.name}</h3>
                   <p className="text-white/60 text-sm">{market.desc}</p>
@@ -468,7 +468,7 @@ export const LandingPage = () => {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="py-20 md:py-32 bg-gradient-to-b from-transparent to-amber-950/20">
+      <section id="contact" className="py-20 md:py-32 bg-gradient-to-b from-transparent to-[#071020]">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <p className="text-amber-400 tracking-[0.3em] text-sm mb-3">PRIVATE INQUIRY</p>
           <h2 className="text-4xl md:text-5xl font-serif mb-6">
@@ -485,7 +485,7 @@ export const LandingPage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              className="bg-white/10 border-white/20 text-white placeholder:text-white/40 flex-1"
+              className="bg-[#0d1f3c]/80 border-amber-400/20 text-white placeholder:text-white/40 flex-1 focus:border-amber-400"
             />
             <Button className="bg-amber-400 text-black hover:bg-amber-300 px-8">
               SUBSCRIBE
@@ -506,7 +506,7 @@ export const LandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-white/10">
+      <footer className="py-12 border-t border-amber-400/10 bg-[#071020]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-3">
