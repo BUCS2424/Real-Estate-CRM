@@ -83,6 +83,7 @@ export const BookingPage = () => {
   const [contacts, setContacts] = useState([]);
   const [contactSearch, setContactSearch] = useState('');
   const [useExistingLead, setUseExistingLead] = useState(true);
+  const [phoneVerified, setPhoneVerified] = useState(false);
   const [newBooking, setNewBooking] = useState({
     selectedContactId: '',
     booker_name: '',
