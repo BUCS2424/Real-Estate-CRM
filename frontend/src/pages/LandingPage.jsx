@@ -67,6 +67,10 @@ export const LandingPage = () => {
   const [sellerAddress, setSellerAddress] = useState('');
   const [sellerEstValue, setSellerEstValue] = useState('');
 
+  // Verification states
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+
   // Fetch listings from database
   useEffect(() => {
     const fetchListings = async () => {
