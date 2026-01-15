@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, Link } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
+import { useBranding } from '../../contexts/BrandingContext';
 
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -35,6 +36,7 @@ const navItems = [
 
 export const Sidebar = ({ collapsed, onToggle }) => {
   const location = useLocation();
+  const { branding } = useBranding();
 
   return (
     <aside
@@ -46,8 +48,24 @@ export const Sidebar = ({ collapsed, onToggle }) => {
     >
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
+        <Link to={branding.dashboardLogoLinkUrl || '/dashboard'} className="flex items-center gap-3">
+          {branding.dashboardLogoUrl ? (
+            <img 
+              src={branding.dashboardLogoUrl} 
+              alt={branding.siteName || 'Logo'} 
+              className="w-9 h-9 object-contain rounded-lg"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+          ) : null}
+          <div 
+            className={cn(
+              "w-9 h-9 bg-primary rounded-lg items-center justify-center",
+              branding.dashboardLogoUrl ? "hidden" : "flex"
+            )}
+          >
             <Building2 className="w-5 h-5 text-primary-foreground" />
           </div>
           {!collapsed && (
@@ -56,7 +74,7 @@ export const Sidebar = ({ collapsed, onToggle }) => {
               <span className="text-xs text-muted-foreground -mt-1">Builder CRM</span>
             </div>
           )}
-        </div>
+        </Link>
       </div>
 
       {/* Navigation */}
