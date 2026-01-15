@@ -1,29 +1,101 @@
-import React, { useState } from 'react';
-import { Cog, Save, Globe, Building2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Cog, Save, Globe, Building2, Image, Link, ExternalLink, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
-import { Textarea } from '../../../components/ui/textarea';
 import { Switch } from '../../../components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
 import { toast } from 'sonner';
+import api from '../../../lib/api';
 
 export const GeneralSettings = () => {
   const [settings, setSettings] = useState({
-    siteName: 'Fusion Builder CRM',
+    siteName: 'Fusion Luxury Estates',
     siteUrl: 'https://fusionluxuryestates.com',
-    supportEmail: 'support@fusionbuilder.com',
+    supportEmail: 'support@fusionluxuryestates.com',
     timezone: 'America/New_York',
     dateFormat: 'MM/DD/YYYY',
     currency: 'USD',
     maintenanceMode: false,
     debugMode: false,
+    // Logo settings
+    logoUrl: '',
+    logoLinkUrl: '/',
+    dashboardLogoUrl: '',
+    dashboardLogoLinkUrl: '/dashboard',
+    faviconUrl: '',
+    pwaIconUrl: '',
   });
 
-  const handleSave = () => {
-    toast.success('General settings saved');
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get('/settings/general');
+        if (res.data) {
+          setSettings(prev => ({ ...prev, ...res.data }));
+        }
+      } catch (error) {
+        // Use defaults if no settings exist
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await api.put('/settings/general', settings);
+      toast.success('General settings saved successfully');
+    } catch (error) {
+      toast.error('Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const ImagePreview = ({ url, alt, size = 'md' }) => {
+    const sizeClasses = {
+      sm: 'w-8 h-8',
+      md: 'w-16 h-16',
+      lg: 'w-24 h-24',
+    };
+    
+    if (!url) {
+      return (
+        <div className={`${sizeClasses[size]} bg-muted/30 rounded-lg flex items-center justify-center border border-dashed border-muted-foreground/30`}>
+          <Image className="w-6 h-6 text-muted-foreground/50" />
+        </div>
+      );
+    }
+    
+    return (
+      <div className={`${sizeClasses[size]} rounded-lg overflow-hidden border border-border bg-muted/10`}>
+        <img 
+          src={url} 
+          alt={alt} 
+          className="w-full h-full object-contain"
+          onError={(e) => {
+            e.target.style.display = 'none';
+            e.target.parentNode.innerHTML = '<div class="w-full h-full flex items-center justify-center text-xs text-destructive">Invalid URL</div>';
+          }}
+        />
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in" data-testid="general-settings-page">
@@ -33,13 +105,151 @@ export const GeneralSettings = () => {
             <Cog className="w-6 h-6" />
             General Settings
           </h1>
-          <p className="text-muted-foreground mt-1">Configure basic application settings</p>
+          <p className="text-muted-foreground mt-1">Configure basic application settings and branding</p>
         </div>
-        <Button onClick={handleSave}>
-          <Save className="w-4 h-4 mr-2" />
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
           Save Changes
         </Button>
       </div>
+
+      {/* Branding - Logo Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Image className="w-5 h-5" />
+            Public Logo
+          </CardTitle>
+          <CardDescription>Logo displayed on public-facing pages (landing page, login, etc.)</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-4">
+              <div>
+                <Label htmlFor="logoUrl">Logo URL</Label>
+                <p className="text-xs text-muted-foreground mb-2">Public logo image URL</p>
+                <Input 
+                  id="logoUrl"
+                  placeholder="https://example.com/logo.png"
+                  value={settings.logoUrl}
+                  onChange={(e) => setSettings({ ...settings, logoUrl: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="logoLinkUrl">Logo Link URL</Label>
+                <p className="text-xs text-muted-foreground mb-2">Where the logo links to when clicked</p>
+                <Input 
+                  id="logoLinkUrl"
+                  placeholder="/"
+                  value={settings.logoLinkUrl}
+                  onChange={(e) => setSettings({ ...settings, logoLinkUrl: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col items-center justify-center p-4 bg-muted/20 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-2">Logo preview</p>
+              <ImagePreview url={settings.logoUrl} alt="Logo preview" size="lg" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Dashboard Logo */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="w-5 h-5" />
+            Dashboard Logo
+          </CardTitle>
+          <CardDescription>Logo displayed in the admin dashboard sidebar</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-4">
+              <div>
+                <Label htmlFor="dashboardLogoUrl">Dashboard Logo URL</Label>
+                <p className="text-xs text-muted-foreground mb-2">Logo shown in the dashboard</p>
+                <Input 
+                  id="dashboardLogoUrl"
+                  placeholder="https://example.com/dashboard-logo.png"
+                  value={settings.dashboardLogoUrl}
+                  onChange={(e) => setSettings({ ...settings, dashboardLogoUrl: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="dashboardLogoLinkUrl">Dashboard Logo Link</Label>
+                <p className="text-xs text-muted-foreground mb-2">Where dashboard logo links to</p>
+                <Input 
+                  id="dashboardLogoLinkUrl"
+                  placeholder="/dashboard"
+                  value={settings.dashboardLogoLinkUrl}
+                  onChange={(e) => setSettings({ ...settings, dashboardLogoLinkUrl: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col items-center justify-center p-4 bg-muted/20 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-2">Dashboard logo preview</p>
+              <ImagePreview url={settings.dashboardLogoUrl} alt="Dashboard logo preview" size="lg" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Favicon & PWA Icon */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="w-5 h-5" />
+            Browser & App Icons
+          </CardTitle>
+          <CardDescription>Icons for browser tabs and mobile app installation</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Favicon */}
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="faviconUrl">Favicon URL</Label>
+                <p className="text-xs text-muted-foreground mb-2">Browser tab icon (32x32 recommended)</p>
+                <Input 
+                  id="faviconUrl"
+                  placeholder="https://example.com/favicon.ico"
+                  value={settings.faviconUrl}
+                  onChange={(e) => setSettings({ ...settings, faviconUrl: e.target.value })}
+                />
+              </div>
+              <div className="flex items-center gap-4 p-3 bg-muted/20 rounded-lg">
+                <ImagePreview url={settings.faviconUrl} alt="Favicon preview" size="sm" />
+                <div>
+                  <p className="text-sm font-medium">Favicon preview</p>
+                  <p className="text-xs text-muted-foreground">32x32 pixels</p>
+                </div>
+              </div>
+            </div>
+
+            {/* PWA Icon */}
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="pwaIconUrl">PWA Icon URL</Label>
+                <p className="text-xs text-muted-foreground mb-2">App icon for mobile (192x192 recommended)</p>
+                <Input 
+                  id="pwaIconUrl"
+                  placeholder="https://example.com/icon-192.png"
+                  value={settings.pwaIconUrl}
+                  onChange={(e) => setSettings({ ...settings, pwaIconUrl: e.target.value })}
+                />
+              </div>
+              <div className="flex items-center gap-4 p-3 bg-muted/20 rounded-lg">
+                <ImagePreview url={settings.pwaIconUrl} alt="PWA icon preview" size="md" />
+                <div>
+                  <p className="text-sm font-medium">PWA icon preview</p>
+                  <p className="text-xs text-muted-foreground">192x192 pixels</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Site Information */}
       <Card>
