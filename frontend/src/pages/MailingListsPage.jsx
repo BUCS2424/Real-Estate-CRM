@@ -720,6 +720,58 @@ export const MailingListsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit List Modal */}
+      <Dialog open={showEditModal} onOpenChange={(open) => {
+        setShowEditModal(open);
+        if (!open) {
+          setEditingList(null);
+          setFormData({ name: '', description: '', category: 'general' });
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Mailing List</DialogTitle>
+            <DialogDescription>Update the list details</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>List Name *</Label>
+              <Input
+                value={formData.name}
+                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                placeholder="e.g., VIP Buyers"
+              />
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Textarea
+                value={formData.description}
+                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Optional description..."
+                rows={2}
+              />
+            </div>
+            <div>
+              <Label>Category</Label>
+              <Select value={formData.category} onValueChange={v => setFormData({ ...formData, category: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map(cat => (
+                    <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditModal(false)}>Cancel</Button>
+            <Button onClick={handleUpdateList}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
