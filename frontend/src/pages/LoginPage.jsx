@@ -90,7 +90,18 @@ export const LoginPage = () => {
             {/* Logo with decorative frame */}
             <div className="relative mx-auto">
               <div className="absolute -inset-3 bg-gradient-to-br from-amber-400/20 to-amber-600/20 rounded-2xl blur-sm"></div>
-              <div className="relative w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-400/30">
+              {branding.dashboardLogoUrl ? (
+                <img 
+                  src={branding.dashboardLogoUrl} 
+                  alt={branding.siteName || 'Logo'} 
+                  className="relative w-16 h-16 object-contain rounded-xl"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div className={`relative w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl items-center justify-center shadow-lg shadow-amber-400/30 ${branding.dashboardLogoUrl ? 'hidden' : 'flex'}`}>
                 <span className="font-serif text-black font-bold text-2xl">F</span>
               </div>
             </div>
