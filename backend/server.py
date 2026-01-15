@@ -2358,9 +2358,6 @@ async def seed_data():
 async def root():
     return {"message": "Fusion Builder CRM API", "version": "1.0.0"}
 
-# Include the router in the main app
-app.include_router(api_router)
-
 # ============ STORAGE PROVIDERS ============
 
 class StorageProviderType:
@@ -2388,8 +2385,6 @@ class StorageProviderResponse(BaseModel):
     settings: dict
     created_at: str
     updated_at: str
-
-@api_router.get("/storage/providers")
 async def get_storage_providers(current_user: dict = Depends(get_current_user)):
     """Get all storage providers configuration"""
     if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
