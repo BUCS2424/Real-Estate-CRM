@@ -281,3 +281,69 @@ Build a unified workspace platform called "Fusion Builder All In One CRM" for re
 - ✅ Status workflow: Pending → Reviewing → Approved → Converted
 - ✅ Convert approved submissions to property listings
 - ✅ Sidebar navigation updated
+
+---
+
+## Update: January 15, 2026 - Design System Enhancement
+
+### Site-Wide Luxury Design Elements Applied:
+Applied the design language from the About (Sheila Desautels) page across all public-facing pages.
+
+#### Key Design Elements:
+- **Decorative Rings** - Pulsing circular borders around icons/images
+- **Corner Accents** - L-shaped amber borders at page corners
+- **Glowing Effects** - Ambient amber blur backgrounds
+- **Golden Frames** - Gradient borders around profile images
+- **Floating Dots** - Animated amber dots for visual interest
+- **Section Dividers** - Gradient backgrounds between sections
+- **Card Hover Effects** - Border color transitions and glow effects
+
+#### Pages Updated:
+
+1. **Login Page** (`/login`):
+   - Dark navy theme with amber accents
+   - Corner accent borders on all 4 corners
+   - Floating decorative dots with animation
+   - Glowing background blur effects
+   - Decorative rings around card
+   - "Back to Home" navigation link
+   - Branded "Fusion CRM" logo with golden gradient
+   - "Powered By: A2G" footer
+
+2. **Register Page** (`/register`):
+   - Same design system as Login page
+   - Consistent corner accents and decorations
+
+3. **Showcase/Public Listings Page** (`/showcase`):
+   - Enhanced hero section with "EXCLUSIVE COLLECTION" label
+   - Italicized "Off Market" in title
+   - Corner accent decorations
+   - Decorative floating dots
+   - Enhanced filter sidebar with glow effect
+   - Improved empty state with decorative rings
+   - Full footer with navigation links
+
+4. **Property Detail Page** (`/property/[id]`):
+   - Background decorative blur elements
+   - Enhanced stat cards with hover glow effects
+   - Icon containers with background styling
+   - Enhanced sidebar contact card with corner accents
+   - Improved inquiry modal with corner decorations
+   - Full footer with navigation links
+
+5. **Newsletter Archive Page** (`/newsletter-archive`):
+   - Fixed header with sticky navigation
+   - "STAY INFORMED" label with italic "Archive" title
+   - Decorative rings around mail icon
+   - Animated floating dots
+   - Enhanced empty state with pulsing rings
+   - Newsletter cards with hover glow effects
+   - Full footer with navigation links
+
+#### Design Consistency:
+- All public pages now share the same luxurious aesthetic
+- Consistent footer across all pages with brand, navigation, and attribution
+- Unified color scheme: Dark navy (#0a1628), Amber/Gold (#fbbf24)
+- Consistent typography: Serif fonts for headings, clean body text
+
+---
