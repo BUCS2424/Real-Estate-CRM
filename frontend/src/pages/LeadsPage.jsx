@@ -344,6 +344,15 @@ export const LeadsPage = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            {lead.status !== 'converted' && (
+                              <DropdownMenuItem 
+                                onClick={(e) => { e.stopPropagation(); handleConvertToContact(lead.id, lead.lead_type); }}
+                                className="text-green-600"
+                              >
+                                <UserCheck className="w-4 h-4 mr-2" />
+                                Convert to Contact
+                              </DropdownMenuItem>
+                            )}
                             {STATUS_OPTIONS.map(s => (
                               <DropdownMenuItem 
                                 key={s.value}
