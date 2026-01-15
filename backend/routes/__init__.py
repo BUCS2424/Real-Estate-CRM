@@ -36,6 +36,7 @@ api_router.include_router(settings_router, prefix="/settings", tags=["Settings"]
 api_router.include_router(users_router, prefix="/users", tags=["Users"])
 api_router.include_router(notifications_router, prefix="/notifications", tags=["Notifications"])
 api_router.include_router(dashboard_router, prefix="/dashboard", tags=["Dashboard"])
+api_router.include_router(mailing_lists_router, tags=["Mailing Lists"])
 
 @api_router.get("/")
 async def root():
