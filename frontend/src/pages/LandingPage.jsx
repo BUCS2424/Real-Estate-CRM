@@ -78,6 +78,10 @@ export const LandingPage = () => {
   // Verification states
   const [emailVerified, setEmailVerified] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
+  
+  // Consent states
+  const [consentEmail, setConsentEmail] = useState(false);
+  const [consentSMS, setConsentSMS] = useState(false);
 
   // Fetch listings from database
   useEffect(() => {
