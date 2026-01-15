@@ -34,7 +34,7 @@ export const NewsletterArchivePage = () => {
   return (
     <div className="min-h-screen bg-[#0a1628]">
       {/* Header */}
-      <header className="bg-[#0a1628]/95 border-b border-amber-400/10">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#0a1628]/95 backdrop-blur-md border-b border-amber-400/10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2">
@@ -52,11 +52,26 @@ export const NewsletterArchivePage = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-12">
-          <Mail className="w-12 h-12 text-amber-400 mx-auto mb-4" />
-          <h1 className="text-4xl font-serif text-white mb-4">Newsletter Archive</h1>
-          <p className="text-white/60">Browse our past newsletters and market updates</p>
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
+        {/* Hero Section with Decorative Elements */}
+        <div className="text-center mb-12 relative">
+          {/* Decorative background elements */}
+          <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-96 h-96 bg-amber-400/5 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute top-0 left-10 w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+          <div className="absolute top-20 right-20 w-1.5 h-1.5 bg-amber-400/60 rounded-full"></div>
+          
+          {/* Icon with decorative rings */}
+          <div className="relative inline-block mb-6">
+            <div className="absolute inset-0 w-24 h-24 -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2 rounded-full border border-amber-400/20 animate-pulse"></div>
+            <div className="absolute inset-0 w-20 h-20 -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2 rounded-full border border-amber-400/10"></div>
+            <div className="relative w-16 h-16 bg-gradient-to-br from-amber-400/20 to-amber-600/20 rounded-full flex items-center justify-center">
+              <Mail className="w-8 h-8 text-amber-400" />
+            </div>
+          </div>
+          
+          <p className="text-amber-400 uppercase tracking-[0.3em] text-sm mb-3">Stay Informed</p>
+          <h1 className="text-4xl md:text-5xl font-serif text-white mb-4">Newsletter <span className="italic text-amber-400">Archive</span></h1>
+          <p className="text-white/60 max-w-xl mx-auto">Browse our past newsletters and market updates</p>
         </div>
 
         {loading ? (
@@ -64,34 +79,48 @@ export const NewsletterArchivePage = () => {
             <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
           </div>
         ) : newsletters.length === 0 ? (
-          <Card className="bg-[#0d1f3c]/50 border-amber-400/10 text-center py-16">
-            <CardContent>
-              <Mail className="w-16 h-16 text-amber-400/30 mx-auto mb-4" />
+          <Card className="bg-[#0d1f3c]/50 border-amber-400/10 text-center py-16 relative overflow-hidden">
+            {/* Decorative rings */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-48 h-48 rounded-full border border-amber-400/10 animate-pulse"></div>
+              <div className="absolute w-40 h-40 rounded-full border border-amber-400/5"></div>
+            </div>
+            <CardContent className="relative z-10">
+              <div className="w-20 h-20 bg-amber-400/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail className="w-10 h-10 text-amber-400/50" />
+              </div>
               <h3 className="text-xl font-serif text-white mb-2">No Newsletters Yet</h3>
               <p className="text-white/50">Check back soon for market updates and property insights</p>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-4">
-            {newsletters.map(nl => (
+            {newsletters.map((nl, index) => (
               <Card 
                 key={nl.id} 
-                className="bg-[#0d1f3c]/50 border-amber-400/10 hover:border-amber-400/30 transition-colors cursor-pointer"
+                className="bg-[#0d1f3c]/50 border-amber-400/10 hover:border-amber-400/30 transition-all duration-300 cursor-pointer group relative overflow-hidden"
                 onClick={() => setSelectedNewsletter(nl)}
               >
-                <CardContent className="p-6">
+                {/* Hover glow effect */}
+                <div className="absolute -right-20 -top-20 w-40 h-40 bg-amber-400/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <CardContent className="p-6 relative z-10">
                   <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-lg font-serif text-white mb-2">{nl.subject}</h3>
-                      <div className="flex items-center gap-4 text-sm text-white/50">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          {formatDate(nl.sent_at)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
-                          {nl.recipients_count} recipients
-                        </span>
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-amber-400/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Mail className="w-6 h-6 text-amber-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-serif text-white mb-2 group-hover:text-amber-400 transition-colors">{nl.subject}</h3>
+                        <div className="flex items-center gap-4 text-sm text-white/50">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            {formatDate(nl.sent_at)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Users className="w-4 h-4" />
+                            {nl.recipients_count} recipients
+                          </span>
+                        </div>
                       </div>
                     </div>
                     <Button variant="ghost" className="text-amber-400 hover:text-amber-300 hover:bg-amber-400/10">
@@ -123,10 +152,21 @@ export const NewsletterArchivePage = () => {
 
       {/* Footer */}
       <footer className="bg-[#060d18] border-t border-amber-400/10 py-8 mt-auto">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-white/40 text-sm">
-            Powered By: <a href="https://a2gdesigns.com" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:underline">A2G</a>
-          </p>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Home className="w-5 h-5 text-amber-400" />
+              <span className="font-serif text-white">Fusion Luxury Estates</span>
+            </div>
+            <div className="flex gap-6 text-sm text-white/50">
+              <Link to="/showcase" className="hover:text-amber-400 transition-colors">Listing Showcase</Link>
+              <Link to="/about" className="hover:text-amber-400 transition-colors">About</Link>
+              <a href="/#contact" className="hover:text-amber-400 transition-colors">Contact</a>
+            </div>
+            <p className="text-sm text-white/30">
+              Powered By: <a href="https://a2gdesigns.com" target="_blank" rel="noopener noreferrer" className="text-amber-400/70 hover:text-amber-400">A2G</a>
+            </p>
+          </div>
         </div>
       </footer>
     </div>
