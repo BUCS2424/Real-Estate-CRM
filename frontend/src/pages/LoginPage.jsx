@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useBranding } from '../contexts/BrandingContext';
 import { seedAPI } from '../lib/api';
 import { Building2, Eye, EyeOff, Home } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -15,6 +16,7 @@ export const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { login, user } = useAuth();
+  const { branding } = useBranding();
   const navigate = useNavigate();
 
   useEffect(() => {
