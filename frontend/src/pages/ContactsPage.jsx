@@ -425,6 +425,11 @@ export const ContactsPage = () => {
                   <div className="flex items-center gap-2">
                     <span className={`w-2 h-2 rounded-full ${statusColors[contact.status]}`} />
                     <span className="text-sm capitalize">{contact.status}</span>
+                    {contact.category && (
+                      <Badge variant="outline" className={`text-xs capitalize ${categoryColors[contact.category] || ''}`}>
+                        {contact.category}
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex items-center gap-1">
                     <Star className={`w-4 h-4 ${contact.lead_score >= 80 ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground'}`} />
