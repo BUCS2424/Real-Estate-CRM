@@ -1,0 +1,76 @@
+from fastapi import APIRouter, HTTPException
+from datetime import datetime, timezone
+import uuid
+from database import db
+from models.user import UserCreate, UserLogin, UserResponse, TokenResponse, UserRole
+from utils.auth import hash_password, verify_password, create_access_token
+
+router = APIRouter()
+
+@router.post("/register", response_model=TokenResponse)
+async def register(user_data: UserCreate):
+    # Check if user exists
+    existing = await db.users.find_one({"email": user_data.email})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Create user
+    user_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    user_doc = {
+        "id": user_id,
+        "email": user_data.email,
+        "password": hash_password(user_data.password),
+        "name": user_data.name,
+        "role": user_data.role,
+        "created_at": now
+    }
+    await db.users.insert_one(user_doc)
+    
+    # Create default settings
+    settings_doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "notifications_email": True,
+        "notifications_sms": False,
+        "theme": "system"
+    }
+    await db.settings.insert_one(settings_doc)
+    
+    # Generate token
+    token = create_access_token({"sub": user_id})
+    
+    return TokenResponse(
+        access_token=token,
+        user=UserResponse(
+            id=user_id,
+            email=user_data.email,
+            name=user_data.name,
+            role=user_data.role,
+            created_at=now
+        )
+    )
+
+@router.post("/login", response_model=TokenResponse)
+async def login(credentials: UserLogin):
+    user = await db.users.find_one({"email": credentials.email})
+    if not user or not verify_password(credentials.password, user["password"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    token = create_access_token({"sub": user["id"]})
+    
+    return TokenResponse(
+        access_token=token,
+        user=UserResponse(**{k: v for k, v in user.items() if k != "password" and k != "_id"})
+    )
+
+@router.get("/me", response_model=UserResponse)
+async def get_me(current_user: dict):
+    from fastapi import Depends
+    from utils.auth import get_current_user
+    # This will be injected by dependency
+    return UserResponse(**current_user)
+
+# Re-export for dependency injection in other routes
+from utils.auth import get_current_user
