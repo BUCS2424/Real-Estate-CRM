@@ -184,6 +184,31 @@ export const usersAPI = {
   updateRole: (id, role) => api.patch(`/users/${id}/role?role=${role}`),
 };
 
+// Newsletter System
+export const newsletterAPI = {
+  list: (status) => api.get(`/newsletters${status ? `?status=${status}` : ''}`),
+  get: (id) => api.get(`/newsletters/${id}`),
+  create: (data) => api.post('/newsletters', data),
+  update: (id, data) => api.put(`/newsletters/${id}`, data),
+  send: (id) => api.post(`/newsletters/${id}/send`),
+  delete: (id) => api.delete(`/newsletters/${id}`),
+  getArchive: () => axios.get(`${API_URL}/newsletters/archive`),
+};
+
+export const templateAPI = {
+  list: () => api.get('/newsletter-templates'),
+  get: (id) => api.get(`/newsletter-templates/${id}`),
+  create: (data) => api.post('/newsletter-templates', data),
+  delete: (id) => api.delete(`/newsletter-templates/${id}`),
+};
+
+export const triggerAPI = {
+  list: () => api.get('/newsletter-triggers'),
+  create: (data) => api.post('/newsletter-triggers', data),
+  update: (id, data) => api.patch(`/newsletter-triggers/${id}`, data),
+  delete: (id) => api.delete(`/newsletter-triggers/${id}`),
+};
+
 // Seed data
 export const seedAPI = {
   seed: () => api.post('/seed'),
