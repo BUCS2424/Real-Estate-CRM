@@ -219,6 +219,25 @@ export const storageAPI = {
   getDefault: () => api.get('/storage/default'),
 };
 
+// Mailing Lists
+export const mailingListAPI = {
+  getLists: () => api.get('/mailing-lists'),
+  getList: (id) => api.get(`/mailing-lists/${id}`),
+  createList: (data) => api.post('/mailing-lists', data),
+  updateList: (id, data) => api.put(`/mailing-lists/${id}`, data),
+  deleteList: (id) => api.delete(`/mailing-lists/${id}`),
+  addSubscriber: (listId, data) => api.post(`/mailing-lists/${listId}/subscribers`, data),
+  removeSubscriber: (listId, subscriberId) => api.delete(`/mailing-lists/${listId}/subscribers/${subscriberId}`),
+  updateSubscriber: (listId, subscriberId, data) => api.patch(`/mailing-lists/${listId}/subscribers/${subscriberId}`, data),
+  importCSV: (listId, formData) => api.post(`/mailing-lists/${listId}/import`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  exportCSV: (listId) => api.get(`/mailing-lists/${listId}/export`, { responseType: 'blob' }),
+  importFromContacts: (listId, category) => api.post(`/mailing-lists/${listId}/import-from-contacts${category ? `?category=${category}` : ''}`),
+  importFromLeads: (listId, leadType) => api.post(`/mailing-lists/${listId}/import-from-leads${leadType ? `?lead_type=${leadType}` : ''}`),
+  clearSubscribers: (listId) => api.delete(`/mailing-lists/${listId}/subscribers`),
+};
+
 // Seed data
 export const seedAPI = {
   seed: () => api.post('/seed'),
