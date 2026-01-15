@@ -145,8 +145,21 @@ export const LandingPage = () => {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-[#0a1628]/95 to-transparent backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded flex items-center justify-center">
+            <Link to={branding.logoLinkUrl || "/"} className="flex items-center gap-3">
+              {branding.logoUrl ? (
+                <img 
+                  src={branding.logoUrl} 
+                  alt={branding.siteName || 'Fusion Luxury Estates'} 
+                  className="h-10 object-contain"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div 
+                className={`w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded items-center justify-center ${branding.logoUrl ? 'hidden' : 'flex'}`}
+              >
                 <span className="font-serif text-black font-bold text-xl">F</span>
               </div>
               <div>
