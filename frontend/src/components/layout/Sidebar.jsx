@@ -29,6 +29,7 @@ const navItems = [
   { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
   { path: '/bookings', icon: CalendarCheck, label: 'Bookings' },
   { path: '/newsletter', icon: Mail, label: 'Newsletter' },
+  { path: '/mailing-lists', icon: ListPlus, label: 'Mailing Lists' },
   { path: '/writer', icon: FileText, label: 'AI Writer' },
 ];
 
