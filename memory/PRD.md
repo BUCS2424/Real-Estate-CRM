@@ -198,12 +198,13 @@ Build a unified workspace platform called "Fusion Builder All In One CRM" for re
 - [x] Admin leads management page
 - [x] Phone/email verification (mocked)
 - [x] Property listings with AI lookup
+- [x] PWA settings and service worker
+- [x] Property submission workflow for sellers
 
 ### P1 - High Priority (Next)
-- [ ] Booking notifications (email, SMS, desktop, PWA)
-- [ ] PWA settings for installable app
+- [ ] Booking notifications (email, SMS, desktop)
 - [ ] Lead auction/bidding system for buyers
-- [ ] Property submission workflow for sellers
+- [ ] Connect AI writer to CRM context
 
 ### P2 - Medium Priority
 - [ ] Backend refactor (split server.py into routers)
@@ -212,7 +213,31 @@ Build a unified workspace platform called "Fusion Builder All In One CRM" for re
 - [ ] Property filtering/search on landing page
 
 ### P3 - Future Backlog
-- [ ] Connect AI writer to CRM context
 - [ ] Automated task generation from deals
 - [ ] Multi-item drag-and-drop on Kanban boards
 - [ ] Advanced reporting & analytics
+
+---
+
+## Update: January 15, 2026 - PWA & Seller Workflow
+
+### PWA Implementation:
+- ✅ Created manifest.json with app metadata and icons
+- ✅ Service worker (sw.js) for offline caching
+- ✅ PWA Settings page at `/settings/developer/pwa`
+- ✅ Install banner component for prompting installation
+- ✅ Generated app icons in multiple sizes (72-512px)
+- ✅ Push notification support (permission handling)
+- ✅ Online/offline status indicators
+
+### Property Submission Workflow:
+- ✅ Enhanced seller form on landing page with:
+  - Property address, city, state
+  - Property type, bedrooms, bathrooms, sqft
+  - Asking price and selling timeline
+  - Optional description field
+- ✅ Backend endpoint `/api/public/property-submissions`
+- ✅ Admin Property Submissions page at `/property-submissions`
+- ✅ Status workflow: Pending → Reviewing → Approved → Converted
+- ✅ Convert approved submissions to property listings
+- ✅ Sidebar navigation updated
