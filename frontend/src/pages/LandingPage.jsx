@@ -21,6 +21,7 @@ import { Input } from '../components/ui/input';
 import { EmailVerification } from '../components/EmailVerification';
 import { PhoneVerification } from '../components/PhoneVerification';
 import { toast } from 'sonner';
+import { useBranding } from '../contexts/BrandingContext';
 
 // Fallback listings if database is empty
 const FALLBACK_LISTINGS = [
