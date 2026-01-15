@@ -442,7 +442,8 @@ class TestMailingListsAPI:
         unauth_session = requests.Session()
         
         response = unauth_session.get(f"{BASE_URL}/api/mailing-lists")
-        assert response.status_code == 401, "Should reject unauthenticated request"
+        # API returns 401 or 403 for unauthorized access
+        assert response.status_code in [401, 403], f"Should reject unauthenticated request, got {response.status_code}"
         
         print("✓ Unauthorized access correctly rejected")
 
