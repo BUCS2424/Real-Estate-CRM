@@ -59,6 +59,7 @@ const STATUS_OPTIONS = [
 ];
 
 export const LeadsPage = () => {
+  const navigate = useNavigate();
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
@@ -68,6 +69,7 @@ export const LeadsPage = () => {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [notes, setNotes] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [converting, setConverting] = useState(false);
 
   useEffect(() => {
     fetchLeads();
@@ -84,6 +86,24 @@ export const LeadsPage = () => {
       toast.error('Failed to load leads');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleConvertToContact = async (leadId, leadType) => {
+    if (!window.confirm(`Convert this ${leadType} lead to a contact?`)) return;
+    setConverting(true);
+    try {
+      const res = await leadsAPI.convertToContact(leadId);
+      toast.success(`Lead converted to ${res.data.category} contact!`);
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: 'converted' } : l));
+      setIsDetailOpen(false);
+      // Navigate to contacts page
+      navigate('/contacts');
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Failed to convert lead';
+      toast.error(message);
+    } finally {
+      setConverting(false);
     }
   };
 
