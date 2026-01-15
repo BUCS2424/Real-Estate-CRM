@@ -245,7 +245,142 @@ async def list_properties(
         query.setdefault("price", {})["$lte"] = max_price
     
     properties = await db.properties.find(query, {"_id": 0}).to_list(1000)
-    return [PropertyListingResponse(**p) for p in properties]
+    return properties
+
+# =========== LISTINGS ALIASES FOR FRONTEND COMPATIBILITY ===========
+@router.get("/listings")
+async def list_listings(current_user: dict = Depends(get_current_user)):
+    """Alias for /properties for frontend compatibility"""
+    properties = await db.properties.find({}, {"_id": 0}).to_list(1000)
+    return properties
+
+@router.get("/listings/{listing_id}")
+async def get_listing(listing_id: str, current_user: dict = Depends(get_current_user)):
+    """Alias for /properties/{id} for frontend compatibility"""
+    prop = await db.properties.find_one({"id": listing_id}, {"_id": 0})
+    if not prop:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    return prop
+
+@router.post("/listings")
+async def create_listing(listing: PropertyListingCreate, current_user: dict = Depends(get_current_user)):
+    """Alias for /properties POST for frontend compatibility"""
+    listing_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    listing_doc = {
+        "id": listing_id,
+        **listing.model_dump(),
+        "created_by": current_user["id"],
+        "created_at": now
+    }
+    await db.properties.insert_one(listing_doc)
+    listing_doc.pop("_id", None)
+    return listing_doc
+
+@router.put("/listings/{listing_id}")
+async def update_listing(listing_id: str, listing: PropertyListingCreate, current_user: dict = Depends(get_current_user)):
+    """Alias for /properties/{id} PUT for frontend compatibility"""
+    result = await db.properties.update_one({"id": listing_id}, {"$set": listing.model_dump()})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    updated = await db.properties.find_one({"id": listing_id}, {"_id": 0})
+    return updated
+
+@router.delete("/listings/{listing_id}")
+async def delete_listing(listing_id: str, current_user: dict = Depends(require_role([UserRole.SUPERUSER, UserRole.ADMIN]))):
+    """Alias for /properties/{id} DELETE for frontend compatibility"""
+    result = await db.properties.delete_one({"id": listing_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    return {"message": "Listing deleted"}
+
+@router.post("/listings/lookup-address")
+async def lookup_address(data: dict, current_user: dict = Depends(get_current_user)):
+    """AI property lookup by address"""
+    address = data.get("address", "")
+    if not address:
+        raise HTTPException(status_code=400, detail="Address is required")
+    
+    try:
+        from emergentintegrations.llm.chat import chat, Message
+        
+        llm_api_key = os.environ.get('EMERGENT_LLM_KEY') or os.environ.get('LLM_API_KEY')
+        
+        prompt = f"""You are a real estate data assistant. Given the following property address, provide estimated property details in JSON format. Be realistic with the estimates based on the location.
+
+Address: {address}
+
+Return a JSON object with these fields:
+- estimated_value: number (estimated market value in USD)
+- bedrooms: number
+- bathrooms: number  
+- sqft: number
+- year_built: number
+- property_type: string (single_family, condo, townhouse, etc.)
+- lot_size: number (in acres)
+- features: array of strings
+
+Only return valid JSON, no other text."""
+
+        response = await chat(
+            api_key=llm_api_key,
+            messages=[Message(role="user", content=prompt)],
+            model="gpt-4o-mini"
+        )
+        
+        import json
+        try:
+            result = json.loads(response)
+            return {"success": True, "data": result, "address": address}
+        except json.JSONDecodeError:
+            return {"success": False, "raw_response": response, "address": address}
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI lookup failed: {str(e)}")
+
+@router.post("/listings/{listing_id}/generate-description")
+async def generate_listing_description(listing_id: str, current_user: dict = Depends(get_current_user)):
+    """Generate AI description for a listing"""
+    listing = await db.properties.find_one({"id": listing_id}, {"_id": 0})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    try:
+        from emergentintegrations.llm.chat import chat, Message
+        
+        llm_api_key = os.environ.get('EMERGENT_LLM_KEY') or os.environ.get('LLM_API_KEY')
+        
+        prompt = f"""Write a compelling luxury real estate listing description for this property:
+
+Address: {listing.get('address')}, {listing.get('city')}, {listing.get('state')}
+Price: ${listing.get('price', 0):,.0f}
+Bedrooms: {listing.get('bedrooms')}
+Bathrooms: {listing.get('bathrooms')}
+Square Feet: {listing.get('sqft', 0):,}
+Features: {', '.join(listing.get('features', []))}
+Property Type: {listing.get('property_type')}
+
+Write a professional, enticing description (2-3 paragraphs) that highlights the property's best features and appeals to luxury home buyers."""
+
+        response = await chat(
+            api_key=llm_api_key,
+            messages=[Message(role="user", content=prompt)],
+            model="gpt-4o-mini"
+        )
+        
+        # Update the listing with the generated description
+        await db.properties.update_one(
+            {"id": listing_id},
+            {"$set": {"description": response}}
+        )
+        
+        return {"success": True, "description": response}
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Description generation failed: {str(e)}")
+
+# =========== END LISTINGS ALIASES ===========
 
 @router.get("/properties/{property_id}", response_model=PropertyListingResponse)
 async def get_property(property_id: str, current_user: dict = Depends(get_current_user)):
