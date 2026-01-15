@@ -54,6 +54,11 @@ const statusColors = {
   closed: 'bg-gray-500'
 };
 
+const categoryColors = {
+  buyer: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  seller: 'bg-orange-100 text-orange-700 border-orange-200',
+};
+
 const initialFormState = {
   name: '',
   email: '',
@@ -64,7 +69,8 @@ const initialFormState = {
   lead_score: 50,
   status: 'new',
   notes: '',
-  tags: []
+  tags: [],
+  category: ''
 };
 
 export const ContactsPage = () => {
