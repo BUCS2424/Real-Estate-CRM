@@ -84,6 +84,7 @@ class ContactCreate(BaseModel):
     status: str = "new"
     notes: Optional[str] = None
     tags: List[str] = []
+    category: Optional[str] = None  # buyer, seller, or other
 
 class ContactResponse(BaseModel):
     id: str
@@ -97,6 +98,7 @@ class ContactResponse(BaseModel):
     status: str
     notes: Optional[str] = None
     tags: List[str] = []
+    category: Optional[str] = None
     created_at: str
     created_by: str
 
