@@ -4,8 +4,6 @@ import bcrypt
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from database import db
-from models.user import UserRole
 
 JWT_SECRET = os.environ.get('JWT_SECRET', 'fusion-builder-secret-key-2024')
 JWT_ALGORITHM = "HS256"
@@ -26,6 +24,9 @@ def create_access_token(data: dict) -> str:
     return jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    # Import here to avoid circular imports
+    from database import db
+    
     try:
         token = credentials.credentials
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
