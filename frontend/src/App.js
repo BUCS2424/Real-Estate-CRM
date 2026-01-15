@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { BrandingProvider } from './contexts/BrandingContext';
 import { Toaster } from './components/ui/sonner';
 import { PWAInstallBanner } from './components/PWAComponents';
 import { registerServiceWorker } from './hooks/usePWA';
