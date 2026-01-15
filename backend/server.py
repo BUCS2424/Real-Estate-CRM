@@ -353,6 +353,8 @@ class PropertySubmissionCreate(BaseModel):
     additional_info: Optional[str] = None
     email_verified: bool = False
     phone_verified: bool = False
+    consent_email: bool = False
+    consent_sms: bool = False
 
 class PropertySubmissionResponse(BaseModel):
     id: str
