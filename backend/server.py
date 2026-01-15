@@ -21,13 +21,8 @@ from database import db, close_db
 # Import and include all routers
 from routes import api_router
 
-# Include main API router
-app.include_router(api_router)
-
-# Add seed endpoint to main app (needs access to db directly)
-from routes import api_router as main_router
-
-@main_router.post("/seed")
+# Add seed endpoint directly to api_router
+@api_router.post("/seed")
 async def seed_data():
     """Seed initial data for the application"""
     from utils.auth import hash_password
@@ -148,6 +143,9 @@ async def seed_data():
         })
     
     return {"message": "Data seeded successfully"}
+
+# Include main API router
+app.include_router(api_router)
 
 # CORS Middleware
 app.add_middleware(
