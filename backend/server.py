@@ -1825,6 +1825,53 @@ async def update_lead(lead_id: str, update_data: dict, current_user: dict = Depe
         raise HTTPException(status_code=404, detail="Lead not found")
     return {"message": "Lead updated"}
 
+@api_router.post("/leads/{lead_id}/convert")
+async def convert_lead_to_contact(lead_id: str, current_user: dict = Depends(get_current_user)):
+    """Convert a lead to a contact with the appropriate category (buyer/seller)"""
+    lead = await db.leads.find_one({"id": lead_id}, {"_id": 0})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    # Check if contact with this email already exists
+    if lead.get("email"):
+        existing = await db.contacts.find_one({"email": lead["email"].lower()})
+        if existing:
+            raise HTTPException(status_code=400, detail="A contact with this email already exists")
+    
+    # Create contact from lead
+    contact_doc = {
+        "id": str(uuid.uuid4()),
+        "name": lead.get("name"),
+        "email": lead.get("email", "").lower() if lead.get("email") else None,
+        "phone": lead.get("phone"),
+        "company": None,
+        "property_interest": lead.get("areas_of_interest") or lead.get("property_address"),
+        "budget": lead.get("budget") or lead.get("estimated_value"),
+        "lead_score": 60,  # Higher score since they converted from lead
+        "status": "active",
+        "notes": f"Converted from {lead.get('lead_type', 'unknown')} lead on {datetime.now(timezone.utc).strftime('%Y-%m-%d')}",
+        "tags": [lead.get("lead_type", "lead")],
+        "category": lead.get("lead_type"),  # buyer or seller
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_by": current_user["id"],
+        "source_lead_id": lead_id
+    }
+    
+    await db.contacts.insert_one(contact_doc)
+    
+    # Update lead status to converted
+    await db.leads.update_one(
+        {"id": lead_id},
+        {"$set": {"status": "converted", "converted_contact_id": contact_doc["id"]}}
+    )
+    
+    logger.info(f"Lead {lead_id} converted to contact {contact_doc['id']} as {lead.get('lead_type')}")
+    return {
+        "message": "Lead converted to contact successfully",
+        "contact_id": contact_doc["id"],
+        "category": lead.get("lead_type")
+    }
+
 @api_router.delete("/leads/{lead_id}")
 async def delete_lead(lead_id: str, current_user: dict = Depends(get_current_user)):
     """Delete a lead"""
