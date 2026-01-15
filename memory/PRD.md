@@ -465,3 +465,48 @@ Added a comprehensive storage provider management system with support for 5 diff
 - `storage_providers` - Stores provider configurations with encrypted credentials
 
 ---
+
+## Update: January 15, 2026 - Mailing List Management & Dynamic Branding
+
+### Mailing List Management System:
+- ✅ **Mailing Lists Page** at `/mailing-lists` with:
+  - Stats cards (Total Lists, Total Subscribers, VIP Lists, Quick Import)
+  - Create/Edit/Delete mailing lists with name, description, category
+  - Add/Remove individual subscribers manually
+  - Search and filter subscribers within a list
+  - Category support: General, Buyers, Sellers, VIP, Custom
+- ✅ **Import/Export Functionality**:
+  - Import subscribers from CSV file (flexible column naming)
+  - Import subscribers from existing Contacts
+  - Import subscribers from existing Leads
+  - Export subscribers to CSV file
+  - Duplicate detection during import
+- ✅ **Backend API Endpoints**:
+  - `GET /api/mailing-lists` - List all mailing lists
+  - `POST /api/mailing-lists` - Create new list
+  - `GET /api/mailing-lists/{id}` - Get list with subscribers
+  - `PUT /api/mailing-lists/{id}` - Update list
+  - `DELETE /api/mailing-lists/{id}` - Delete list
+  - `POST /api/mailing-lists/{id}/subscribers` - Add subscriber
+  - `DELETE /api/mailing-lists/{id}/subscribers/{subscriber_id}` - Remove subscriber
+  - `POST /api/mailing-lists/{id}/import` - Import from CSV
+  - `GET /api/mailing-lists/{id}/export` - Export to CSV
+  - `POST /api/mailing-lists/{id}/import-from-contacts` - Import from contacts
+  - `POST /api/mailing-lists/{id}/import-from-leads` - Import from leads
+
+### Dynamic Branding System:
+- ✅ **BrandingContext** (`/app/frontend/src/contexts/BrandingContext.js`):
+  - Global state management for branding settings
+  - Auto-fetches branding from public endpoint on app load
+  - Dynamically updates favicon and page title
+  - Provides `refreshBranding()` function for after settings save
+- ✅ **Public Branding Endpoint**:
+  - `GET /api/settings/branding` - Returns public branding (no auth required)
+  - Returns: siteName, logoUrl, logoLinkUrl, dashboardLogoUrl, dashboardLogoLinkUrl, faviconUrl, pwaIconUrl
+- ✅ **Updated Components**:
+  - Sidebar - Uses dynamic dashboard logo
+  - LandingPage - Uses dynamic public logo
+  - LoginPage - Uses dynamic dashboard logo
+  - GeneralSettings - Triggers branding refresh on save
+
+---
