@@ -293,6 +293,21 @@ async def get_public_properties(
     properties = await db.properties.find(query, {"_id": 0}).to_list(100)
     return properties
 
+# Alias for frontend compatibility
+@router.get("/public/listings")
+async def get_public_listings(limit: int = 100):
+    """Alias endpoint for /public/properties for frontend compatibility"""
+    properties = await db.properties.find({"status": "active"}, {"_id": 0}).to_list(limit)
+    return properties
+
+@router.get("/public/listings/{listing_id}")
+async def get_public_listing(listing_id: str):
+    """Alias endpoint for frontend compatibility"""
+    prop = await db.properties.find_one({"id": listing_id, "status": "active"}, {"_id": 0})
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+    return prop
+
 @router.get("/public/properties/{property_id}")
 async def get_public_property(property_id: str):
     prop = await db.properties.find_one({"id": property_id, "status": "active"}, {"_id": 0})
