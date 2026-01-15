@@ -607,12 +607,12 @@ export const MailingListsPage = () => {
             {importSource === 'contacts' && (
               <div>
                 <Label>Filter by Category (optional)</Label>
-                <Select value={importCategory} onValueChange={setImportCategory}>
+                <Select value={importCategory || "all"} onValueChange={(v) => setImportCategory(v === "all" ? "" : v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="All contacts" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Contacts</SelectItem>
+                    <SelectItem value="all">All Contacts</SelectItem>
                     <SelectItem value="buyer">Buyers</SelectItem>
                     <SelectItem value="seller">Sellers</SelectItem>
                   </SelectContent>
