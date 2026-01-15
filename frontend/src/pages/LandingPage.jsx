@@ -212,12 +212,12 @@ export const LandingPage = () => {
             Where privacy meets unparalleled elegance.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="#listings">
+            <Link to="/showcase">
               <Button size="lg" className="bg-amber-400 text-black hover:bg-amber-300 px-8 py-6 text-base">
                 VIEW COLLECTION
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
-            </a>
+            </Link>
             <a href="#contact">
               <Button size="lg" variant="outline" className="border-white/30 hover:bg-white/10 px-8 py-6 text-base">
                 PRIVATE INQUIRY
