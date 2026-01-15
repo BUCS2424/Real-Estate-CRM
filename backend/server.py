@@ -1856,6 +1856,8 @@ async def submit_property(submission: PropertySubmissionCreate):
         "additional_info": submission.additional_info,
         "email_verified": submission.email_verified,
         "phone_verified": submission.phone_verified,
+        "consent_email": submission.consent_email,
+        "consent_sms": submission.consent_sms,
         "status": "pending",
         "notes": None,
         "assigned_to": None,
