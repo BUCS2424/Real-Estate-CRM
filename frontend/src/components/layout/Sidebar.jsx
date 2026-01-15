@@ -12,7 +12,8 @@ import {
   CalendarCheck,
   Home,
   UserPlus,
-  FileInput
+  FileInput,
+  Mail
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
@@ -26,6 +27,7 @@ const navItems = [
   { path: '/listings', icon: Home, label: 'Listings' },
   { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
   { path: '/bookings', icon: CalendarCheck, label: 'Bookings' },
+  { path: '/newsletter', icon: Mail, label: 'Newsletter' },
   { path: '/writer', icon: FileText, label: 'AI Writer' },
 ];
 
