@@ -1331,6 +1331,8 @@ async def submit_public_lead(lead_data: dict):
         "property_id": lead_data.get("property_id"),
         "message": lead_data.get("message"),
         "status": "new",
+        "consent_email": lead_data.get("consent_email", False),
+        "consent_sms": lead_data.get("consent_sms", False),
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
