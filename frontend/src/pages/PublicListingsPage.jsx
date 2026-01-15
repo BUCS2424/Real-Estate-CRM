@@ -339,7 +339,7 @@ export const PublicListingsPage = () => {
             Showcase of <span className="italic text-amber-400">Off Market</span> Properties
           </h1>
           <p className="text-lg text-white/60 max-w-2xl mx-auto mb-8">
-            Discover exceptional homes in Florida's most prestigious neighborhoods
+            Discover exceptional homes in Florida&apos;s most prestigious neighborhoods
           </p>
           
           {/* Search Bar */}
