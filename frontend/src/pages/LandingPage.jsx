@@ -353,41 +353,33 @@ export const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <p className="text-amber-400 tracking-[0.3em] text-sm mb-3">ABOUT US</p>
+              <p className="text-amber-400 tracking-[0.3em] text-sm mb-3">MEET SHEILA DESAUTELS</p>
               <h2 className="text-4xl md:text-5xl font-serif mb-6">
-                Florida's Premier <span className="italic text-amber-400">Off-Market</span> Specialists
+                25+ Years of <span className="italic text-amber-400">Trusted</span> Excellence
               </h2>
               <p className="text-white/70 leading-relaxed mb-6">
-                For over two decades, we have cultivated an exclusive network of ultra-high-net-worth individuals, 
-                family offices, and discerning buyers seeking Florida's most exceptional properties—before they 
-                ever reach the open market.
+                For over two and a half decades, Sheila Desautels and her husband have been helping families 
+                find their dream homes in Florida's most prestigious communities. Their dedication to service, 
+                deep local knowledge, and genuine care for clients has made them a trusted name in luxury real estate.
               </p>
               <p className="text-white/70 leading-relaxed mb-8">
-                Our off-market expertise spans Palm Beach's legendary estates, Miami Beach's waterfront mansions, 
-                and Naples' most coveted Gulf-front properties. Every transaction is handled with the utmost 
-                discretion and professionalism.
+                As off-market specialists, they've cultivated an exclusive network of discerning buyers and sellers 
+                seeking privacy and personalized attention. Every transaction is handled with the utmost 
+                discretion, integrity, and professionalism.
               </p>
-              <div className="flex flex-wrap gap-4">
-                <div className="bg-[#0d1f3c]/80 border border-amber-400/20 rounded-lg px-6 py-4 backdrop-blur-sm">
-                  <p className="text-amber-400 font-serif text-2xl">Palm Beach</p>
-                  <p className="text-white/50 text-sm">Island Estates</p>
-                </div>
-                <div className="bg-[#0d1f3c]/80 border border-amber-400/20 rounded-lg px-6 py-4 backdrop-blur-sm">
-                  <p className="text-amber-400 font-serif text-2xl">Miami Beach</p>
-                  <p className="text-white/50 text-sm">Star Island</p>
-                </div>
-                <div className="bg-[#0d1f3c]/80 border border-amber-400/20 rounded-lg px-6 py-4 backdrop-blur-sm">
-                  <p className="text-amber-400 font-serif text-2xl">Naples</p>
-                  <p className="text-white/50 text-sm">Port Royal</p>
-                </div>
-              </div>
+              <Link to="/about">
+                <Button className="bg-amber-400 text-black hover:bg-amber-300">
+                  Learn More About Sheila
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
             </div>
             <div className="relative">
               <div className="aspect-[4/5] rounded-lg overflow-hidden">
                 <img 
-                  src="https://images.unsplash.com/photo-1600137444380-ce5aea5c43c8?w=800&q=80" 
-                  alt="Luxury Florida Estate"
-                  className="w-full h-full object-cover"
+                  src="https://customer-assets.emergentagent.com/job_fusion-estates/artifacts/sojktbhq_Sheila-Desautels.jpg" 
+                  alt="Sheila Desautels - Luxury Real Estate Agent"
+                  className="w-full h-full object-cover object-top"
                 />
               </div>
               <div className="absolute -bottom-6 -left-6 bg-amber-400 text-black p-6 rounded-lg">
