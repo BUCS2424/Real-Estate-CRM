@@ -70,10 +70,12 @@ export const MailingListsPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedList, setSelectedList] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showAddSubscriberModal, setShowAddSubscriberModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const fileInputRef = useRef(null);
+  const [editingList, setEditingList] = useState(null);
 
   // Form states
   const [formData, setFormData] = useState({ name: '', description: '', category: 'general' });
