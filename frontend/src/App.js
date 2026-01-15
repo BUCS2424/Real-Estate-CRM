@@ -52,6 +52,7 @@ import { EmailSettings } from './pages/settings/developer/EmailSettings';
 import { CustomCode } from './pages/settings/developer/CustomCode';
 import { SystemMessages } from './pages/settings/developer/SystemMessages';
 import { PWASettings } from './pages/settings/developer/PWASettings';
+import { MailingListsPage } from './pages/MailingListsPage';
 
 import './App.css';
 
