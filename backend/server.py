@@ -2386,6 +2386,55 @@ class StorageProviderResponse(BaseModel):
     created_at: str
     updated_at: str
 
+# ============ GENERAL SETTINGS ============
+
+class GeneralSettingsModel(BaseModel):
+    siteName: str = "Fusion Luxury Estates"
+    siteUrl: str = ""
+    supportEmail: str = ""
+    timezone: str = "America/New_York"
+    dateFormat: str = "MM/DD/YYYY"
+    currency: str = "USD"
+    maintenanceMode: bool = False
+    debugMode: bool = False
+    logoUrl: str = ""
+    logoLinkUrl: str = "/"
+    dashboardLogoUrl: str = ""
+    dashboardLogoLinkUrl: str = "/dashboard"
+    faviconUrl: str = ""
+    pwaIconUrl: str = ""
+
+@api_router.get("/settings/general")
+async def get_general_settings(current_user: dict = Depends(get_current_user)):
+    """Get general application settings"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    settings = await db.general_settings.find_one({}, {"_id": 0})
+    if not settings:
+        # Return defaults
+        return GeneralSettingsModel().model_dump()
+    return settings
+
+@api_router.put("/settings/general")
+async def update_general_settings(settings_data: dict, current_user: dict = Depends(get_current_user)):
+    """Update general application settings"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Add timestamp
+    settings_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    settings_data["updated_by"] = current_user["id"]
+    
+    # Upsert settings
+    await db.general_settings.update_one(
+        {},
+        {"$set": settings_data},
+        upsert=True
+    )
+    
+    return {"message": "Settings saved successfully", "data": settings_data}
+
 @api_router.get("/storage/providers")
 async def get_storage_providers(current_user: dict = Depends(get_current_user)):
     """Get all storage providers configuration"""
