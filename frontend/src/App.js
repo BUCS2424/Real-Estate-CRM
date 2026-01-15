@@ -29,6 +29,7 @@ import { PropertySubmissionsPage } from './pages/PropertySubmissionsPage';
 import { PublicListingsPage } from './pages/PublicListingsPage';
 import { NewsletterPage } from './pages/NewsletterPage';
 import { NewsletterArchivePage } from './pages/NewsletterArchivePage';
+import { AboutPage } from './pages/AboutPage';
 
 // Settings Pages
 import { SettingsOverview } from './pages/settings/SettingsOverview';
