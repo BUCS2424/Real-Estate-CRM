@@ -138,6 +138,7 @@ function App() {
         <Toaster position="top-right" richColors />
         <PWAInstallBanner />
       </AuthProvider>
+      </BrandingProvider>
     </ThemeProvider>
   );
 }
