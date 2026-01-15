@@ -102,6 +102,43 @@ class ContactResponse(BaseModel):
     created_at: str
     created_by: str
 
+# ============ NEWSLETTER MODELS ============
+
+class NewsletterCreate(BaseModel):
+    subject: str
+    content: str  # HTML content from WYSIWYG
+    recipient_type: str = "all"  # all, buyers, sellers
+    scheduled_at: Optional[str] = None  # ISO datetime for scheduled send
+    template_id: Optional[str] = None
+
+class NewsletterResponse(BaseModel):
+    id: str
+    subject: str
+    content: str
+    recipient_type: str
+    status: str  # draft, scheduled, sending, sent, failed
+    scheduled_at: Optional[str]
+    sent_at: Optional[str]
+    recipients_count: int
+    opened_count: int
+    clicked_count: int
+    created_by: str
+    created_at: str
+    updated_at: str
+
+class NewsletterTemplateCreate(BaseModel):
+    name: str
+    subject: str
+    content: str
+    category: str = "general"  # general, welcome, listing, follow-up
+
+class AutoTriggerCreate(BaseModel):
+    name: str
+    trigger_type: str  # new_lead, new_listing, lead_converted, booking_confirmed
+    template_id: str
+    recipient_type: str = "all"
+    is_active: bool = True
+
 class DealCreate(BaseModel):
     title: str
     contact_id: Optional[str] = None
