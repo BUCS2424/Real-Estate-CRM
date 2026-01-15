@@ -16,6 +16,105 @@ router = APIRouter()
 # Store verification codes in memory (in production, use Redis or similar)
 verification_codes = {}
 
+# =========== BOOKING ALIASES FOR FRONTEND COMPATIBILITY ===========
+@router.get("/booking/settings")
+async def get_booking_settings_alias(current_user: dict = Depends(get_current_user)):
+    """Alias for /booking-settings for frontend compatibility"""
+    settings = await db.booking_settings.find_one({"user_id": current_user["id"]}, {"_id": 0})
+    if not settings:
+        raise HTTPException(status_code=404, detail="Booking settings not found")
+    return settings
+
+@router.put("/booking/settings")
+async def update_booking_settings_alias(settings: BookingSettingsCreate, current_user: dict = Depends(get_current_user)):
+    """Alias for PUT /booking-settings for frontend compatibility"""
+    now = datetime.now(timezone.utc).isoformat()
+    update_data = {**settings.model_dump(), "updated_at": now}
+    
+    result = await db.booking_settings.update_one(
+        {"user_id": current_user["id"]},
+        {"$set": update_data}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Booking settings not found")
+    
+    updated = await db.booking_settings.find_one({"user_id": current_user["id"]}, {"_id": 0})
+    return updated
+
+@router.get("/booking/list")
+async def get_booking_list(current_user: dict = Depends(get_current_user)):
+    """Alias for /bookings for frontend compatibility"""
+    bookings = await db.bookings.find({"agent_id": current_user["id"]}, {"_id": 0}).to_list(1000)
+    return bookings
+
+@router.post("/booking/create")
+async def create_booking_alias(booking: BookingCreate, current_user: dict = Depends(get_current_user)):
+    """Alias for creating booking for frontend compatibility"""
+    booking_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    booking_doc = {
+        "id": booking_id,
+        "agent_id": current_user["id"],
+        **booking.model_dump(),
+        "status": "pending",
+        "created_at": now
+    }
+    await db.bookings.insert_one(booking_doc)
+    booking_doc.pop("_id", None)
+    return booking_doc
+
+@router.patch("/booking/{booking_id}/status")
+async def update_booking_status_alias(booking_id: str, data: dict, current_user: dict = Depends(get_current_user)):
+    """Alias for updating booking status for frontend compatibility"""
+    status = data.get("status")
+    result = await db.bookings.update_one(
+        {"id": booking_id, "agent_id": current_user["id"]},
+        {"$set": {"status": status}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    updated = await db.bookings.find_one({"id": booking_id}, {"_id": 0})
+    return updated
+
+@router.delete("/booking/{booking_id}")
+async def delete_booking_alias(booking_id: str, current_user: dict = Depends(get_current_user)):
+    """Alias for deleting booking for frontend compatibility"""
+    result = await db.bookings.delete_one({"id": booking_id, "agent_id": current_user["id"]})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    return {"message": "Booking deleted"}
+
+@router.get("/booking/blocked-dates")
+async def get_blocked_dates_alias(current_user: dict = Depends(get_current_user)):
+    """Alias for getting blocked dates for frontend compatibility"""
+    dates = await db.blocked_dates.find({"user_id": current_user["id"]}, {"_id": 0}).to_list(100)
+    return dates
+
+@router.post("/booking/blocked-dates")
+async def add_blocked_date_alias(blocked: BlockedDateCreate, current_user: dict = Depends(get_current_user)):
+    """Alias for adding blocked date for frontend compatibility"""
+    blocked_id = str(uuid.uuid4())
+    blocked_doc = {
+        "id": blocked_id,
+        "user_id": current_user["id"],
+        **blocked.model_dump(),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.blocked_dates.insert_one(blocked_doc)
+    return {"id": blocked_id, "message": "Date blocked"}
+
+@router.delete("/booking/blocked-dates/{blocked_id}")
+async def remove_blocked_date_alias(blocked_id: str, current_user: dict = Depends(get_current_user)):
+    """Alias for removing blocked date for frontend compatibility"""
+    result = await db.blocked_dates.delete_one({"id": blocked_id, "user_id": current_user["id"]})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Blocked date not found")
+    return {"message": "Blocked date removed"}
+
+# =========== END BOOKING ALIASES ===========
+
 @router.post("/booking-settings", response_model=BookingSettingsResponse)
 async def create_booking_settings(settings: BookingSettingsCreate, current_user: dict = Depends(get_current_user)):
     existing = await db.booking_settings.find_one({"user_id": current_user["id"]})
