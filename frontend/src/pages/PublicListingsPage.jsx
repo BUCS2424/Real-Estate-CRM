@@ -324,7 +324,7 @@ export const PublicListingsPage = () => {
       <div className="pt-16 bg-gradient-to-b from-[#0a1628] via-[#0d1f3c] to-[#0a1628]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-white mb-4">
-            Luxury Properties
+            Showcase of Off Market Properties
           </h1>
           <p className="text-lg text-white/60 max-w-2xl mx-auto mb-8">
             Discover exceptional homes in Florida's most prestigious neighborhoods
