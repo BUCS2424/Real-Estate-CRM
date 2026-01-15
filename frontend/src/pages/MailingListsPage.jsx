@@ -125,6 +125,37 @@ export const MailingListsPage = () => {
     }
   };
 
+  const handleEditList = (list) => {
+    setEditingList(list);
+    setFormData({
+      name: list.name,
+      description: list.description || '',
+      category: list.category || 'general'
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateList = async () => {
+    if (!formData.name.trim()) {
+      toast.error('List name is required');
+      return;
+    }
+    try {
+      await mailingListAPI.updateList(editingList.id, formData);
+      toast.success('Mailing list updated');
+      setShowEditModal(false);
+      setEditingList(null);
+      setFormData({ name: '', description: '', category: 'general' });
+      fetchLists();
+      // Update selected list if it was the one edited
+      if (selectedList?.id === editingList.id) {
+        fetchListDetails(editingList.id);
+      }
+    } catch (error) {
+      toast.error('Failed to update list');
+    }
+  };
+
   const handleDeleteList = async (listId) => {
     if (!window.confirm('Are you sure you want to delete this list? All subscribers will be removed.')) return;
     try {
