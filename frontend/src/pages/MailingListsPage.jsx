@@ -381,6 +381,10 @@ export const MailingListsPage = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditList(list); }}>
+                            <Edit2 className="w-4 h-4 mr-2" />
+                            Edit List
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleExport(list.id)}>
                             <Download className="w-4 h-4 mr-2" />
                             Export CSV
