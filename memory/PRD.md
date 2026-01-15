@@ -210,12 +210,52 @@ Build a unified workspace platform called "Fusion Builder All In One CRM" for re
 - [ ] Backend refactor (split server.py into routers)
 - [ ] Dark mode toggle implementation
 - [ ] Storage/media management in admin settings
-- [ ] Property filtering/search on landing page
 
 ### P3 - Future Backlog
 - [ ] Automated task generation from deals
 - [ ] Multi-item drag-and-drop on Kanban boards
 - [ ] Advanced reporting & analytics
+
+---
+
+## Update: January 15, 2026 - Contacts Redesign & Newsletter System
+
+### Contacts Page Redesign:
+- ✅ Changed from grid cards to list/table view
+- ✅ Category filter tabs (All, Buyers, Sellers)
+- ✅ Stats cards for total, buyers, sellers counts
+- ✅ Table with Contact, Category, Details, Status, Score, Added, Actions
+- ✅ Category badges with icons (shopping cart for buyers, home for sellers)
+
+### Newsletter System:
+- ✅ **Newsletter Center** at `/newsletter` with:
+  - Compose tab with WYSIWYG editor (TipTap)
+  - All Newsletters list
+  - Templates management
+  - Auto-Triggers for automated emails
+  - Archive tab for sent newsletters
+- ✅ **WYSIWYG Editor Features**:
+  - Bold, Italic, Underline
+  - H1, H2 headings
+  - Bullet and numbered lists
+  - Text alignment
+  - Link and Image insertion
+- ✅ **Recipient Targeting**: All Contacts, Buyers Only, Sellers Only
+- ✅ **Scheduling**: Optional datetime picker for scheduled sending
+- ✅ **Templates**: Save and reuse newsletter templates
+- ✅ **Auto-Triggers**: Automated emails on events:
+  - New Lead Captured
+  - New Listing Added
+  - Lead Converted
+  - Booking Confirmed
+- ✅ **Public Newsletter Archive** at `/newsletter-archive`
+- ✅ Footer link to Newsletter Archive on landing page
+
+### Additional Features:
+- ✅ Convert Lead to Contact with category (buyer/seller)
+- ✅ Showcase Listings page at `/showcase`
+- ✅ Download as Word document in AI Writer
+- ✅ Email and SMS consent checkboxes on forms
 
 ---
 
