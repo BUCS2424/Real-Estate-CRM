@@ -2606,6 +2606,9 @@ async def set_default_storage_provider(provider_id: str, current_user: dict = De
     
     return {"message": f"{provider['name']} set as default storage provider"}
 
+# Include the router in the main app
+app.include_router(api_router)
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
