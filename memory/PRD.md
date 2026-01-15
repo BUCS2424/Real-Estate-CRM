@@ -348,7 +348,73 @@ Applied the design language from the About (Sheila Desautels) page across all pu
 
 ---
 
-## Update: January 15, 2026 - Storage Providers System
+## Update: January 15, 2026 - Backend Refactor
+
+### Major Backend Architecture Overhaul:
+Refactored the monolithic `server.py` (2,676 lines) into a clean, modular architecture.
+
+#### New Structure:
+```
+/app/backend/
+├── server.py          (165 lines - main app entry point)
+├── database.py        (MongoDB connection module)
+├── models/            (Pydantic models)
+│   ├── __init__.py
+│   ├── user.py
+│   ├── contact.py
+│   ├── deal.py
+│   ├── task.py
+│   ├── article.py
+│   ├── booking.py
+│   ├── newsletter.py
+│   ├── property.py
+│   ├── storage.py
+│   └── settings.py
+├── routes/            (FastAPI routers)
+│   ├── __init__.py    (Router aggregation)
+│   ├── auth.py
+│   ├── contacts.py
+│   ├── deals.py
+│   ├── tasks.py
+│   ├── articles.py
+│   ├── bookings.py
+│   ├── newsletters.py
+│   ├── properties.py
+│   ├── leads.py
+│   ├── storage.py
+│   ├── settings.py
+│   ├── users.py
+│   ├── notifications.py
+│   └── dashboard.py
+└── utils/             (Shared utilities)
+    ├── __init__.py
+    └── auth.py        (JWT, password hashing)
+```
+
+#### Benefits:
+- **94% reduction** in main server.py size (2,676 → 165 lines)
+- Clear separation of concerns
+- Easier to maintain and extend
+- Each module is independently testable
+- Better code organization following FastAPI best practices
+
+#### All Endpoints Preserved:
+- Authentication (/api/auth/*)
+- Contacts CRUD (/api/contacts/*)
+- Deals Pipeline (/api/deals/*)
+- Tasks Management (/api/tasks/*)
+- Articles & AI Writer (/api/articles/*)
+- Booking System (/api/bookings/*, /api/public/booking/*)
+- Newsletter System (/api/newsletters/*)
+- Property Listings (/api/properties/*, /api/public/properties/*)
+- Leads Management (/api/leads/*)
+- Storage Providers (/api/storage/*)
+- Settings (/api/settings/*)
+- User Management (/api/users/*)
+- Notifications (/api/notifications/*)
+- Dashboard Stats (/api/dashboard/*)
+
+---
 
 ### Storage Provider Management:
 Added a comprehensive storage provider management system with support for 5 different cloud storage services:
