@@ -468,15 +468,25 @@ export const LeadsPage = () => {
                 </div>
               </div>
 
-              <DialogFooter>
-                <Button variant="outline" onClick={() => handleDeleteLead(selectedLead.id)}>
+              <DialogFooter className="flex-col sm:flex-row gap-2">
+                <Button variant="outline" onClick={() => handleDeleteLead(selectedLead.id)} className="text-destructive">
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete
                 </Button>
-                <Button onClick={handleSaveNotes} disabled={updating}>
+                <Button variant="outline" onClick={handleSaveNotes} disabled={updating}>
                   {updating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                   Save Notes
                 </Button>
+                {selectedLead.status !== 'converted' && (
+                  <Button 
+                    onClick={() => handleConvertToContact(selectedLead.id, selectedLead.lead_type)}
+                    disabled={converting}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {converting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <UserCheck className="w-4 h-4 mr-2" />}
+                    Convert to {selectedLead.lead_type === 'buyer' ? 'Buyer' : 'Seller'} Contact
+                  </Button>
+                )}
               </DialogFooter>
             </>
           )}
