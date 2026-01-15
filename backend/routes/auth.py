@@ -1,9 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from datetime import datetime, timezone
 import uuid
 from database import db
 from models.user import UserCreate, UserLogin, UserResponse, TokenResponse, UserRole
-from utils.auth import hash_password, verify_password, create_access_token
+from utils.auth import hash_password, verify_password, create_access_token, get_current_user
 
 router = APIRouter()
 
@@ -66,11 +66,5 @@ async def login(credentials: UserLogin):
     )
 
 @router.get("/me", response_model=UserResponse)
-async def get_me(current_user: dict):
-    from fastapi import Depends
-    from utils.auth import get_current_user
-    # This will be injected by dependency
+async def get_me(current_user: dict = Depends(get_current_user)):
     return UserResponse(**current_user)
-
-# Re-export for dependency injection in other routes
-from utils.auth import get_current_user
