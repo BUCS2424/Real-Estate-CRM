@@ -160,6 +160,7 @@ export const leadsAPI = {
   get: (id) => api.get(`/leads/${id}`),
   update: (id, data) => api.patch(`/leads/${id}`, data),
   delete: (id) => api.delete(`/leads/${id}`),
+  convertToContact: (id) => api.post(`/leads/${id}/convert`),
 };
 
 // Property Submissions (seller workflow)
