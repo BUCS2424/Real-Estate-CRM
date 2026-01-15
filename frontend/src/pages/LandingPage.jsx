@@ -48,6 +48,7 @@ const formatPrice = (price) => {
 
 export const LandingPage = () => {
   const navigate = useNavigate();
+  const { branding } = useBranding();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
