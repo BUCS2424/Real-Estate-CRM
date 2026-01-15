@@ -507,7 +507,9 @@ export const LandingPage = () => {
                   email_verified: emailVerified,
                   phone_verified: phoneVerified,
                   budget: buyerBudget,
-                  areas_of_interest: buyerAreas
+                  areas_of_interest: buyerAreas,
+                  consent_email: consentEmail,
+                  consent_sms: consentSMS
                 };
                 await publicAPI.submitLead(leadData);
                 toast.success('Thank you! You\'ll receive auction invitations soon.');
@@ -528,7 +530,9 @@ export const LandingPage = () => {
                   timeline: sellerTimeline,
                   description: sellerDescription,
                   email_verified: emailVerified,
-                  phone_verified: phoneVerified
+                  phone_verified: phoneVerified,
+                  consent_email: consentEmail,
+                  consent_sms: consentSMS
                 };
                 await propertySubmissionsAPI.submit(submissionData);
                 toast.success('Property submitted! Our team will review and contact you soon.');
@@ -541,6 +545,7 @@ export const LandingPage = () => {
               setSellerPropertyType('single_family'); setSellerBedrooms(''); setSellerBathrooms('');
               setSellerSqft(''); setSellerAskingPrice(''); setSellerTimeline(''); setSellerDescription('');
               setEmailVerified(false); setPhoneVerified(false);
+              setConsentEmail(false); setConsentSMS(false);
             } catch (error) {
               toast.error('Something went wrong. Please try again.');
             } finally {
