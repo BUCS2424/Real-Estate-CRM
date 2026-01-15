@@ -45,17 +45,54 @@ export const AboutPage = () => {
       <section className="pt-24 pb-16 bg-gradient-to-b from-[#0a1628] via-[#0d1f3c] to-[#0a1628]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Image */}
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-tr from-amber-400/20 to-transparent rounded-2xl transform rotate-3"></div>
-              <img 
-                src="https://customer-assets.emergentagent.com/job_fusion-estates/artifacts/sojktbhq_Sheila-Desautels.jpg"
-                alt="Sheila Desautels - Luxury Real Estate Agent"
-                className="relative rounded-2xl shadow-2xl shadow-amber-400/10 w-full max-w-md mx-auto lg:mx-0"
-              />
-              <div className="absolute -bottom-4 -right-4 bg-amber-400 text-black px-6 py-3 rounded-lg shadow-lg">
-                <p className="font-serif text-2xl font-bold">25+</p>
-                <p className="text-sm">Years Experience</p>
+            {/* Image with Creative Frame */}
+            <div className="relative flex items-center justify-center">
+              {/* Outer decorative rings */}
+              <div className="absolute w-[420px] h-[420px] rounded-full border-2 border-amber-400/10 animate-pulse"></div>
+              <div className="absolute w-[380px] h-[380px] rounded-full border border-amber-400/20"></div>
+              <div className="absolute w-[340px] h-[340px] rounded-full bg-gradient-to-br from-amber-400/5 to-transparent"></div>
+              
+              {/* Decorative corner accents */}
+              <div className="absolute top-4 left-4 w-24 h-24 border-l-2 border-t-2 border-amber-400/40 rounded-tl-3xl"></div>
+              <div className="absolute top-4 right-4 w-24 h-24 border-r-2 border-t-2 border-amber-400/40 rounded-tr-3xl"></div>
+              <div className="absolute bottom-4 left-4 w-24 h-24 border-l-2 border-b-2 border-amber-400/40 rounded-bl-3xl"></div>
+              <div className="absolute bottom-4 right-4 w-24 h-24 border-r-2 border-b-2 border-amber-400/40 rounded-br-3xl"></div>
+              
+              {/* Glowing background effect */}
+              <div className="absolute w-72 h-72 bg-amber-400/20 rounded-full blur-3xl"></div>
+              <div className="absolute w-56 h-56 bg-amber-500/10 rounded-full blur-2xl"></div>
+              
+              {/* Image container with frame */}
+              <div className="relative z-10">
+                <div className="relative">
+                  {/* Golden frame border */}
+                  <div className="absolute -inset-3 bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 rounded-2xl opacity-80 blur-sm"></div>
+                  <div className="absolute -inset-2 bg-gradient-to-br from-amber-400/80 to-amber-600/80 rounded-xl"></div>
+                  
+                  {/* Image */}
+                  <img 
+                    src="https://customer-assets.emergentagent.com/job_fusion-estates/artifacts/sojktbhq_Sheila-Desautels.jpg"
+                    alt="Sheila Desautels - Luxury Real Estate Agent"
+                    className="relative rounded-xl w-64 h-80 object-cover object-top shadow-2xl"
+                  />
+                </div>
+                
+                {/* Experience badge */}
+                <div className="absolute -bottom-6 -right-6 bg-gradient-to-br from-amber-400 to-amber-500 text-black px-5 py-3 rounded-xl shadow-xl shadow-amber-400/30 z-20">
+                  <p className="font-serif text-2xl font-bold">25+</p>
+                  <p className="text-xs font-medium">Years Experience</p>
+                </div>
+                
+                {/* Small decorative dots */}
+                <div className="absolute -top-8 -left-8 flex gap-2">
+                  <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
+                  <div className="w-2 h-2 bg-amber-400/60 rounded-full"></div>
+                  <div className="w-2 h-2 bg-amber-400/30 rounded-full"></div>
+                </div>
+                <div className="absolute -bottom-8 -left-4 flex gap-2">
+                  <div className="w-1.5 h-1.5 bg-amber-400/30 rounded-full"></div>
+                  <div className="w-1.5 h-1.5 bg-amber-400/60 rounded-full"></div>
+                </div>
               </div>
             </div>
 
