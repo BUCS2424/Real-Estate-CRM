@@ -2392,7 +2392,11 @@ async def get_storage_providers(current_user: dict = Depends(get_current_user)):
     if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
         raise HTTPException(status_code=403, detail="Admin access required")
     
-    providers = await db.storage_providers.find({}, {"_id": 0}).to_list(100)
+    providers_cursor = db.storage_providers.find({})
+    providers = []
+    async for p in providers_cursor:
+        p.pop("_id", None)  # Remove MongoDB _id
+        providers.append(p)
     
     # If no providers exist, create default templates
     if not providers:
@@ -2477,6 +2481,7 @@ async def get_storage_providers(current_user: dict = Depends(get_current_user)):
     for provider in providers:
         provider["credentials_configured"] = bool(provider.get("credentials"))
         provider.pop("credentials", None)
+        provider.pop("_id", None)  # Ensure _id is removed
     
     return providers
 
