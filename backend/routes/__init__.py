@@ -1,7 +1,10 @@
 # Routes package
 from fastapi import APIRouter
 
-# Import all routers
+# Create main API router first
+api_router = APIRouter(prefix="/api")
+
+# Import all routers after api_router is defined
 from .auth import router as auth_router
 from .contacts import router as contacts_router
 from .deals import router as deals_router
@@ -16,9 +19,6 @@ from .settings import router as settings_router
 from .users import router as users_router
 from .notifications import router as notifications_router
 from .dashboard import router as dashboard_router
-
-# Create main API router
-api_router = APIRouter(prefix="/api")
 
 # Include all sub-routers
 api_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
