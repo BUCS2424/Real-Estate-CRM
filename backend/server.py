@@ -1917,6 +1917,239 @@ async def delete_lead(lead_id: str, current_user: dict = Depends(get_current_use
         raise HTTPException(status_code=404, detail="Lead not found")
     return {"message": "Lead deleted"}
 
+# ============ NEWSLETTER SYSTEM ============
+
+@api_router.post("/newsletters")
+async def create_newsletter(newsletter: NewsletterCreate, current_user: dict = Depends(get_current_user)):
+    """Create a new newsletter (draft or scheduled)"""
+    doc = {
+        "id": str(uuid.uuid4()),
+        "subject": newsletter.subject,
+        "content": newsletter.content,
+        "recipient_type": newsletter.recipient_type,
+        "template_id": newsletter.template_id,
+        "status": "scheduled" if newsletter.scheduled_at else "draft",
+        "scheduled_at": newsletter.scheduled_at,
+        "sent_at": None,
+        "recipients_count": 0,
+        "opened_count": 0,
+        "clicked_count": 0,
+        "created_by": current_user["id"],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.newsletters.insert_one(doc)
+    return {"message": "Newsletter created", "id": doc["id"], "status": doc["status"]}
+
+@api_router.get("/newsletters")
+async def list_newsletters(status: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    """List all newsletters"""
+    query = {}
+    if status:
+        query["status"] = status
+    newsletters = await db.newsletters.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return newsletters
+
+@api_router.get("/newsletters/archive")
+async def list_sent_newsletters():
+    """Public endpoint for newsletter archive (sent newsletters only)"""
+    newsletters = await db.newsletters.find(
+        {"status": "sent"},
+        {"_id": 0, "id": 1, "subject": 1, "sent_at": 1, "recipients_count": 1}
+    ).sort("sent_at", -1).to_list(100)
+    return newsletters
+
+@api_router.get("/newsletters/{newsletter_id}")
+async def get_newsletter(newsletter_id: str, current_user: dict = Depends(get_current_user)):
+    """Get a single newsletter"""
+    newsletter = await db.newsletters.find_one({"id": newsletter_id}, {"_id": 0})
+    if not newsletter:
+        raise HTTPException(status_code=404, detail="Newsletter not found")
+    return newsletter
+
+@api_router.put("/newsletters/{newsletter_id}")
+async def update_newsletter(newsletter_id: str, data: dict, current_user: dict = Depends(get_current_user)):
+    """Update a newsletter"""
+    allowed = ["subject", "content", "recipient_type", "scheduled_at", "status"]
+    update_data = {k: v for k, v in data.items() if k in allowed}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.newsletters.update_one({"id": newsletter_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Newsletter not found")
+    return {"message": "Newsletter updated"}
+
+@api_router.post("/newsletters/{newsletter_id}/send")
+async def send_newsletter(newsletter_id: str, current_user: dict = Depends(get_current_user)):
+    """Send a newsletter immediately"""
+    newsletter = await db.newsletters.find_one({"id": newsletter_id}, {"_id": 0})
+    if not newsletter:
+        raise HTTPException(status_code=404, detail="Newsletter not found")
+    
+    # Get recipients based on type
+    recipient_type = newsletter.get("recipient_type", "all")
+    query = {"email": {"$exists": True, "$ne": None}}
+    if recipient_type == "buyers":
+        query["category"] = "buyer"
+    elif recipient_type == "sellers":
+        query["category"] = "seller"
+    
+    contacts = await db.contacts.find(query, {"_id": 0, "email": 1, "name": 1}).to_list(10000)
+    recipients_count = len(contacts)
+    
+    # MOCK: Log email sending (replace with actual email service)
+    for contact in contacts:
+        logger.info(f"[MOCK EMAIL] Newsletter '{newsletter['subject']}' sent to {contact.get('email')}")
+    
+    # Update newsletter status
+    await db.newsletters.update_one(
+        {"id": newsletter_id},
+        {"$set": {
+            "status": "sent",
+            "sent_at": datetime.now(timezone.utc).isoformat(),
+            "recipients_count": recipients_count,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    logger.info(f"Newsletter {newsletter_id} sent to {recipients_count} recipients")
+    return {"message": f"Newsletter sent to {recipients_count} recipients", "recipients_count": recipients_count}
+
+@api_router.delete("/newsletters/{newsletter_id}")
+async def delete_newsletter(newsletter_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a newsletter"""
+    result = await db.newsletters.delete_one({"id": newsletter_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Newsletter not found")
+    return {"message": "Newsletter deleted"}
+
+# Newsletter Templates
+@api_router.post("/newsletter-templates")
+async def create_template(template: NewsletterTemplateCreate, current_user: dict = Depends(get_current_user)):
+    """Create a newsletter template"""
+    doc = {
+        "id": str(uuid.uuid4()),
+        "name": template.name,
+        "subject": template.subject,
+        "content": template.content,
+        "category": template.category,
+        "created_by": current_user["id"],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.newsletter_templates.insert_one(doc)
+    return {"message": "Template created", "id": doc["id"]}
+
+@api_router.get("/newsletter-templates")
+async def list_templates(current_user: dict = Depends(get_current_user)):
+    """List all newsletter templates"""
+    templates = await db.newsletter_templates.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return templates
+
+@api_router.get("/newsletter-templates/{template_id}")
+async def get_template(template_id: str, current_user: dict = Depends(get_current_user)):
+    """Get a single template"""
+    template = await db.newsletter_templates.find_one({"id": template_id}, {"_id": 0})
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    return template
+
+@api_router.delete("/newsletter-templates/{template_id}")
+async def delete_template(template_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a template"""
+    result = await db.newsletter_templates.delete_one({"id": template_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Template not found")
+    return {"message": "Template deleted"}
+
+# Auto Triggers
+@api_router.post("/newsletter-triggers")
+async def create_trigger(trigger: AutoTriggerCreate, current_user: dict = Depends(get_current_user)):
+    """Create an auto-send trigger"""
+    doc = {
+        "id": str(uuid.uuid4()),
+        "name": trigger.name,
+        "trigger_type": trigger.trigger_type,
+        "template_id": trigger.template_id,
+        "recipient_type": trigger.recipient_type,
+        "is_active": trigger.is_active,
+        "created_by": current_user["id"],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.newsletter_triggers.insert_one(doc)
+    return {"message": "Trigger created", "id": doc["id"]}
+
+@api_router.get("/newsletter-triggers")
+async def list_triggers(current_user: dict = Depends(get_current_user)):
+    """List all auto-send triggers"""
+    triggers = await db.newsletter_triggers.find({}, {"_id": 0}).to_list(100)
+    return triggers
+
+@api_router.patch("/newsletter-triggers/{trigger_id}")
+async def update_trigger(trigger_id: str, data: dict, current_user: dict = Depends(get_current_user)):
+    """Update a trigger (enable/disable)"""
+    allowed = ["is_active", "template_id", "recipient_type"]
+    update_data = {k: v for k, v in data.items() if k in allowed}
+    result = await db.newsletter_triggers.update_one({"id": trigger_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Trigger not found")
+    return {"message": "Trigger updated"}
+
+@api_router.delete("/newsletter-triggers/{trigger_id}")
+async def delete_trigger(trigger_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a trigger"""
+    result = await db.newsletter_triggers.delete_one({"id": trigger_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Trigger not found")
+    return {"message": "Trigger deleted"}
+
+# Helper function to process auto-triggers
+async def process_auto_trigger(trigger_type: str, context: dict = None):
+    """Process auto-triggers when events happen"""
+    triggers = await db.newsletter_triggers.find(
+        {"trigger_type": trigger_type, "is_active": True},
+        {"_id": 0}
+    ).to_list(100)
+    
+    for trigger in triggers:
+        template = await db.newsletter_templates.find_one({"id": trigger["template_id"]}, {"_id": 0})
+        if not template:
+            continue
+        
+        # Get recipients
+        recipient_type = trigger.get("recipient_type", "all")
+        query = {"email": {"$exists": True, "$ne": None}}
+        if recipient_type == "buyers":
+            query["category"] = "buyer"
+        elif recipient_type == "sellers":
+            query["category"] = "seller"
+        
+        contacts = await db.contacts.find(query, {"_id": 0, "email": 1, "name": 1}).to_list(10000)
+        
+        # MOCK: Send emails
+        for contact in contacts:
+            logger.info(f"[AUTO-TRIGGER] Sending '{template['subject']}' to {contact.get('email')} (trigger: {trigger_type})")
+        
+        # Log the auto-send
+        auto_newsletter = {
+            "id": str(uuid.uuid4()),
+            "subject": template["subject"],
+            "content": template["content"],
+            "recipient_type": recipient_type,
+            "template_id": template["id"],
+            "status": "sent",
+            "scheduled_at": None,
+            "sent_at": datetime.now(timezone.utc).isoformat(),
+            "recipients_count": len(contacts),
+            "opened_count": 0,
+            "clicked_count": 0,
+            "created_by": "system",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "auto_trigger": trigger_type
+        }
+        await db.newsletters.insert_one(auto_newsletter)
+        logger.info(f"Auto-trigger '{trigger_type}' sent newsletter to {len(contacts)} recipients")
+
 # ============ PROPERTY SUBMISSIONS ============
 
 @api_router.post("/public/property-submissions")
