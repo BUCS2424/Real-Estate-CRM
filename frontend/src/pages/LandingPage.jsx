@@ -690,10 +690,36 @@ export const LandingPage = () => {
               </div>
             )}
             
+            {/* Consent Checkboxes */}
+            <div className="space-y-3 text-sm">
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={consentEmail}
+                  onChange={(e) => setConsentEmail(e.target.checked)}
+                  className="mt-1 w-4 h-4 rounded border-amber-400/30 bg-[#0d1f3c] text-amber-400 focus:ring-amber-400 focus:ring-offset-0"
+                />
+                <span className="text-white/70 group-hover:text-white/90 transition-colors">
+                  I agree to receive email communications about property updates, market insights, and exclusive listings.
+                </span>
+              </label>
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={consentSMS}
+                  onChange={(e) => setConsentSMS(e.target.checked)}
+                  className="mt-1 w-4 h-4 rounded border-amber-400/30 bg-[#0d1f3c] text-amber-400 focus:ring-amber-400 focus:ring-offset-0"
+                />
+                <span className="text-white/70 group-hover:text-white/90 transition-colors">
+                  I agree to receive SMS/text messages for appointment reminders and urgent updates. Msg & data rates may apply.
+                </span>
+              </label>
+            </div>
+            
             <Button 
               type="submit" 
-              disabled={submitting}
-              className="w-full bg-amber-400 text-black hover:bg-amber-300 py-6 text-base"
+              disabled={submitting || !consentEmail}
+              className="w-full bg-amber-400 text-black hover:bg-amber-300 py-6 text-base disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
               {leadType === 'buyer' ? 'REQUEST AUCTION ACCESS' : 'SUBMIT MY PROPERTY'}
