@@ -38,17 +38,17 @@ class PropertyListingResponse(BaseModel):
     bedrooms: int
     bathrooms: float
     sqft: int
-    lot_size: Optional[float]
-    year_built: Optional[int]
+    lot_size: Optional[float] = None
+    year_built: Optional[int] = None
     property_type: str
     status: str
-    description: Optional[str]
-    features: List[str]
-    images: List[PropertyImage]
-    mls_number: Optional[str]
-    garage: Optional[int]
-    pool: bool
-    waterfront: bool
+    description: Optional[str] = None
+    features: List[str] = []
+    images: List[PropertyImage] = []
+    mls_number: Optional[str] = None
+    garage: Optional[int] = None
+    pool: bool = False
+    waterfront: bool = False
     created_at: str
 
 class MediaFile(BaseModel):
