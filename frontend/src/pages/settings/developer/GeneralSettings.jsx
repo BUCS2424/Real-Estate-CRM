@@ -54,6 +54,8 @@ export const GeneralSettings = () => {
     try {
       await api.put('/settings/general', settings);
       toast.success('General settings saved successfully');
+      // Refresh branding across the app
+      refreshBranding();
     } catch (error) {
       toast.error('Failed to save settings');
     } finally {
