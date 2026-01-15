@@ -12,7 +12,8 @@ import {
   Loader2,
   Copy,
   Check,
-  Plus
+  Plus,
+  Download
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -30,6 +31,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { toast } from 'sonner';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
+import { saveAs } from 'file-saver';
 
 const ARTICLE_TYPES = [
   { id: 'email', label: 'Email', icon: Mail, description: 'Professional email outreach' },
