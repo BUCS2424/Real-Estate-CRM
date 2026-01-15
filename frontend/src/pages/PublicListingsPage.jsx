@@ -307,7 +307,7 @@ export const PublicListingsPage = () => {
             </Link>
             <nav className="hidden md:flex items-center gap-8">
               <Link to="/" className="text-sm text-white/70 hover:text-amber-400 transition-colors">HOME</Link>
-              <Link to="/listings" className="text-sm text-amber-400 border-b border-amber-400">LISTINGS</Link>
+              <Link to="/showcase" className="text-sm text-amber-400 border-b border-amber-400">LISTING SHOWCASE</Link>
               <a href="/#about" className="text-sm text-white/70 hover:text-amber-400 transition-colors">ABOUT</a>
               <a href="/#contact" className="text-sm text-white/70 hover:text-amber-400 transition-colors">CONTACT</a>
             </nav>
