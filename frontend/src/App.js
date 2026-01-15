@@ -65,10 +65,11 @@ function App() {
 
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Public Routes */}
+      <BrandingProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/property/:id" element={<PropertyDetailPage />} />
             <Route path="/showcase" element={<PublicListingsPage />} />
