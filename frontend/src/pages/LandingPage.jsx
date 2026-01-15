@@ -374,17 +374,29 @@ export const LandingPage = () => {
                 </Button>
               </Link>
             </div>
-            <div className="relative">
-              <div className="aspect-[4/5] rounded-lg overflow-hidden">
+            <div className="relative flex items-center justify-center min-h-[500px]">
+              {/* Background effects */}
+              <div className="absolute w-96 h-96 rounded-full border border-amber-400/10"></div>
+              <div className="absolute w-80 h-80 rounded-full bg-gradient-to-br from-amber-400/5 to-transparent"></div>
+              <div className="absolute w-64 h-64 bg-amber-400/10 rounded-full blur-3xl"></div>
+              
+              {/* Corner accents */}
+              <div className="absolute top-0 left-0 w-20 h-20 border-l-2 border-t-2 border-amber-400/30 rounded-tl-2xl"></div>
+              <div className="absolute bottom-0 right-0 w-20 h-20 border-r-2 border-b-2 border-amber-400/30 rounded-br-2xl"></div>
+              
+              {/* Image with frame */}
+              <div className="relative z-10">
+                <div className="absolute -inset-2 bg-gradient-to-br from-amber-400/60 to-amber-600/60 rounded-xl blur-sm"></div>
+                <div className="absolute -inset-1 bg-gradient-to-br from-amber-400 to-amber-500 rounded-lg"></div>
                 <img 
                   src="https://customer-assets.emergentagent.com/job_fusion-estates/artifacts/sojktbhq_Sheila-Desautels.jpg" 
                   alt="Sheila Desautels - Luxury Real Estate Agent"
-                  className="w-full h-full object-cover object-top"
+                  className="relative w-56 h-72 object-cover object-top rounded-lg shadow-2xl"
                 />
-              </div>
-              <div className="absolute -bottom-6 -left-6 bg-amber-400 text-black p-6 rounded-lg">
-                <p className="text-3xl font-serif">25+</p>
-                <p className="text-sm">Years of Excellence</p>
+                <div className="absolute -bottom-6 -left-6 bg-gradient-to-br from-amber-400 to-amber-500 text-black p-4 rounded-lg shadow-xl z-20">
+                  <p className="text-2xl font-serif font-bold">25+</p>
+                  <p className="text-xs">Years of Excellence</p>
+                </div>
               </div>
             </div>
           </div>
