@@ -431,13 +431,18 @@ export const AIWriterPage = () => {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <Label>Generated Content</Label>
-                      <Button variant="ghost" size="sm" onClick={handleCopy}>
-                        {copied ? (
-                          <><Check className="w-4 h-4 mr-1" /> Copied</>
-                        ) : (
-                          <><Copy className="w-4 h-4 mr-1" /> Copy</>
-                        )}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="sm" onClick={handleDownloadWord} data-testid="download-word-btn">
+                          <Download className="w-4 h-4 mr-1" /> Word
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={handleCopy}>
+                          {copied ? (
+                            <><Check className="w-4 h-4 mr-1" /> Copied</>
+                          ) : (
+                            <><Copy className="w-4 h-4 mr-1" /> Copy</>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                     <Textarea
                       value={generatedContent}
