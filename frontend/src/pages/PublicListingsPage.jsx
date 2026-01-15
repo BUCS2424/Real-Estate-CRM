@@ -321,10 +321,22 @@ export const PublicListingsPage = () => {
       </header>
 
       {/* Hero */}
-      <div className="pt-16 bg-gradient-to-b from-[#0a1628] via-[#0d1f3c] to-[#0a1628]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+      <div className="pt-16 bg-gradient-to-b from-[#0a1628] via-[#0d1f3c] to-[#0a1628] relative overflow-hidden">
+        {/* Decorative Elements */}
+        <div className="absolute top-20 left-10 w-64 h-64 bg-amber-400/5 rounded-full blur-3xl"></div>
+        <div className="absolute top-40 right-20 w-96 h-96 bg-amber-400/3 rounded-full blur-3xl"></div>
+        <div className="absolute top-32 left-1/4 w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+        <div className="absolute top-48 right-1/3 w-1.5 h-1.5 bg-amber-400/60 rounded-full"></div>
+        <div className="absolute top-24 right-1/4 w-1 h-1 bg-amber-400/40 rounded-full"></div>
+        
+        {/* Corner Accents */}
+        <div className="absolute top-20 left-8 w-16 h-16 border-l-2 border-t-2 border-amber-400/20 rounded-tl-2xl"></div>
+        <div className="absolute top-20 right-8 w-16 h-16 border-r-2 border-t-2 border-amber-400/20 rounded-tr-2xl"></div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center relative z-10">
+          <p className="text-amber-400 uppercase tracking-[0.3em] text-sm mb-4">Exclusive Collection</p>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-white mb-4">
-            Showcase of Off Market Properties
+            Showcase of <span className="italic text-amber-400">Off Market</span> Properties
           </h1>
           <p className="text-lg text-white/60 max-w-2xl mx-auto mb-8">
             Discover exceptional homes in Florida's most prestigious neighborhoods
@@ -376,9 +388,13 @@ export const PublicListingsPage = () => {
         <div className="flex gap-8">
           {/* Desktop Sidebar Filters */}
           <aside className="hidden lg:block w-72 flex-shrink-0">
-            <div className="sticky top-24 bg-[#0d1f3c]/50 rounded-2xl p-6 border border-amber-400/10">
-              <h3 className="text-lg font-serif text-white mb-6 flex items-center gap-2">
-                <SlidersHorizontal className="w-5 h-5 text-amber-400" />
+            <div className="sticky top-24 bg-[#0d1f3c]/50 rounded-2xl p-6 border border-amber-400/10 relative overflow-hidden">
+              {/* Decorative glow */}
+              <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-400/5 rounded-full blur-2xl"></div>
+              <h3 className="text-lg font-serif text-white mb-6 flex items-center gap-2 relative z-10">
+                <div className="w-10 h-10 bg-amber-400/10 rounded-xl flex items-center justify-center">
+                  <SlidersHorizontal className="w-5 h-5 text-amber-400" />
+                </div>
                 Filters
               </h3>
               <FilterPanel />
@@ -470,13 +486,22 @@ export const PublicListingsPage = () => {
               </div>
             ) : filteredListings.length === 0 ? (
               /* Empty State */
-              <div className="text-center py-16">
-                <Home className="w-16 h-16 text-amber-400/30 mx-auto mb-4" />
-                <h3 className="text-xl font-serif text-white mb-2">No Properties Found</h3>
-                <p className="text-white/50 mb-6">Try adjusting your filters to see more results</p>
-                <Button onClick={clearFilters} className="bg-amber-400 text-black hover:bg-amber-300">
-                  Clear All Filters
-                </Button>
+              <div className="text-center py-16 relative">
+                {/* Decorative rings */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-48 h-48 rounded-full border border-amber-400/10 animate-pulse"></div>
+                  <div className="absolute w-40 h-40 rounded-full border border-amber-400/5"></div>
+                </div>
+                <div className="relative z-10">
+                  <div className="w-20 h-20 bg-amber-400/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Home className="w-10 h-10 text-amber-400/50" />
+                  </div>
+                  <h3 className="text-xl font-serif text-white mb-2">No Properties Found</h3>
+                  <p className="text-white/50 mb-6">Try adjusting your filters to see more results</p>
+                  <Button onClick={clearFilters} className="bg-amber-400 text-black hover:bg-amber-300">
+                    Clear All Filters
+                  </Button>
+                </div>
               </div>
             ) : (
               /* Grid View */
@@ -558,10 +583,21 @@ export const PublicListingsPage = () => {
 
       {/* Footer */}
       <footer className="bg-[#060d18] border-t border-amber-400/10 py-8 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-white/40 text-sm">
-            Powered By: <a href="https://a2gdesigns.com" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:underline">A2G</a>
-          </p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Home className="w-5 h-5 text-amber-400" />
+              <span className="font-serif text-white">Fusion Luxury Estates</span>
+            </div>
+            <div className="flex gap-6 text-sm text-white/50">
+              <Link to="/newsletter-archive" className="hover:text-amber-400 transition-colors">Newsletter Archive</Link>
+              <Link to="/about" className="hover:text-amber-400 transition-colors">About</Link>
+              <a href="/#contact" className="hover:text-amber-400 transition-colors">Contact</a>
+            </div>
+            <p className="text-sm text-white/30">
+              Powered By: <a href="https://a2gdesigns.com" target="_blank" rel="noopener noreferrer" className="text-amber-400/70 hover:text-amber-400">A2G</a>
+            </p>
+          </div>
         </div>
       </footer>
     </div>
