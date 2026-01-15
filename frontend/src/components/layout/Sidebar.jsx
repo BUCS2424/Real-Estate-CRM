@@ -13,7 +13,8 @@ import {
   Home,
   UserPlus,
   FileInput,
-  Mail
+  Mail,
+  ListPlus
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';

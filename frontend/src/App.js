@@ -90,6 +90,7 @@ function App() {
               <Route path="/property-submissions" element={<PropertySubmissionsPage />} />
               <Route path="/writer" element={<AIWriterPage />} />
               <Route path="/newsletter" element={<NewsletterPage />} />
+              <Route path="/mailing-lists" element={<MailingListsPage />} />
               <Route path="/admin/users" element={<AdminUsersPage />} />
               <Route path="/admin" element={<Navigate to="/admin/users" replace />} />
               <Route path="/profile" element={<Navigate to="/settings" replace />} />
