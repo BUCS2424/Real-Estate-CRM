@@ -19,6 +19,7 @@ from .settings import router as settings_router
 from .users import router as users_router
 from .notifications import router as notifications_router
 from .dashboard import router as dashboard_router
+from .mailing_lists import router as mailing_lists_router
 
 # Include all sub-routers
 api_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
