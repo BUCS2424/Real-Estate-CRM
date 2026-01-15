@@ -178,7 +178,7 @@ export const LandingPage = () => {
           <div className="md:hidden bg-[#0a1628]/98 backdrop-blur-lg border-t border-amber-400/10">
             <div className="px-6 py-4 space-y-4">
               <Link to="/showcase" className="block text-sm tracking-wide hover:text-amber-400">LISTING SHOWCASE</Link>
-              <a href="#about" className="block text-sm tracking-wide hover:text-amber-400">ABOUT</a>
+              <Link to="/about" className="block text-sm tracking-wide hover:text-amber-400">ABOUT</Link>
               <a href="#contact" className="block text-sm tracking-wide hover:text-amber-400">CONTACT</a>
               <Link to="/login" className="block">
                 <Button variant="outline" className="w-full border-amber-400/50 text-amber-400">
