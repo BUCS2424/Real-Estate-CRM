@@ -8,8 +8,10 @@ import { Switch } from '../../../components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
 import { toast } from 'sonner';
 import api from '../../../lib/api';
+import { useBranding } from '../../../contexts/BrandingContext';
 
 export const GeneralSettings = () => {
+  const { refreshBranding } = useBranding();
   const [settings, setSettings] = useState({
     siteName: 'Fusion Luxury Estates',
     siteUrl: 'https://fusionluxuryestates.com',
