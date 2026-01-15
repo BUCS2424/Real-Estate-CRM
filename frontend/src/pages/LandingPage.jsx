@@ -154,7 +154,7 @@ export const LandingPage = () => {
             </Link>
             
             <div className="hidden md:flex items-center gap-8">
-              <Link to="/showcase" className="text-sm tracking-wide hover:text-amber-400 transition-colors">LISTINGS</Link>
+              <Link to="/showcase" className="text-sm tracking-wide hover:text-amber-400 transition-colors">LISTING SHOWCASE</Link>
               <a href="#about" className="text-sm tracking-wide hover:text-amber-400 transition-colors">ABOUT</a>
               <a href="#contact" className="text-sm tracking-wide hover:text-amber-400 transition-colors">CONTACT</a>
               <Link to="/login">
