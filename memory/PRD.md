@@ -347,3 +347,55 @@ Applied the design language from the About (Sheila Desautels) page across all pu
 - Consistent typography: Serif fonts for headings, clean body text
 
 ---
+
+## Update: January 15, 2026 - Storage Providers System
+
+### Storage Provider Management:
+Added a comprehensive storage provider management system with support for 5 different cloud storage services:
+
+#### Providers Implemented:
+1. **Google Drive** - OAuth-based cloud storage
+   - Credentials: Client ID, Client Secret, Refresh Token
+   - Settings: Folder ID, Service Account option
+   
+2. **iDrive** - S3-compatible cloud backup
+   - Credentials: Access Key, Secret Key
+   - Settings: Bucket, Region, Endpoint URL
+   
+3. **cPanel** - FTP/SFTP hosting storage
+   - Credentials: Username, Password, API Token
+   - Settings: Host, Port, Directory, SFTP option
+   
+4. **pCloud** - European cloud storage
+   - Credentials: Access Token, Client ID
+   - Settings: Folder ID, Data Location (US/EU)
+   
+5. **Custom CDN** - S3-compatible custom storage
+   - Credentials: API Key, API Secret
+   - Settings: Endpoint URL, Bucket, Public URL, Region
+
+#### Features:
+- ✅ Collapsible provider cards with configuration panels
+- ✅ Credentials input with show/hide toggle for passwords
+- ✅ Provider-specific settings fields
+- ✅ Active/Inactive toggle per provider
+- ✅ Set Default Provider functionality
+- ✅ Test Connection button (mock implementation)
+- ✅ Status badges (Setup Required / Configured)
+- ✅ Stats overview (Total, Configured, Active counts)
+- ✅ Getting Started guide with setup instructions
+- ✅ Credentials stored securely (masked in UI)
+- ✅ Admin-only access (Super Admin + Admins)
+
+#### Backend Endpoints:
+- `GET /api/storage/providers` - List all providers
+- `GET /api/storage/providers/{id}` - Get single provider
+- `PUT /api/storage/providers/{id}` - Update provider config
+- `POST /api/storage/providers/{id}/test` - Test connection
+- `POST /api/storage/providers/{id}/set-default` - Set as default
+- `GET /api/storage/default` - Get default provider
+
+#### Database Collection:
+- `storage_providers` - Stores provider configurations with encrypted credentials
+
+---
