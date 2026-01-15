@@ -177,7 +177,7 @@ export const LandingPage = () => {
         {mobileMenuOpen && (
           <div className="md:hidden bg-[#0a1628]/98 backdrop-blur-lg border-t border-amber-400/10">
             <div className="px-6 py-4 space-y-4">
-              <Link to="/showcase" className="block text-sm tracking-wide hover:text-amber-400">LISTINGS</Link>
+              <Link to="/showcase" className="block text-sm tracking-wide hover:text-amber-400">LISTING SHOWCASE</Link>
               <a href="#about" className="block text-sm tracking-wide hover:text-amber-400">ABOUT</a>
               <a href="#contact" className="block text-sm tracking-wide hover:text-amber-400">CONTACT</a>
               <Link to="/login" className="block">
