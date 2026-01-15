@@ -209,6 +209,16 @@ export const triggerAPI = {
   delete: (id) => api.delete(`/newsletter-triggers/${id}`),
 };
 
+// Storage Providers
+export const storageAPI = {
+  getProviders: () => api.get('/storage/providers'),
+  getProvider: (id) => api.get(`/storage/providers/${id}`),
+  updateProvider: (id, data) => api.put(`/storage/providers/${id}`, data),
+  testProvider: (id) => api.post(`/storage/providers/${id}/test`),
+  setDefault: (id) => api.post(`/storage/providers/${id}/set-default`),
+  getDefault: () => api.get('/storage/default'),
+};
+
 // Seed data
 export const seedAPI = {
   seed: () => api.post('/seed'),
