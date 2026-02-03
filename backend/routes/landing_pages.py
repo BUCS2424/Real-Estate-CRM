@@ -66,6 +66,22 @@ async def get_idrive_client():
 
 # ============ CRUD OPERATIONS ============
 
+@router.get("/available-listings")
+async def get_available_listings(current_user: dict = Depends(get_current_user)):
+    """Get listings that don't have landing pages yet"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get all listing IDs that already have landing pages
+    existing_pages = await db.landing_pages.find({}, {"listing_id": 1, "_id": 0}).to_list(1000)
+    existing_ids = [p["listing_id"] for p in existing_pages]
+    
+    # Get listings without landing pages
+    query = {"id": {"$nin": existing_ids}} if existing_ids else {}
+    listings = await db.properties.find(query, {"_id": 0}).to_list(1000)
+    
+    return listings
+
 @router.post("", response_model=LandingPageResponse)
 async def create_landing_page(page_data: LandingPageCreate, current_user: dict = Depends(get_current_user)):
     """Create a new landing page for a listing"""
