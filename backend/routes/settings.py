@@ -42,9 +42,11 @@ async def get_public_branding():
     """Get public branding settings (no auth required)"""
     settings = await db.general_settings.find_one({}, {"_id": 0})
     
+    print(f"[DEBUG] Branding settings from DB: {settings}")
+    
     # Return only branding-related fields for public access
     default_branding = {
-        "siteName": "Fusion Luxury Estates",
+        "siteName": "Hidden Haven Realty",
         "logoUrl": "",
         "logoLinkUrl": "/",
         "dashboardLogoUrl": "",
@@ -54,9 +56,10 @@ async def get_public_branding():
     }
     
     if not settings:
+        print("[DEBUG] No settings found, returning defaults")
         return default_branding
     
-    return {
+    result = {
         "siteName": settings.get("siteName", default_branding["siteName"]),
         "logoUrl": settings.get("logoUrl", default_branding["logoUrl"]),
         "logoLinkUrl": settings.get("logoLinkUrl", default_branding["logoLinkUrl"]),
@@ -65,6 +68,8 @@ async def get_public_branding():
         "faviconUrl": settings.get("faviconUrl", default_branding["faviconUrl"]),
         "pwaIconUrl": settings.get("pwaIconUrl", default_branding["pwaIconUrl"]),
     }
+    print(f"[DEBUG] Returning branding: {result}")
+    return result
 
 @router.put("/general")
 async def update_general_settings(settings_data: dict, current_user: dict = Depends(get_current_user)):
