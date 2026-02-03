@@ -149,22 +149,67 @@ async def test_storage_provider(provider_id: str, current_user: dict = Depends(g
         return {"success": False, "message": "No credentials configured"}
     
     provider_type = provider["provider_type"]
+    creds = provider["credentials"]
+    settings = provider.get("settings", {})
     
-    if provider_type == StorageProviderType.GOOGLE_DRIVE:
-        has_required = all(k in provider["credentials"] for k in ["client_id", "client_secret"])
-    elif provider_type == StorageProviderType.IDRIVE:
-        has_required = all(k in provider["credentials"] for k in ["access_key", "secret_key"])
+    # Actually test the connection for iDrive/S3
+    if provider_type == StorageProviderType.IDRIVE:
+        if not all(k in creds for k in ["access_key", "secret_key"]):
+            return {"success": False, "message": "Missing access_key or secret_key"}
+        
+        try:
+            import boto3
+            from botocore.config import Config
+            from botocore.exceptions import ClientError, NoCredentialsError
+            
+            endpoint = settings.get("endpoint", "https://s3.us-central-1.idrivee2.com")
+            bucket = settings.get("bucket", "")
+            
+            if not bucket:
+                return {"success": False, "message": "Bucket name not configured"}
+            
+            client = boto3.client(
+                's3',
+                endpoint_url=endpoint,
+                aws_access_key_id=creds["access_key"],
+                aws_secret_access_key=creds["secret_key"],
+                config=Config(signature_version='s3v4')
+            )
+            
+            # Actually test by listing the bucket
+            client.head_bucket(Bucket=bucket)
+            return {"success": True, "message": f"Successfully connected to bucket '{bucket}'"}
+            
+        except NoCredentialsError:
+            return {"success": False, "message": "Invalid credentials"}
+        except ClientError as e:
+            error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            error_msg = e.response.get('Error', {}).get('Message', str(e))
+            if error_code == '403':
+                return {"success": False, "message": f"Access denied to bucket '{bucket}'. Check credentials and bucket permissions."}
+            elif error_code == '404':
+                return {"success": False, "message": f"Bucket '{bucket}' not found. Please create it first."}
+            elif error_code == 'SignatureDoesNotMatch':
+                return {"success": False, "message": "Signature mismatch. Please re-enter your Secret Access Key."}
+            else:
+                return {"success": False, "message": f"Connection failed: {error_code} - {error_msg}"}
+        except Exception as e:
+            return {"success": False, "message": f"Connection failed: {str(e)}"}
+    
+    # For other providers, just check if credentials exist
+    elif provider_type == StorageProviderType.GOOGLE_DRIVE:
+        has_required = all(k in creds for k in ["client_id", "client_secret"])
     elif provider_type == StorageProviderType.CPANEL:
-        has_required = all(k in provider["credentials"] for k in ["username", "password"])
+        has_required = all(k in creds for k in ["username", "password"])
     elif provider_type == StorageProviderType.PCLOUD:
-        has_required = all(k in provider["credentials"] for k in ["access_token"])
+        has_required = all(k in creds for k in ["access_token"])
     elif provider_type == StorageProviderType.CUSTOM_CDN:
-        has_required = all(k in provider["credentials"] for k in ["api_key"])
+        has_required = all(k in creds for k in ["api_key"])
     else:
         has_required = False
     
     if has_required:
-        return {"success": True, "message": "Connection test successful (credentials configured)"}
+        return {"success": True, "message": "Credentials configured (actual connection test not implemented for this provider)"}
     else:
         return {"success": False, "message": "Missing required credentials"}
 
