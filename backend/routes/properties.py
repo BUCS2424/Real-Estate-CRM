@@ -719,6 +719,13 @@ async def convert_submission_to_listing(submission_id: str, current_user: dict =
     property_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     
+    # Generate storage folder for the new property
+    storage_folder = generate_storage_folder(
+        submission["property_address"],
+        submission["property_city"],
+        submission["property_state"]
+    )
+    
     property_doc = {
         "id": property_id,
         "address": submission["property_address"],
@@ -735,11 +742,15 @@ async def convert_submission_to_listing(submission_id: str, current_user: dict =
         "description": submission.get("description", ""),
         "features": [],
         "images": [],
+        "storage_folder": storage_folder,  # Persistent storage folder
         "created_by": current_user["id"],
         "source_submission_id": submission_id,
         "created_at": now
     }
     await db.properties.insert_one(property_doc)
+    
+    # Create the folder in iDrive (if configured)
+    await create_property_folder(storage_folder)
     
     await db.property_submissions.update_one(
         {"id": submission_id},
