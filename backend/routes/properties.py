@@ -70,6 +70,18 @@ async def create_property_folder(storage_folder: str):
             Body=b'',
             ContentType='application/x-directory'
         )
+        
+        # Create default subfolders: gallery, videos, documents
+        default_subfolders = ['gallery', 'videos', 'documents']
+        for subfolder in default_subfolders:
+            subfolder_key = f"{storage_folder}/{subfolder}/.folder"
+            client.put_object(
+                Bucket=bucket,
+                Key=subfolder_key,
+                Body=b'',
+                ContentType='application/x-directory'
+            )
+        
         return f"{endpoint}/{bucket}/{storage_folder}"
     except Exception as e:
         print(f"Warning: Could not create property folder in iDrive: {e}")
