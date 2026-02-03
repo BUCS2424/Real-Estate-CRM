@@ -332,14 +332,21 @@ async def upload_image(
     if not page:
         raise HTTPException(status_code=404, detail="Landing page not found")
     
+    # Get the property's storage folder
+    listing = await db.properties.find_one({"id": page["listing_id"]}, {"_id": 0})
+    storage_folder = listing.get("storage_folder") if listing else None
+    
     # Get iDrive client
-    client, bucket = await get_idrive_client()
+    client, bucket, endpoint = await get_idrive_client()
     if not client or not bucket:
         raise HTTPException(status_code=400, detail="iDrive storage not configured")
     
+    # Use property's storage folder or fallback to landing-pages path
+    base_path = storage_folder if storage_folder else f"landing-pages/{page['slug']}"
+    
     # Generate unique filename
     file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
-    file_key = f"landing-pages/{page['slug']}/images/{str(uuid.uuid4())}.{file_ext}"
+    file_key = f"{base_path}/images/{str(uuid.uuid4())}.{file_ext}"
     
     try:
         content = await file.read()
@@ -350,7 +357,6 @@ async def upload_image(
             ContentType=file.content_type or 'image/jpeg'
         )
         
-        endpoint = client._endpoint.host
         image_url = f"{endpoint}/{bucket}/{file_key}"
         
         image_item = {
