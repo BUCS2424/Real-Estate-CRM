@@ -1,0 +1,487 @@
+import React, { useState } from 'react';
+import { 
+  Search, 
+  Building2, 
+  User, 
+  MapPin, 
+  DollarSign, 
+  Home,
+  Loader2,
+  FileText,
+  ExternalLink,
+  Settings,
+  CheckCircle,
+  XCircle
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Badge } from '../components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog';
+import { propertyLookupAPI } from '../lib/api';
+import { toast } from 'sonner';
+
+const COUNTIES = [
+  { key: 'hillsborough', name: 'Hillsborough', cities: ['Tampa', 'Brandon', 'Plant City'] },
+  { key: 'pinellas', name: 'Pinellas', cities: ['St. Petersburg', 'Clearwater', 'Largo'] },
+  { key: 'pasco', name: 'Pasco', cities: ['New Port Richey', 'Wesley Chapel', 'Trinity'] }
+];
+
+export const PropertyLookupPage = () => {
+  const [searchAddress, setSearchAddress] = useState('');
+  const [selectedCounty, setSelectedCounty] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [results, setResults] = useState([]);
+  const [selectedProperty, setSelectedProperty] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [propertyDetails, setPropertyDetails] = useState(null);
+  
+  // MLS Config
+  const [showMLSConfig, setShowMLSConfig] = useState(false);
+  const [mlsConfig, setMlsConfig] = useState({
+    api_url: '',
+    client_id: '',
+    client_secret: '',
+    api_key: '',
+    mls_name: ''
+  });
+  const [testingMLS, setTestingMLS] = useState(false);
+  const [mlsStatus, setMlsStatus] = useState(null);
+
+  const handleSearch = async () => {
+    if (!searchAddress.trim()) {
+      toast.error('Please enter an address');
+      return;
+    }
+    
+    setSearching(true);
+    setResults([]);
+    setPropertyDetails(null);
+    
+    try {
+      const res = await propertyLookupAPI.searchCounty(searchAddress, selectedCounty || null);
+      setResults(res.data.results || []);
+      
+      if (res.data.results?.length === 0) {
+        toast.info('No properties found matching that address');
+      } else {
+        toast.success(`Found ${res.data.results.length} properties`);
+      }
+    } catch (error) {
+      toast.error('Search failed: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleViewDetails = async (result) => {
+    setSelectedProperty(result);
+    setLoadingDetails(true);
+    setPropertyDetails(null);
+    
+    try {
+      const res = await propertyLookupAPI.getCountyDetails(result.county.toLowerCase(), result.parcel_id);
+      setPropertyDetails(res.data.data);
+    } catch (error) {
+      toast.error('Failed to load property details');
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  const handleSaveMlsConfig = async () => {
+    try {
+      await propertyLookupAPI.saveMlsConfig(mlsConfig);
+      toast.success('MLS configuration saved');
+      setShowMLSConfig(false);
+    } catch (error) {
+      toast.error('Failed to save MLS config');
+    }
+  };
+
+  const handleTestMLS = async () => {
+    setTestingMLS(true);
+    try {
+      const res = await propertyLookupAPI.testMls();
+      setMlsStatus(res.data);
+      if (res.data.success) {
+        toast.success('MLS connection successful!');
+      } else {
+        toast.error(res.data.message);
+      }
+    } catch (error) {
+      toast.error('MLS test failed');
+    } finally {
+      setTestingMLS(false);
+    }
+  };
+
+  const formatCurrency = (value) => {
+    if (!value) return 'N/A';
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in" data-testid="property-lookup-page">
+      {/* Header */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-serif text-white mb-2">Property Lookup</h1>
+          <p className="text-white/60">Search county tax records and MLS listings</p>
+        </div>
+        <Button variant="outline" onClick={() => setShowMLSConfig(true)} data-testid="mls-config-btn">
+          <Settings className="w-4 h-4 mr-2" />
+          MLS Settings
+        </Button>
+      </div>
+
+      {/* Search Section */}
+      <Card className="border-white/10 bg-white/5">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Search className="w-5 h-5 text-amber-400" />
+            Search Property Records
+          </CardTitle>
+          <CardDescription>
+            Search Hillsborough, Pinellas, and Pasco county property appraiser records
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <Label className="text-white/80">Property Address</Label>
+              <Input
+                placeholder="Enter street address (e.g., 123 Main St, Tampa)"
+                value={searchAddress}
+                onChange={(e) => setSearchAddress(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="bg-white/10 border-white/20 text-white"
+                data-testid="address-input"
+              />
+            </div>
+            <div className="w-full md:w-48">
+              <Label className="text-white/80">County (Optional)</Label>
+              <Select value={selectedCounty} onValueChange={setSelectedCounty}>
+                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                  <SelectValue placeholder="All Counties" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Counties</SelectItem>
+                  {COUNTIES.map(c => (
+                    <SelectItem key={c.key} value={c.key}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-end">
+              <Button 
+                onClick={handleSearch} 
+                disabled={searching}
+                className="bg-amber-500 hover:bg-amber-600 text-black"
+                data-testid="search-btn"
+              >
+                {searching ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Search className="w-4 h-4 mr-2" />
+                )}
+                Search
+              </Button>
+            </div>
+          </div>
+          
+          {/* Quick County Links */}
+          <div className="mt-4 flex flex-wrap gap-2">
+            {COUNTIES.map(c => (
+              <Badge 
+                key={c.key} 
+                variant="outline" 
+                className="cursor-pointer hover:bg-white/10"
+                onClick={() => setSelectedCounty(c.key)}
+              >
+                {c.name}: {c.cities.join(', ')}
+              </Badge>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Results */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Search Results List */}
+        <Card className="border-white/10 bg-white/5">
+          <CardHeader>
+            <CardTitle className="text-white">Search Results</CardTitle>
+            <CardDescription>
+              {results.length > 0 ? `${results.length} properties found` : 'Enter an address to search'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {results.length === 0 ? (
+              <div className="text-center py-8 text-white/50">
+                <Building2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No results yet</p>
+                <p className="text-sm mt-1">Search by address to find property records</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                {results.map((result, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                      selectedProperty?.parcel_id === result.parcel_id
+                        ? 'border-amber-400 bg-amber-400/10'
+                        : 'border-white/10 hover:border-white/30 hover:bg-white/5'
+                    }`}
+                    onClick={() => handleViewDetails(result)}
+                    data-testid={`result-${idx}`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-medium text-white">{result.address || 'No address'}</p>
+                        <p className="text-sm text-amber-400">{result.owner_name || 'Owner not found'}</p>
+                      </div>
+                      <Badge variant="outline">{result.county}</Badge>
+                    </div>
+                    <p className="text-xs text-white/50 mt-2">Parcel: {result.parcel_id}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Property Details */}
+        <Card className="border-white/10 bg-white/5">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <FileText className="w-5 h-5 text-amber-400" />
+              Property Details
+            </CardTitle>
+            <CardDescription>
+              {selectedProperty ? `Viewing: ${selectedProperty.address}` : 'Select a property to view details'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingDetails ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
+              </div>
+            ) : !propertyDetails ? (
+              <div className="text-center py-8 text-white/50">
+                <Home className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>Select a property from the results</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Owner Info */}
+                <div className="p-4 rounded-lg bg-amber-400/10 border border-amber-400/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <User className="w-4 h-4 text-amber-400" />
+                    <span className="text-sm font-medium text-amber-400">Owner Information</span>
+                  </div>
+                  <p className="text-xl font-semibold text-white">{propertyDetails.owner_name || 'N/A'}</p>
+                  {propertyDetails.owner_address && (
+                    <p className="text-sm text-white/70 mt-1">{propertyDetails.owner_address}</p>
+                  )}
+                </div>
+
+                {/* Address */}
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-white/50 mt-0.5" />
+                  <div>
+                    <p className="text-white">{propertyDetails.address}</p>
+                    <p className="text-sm text-white/50">
+                      {propertyDetails.city}, {propertyDetails.zip_code}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Values */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 rounded-lg bg-white/5">
+                    <p className="text-xs text-white/50">Market Value</p>
+                    <p className="text-lg font-semibold text-white">
+                      {formatCurrency(propertyDetails.market_value)}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-white/5">
+                    <p className="text-xs text-white/50">Assessed Value</p>
+                    <p className="text-lg font-semibold text-white">
+                      {formatCurrency(propertyDetails.assessed_value)}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-white/5">
+                    <p className="text-xs text-white/50">Land Value</p>
+                    <p className="text-lg font-semibold text-white">
+                      {formatCurrency(propertyDetails.land_value)}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-white/5">
+                    <p className="text-xs text-white/50">Taxable Value</p>
+                    <p className="text-lg font-semibold text-white">
+                      {formatCurrency(propertyDetails.taxable_value)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Property Details */}
+                <div className="grid grid-cols-3 gap-3">
+                  {propertyDetails.bedrooms && (
+                    <div className="text-center p-2 rounded bg-white/5">
+                      <p className="text-lg font-semibold text-white">{propertyDetails.bedrooms}</p>
+                      <p className="text-xs text-white/50">Beds</p>
+                    </div>
+                  )}
+                  {propertyDetails.bathrooms && (
+                    <div className="text-center p-2 rounded bg-white/5">
+                      <p className="text-lg font-semibold text-white">{propertyDetails.bathrooms}</p>
+                      <p className="text-xs text-white/50">Baths</p>
+                    </div>
+                  )}
+                  {propertyDetails.sqft && (
+                    <div className="text-center p-2 rounded bg-white/5">
+                      <p className="text-lg font-semibold text-white">{propertyDetails.sqft}</p>
+                      <p className="text-xs text-white/50">Sq Ft</p>
+                    </div>
+                  )}
+                  {propertyDetails.year_built && (
+                    <div className="text-center p-2 rounded bg-white/5">
+                      <p className="text-lg font-semibold text-white">{propertyDetails.year_built}</p>
+                      <p className="text-xs text-white/50">Year Built</p>
+                    </div>
+                  )}
+                  {propertyDetails.lot_size && (
+                    <div className="text-center p-2 rounded bg-white/5">
+                      <p className="text-lg font-semibold text-white">{propertyDetails.lot_size}</p>
+                      <p className="text-xs text-white/50">Lot Size</p>
+                    </div>
+                  )}
+                  {propertyDetails.homestead !== undefined && (
+                    <div className="text-center p-2 rounded bg-white/5">
+                      <p className="text-lg font-semibold text-white">
+                        {propertyDetails.homestead ? 'Yes' : 'No'}
+                      </p>
+                      <p className="text-xs text-white/50">Homestead</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Legal Description */}
+                {propertyDetails.legal_description && (
+                  <div className="p-3 rounded-lg bg-white/5">
+                    <p className="text-xs text-white/50 mb-1">Legal Description</p>
+                    <p className="text-sm text-white/80">{propertyDetails.legal_description}</p>
+                  </div>
+                )}
+
+                {/* Source */}
+                <p className="text-xs text-white/30 text-right">
+                  Source: {propertyDetails.source} | {propertyDetails.fetched_at}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* MLS Configuration Modal */}
+      <Dialog open={showMLSConfig} onOpenChange={setShowMLSConfig}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>MLS API Configuration</DialogTitle>
+            <DialogDescription>
+              Configure your MLS API credentials to search active listings.
+              Most MLS systems use the RESO Web API standard.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label>MLS Name</Label>
+              <Input
+                placeholder="e.g., Stellar MLS, Bright MLS"
+                value={mlsConfig.mls_name}
+                onChange={(e) => setMlsConfig({...mlsConfig, mls_name: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label>API URL</Label>
+              <Input
+                placeholder="https://api.mlsprovider.com/reso/odata"
+                value={mlsConfig.api_url}
+                onChange={(e) => setMlsConfig({...mlsConfig, api_url: e.target.value})}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Client ID</Label>
+                <Input
+                  placeholder="OAuth Client ID"
+                  value={mlsConfig.client_id}
+                  onChange={(e) => setMlsConfig({...mlsConfig, client_id: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label>Client Secret</Label>
+                <Input
+                  type="password"
+                  placeholder="OAuth Client Secret"
+                  value={mlsConfig.client_secret}
+                  onChange={(e) => setMlsConfig({...mlsConfig, client_secret: e.target.value})}
+                />
+              </div>
+            </div>
+            <div>
+              <Label>API Key (if not using OAuth)</Label>
+              <Input
+                type="password"
+                placeholder="Direct API Key"
+                value={mlsConfig.api_key}
+                onChange={(e) => setMlsConfig({...mlsConfig, api_key: e.target.value})}
+              />
+            </div>
+
+            {mlsStatus && (
+              <div className={`p-3 rounded-lg flex items-center gap-2 ${
+                mlsStatus.success ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+              }`}>
+                {mlsStatus.success ? (
+                  <CheckCircle className="w-5 h-5" />
+                ) : (
+                  <XCircle className="w-5 h-5" />
+                )}
+                {mlsStatus.message}
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={handleTestMLS} disabled={testingMLS}>
+              {testingMLS ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Test Connection'}
+            </Button>
+            <Button onClick={handleSaveMlsConfig}>Save Configuration</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default PropertyLookupPage;
