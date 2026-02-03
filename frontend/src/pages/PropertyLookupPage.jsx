@@ -241,11 +241,11 @@ export const PropertyLookupPage = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => handleSearch(search.address)}
-                  className="border-white/20 text-white/80 hover:bg-white/10 hover:text-white"
+                  className="border-amber-400/50 bg-amber-400/10 text-white hover:bg-amber-400/20 hover:border-amber-400"
                 >
-                  <MapPin className="w-3 h-3 mr-1" />
+                  <MapPin className="w-3 h-3 mr-1 text-amber-400" />
                   {search.address}
-                  <Badge variant="outline" className="ml-2 text-xs">{search.county}</Badge>
+                  <Badge className="ml-2 text-xs bg-white/20 text-white border-0">{search.county}</Badge>
                 </Button>
               ))}
             </div>
