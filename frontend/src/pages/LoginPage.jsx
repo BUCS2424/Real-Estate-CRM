@@ -102,11 +102,11 @@ export const LoginPage = () => {
                 />
               ) : null}
               <div className={`relative w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl items-center justify-center shadow-lg shadow-amber-400/30 ${branding.dashboardLogoUrl ? 'hidden' : 'flex'}`}>
-                <span className="font-serif text-black font-bold text-2xl">F</span>
+                <span className="font-serif text-black font-bold text-2xl">H</span>
               </div>
             </div>
             <div>
-              <CardTitle className="text-2xl font-serif text-white">Fusion CRM</CardTitle>
+              <CardTitle className="text-2xl font-serif text-white">{branding.siteName || 'Hidden Haven Realty'}</CardTitle>
               <CardDescription className="text-white/50">Real Estate Management Platform</CardDescription>
             </div>
           </CardHeader>
