@@ -633,6 +633,183 @@ export const ContactsPage = () => {
           </div>
         </Card>
       )}
+
+      {/* Import Modal */}
+      <Dialog open={showImportModal} onOpenChange={(open) => {
+        setShowImportModal(open);
+        if (!open) {
+          setImportResult(null);
+          setImportCategory('');
+          if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+      }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="w-5 h-5" />
+              Import Contacts
+            </DialogTitle>
+            <DialogDescription>
+              Import contacts from Apple vCard (.vcf) or CSV file
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>File (vCard or CSV)</Label>
+              <Input
+                ref={fileInputRef}
+                type="file"
+                accept=".vcf,.vcard,.csv"
+                className="cursor-pointer"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Supported: Apple vCard (.vcf), CSV with email, name columns
+              </p>
+            </div>
+            
+            <div>
+              <Label>Assign Category (optional)</Label>
+              <Select value={importCategory || "none"} onValueChange={(v) => setImportCategory(v === "none" ? "" : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Keep original or none" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Keep Original</SelectItem>
+                  <SelectItem value="buyer">Buyer</SelectItem>
+                  <SelectItem value="seller">Seller</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {importResult && (
+              <div className="p-4 bg-muted/30 rounded-lg space-y-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  <span className="font-medium">Import Complete</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Imported:</span>
+                    <span className="ml-1 font-medium text-green-600">{importResult.imported}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Duplicates:</span>
+                    <span className="ml-1 font-medium text-yellow-600">{importResult.duplicates}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Errors:</span>
+                    <span className="ml-1 font-medium text-red-600">{importResult.errors || 0}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowImportModal(false)}>
+              {importResult ? 'Close' : 'Cancel'}
+            </Button>
+            {!importResult && (
+              <Button onClick={handleImport} disabled={importing}>
+                {importing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Import
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Modal */}
+      <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Download className="w-5 h-5" />
+              Export Contacts
+            </DialogTitle>
+            <DialogDescription>
+              Export contacts to Apple vCard (.vcf) or CSV format with filters
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Export Format</Label>
+              <Select value={exportFormat} onValueChange={setExportFormat}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="vcard">
+                    <div className="flex items-center gap-2">
+                      <FileSpreadsheet className="w-4 h-4" />
+                      vCard (.vcf) - Apple Compatible
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="csv">
+                    <div className="flex items-center gap-2">
+                      <FileSpreadsheet className="w-4 h-4" />
+                      CSV Spreadsheet
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Filter by Category</Label>
+                <Select value={exportCategory || "all"} onValueChange={(v) => setExportCategory(v === "all" ? "" : v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Contacts</SelectItem>
+                    <SelectItem value="buyer">Buyers Only</SelectItem>
+                    <SelectItem value="seller">Sellers Only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label>Filter by Status</Label>
+                <Select value={exportStatus || "all"} onValueChange={(v) => setExportStatus(v === "all" ? "" : v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="lead">Lead</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                <strong>Export preview:</strong> {exportCategory ? `${exportCategory}s` : 'All contacts'} 
+                {exportStatus ? ` with ${exportStatus} status` : ''} 
+                {' as '}{exportFormat === 'vcard' ? 'Apple vCard (.vcf)' : 'CSV spreadsheet'}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Matching contacts: {contacts.filter(c => 
+                  (!exportCategory || c.category === exportCategory) &&
+                  (!exportStatus || c.status === exportStatus)
+                ).length}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowExportModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleExport} disabled={exporting}>
+              {exporting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Export {exportFormat === 'vcard' ? 'vCard' : 'CSV'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
