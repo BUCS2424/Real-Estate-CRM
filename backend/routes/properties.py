@@ -353,6 +353,37 @@ async def list_listings(current_user: dict = Depends(get_current_user)):
     properties = await db.properties.find({}, {"_id": 0}).to_list(1000)
     return properties
 
+@router.post("/listings/migrate-storage-folders")
+async def migrate_storage_folders(current_user: dict = Depends(get_current_user)):
+    """Add storage folders to existing properties that don't have them"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Find properties without storage folders
+    properties = await db.properties.find(
+        {"$or": [{"storage_folder": None}, {"storage_folder": {"$exists": False}}]},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    updated_count = 0
+    for prop in properties:
+        storage_folder = generate_storage_folder(
+            prop.get("address", "property"),
+            prop.get("city", ""),
+            prop.get("state", "")
+        )
+        
+        await db.properties.update_one(
+            {"id": prop["id"]},
+            {"$set": {"storage_folder": storage_folder}}
+        )
+        
+        # Create folder in iDrive if configured
+        await create_property_folder(storage_folder)
+        updated_count += 1
+    
+    return {"message": f"Migrated {updated_count} properties with storage folders"}
+
 @router.get("/listings/{listing_id}")
 async def get_listing(listing_id: str, current_user: dict = Depends(get_current_user)):
     """Alias for /properties/{id} for frontend compatibility"""
