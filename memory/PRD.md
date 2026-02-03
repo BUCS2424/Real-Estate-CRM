@@ -514,6 +514,32 @@ Added a comprehensive storage provider management system with support for 5 diff
 - `GET /api/contacts/export/csv` - Export contacts as CSV spreadsheet
   - Query params: `category`, `status`, `tags`
 
+### Landing Page Generator API (New - Feb 3, 2026)
+- `GET /api/landing-pages/available-listings` - Get listings without landing pages
+- `POST /api/landing-pages` - Create landing page from listing
+- `GET /api/landing-pages` - List all landing pages
+- `GET /api/landing-pages/{id}` - Get specific landing page
+- `PUT /api/landing-pages/{id}` - Update landing page
+- `DELETE /api/landing-pages/{id}` - Delete landing page
+- `POST /api/landing-pages/{id}/publish` - Publish page
+- `POST /api/landing-pages/{id}/unpublish` - Unpublish page
+- `POST /api/landing-pages/{id}/upload-video` - Upload video to iDrive
+- `POST /api/landing-pages/{id}/upload-image` - Upload image to iDrive
+- **Public (no auth):**
+  - `GET /api/landing-pages/public/{slug}` - Get published page by slug
+  - `POST /api/landing-pages/public/{slug}/contact` - Submit contact form (creates Lead)
+
+**Features:**
+- Auto theme selection: 'luxury' (dark navy + gold) for $1M+, 'modern' (clean light) for others
+- Slug auto-generated from address-city-state format
+- Preview URL: `https://hiddenhavenrealty.com/[slug]`
+- Multiple video support: YouTube, Vimeo, or upload to iDrive
+- Photo gallery with lightbox
+- Virtual tour embed (Matterport)
+- Google Maps location
+- Agent info with photo
+- Contact form → Leads in CRM
+
 ### Dynamic Branding System:
 - ✅ **BrandingContext** (`/app/frontend/src/contexts/BrandingContext.js`):
   - Global state management for branding settings
