@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, 
   Building2, 
@@ -11,14 +11,16 @@ import {
   ExternalLink,
   Settings,
   CheckCircle,
-  XCircle
+  XCircle,
+  Clock,
+  Link2,
+  Plus
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Badge } from '../components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -34,13 +36,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
-import { propertyLookupAPI } from '../lib/api';
+import { propertyLookupAPI, propertiesAPI } from '../lib/api';
 import { toast } from 'sonner';
 
 const COUNTIES = [
   { key: 'hillsborough', name: 'Hillsborough', cities: ['Tampa', 'Brandon', 'Plant City'] },
   { key: 'pinellas', name: 'Pinellas', cities: ['St. Petersburg', 'Clearwater', 'Largo'] },
-  { key: 'pasco', name: 'Pasco', cities: ['New Port Richey', 'Wesley Chapel', 'Trinity'] }
+  { key: 'pasco', name: 'Pasco', cities: ['New Port Richey', 'Wesley Chapel', 'Zephyrhills'] }
 ];
 
 export const PropertyLookupPage = () => {
@@ -51,6 +53,17 @@ export const PropertyLookupPage = () => {
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [propertyDetails, setPropertyDetails] = useState(null);
+  
+  // Recent searches
+  const [recentSearches, setRecentSearches] = useState([]);
+  const [loadingRecent, setLoadingRecent] = useState(true);
+  
+  // Assign to property
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [listings, setListings] = useState([]);
+  const [loadingListings, setLoadingListings] = useState(false);
+  const [selectedListing, setSelectedListing] = useState('');
+  const [assigning, setAssigning] = useState(false);
   
   // MLS Config
   const [showMLSConfig, setShowMLSConfig] = useState(false);
@@ -64,10 +77,30 @@ export const PropertyLookupPage = () => {
   const [testingMLS, setTestingMLS] = useState(false);
   const [mlsStatus, setMlsStatus] = useState(null);
 
-  const handleSearch = async () => {
-    if (!searchAddress.trim()) {
+  useEffect(() => {
+    fetchRecentSearches();
+  }, []);
+
+  const fetchRecentSearches = async () => {
+    try {
+      const res = await propertyLookupAPI.getRecentSearches(8);
+      setRecentSearches(res.data.searches || []);
+    } catch (error) {
+      console.error('Failed to load recent searches');
+    } finally {
+      setLoadingRecent(false);
+    }
+  };
+
+  const handleSearch = async (address = null) => {
+    const searchTerm = address || searchAddress;
+    if (!searchTerm.trim()) {
       toast.error('Please enter an address');
       return;
+    }
+    
+    if (address) {
+      setSearchAddress(address);
     }
     
     setSearching(true);
@@ -75,13 +108,15 @@ export const PropertyLookupPage = () => {
     setPropertyDetails(null);
     
     try {
-      const res = await propertyLookupAPI.searchCounty(searchAddress, selectedCounty || null);
+      const res = await propertyLookupAPI.searchCounty(searchTerm, selectedCounty || null);
       setResults(res.data.results || []);
       
       if (res.data.results?.length === 0) {
         toast.info('No properties found matching that address');
       } else {
         toast.success(`Found ${res.data.results.length} properties`);
+        // Refresh recent searches
+        fetchRecentSearches();
       }
     } catch (error) {
       toast.error('Search failed: ' + (error.response?.data?.detail || error.message));
@@ -102,6 +137,44 @@ export const PropertyLookupPage = () => {
       toast.error('Failed to load property details');
     } finally {
       setLoadingDetails(false);
+    }
+  };
+
+  const handleOpenAssignModal = async () => {
+    if (!propertyDetails) {
+      toast.error('Please select a property first');
+      return;
+    }
+    
+    setShowAssignModal(true);
+    setLoadingListings(true);
+    
+    try {
+      const res = await propertiesAPI.getAll();
+      setListings(res.data || []);
+    } catch (error) {
+      toast.error('Failed to load listings');
+    } finally {
+      setLoadingListings(false);
+    }
+  };
+
+  const handleAssignToProperty = async () => {
+    if (!selectedListing || !propertyDetails) {
+      toast.error('Please select a listing');
+      return;
+    }
+    
+    setAssigning(true);
+    try {
+      await propertyLookupAPI.assignToProperty(selectedListing, propertyDetails);
+      toast.success('County data assigned to property!');
+      setShowAssignModal(false);
+      setSelectedListing('');
+    } catch (error) {
+      toast.error('Failed to assign: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setAssigning(false);
     }
   };
 
@@ -145,11 +218,40 @@ export const PropertyLookupPage = () => {
           <h1 className="text-3xl font-serif text-white mb-2">Property Lookup</h1>
           <p className="text-white/60">Search county tax records and MLS listings</p>
         </div>
-        <Button variant="outline" onClick={() => setShowMLSConfig(true)} data-testid="mls-config-btn">
+        <Button variant="outline" onClick={() => setShowMLSConfig(true)} className="border-white/20 text-white hover:bg-white/10" data-testid="mls-config-btn">
           <Settings className="w-4 h-4 mr-2" />
           MLS Settings
         </Button>
       </div>
+
+      {/* Recent Searches */}
+      {recentSearches.length > 0 && (
+        <Card className="border-white/10 bg-white/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white text-sm flex items-center gap-2">
+              <Clock className="w-4 h-4 text-amber-400" />
+              Recent Searches
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {recentSearches.map((search, idx) => (
+                <Button
+                  key={idx}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSearch(search.address)}
+                  className="border-white/20 text-white/80 hover:bg-white/10 hover:text-white"
+                >
+                  <MapPin className="w-3 h-3 mr-1" />
+                  {search.address}
+                  <Badge variant="outline" className="ml-2 text-xs">{search.county}</Badge>
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Search Section */}
       <Card className="border-white/10 bg-white/5">
@@ -191,7 +293,7 @@ export const PropertyLookupPage = () => {
             </div>
             <div className="flex items-end">
               <Button 
-                onClick={handleSearch} 
+                onClick={() => handleSearch()} 
                 disabled={searching}
                 className="bg-amber-500 hover:bg-amber-600 text-black"
                 data-testid="search-btn"
@@ -212,7 +314,7 @@ export const PropertyLookupPage = () => {
               <Badge 
                 key={c.key} 
                 variant="outline" 
-                className="cursor-pointer hover:bg-white/10"
+                className="cursor-pointer hover:bg-white/10 text-white/70"
                 onClick={() => setSelectedCounty(c.key)}
               >
                 {c.name}: {c.cities.join(', ')}
@@ -257,7 +359,7 @@ export const PropertyLookupPage = () => {
                         <p className="font-medium text-white">{result.address || 'No address'}</p>
                         <p className="text-sm text-amber-400">{result.owner_name || 'Owner not found'}</p>
                       </div>
-                      <Badge variant="outline">{result.county}</Badge>
+                      <Badge variant="outline" className="text-white/70">{result.county}</Badge>
                     </div>
                     <p className="text-xs text-white/50 mt-2">Parcel: {result.parcel_id}</p>
                   </div>
@@ -270,13 +372,28 @@ export const PropertyLookupPage = () => {
         {/* Property Details */}
         <Card className="border-white/10 bg-white/5">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <FileText className="w-5 h-5 text-amber-400" />
-              Property Details
-            </CardTitle>
-            <CardDescription>
-              {selectedProperty ? `Viewing: ${selectedProperty.address}` : 'Select a property to view details'}
-            </CardDescription>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-amber-400" />
+                  Property Details
+                </CardTitle>
+                <CardDescription>
+                  {selectedProperty ? `Viewing: ${selectedProperty.address}` : 'Select a property to view details'}
+                </CardDescription>
+              </div>
+              {propertyDetails && (
+                <Button 
+                  onClick={handleOpenAssignModal}
+                  size="sm"
+                  className="bg-amber-500 hover:bg-amber-600 text-black"
+                  data-testid="assign-btn"
+                >
+                  <Link2 className="w-4 h-4 mr-1" />
+                  Assign to Listing
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {loadingDetails ? (
@@ -334,43 +451,19 @@ export const PropertyLookupPage = () => {
                     </p>
                   </div>
                   <div className="p-3 rounded-lg bg-white/5">
-                    <p className="text-xs text-white/50">Taxable Value</p>
+                    <p className="text-xs text-white/50">Building Value</p>
                     <p className="text-lg font-semibold text-white">
-                      {formatCurrency(propertyDetails.taxable_value)}
+                      {formatCurrency(propertyDetails.building_value)}
                     </p>
                   </div>
                 </div>
 
                 {/* Property Details */}
                 <div className="grid grid-cols-3 gap-3">
-                  {propertyDetails.bedrooms && (
-                    <div className="text-center p-2 rounded bg-white/5">
-                      <p className="text-lg font-semibold text-white">{propertyDetails.bedrooms}</p>
-                      <p className="text-xs text-white/50">Beds</p>
-                    </div>
-                  )}
-                  {propertyDetails.bathrooms && (
-                    <div className="text-center p-2 rounded bg-white/5">
-                      <p className="text-lg font-semibold text-white">{propertyDetails.bathrooms}</p>
-                      <p className="text-xs text-white/50">Baths</p>
-                    </div>
-                  )}
-                  {propertyDetails.sqft && (
-                    <div className="text-center p-2 rounded bg-white/5">
-                      <p className="text-lg font-semibold text-white">{propertyDetails.sqft}</p>
-                      <p className="text-xs text-white/50">Sq Ft</p>
-                    </div>
-                  )}
-                  {propertyDetails.year_built && (
-                    <div className="text-center p-2 rounded bg-white/5">
-                      <p className="text-lg font-semibold text-white">{propertyDetails.year_built}</p>
-                      <p className="text-xs text-white/50">Year Built</p>
-                    </div>
-                  )}
                   {propertyDetails.lot_size && (
                     <div className="text-center p-2 rounded bg-white/5">
                       <p className="text-lg font-semibold text-white">{propertyDetails.lot_size}</p>
-                      <p className="text-xs text-white/50">Lot Size</p>
+                      <p className="text-xs text-white/50">Acres</p>
                     </div>
                   )}
                   {propertyDetails.homestead !== undefined && (
@@ -381,25 +474,88 @@ export const PropertyLookupPage = () => {
                       <p className="text-xs text-white/50">Homestead</p>
                     </div>
                   )}
+                  {propertyDetails.sale_price && (
+                    <div className="text-center p-2 rounded bg-white/5">
+                      <p className="text-lg font-semibold text-white">{formatCurrency(propertyDetails.sale_price)}</p>
+                      <p className="text-xs text-white/50">Last Sale</p>
+                    </div>
+                  )}
                 </div>
-
-                {/* Legal Description */}
-                {propertyDetails.legal_description && (
-                  <div className="p-3 rounded-lg bg-white/5">
-                    <p className="text-xs text-white/50 mb-1">Legal Description</p>
-                    <p className="text-sm text-white/80">{propertyDetails.legal_description}</p>
-                  </div>
-                )}
 
                 {/* Source */}
                 <p className="text-xs text-white/30 text-right">
-                  Source: {propertyDetails.source} | {propertyDetails.fetched_at}
+                  Source: {propertyDetails.source}
                 </p>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Assign to Property Modal */}
+      <Dialog open={showAssignModal} onOpenChange={setShowAssignModal}>
+        <DialogContent className="sm:max-w-lg bg-[#0a1628] border-white/20">
+          <DialogHeader>
+            <DialogTitle className="text-white">Assign to Property Listing</DialogTitle>
+            <DialogDescription className="text-white/60">
+              Link this county data to an existing property in your listings.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Selected County Data Summary */}
+            {propertyDetails && (
+              <div className="p-3 rounded-lg bg-amber-400/10 border border-amber-400/30">
+                <p className="text-sm text-amber-400 font-medium">County Data to Assign:</p>
+                <p className="text-white">{propertyDetails.address}</p>
+                <p className="text-sm text-white/70">Owner: {propertyDetails.owner_name}</p>
+              </div>
+            )}
+            
+            {/* Property Selection */}
+            <div>
+              <Label className="text-white/80">Select Property Listing</Label>
+              {loadingListings ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
+                </div>
+              ) : listings.length === 0 ? (
+                <div className="text-center py-4 text-white/50">
+                  <p>No listings found</p>
+                  <p className="text-sm">Create a listing first to assign county data</p>
+                </div>
+              ) : (
+                <Select value={selectedListing} onValueChange={setSelectedListing}>
+                  <SelectTrigger className="bg-[#0f1d32] border-white/20 text-white">
+                    <SelectValue placeholder="Select a property..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {listings.map(listing => (
+                      <SelectItem key={listing.id} value={listing.id}>
+                        {listing.address}, {listing.city}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          </div>
+          
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowAssignModal(false)} className="border-white/20 text-white hover:bg-white/10">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAssignToProperty} 
+              disabled={!selectedListing || assigning}
+              className="bg-amber-500 hover:bg-amber-600 text-black"
+            >
+              {assigning ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Link2 className="w-4 h-4 mr-2" />}
+              Assign Data
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* MLS Configuration Modal */}
       <Dialog open={showMLSConfig} onOpenChange={setShowMLSConfig}>
