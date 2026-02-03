@@ -36,7 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
-import { propertyLookupAPI, propertiesAPI } from '../lib/api';
+import { propertyLookupAPI, listingsAPI } from '../lib/api';
 import { toast } from 'sonner';
 
 const COUNTIES = [
