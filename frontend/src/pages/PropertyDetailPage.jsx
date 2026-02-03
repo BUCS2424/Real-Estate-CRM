@@ -134,13 +134,19 @@ export const PropertyDetailPage = () => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#0a1628]/95 backdrop-blur-sm border-b border-amber-400/10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded flex items-center justify-center">
-              <span className="font-serif text-black font-bold text-xl">F</span>
-            </div>
-            <div>
-              <h1 className="text-xl font-serif tracking-wide">FUSION</h1>
-              <p className="text-[10px] tracking-[0.3em] text-amber-400/80">LUXURY ESTATES</p>
-            </div>
+            {branding.logoUrl ? (
+              <img src={branding.logoUrl} alt={branding.siteName} className="h-12 object-contain" />
+            ) : (
+              <>
+                <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded flex items-center justify-center">
+                  <span className="font-serif text-black font-bold text-xl">H</span>
+                </div>
+                <div>
+                  <h1 className="text-xl font-serif tracking-wide">HIDDEN HAVEN</h1>
+                  <p className="text-[10px] tracking-[0.3em] text-amber-400/80">REALTY</p>
+                </div>
+              </>
+            )}
           </Link>
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" className="text-white hover:text-amber-400">
