@@ -45,6 +45,24 @@ export const contactsAPI = {
   update: (id, data) => api.put(`/contacts/${id}`, data),
   updateScore: (id, score) => api.patch(`/contacts/${id}/score`, { lead_score: score }),
   delete: (id) => api.delete(`/contacts/${id}`),
+  // Import/Export
+  importFile: (formData, category) => api.post(`/contacts/import${category ? `?category=${category}` : ''}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  exportCSV: (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.category) params.append('category', filters.category);
+    if (filters.status) params.append('status', filters.status);
+    if (filters.tags) params.append('tags', filters.tags);
+    return api.get(`/contacts/export/csv?${params.toString()}`, { responseType: 'blob' });
+  },
+  exportVCard: (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.category) params.append('category', filters.category);
+    if (filters.status) params.append('status', filters.status);
+    if (filters.tags) params.append('tags', filters.tags);
+    return api.get(`/contacts/export/vcard?${params.toString()}`, { responseType: 'blob' });
+  },
 };
 
 // Deals
