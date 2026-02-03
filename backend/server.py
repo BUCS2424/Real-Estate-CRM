@@ -241,6 +241,7 @@ from models.user import UserRole
 
 @api_router.post("/site-images/upload")
 async def upload_site_image(
+    request: Request,
     file: UploadFile = File(...),
     current_user: dict = Depends(get_current_user)
 ):
@@ -263,10 +264,11 @@ async def upload_site_image(
     with open(file_path, 'wb') as f:
         f.write(content)
     
-    # Build the URL - use REACT_APP_BACKEND_URL for full URL
-    base_url = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
-    if not base_url:
-        base_url = 'http://localhost:8001'
+    # Build the URL from the request
+    # Use X-Forwarded headers if behind proxy, otherwise use request base
+    forwarded_proto = request.headers.get('x-forwarded-proto', 'https')
+    forwarded_host = request.headers.get('x-forwarded-host', request.headers.get('host', 'localhost:8001'))
+    base_url = f"{forwarded_proto}://{forwarded_host}"
     
     file_url = f"{base_url}/api/static/site-images/{unique_name}"
     
@@ -279,14 +281,15 @@ async def upload_site_image(
     }
 
 @api_router.get("/site-images")
-async def list_site_images(current_user: dict = Depends(get_current_user)):
+async def list_site_images(request: Request, current_user: dict = Depends(get_current_user)):
     """List all images in the site-images folder"""
     if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
         raise HTTPException(status_code=403, detail="Admin access required")
     
-    base_url = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
-    if not base_url:
-        base_url = 'http://localhost:8001'
+    # Build the URL from the request
+    forwarded_proto = request.headers.get('x-forwarded-proto', 'https')
+    forwarded_host = request.headers.get('x-forwarded-host', request.headers.get('host', 'localhost:8001'))
+    base_url = f"{forwarded_proto}://{forwarded_host}"
     
     images = []
     if os.path.exists(SITE_IMAGES_DIR):
