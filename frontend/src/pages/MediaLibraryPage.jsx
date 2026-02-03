@@ -90,10 +90,14 @@ export const MediaLibraryPage = () => {
   const [newFileName, setNewFileName] = useState('');
   const [showNewFolderModal, setShowNewFolderModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  const [showUploadModal, setShowUploadModal] = useState(false);
   
   // Upload
   const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef(null);
+  
+  // Drag state for main area
+  const [isDraggingMain, setIsDraggingMain] = useState(false);
+  const dragCounter = useRef(0);
 
   useEffect(() => {
     fetchFolders();
