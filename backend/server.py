@@ -31,9 +31,38 @@ async def seed_data():
     # Check if super user exists
     existing = await db.users.find_one({"email": "mel@a2gdesigns.com"})
     if existing:
-        return {"message": "Data already seeded"}
+        # Still update branding in case it's missing
+        await db.general_settings.update_one(
+            {},
+            {"$set": {
+                "siteName": "Hidden Haven Realty",
+                "logoUrl": "https://customer-assets.emergentagent.com/job_096c795f-2f6d-4346-886a-63ca7ee0963b/artifacts/3cycoznd_hidden-haven-realty-site-top.png",
+                "dashboardLogoUrl": "https://customer-assets.emergentagent.com/job_096c795f-2f6d-4346-886a-63ca7ee0963b/artifacts/3cycoznd_hidden-haven-realty-site-top.png",
+                "faviconUrl": "https://customer-assets.emergentagent.com/job_096c795f-2f6d-4346-886a-63ca7ee0963b/artifacts/0gvwgebj_hidden-haven-realty.png",
+                "pwaIconUrl": "https://customer-assets.emergentagent.com/job_096c795f-2f6d-4346-886a-63ca7ee0963b/artifacts/0gvwgebj_hidden-haven-realty.png",
+                "logoLinkUrl": "/",
+                "dashboardLogoLinkUrl": "/dashboard"
+            }},
+            upsert=True
+        )
+        return {"message": "Data already seeded, branding updated"}
     
     now = datetime.now(timezone.utc).isoformat()
+    
+    # Create branding/general settings FIRST
+    await db.general_settings.update_one(
+        {},
+        {"$set": {
+            "siteName": "Hidden Haven Realty",
+            "logoUrl": "https://customer-assets.emergentagent.com/job_096c795f-2f6d-4346-886a-63ca7ee0963b/artifacts/3cycoznd_hidden-haven-realty-site-top.png",
+            "dashboardLogoUrl": "https://customer-assets.emergentagent.com/job_096c795f-2f6d-4346-886a-63ca7ee0963b/artifacts/3cycoznd_hidden-haven-realty-site-top.png",
+            "faviconUrl": "https://customer-assets.emergentagent.com/job_096c795f-2f6d-4346-886a-63ca7ee0963b/artifacts/0gvwgebj_hidden-haven-realty.png",
+            "pwaIconUrl": "https://customer-assets.emergentagent.com/job_096c795f-2f6d-4346-886a-63ca7ee0963b/artifacts/0gvwgebj_hidden-haven-realty.png",
+            "logoLinkUrl": "/",
+            "dashboardLogoLinkUrl": "/dashboard"
+        }},
+        upsert=True
+    )
     
     # Create super user
     super_user_id = str(uuid.uuid4())
@@ -74,10 +103,10 @@ async def seed_data():
         "updated_at": now
     })
     
-    # Sample contacts
+    # Sample contacts - WITH first_name and last_name
     contacts = [
-        {"first_name": "John", "last_name": "Smith", "email": "john@example.com", "phone": "+1234567890", "status": "active", "category": "buyer"},
-        {"first_name": "Sarah", "last_name": "Johnson", "email": "sarah@example.com", "phone": "+1234567891", "status": "active", "category": "seller"},
+        {"first_name": "John", "last_name": "Smith", "name": "John Smith", "email": "john@example.com", "phone": "+1234567890", "status": "active", "category": "buyer"},
+        {"first_name": "Sarah", "last_name": "Johnson", "name": "Sarah Johnson", "email": "sarah@example.com", "phone": "+1234567891", "status": "active", "category": "seller"},
         {"first_name": "Michael", "last_name": "Brown", "email": "michael@example.com", "status": "lead", "category": "buyer"},
     ]
     
