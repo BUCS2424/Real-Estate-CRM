@@ -1,13 +1,119 @@
-from fastapi import APIRouter, Depends, HTTPException
-from typing import List
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from fastapi.responses import StreamingResponse
+from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
+import csv
+import io
+import re
 from database import db
 from models.contact import ContactCreate, ContactResponse, LeadScoreUpdate
 from models.user import UserRole
 from utils.auth import get_current_user, require_role
 
 router = APIRouter()
+
+# ============ VCARD PARSING UTILITIES ============
+
+def parse_vcard(content: str) -> list:
+    """Parse vCard (.vcf) file content into contact dictionaries"""
+    contacts = []
+    current_contact = {}
+    
+    lines = content.replace('\r\n ', '').replace('\r\n\t', '').split('\n')
+    
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+            
+        if line.upper() == 'BEGIN:VCARD':
+            current_contact = {}
+        elif line.upper() == 'END:VCARD':
+            if current_contact:
+                contacts.append(current_contact)
+            current_contact = {}
+        elif ':' in line:
+            # Handle property;params:value format
+            parts = line.split(':', 1)
+            prop_part = parts[0]
+            value = parts[1] if len(parts) > 1 else ''
+            
+            # Get property name (before any parameters)
+            prop_name = prop_part.split(';')[0].upper()
+            
+            if prop_name == 'FN':
+                current_contact['full_name'] = value
+            elif prop_name == 'N':
+                # N:Last;First;Middle;Prefix;Suffix
+                name_parts = value.split(';')
+                if len(name_parts) >= 2:
+                    current_contact['last_name'] = name_parts[0] if name_parts[0] else ''
+                    current_contact['first_name'] = name_parts[1] if len(name_parts) > 1 else ''
+            elif prop_name == 'EMAIL':
+                current_contact['email'] = value.lower()
+            elif prop_name == 'TEL':
+                # Clean phone number
+                phone = re.sub(r'[^\d+]', '', value)
+                current_contact['phone'] = phone
+            elif prop_name == 'ORG':
+                current_contact['company'] = value.split(';')[0]
+            elif prop_name == 'TITLE':
+                current_contact['position'] = value
+            elif prop_name == 'NOTE':
+                current_contact['notes'] = value
+            elif prop_name == 'CATEGORIES':
+                # Parse categories/tags
+                current_contact['tags'] = [t.strip() for t in value.split(',')]
+    
+    return contacts
+
+def generate_vcard(contact: dict) -> str:
+    """Generate a vCard string from a contact dictionary"""
+    lines = ['BEGIN:VCARD', 'VERSION:3.0']
+    
+    # Full name
+    first = contact.get('first_name', '')
+    last = contact.get('last_name', '')
+    full_name = f"{first} {last}".strip() or contact.get('email', 'Unknown')
+    lines.append(f'FN:{full_name}')
+    
+    # Structured name
+    lines.append(f'N:{last};{first};;;')
+    
+    # Email
+    if contact.get('email'):
+        lines.append(f'EMAIL;TYPE=INTERNET:{contact["email"]}')
+    
+    # Phone
+    if contact.get('phone'):
+        lines.append(f'TEL;TYPE=CELL:{contact["phone"]}')
+    
+    # Organization
+    if contact.get('company'):
+        lines.append(f'ORG:{contact["company"]}')
+    
+    # Title/Position
+    if contact.get('position'):
+        lines.append(f'TITLE:{contact["position"]}')
+    
+    # Notes
+    if contact.get('notes'):
+        lines.append(f'NOTE:{contact["notes"]}')
+    
+    # Categories (tags + category)
+    categories = []
+    if contact.get('category'):
+        categories.append(contact['category'])
+    if contact.get('tags'):
+        categories.extend(contact['tags'])
+    if categories:
+        lines.append(f'CATEGORIES:{",".join(categories)}')
+    
+    lines.append('END:VCARD')
+    return '\r\n'.join(lines)
+
+# ============ CRUD OPERATIONS ============
 
 @router.post("", response_model=ContactResponse)
 async def create_contact(contact: ContactCreate, current_user: dict = Depends(get_current_user)):
@@ -57,3 +163,252 @@ async def delete_contact(contact_id: str, current_user: dict = Depends(require_r
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Contact not found")
     return {"message": "Contact deleted"}
+
+# ============ IMPORT / EXPORT ============
+
+@router.post("/import")
+async def import_contacts(
+    file: UploadFile = File(...),
+    category: Optional[str] = Query(None, description="Category to assign: buyer, seller"),
+    current_user: dict = Depends(get_current_user)
+):
+    """Import contacts from CSV or vCard (.vcf) file"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    content = await file.read()
+    
+    # Detect file type
+    filename = file.filename.lower() if file.filename else ''
+    is_vcard = filename.endswith('.vcf') or filename.endswith('.vcard')
+    
+    try:
+        # Decode content
+        try:
+            text = content.decode('utf-8')
+        except UnicodeDecodeError:
+            text = content.decode('latin-1')
+        
+        contacts_to_import = []
+        
+        if is_vcard:
+            # Parse vCard format
+            contacts_to_import = parse_vcard(text)
+        else:
+            # Parse CSV format
+            reader = csv.DictReader(io.StringIO(text))
+            for row in reader:
+                contact = {}
+                # Flexible column mapping for email
+                for key in ['email', 'Email', 'EMAIL', 'e-mail', 'E-mail', 'email_address']:
+                    if key in row and row[key]:
+                        contact['email'] = row[key].strip().lower()
+                        break
+                
+                # Name fields
+                for key in ['first_name', 'First Name', 'FirstName', 'first']:
+                    if key in row and row[key]:
+                        contact['first_name'] = row[key].strip()
+                        break
+                
+                for key in ['last_name', 'Last Name', 'LastName', 'last']:
+                    if key in row and row[key]:
+                        contact['last_name'] = row[key].strip()
+                        break
+                
+                # If we have full_name but not first/last, try to split it
+                if not contact.get('first_name') and not contact.get('last_name'):
+                    for key in ['name', 'Name', 'NAME', 'full_name', 'Full Name']:
+                        if key in row and row[key]:
+                            parts = row[key].strip().split(' ', 1)
+                            contact['first_name'] = parts[0]
+                            contact['last_name'] = parts[1] if len(parts) > 1 else ''
+                            break
+                
+                # Phone
+                for key in ['phone', 'Phone', 'PHONE', 'mobile', 'Mobile', 'phone_number']:
+                    if key in row and row[key]:
+                        contact['phone'] = row[key].strip()
+                        break
+                
+                # Company
+                for key in ['company', 'Company', 'COMPANY', 'organization', 'org']:
+                    if key in row and row[key]:
+                        contact['company'] = row[key].strip()
+                        break
+                
+                # Position/Title
+                for key in ['position', 'Position', 'title', 'Title', 'job_title']:
+                    if key in row and row[key]:
+                        contact['position'] = row[key].strip()
+                        break
+                
+                # Notes
+                for key in ['notes', 'Notes', 'NOTE', 'note']:
+                    if key in row and row[key]:
+                        contact['notes'] = row[key].strip()
+                        break
+                
+                if contact.get('email') or (contact.get('first_name') and contact.get('last_name')):
+                    contacts_to_import.append(contact)
+        
+        # Import contacts
+        imported = 0
+        duplicates = 0
+        errors = 0
+        error_details = []
+        now = datetime.now(timezone.utc).isoformat()
+        
+        for contact in contacts_to_import:
+            try:
+                email = contact.get('email', '').lower()
+                
+                # Check for duplicate by email if email exists
+                if email:
+                    existing = await db.contacts.find_one({"email": email})
+                    if existing:
+                        duplicates += 1
+                        continue
+                
+                # Create contact document
+                contact_doc = {
+                    "id": str(uuid.uuid4()),
+                    "first_name": contact.get('first_name', ''),
+                    "last_name": contact.get('last_name', ''),
+                    "email": email,
+                    "phone": contact.get('phone'),
+                    "company": contact.get('company'),
+                    "position": contact.get('position'),
+                    "source": "import",
+                    "notes": contact.get('notes'),
+                    "tags": contact.get('tags', []),
+                    "category": category or contact.get('category', 'buyer'),
+                    "status": "active",
+                    "lead_score": 0,
+                    "created_at": now
+                }
+                
+                await db.contacts.insert_one(contact_doc)
+                imported += 1
+                
+            except Exception as e:
+                errors += 1
+                error_details.append(str(e))
+        
+        return {
+            "total": len(contacts_to_import),
+            "imported": imported,
+            "duplicates": duplicates,
+            "errors": errors,
+            "error_details": error_details[:10]
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to parse file: {str(e)}")
+
+@router.get("/export/csv")
+async def export_contacts_csv(
+    category: Optional[str] = Query(None, description="Filter by category: buyer, seller"),
+    status: Optional[str] = Query(None, description="Filter by status: active, lead, inactive"),
+    tags: Optional[str] = Query(None, description="Filter by tags (comma-separated)"),
+    current_user: dict = Depends(get_current_user)
+):
+    """Export contacts to CSV file with optional filters"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Build query
+    query = {}
+    if category:
+        query["category"] = category
+    if status:
+        query["status"] = status
+    if tags:
+        tag_list = [t.strip() for t in tags.split(',')]
+        query["tags"] = {"$in": tag_list}
+    
+    contacts = await db.contacts.find(query, {"_id": 0}).to_list(100000)
+    
+    # Create CSV
+    output = io.StringIO()
+    fieldnames = ['first_name', 'last_name', 'email', 'phone', 'company', 'position', 'category', 'status', 'tags', 'notes', 'lead_score', 'created_at']
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
+    
+    for contact in contacts:
+        writer.writerow({
+            'first_name': contact.get('first_name', ''),
+            'last_name': contact.get('last_name', ''),
+            'email': contact.get('email', ''),
+            'phone': contact.get('phone', ''),
+            'company': contact.get('company', ''),
+            'position': contact.get('position', ''),
+            'category': contact.get('category', ''),
+            'status': contact.get('status', ''),
+            'tags': ','.join(contact.get('tags', [])),
+            'notes': contact.get('notes', ''),
+            'lead_score': contact.get('lead_score', 0),
+            'created_at': contact.get('created_at', '')
+        })
+    
+    output.seek(0)
+    
+    # Generate filename with filters
+    filter_parts = []
+    if category:
+        filter_parts.append(category)
+    if status:
+        filter_parts.append(status)
+    filter_str = '_'.join(filter_parts) if filter_parts else 'all'
+    filename = f"contacts_{filter_str}_{datetime.now().strftime('%Y%m%d')}.csv"
+    
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+@router.get("/export/vcard")
+async def export_contacts_vcard(
+    category: Optional[str] = Query(None, description="Filter by category: buyer, seller"),
+    status: Optional[str] = Query(None, description="Filter by status: active, lead, inactive"),
+    tags: Optional[str] = Query(None, description="Filter by tags (comma-separated)"),
+    current_user: dict = Depends(get_current_user)
+):
+    """Export contacts to vCard (.vcf) file with optional filters - Apple compatible"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Build query
+    query = {}
+    if category:
+        query["category"] = category
+    if status:
+        query["status"] = status
+    if tags:
+        tag_list = [t.strip() for t in tags.split(',')]
+        query["tags"] = {"$in": tag_list}
+    
+    contacts = await db.contacts.find(query, {"_id": 0}).to_list(100000)
+    
+    # Generate vCards
+    vcards = []
+    for contact in contacts:
+        vcards.append(generate_vcard(contact))
+    
+    output = '\r\n'.join(vcards)
+    
+    # Generate filename with filters
+    filter_parts = []
+    if category:
+        filter_parts.append(category)
+    if status:
+        filter_parts.append(status)
+    filter_str = '_'.join(filter_parts) if filter_parts else 'all'
+    filename = f"contacts_{filter_str}_{datetime.now().strftime('%Y%m%d')}.vcf"
+    
+    return StreamingResponse(
+        iter([output]),
+        media_type="text/vcard",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
