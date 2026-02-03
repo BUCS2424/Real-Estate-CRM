@@ -15,7 +15,8 @@ import {
   FileInput,
   Mail,
   ListPlus,
-  Layout
+  Layout,
+  FolderOpen
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
@@ -29,6 +30,7 @@ const navItems = [
   { path: '/deals', icon: Briefcase, label: 'Deals Pipeline' },
   { path: '/listings', icon: Home, label: 'Listings' },
   { path: '/landing-pages', icon: Layout, label: 'Landing Pages' },
+  { path: '/media', icon: FolderOpen, label: 'Media Library' },
   { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
   { path: '/bookings', icon: CalendarCheck, label: 'Bookings' },
   { path: '/newsletter', icon: Mail, label: 'Newsletter' },
