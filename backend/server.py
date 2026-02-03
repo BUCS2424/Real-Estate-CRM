@@ -5,8 +5,9 @@ Refactored modular architecture
 import os
 import uuid
 from datetime import datetime, timezone
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -14,6 +15,14 @@ app = FastAPI(
     description="Real Estate CRM Platform API",
     version="2.0.0"
 )
+
+# Ensure static directories exist
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+SITE_IMAGES_DIR = os.path.join(STATIC_DIR, "site-images")
+os.makedirs(SITE_IMAGES_DIR, exist_ok=True)
+
+# Mount static files - serves /static/site-images/*
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # Import database
 from database import db, close_db
