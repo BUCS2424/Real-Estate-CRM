@@ -298,201 +298,116 @@ class PinellasScraper(BaseCountyScraper):
 class PascoScraper(BaseCountyScraper):
     """
     Pasco County Property Appraiser
-    Website: pascopa.com / search.pascopa.com
-    Uses form-based search with separate street number and name fields
+    Uses ArcGIS REST API at maps.pascopa.com
     """
     
     COUNTY = "Pasco"
-    BASE_URL = "https://search.pascopa.com"
-    SEARCH_URL = "https://search.pascopa.com/default.aspx"
-    
-    def _parse_address(self, address: str) -> tuple:
-        """Parse address into street number and street name"""
-        import re
-        # Remove city, state, zip if present
-        address = re.split(r',|\d{5}', address)[0].strip()
-        
-        # Split into number and street name
-        match = re.match(r'^(\d+)\s+(.+)$', address.strip())
-        if match:
-            return match.group(1), match.group(2)
-        return "", address
+    ARCGIS_URL = "https://maps.pascopa.com/arcgis/rest/services/Parcels/MapServer"
+    PARCEL_LAYER = 3  # Parcels (Clickable Info)
     
     async def search_by_address(self, address: str) -> List[Dict[str, Any]]:
-        """Search for properties by address using form submission"""
+        """Search for properties by address using ArcGIS find"""
         results = []
         
         try:
-            street_num, street_name = self._parse_address(address)
-            print(f"Pasco search: num='{street_num}', name='{street_name}'")
-            
-            # Submit the address search form
+            # Use ArcGIS find endpoint
             response = await self.client.get(
-                self.SEARCH_URL,
+                f"{self.ARCGIS_URL}/find",
                 params={
-                    "add1": street_num,
-                    "add2": street_name,
-                    "add": "Search"
+                    "searchText": address,
+                    "contains": "true",
+                    "searchFields": "PHYS_STREET",
+                    "sr": "4326",
+                    "layers": str(self.PARCEL_LAYER),
+                    "returnGeometry": "false",
+                    "f": "json"
                 }
             )
             
             if response.status_code == 200:
-                results = self._parse_search_results(response.text)
-                
-            # If no results, try alternative search
-            if not results:
-                response = await self.client.get(
-                    self.SEARCH_URL,
-                    params={
-                        "add1": street_num,
-                        "add2": street_name.split()[0] if street_name else "",  # Just first word
-                        "add": "Search"
-                    }
-                )
-                if response.status_code == 200:
-                    results = self._parse_search_results(response.text)
-                
-        except Exception as e:
-            print(f"Pasco search error: {e}")
-        
-        return results
-    
-    def _parse_search_results(self, html: str) -> List[Dict[str, Any]]:
-        """Parse search results from HTML"""
-        results = []
-        soup = BeautifulSoup(html, 'lxml')
-        
-        # Look for the results table - Pasco shows results in a table
-        tables = soup.find_all('table')
-        
-        for table in tables:
-            rows = table.find_all('tr')
-            for row in rows:
-                cells = row.find_all('td')
-                if len(cells) >= 3:
-                    # Look for links that go to parcel details
-                    link = row.find('a', href=re.compile(r'account|parcel|pid', re.I))
-                    if link:
-                        href = link.get('href', '')
-                        # Extract parcel ID from link
-                        parcel_match = re.search(r'(?:account|parcel|pid)[=:]?(\d+)', href, re.I)
-                        parcel_id = parcel_match.group(1) if parcel_match else self.clean_text(link.get_text())
-                        
-                        # Get text from cells
-                        cell_texts = [self.clean_text(c.get_text()) for c in cells]
-                        
-                        results.append({
-                            "parcel_id": parcel_id,
-                            "address": cell_texts[1] if len(cell_texts) > 1 else "",
-                            "owner_name": cell_texts[2] if len(cell_texts) > 2 else "",
-                            "county": self.COUNTY,
-                            "raw_data": {"cells": cell_texts, "href": href}
-                        })
-        
-        # Also check for direct property display (single result)
-        if not results:
-            # Check if we landed on a property detail page
-            owner_elem = soup.find(string=re.compile(r'Owner', re.I))
-            addr_elem = soup.find(string=re.compile(r'Site Address|Property Address', re.I))
-            parcel_elem = soup.find(string=re.compile(r'Parcel|Account', re.I))
-            
-            if owner_elem or addr_elem:
-                parcel_id = ""
-                address = ""
-                owner = ""
-                
-                # Try to extract parcel from URL or page
-                parcel_input = soup.find('input', {'name': 'pid'})
-                if parcel_input:
-                    parcel_id = parcel_input.get('value', '')
-                
-                # Get values from labels
-                def get_next_text(elem):
-                    if elem and elem.parent:
-                        next_elem = elem.parent.find_next(['td', 'span', 'div'])
-                        if next_elem:
-                            return self.clean_text(next_elem.get_text())
-                    return ""
-                
-                if addr_elem:
-                    address = get_next_text(addr_elem)
-                if owner_elem:
-                    owner = get_next_text(owner_elem)
-                
-                if address or owner:
+                data = response.json()
+                for result in data.get("results", []):
+                    attrs = result.get("attributes", {})
+                    
+                    # Build full address
+                    full_address = f"{attrs.get('PHYS_STREET', '').strip()}, {attrs.get('PHYS_CITY', '')}, {attrs.get('PHYS_STATE', '')} {attrs.get('PHYS_ZIP', '')}"
+                    
                     results.append({
-                        "parcel_id": parcel_id,
-                        "address": address,
-                        "owner_name": owner,
-                        "county": self.COUNTY
+                        "parcel_id": attrs.get("ParcelID", attrs.get("DIR_ID", "")),
+                        "address": full_address.strip(", "),
+                        "owner_name": attrs.get("NAD_NAME_1", ""),
+                        "county": self.COUNTY,
+                        "raw_data": attrs
                     })
+                    
+        except Exception as e:
+            print(f"Pasco ArcGIS search error: {e}")
         
         return results
     
     async def get_property_details(self, parcel_id: str) -> Optional[Dict[str, Any]]:
-        """Get detailed property info by parcel ID"""
+        """Get detailed property info by parcel ID using ArcGIS query"""
         try:
-            # Try to get property page by parcel ID
+            # Query by ParcelID or DIR_ID
+            where_clause = f"ParcelID='{parcel_id}' OR DIR_ID='{parcel_id}'"
+            
             response = await self.client.get(
-                f"{self.BASE_URL}/parcel.aspx",
-                params={"pid": parcel_id}
+                f"{self.ARCGIS_URL}/{self.PARCEL_LAYER}/query",
+                params={
+                    "where": where_clause,
+                    "outFields": "*",
+                    "returnGeometry": "false",
+                    "f": "json"
+                }
             )
             
             if response.status_code == 200:
-                return self._parse_detail_page(response.text, parcel_id)
-            
-            # Try account number format
-            response = await self.client.get(
-                f"{self.BASE_URL}/default.aspx",
-                params={"account": parcel_id}
-            )
-            
-            if response.status_code == 200:
-                return self._parse_detail_page(response.text, parcel_id)
+                data = response.json()
+                features = data.get("features", [])
+                
+                if features:
+                    attrs = features[0].get("attributes", {})
+                    
+                    # Build full address
+                    full_address = f"{attrs.get('PHYS_STREET', '').strip()}, {attrs.get('PHYS_CITY', '')}, {attrs.get('PHYS_STATE', '')} {attrs.get('PHYS_ZIP', '')}"
+                    
+                    # Build owner mailing address
+                    owner_address = f"{attrs.get('NAD_ADD_1', '')} {attrs.get('NAD_ADD_2', '')}, {attrs.get('NAD_CITY', '')}, {attrs.get('NAD_STATE', '')} {attrs.get('NAD_ZIP', '')}"
+                    
+                    # Parse sale date
+                    sale_date = None
+                    if attrs.get('SALE_YEAR') and attrs.get('SALE_YEAR') != 'Null':
+                        sale_date = f"{attrs.get('SALE_YEAR')}-{attrs.get('SALE_MON', '01')}-{attrs.get('SALE_DAY', '01')}"
+                    
+                    return {
+                        "parcel_id": attrs.get("ParcelID", parcel_id),
+                        "dir_id": attrs.get("DIR_ID", ""),
+                        "county": self.COUNTY,
+                        "address": full_address.strip(", "),
+                        "city": attrs.get("PHYS_CITY", ""),
+                        "state": attrs.get("PHYS_STATE", ""),
+                        "zip_code": attrs.get("PHYS_ZIP", ""),
+                        "owner_name": f"{attrs.get('NAD_NAME_1', '')} {attrs.get('NAD_NAME_2', '')}".strip(),
+                        "owner_address": owner_address.strip(", "),
+                        "assessed_value": self.parse_currency(str(attrs.get("VAL_APPR", ""))),
+                        "market_value": self.parse_currency(str(attrs.get("VAL_APPR", ""))),  # Pasco uses VAL_APPR
+                        "land_value": self.parse_currency(str(attrs.get("VAL_LAND", ""))),
+                        "building_value": self.parse_currency(str(attrs.get("VAL_BLDG_DEPR", ""))),
+                        "lot_size": attrs.get("VAL_ACRES", ""),
+                        "homestead": attrs.get("HAS_HX", "").lower() == "yes",
+                        "sale_price": self.parse_currency(str(attrs.get("SALE_AMT", ""))) if attrs.get("SALE_AMT") != "Null" else None,
+                        "sale_date": sale_date,
+                        "tax_area": attrs.get("VAL_TAX_AREA", ""),
+                        "property_class": attrs.get("DIR_CLASS", ""),
+                        "raw_data": attrs,
+                        "source": "Pasco County Property Appraiser (ArcGIS)",
+                        "fetched_at": datetime.utcnow().isoformat()
+                    }
                     
         except Exception as e:
-            print(f"Pasco detail error: {e}")
+            print(f"Pasco ArcGIS detail error: {e}")
         
         return None
-    
-    def _parse_detail_page(self, html: str, parcel_id: str) -> Dict[str, Any]:
-        """Parse property detail HTML page"""
-        soup = BeautifulSoup(html, 'lxml')
-        
-        def find_value(patterns: List[str]) -> str:
-            for pattern in patterns:
-                elem = soup.find(string=re.compile(pattern, re.I))
-                if elem:
-                    parent = elem.find_parent(['tr', 'div', 'dl', 'td'])
-                    if parent:
-                        # Try to find the value cell/element
-                        value_elem = parent.find_next(['td', 'dd', 'span'])
-                        if value_elem and value_elem != elem.parent:
-                            return self.clean_text(value_elem.get_text())
-            return ""
-        
-        return {
-            "parcel_id": parcel_id,
-            "county": self.COUNTY,
-            "address": find_value(["Site Address", "Property Address", "Location"]),
-            "owner_name": find_value(["Owner", "Owner Name", "Property Owner"]),
-            "owner_address": find_value(["Mailing Address", "Owner Address"]),
-            "assessed_value": self.parse_currency(find_value(["Assessed Value", "Total Assessed"])),
-            "market_value": self.parse_currency(find_value(["Market Value", "Just Value"])),
-            "taxable_value": self.parse_currency(find_value(["Taxable Value"])),
-            "land_value": self.parse_currency(find_value(["Land Value"])),
-            "building_value": self.parse_currency(find_value(["Building Value", "Improvement Value"])),
-            "year_built": find_value(["Year Built", "Effective Year"]),
-            "bedrooms": find_value(["Bedrooms", "Beds"]),
-            "bathrooms": find_value(["Bathrooms", "Baths"]),
-            "sqft": find_value(["Heated", "Living Area", "Sq Ft", "Square Feet"]),
-            "lot_size": find_value(["Lot Size", "Land Area", "Acreage"]),
-            "property_use": find_value(["Use Code", "Property Use", "Land Use"]),
-            "legal_description": find_value(["Legal", "Legal Description"]),
-            "homestead": "yes" in find_value(["Homestead"]).lower(),
-            "source": "Pasco County Property Appraiser",
-            "fetched_at": datetime.utcnow().isoformat()
-        }
 
 
 # Factory function to get the right scraper
