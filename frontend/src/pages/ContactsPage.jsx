@@ -430,6 +430,7 @@ export const ContactsPage = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Stats Cards */}
