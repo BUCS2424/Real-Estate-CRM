@@ -107,7 +107,7 @@ async def seed_data():
     contacts = [
         {"first_name": "John", "last_name": "Smith", "name": "John Smith", "email": "john@example.com", "phone": "+1234567890", "status": "active", "category": "buyer"},
         {"first_name": "Sarah", "last_name": "Johnson", "name": "Sarah Johnson", "email": "sarah@example.com", "phone": "+1234567891", "status": "active", "category": "seller"},
-        {"first_name": "Michael", "last_name": "Brown", "email": "michael@example.com", "status": "lead", "category": "buyer"},
+        {"first_name": "Michael", "last_name": "Brown", "name": "Michael Brown", "email": "michael@example.com", "status": "lead", "category": "buyer"},
     ]
     
     for c in contacts:
