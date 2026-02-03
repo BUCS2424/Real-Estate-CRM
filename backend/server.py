@@ -5,7 +5,7 @@ Refactored modular architecture
 import os
 import uuid
 from datetime import datetime, timezone
-from fastapi import FastAPI, UploadFile, File, Depends, HTTPException
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
