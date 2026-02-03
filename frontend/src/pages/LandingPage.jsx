@@ -769,10 +769,16 @@ export const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-amber-600 rounded flex items-center justify-center">
-                <span className="font-serif text-black font-bold">F</span>
-              </div>
-              <span className="font-serif text-lg">FUSION LUXURY ESTATES</span>
+              {branding.logoUrl ? (
+                <img src={branding.logoUrl} alt={branding.siteName} className="h-10 object-contain" />
+              ) : (
+                <>
+                  <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-amber-600 rounded flex items-center justify-center">
+                    <span className="font-serif text-black font-bold">H</span>
+                  </div>
+                  <span className="font-serif text-lg">HIDDEN HAVEN REALTY</span>
+                </>
+              )}
             </div>
             <div className="flex gap-8 text-sm text-white/50">
               <Link to="/newsletter-archive" className="hover:text-amber-400 transition-colors">Newsletter Archive</Link>
@@ -781,7 +787,7 @@ export const LandingPage = () => {
               <a href="#contact" className="hover:text-amber-400 transition-colors">Contact</a>
             </div>
             <p className="text-sm text-white/30">
-            © {new Date().getFullYear()} {branding.siteName || 'Fusion Luxury Estates'}. Powered By: <a href="https://a2gdesigns.com" target="_blank" rel="noopener noreferrer" className="text-amber-400/70 hover:text-amber-400 transition-colors">A2G</a>
+            © {new Date().getFullYear()} {branding.siteName || 'Hidden Haven Realty'}. Powered By: <a href="https://a2gdesigns.com" target="_blank" rel="noopener noreferrer" className="text-amber-400/70 hover:text-amber-400 transition-colors">A2G</a>
           </p>
           </div>
         </div>
