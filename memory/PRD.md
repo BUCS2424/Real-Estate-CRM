@@ -207,9 +207,13 @@ Build a unified workspace platform called "Fusion Builder All In One CRM" for re
 - [ ] Connect AI writer to CRM context
 
 ### P2 - Medium Priority
-- [ ] Backend refactor (split server.py into routers)
+- [x] Backend refactor (split server.py into routers) - DONE
 - [ ] Dark mode toggle implementation
 - [ ] Storage/media management in admin settings
+
+### Recently Completed (January 15, 2026)
+- [x] Mailing List Management with import/export
+- [x] Dynamic Branding System (logos, favicon, site name)
 
 ### P3 - Future Backlog
 - [ ] Automated task generation from deals
