@@ -34,6 +34,7 @@ import { AboutPage } from './pages/AboutPage';
 import { LandingPagesPage } from './pages/LandingPagesPage';
 import { PropertyLandingPage } from './pages/PropertyLandingPage';
 import { MediaLibraryPage } from './pages/MediaLibraryPage';
+import { PropertyLookupPage } from './pages/PropertyLookupPage';
 
 // Settings Pages
 import { SettingsOverview } from './pages/settings/SettingsOverview';
