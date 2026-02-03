@@ -478,10 +478,10 @@ export const PropertyLookupPage = () => {
           </div>
           
           <DialogFooter className="flex gap-2">
-            <Button variant="outline" onClick={handleTestMLS} disabled={testingMLS}>
+            <Button variant="outline" onClick={handleTestMLS} disabled={testingMLS} className="border-white/20 text-white hover:bg-white/10">
               {testingMLS ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Test Connection'}
             </Button>
-            <Button onClick={handleSaveMlsConfig}>Save Configuration</Button>
+            <Button onClick={handleSaveMlsConfig} className="bg-amber-500 hover:bg-amber-600 text-black">Save Configuration</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
