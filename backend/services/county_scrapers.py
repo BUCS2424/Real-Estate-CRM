@@ -299,102 +299,156 @@ class PascoScraper(BaseCountyScraper):
     """
     Pasco County Property Appraiser
     Website: pascopa.com / search.pascopa.com
+    Uses form-based search with separate street number and name fields
     """
     
     COUNTY = "Pasco"
     BASE_URL = "https://search.pascopa.com"
-    SEARCH_URL = "https://search.pascopa.com"
+    SEARCH_URL = "https://search.pascopa.com/default.aspx"
+    
+    def _parse_address(self, address: str) -> tuple:
+        """Parse address into street number and street name"""
+        import re
+        # Remove city, state, zip if present
+        address = re.split(r',|\d{5}', address)[0].strip()
+        
+        # Split into number and street name
+        match = re.match(r'^(\d+)\s+(.+)$', address.strip())
+        if match:
+            return match.group(1), match.group(2)
+        return "", address
     
     async def search_by_address(self, address: str) -> List[Dict[str, Any]]:
-        """Search for properties by address"""
+        """Search for properties by address using form submission"""
         results = []
         
         try:
-            # Pasco uses search.pascopa.com
-            search_url = f"{self.BASE_URL}/search"
+            street_num, street_name = self._parse_address(address)
+            print(f"Pasco search: num='{street_num}', name='{street_name}'")
             
+            # Submit the address search form
             response = await self.client.get(
-                search_url,
-                params={"q": address, "type": "address"}
+                self.SEARCH_URL,
+                params={
+                    "add1": street_num,
+                    "add2": street_name,
+                    "add": "Search"
+                }
             )
             
             if response.status_code == 200:
-                # Try to parse as JSON first
-                try:
-                    data = response.json()
-                    for item in data if isinstance(data, list) else data.get("results", []):
-                        results.append({
-                            "parcel_id": item.get("parcelId", item.get("accountNumber", "")),
-                            "address": item.get("address", item.get("siteAddress", "")),
-                            "owner_name": item.get("ownerName", item.get("owner", "")),
-                            "county": self.COUNTY,
-                            "raw_data": item
-                        })
-                except:
-                    # Parse HTML
-                    results = await self._scrape_search(address)
-            else:
-                results = await self._scrape_search(address)
+                results = self._parse_search_results(response.text)
+                
+            # If no results, try alternative search
+            if not results:
+                response = await self.client.get(
+                    self.SEARCH_URL,
+                    params={
+                        "add1": street_num,
+                        "add2": street_name.split()[0] if street_name else "",  # Just first word
+                        "add": "Search"
+                    }
+                )
+                if response.status_code == 200:
+                    results = self._parse_search_results(response.text)
                 
         except Exception as e:
             print(f"Pasco search error: {e}")
-            try:
-                results = await self._scrape_search(address)
-            except:
-                pass
         
         return results
     
-    async def _scrape_search(self, address: str) -> List[Dict[str, Any]]:
-        """Scrape search results"""
+    def _parse_search_results(self, html: str) -> List[Dict[str, Any]]:
+        """Parse search results from HTML"""
         results = []
+        soup = BeautifulSoup(html, 'lxml')
         
-        # Try the main pascopa.com site
-        response = await self.client.get(
-            "https://pascopa.com/property-search/",
-            params={"search": address}
-        )
+        # Look for the results table - Pasco shows results in a table
+        tables = soup.find_all('table')
         
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'lxml')
-            
-            # Look for result items
-            items = soup.select('.property-result, .search-result, table tr')
-            for item in items:
-                try:
-                    parcel = item.select_one('.parcel-id, [data-parcel]')
-                    addr = item.select_one('.address, .site-address')
-                    owner = item.select_one('.owner, .owner-name')
-                    
-                    if parcel or addr:
+        for table in tables:
+            rows = table.find_all('tr')
+            for row in rows:
+                cells = row.find_all('td')
+                if len(cells) >= 3:
+                    # Look for links that go to parcel details
+                    link = row.find('a', href=re.compile(r'account|parcel|pid', re.I))
+                    if link:
+                        href = link.get('href', '')
+                        # Extract parcel ID from link
+                        parcel_match = re.search(r'(?:account|parcel|pid)[=:]?(\d+)', href, re.I)
+                        parcel_id = parcel_match.group(1) if parcel_match else self.clean_text(link.get_text())
+                        
+                        # Get text from cells
+                        cell_texts = [self.clean_text(c.get_text()) for c in cells]
+                        
                         results.append({
-                            "parcel_id": self.clean_text(parcel.get_text()) if parcel else "",
-                            "address": self.clean_text(addr.get_text()) if addr else "",
-                            "owner_name": self.clean_text(owner.get_text()) if owner else "",
-                            "county": self.COUNTY
+                            "parcel_id": parcel_id,
+                            "address": cell_texts[1] if len(cell_texts) > 1 else "",
+                            "owner_name": cell_texts[2] if len(cell_texts) > 2 else "",
+                            "county": self.COUNTY,
+                            "raw_data": {"cells": cell_texts, "href": href}
                         })
-                except:
-                    continue
+        
+        # Also check for direct property display (single result)
+        if not results:
+            # Check if we landed on a property detail page
+            owner_elem = soup.find(string=re.compile(r'Owner', re.I))
+            addr_elem = soup.find(string=re.compile(r'Site Address|Property Address', re.I))
+            parcel_elem = soup.find(string=re.compile(r'Parcel|Account', re.I))
+            
+            if owner_elem or addr_elem:
+                parcel_id = ""
+                address = ""
+                owner = ""
+                
+                # Try to extract parcel from URL or page
+                parcel_input = soup.find('input', {'name': 'pid'})
+                if parcel_input:
+                    parcel_id = parcel_input.get('value', '')
+                
+                # Get values from labels
+                def get_next_text(elem):
+                    if elem and elem.parent:
+                        next_elem = elem.parent.find_next(['td', 'span', 'div'])
+                        if next_elem:
+                            return self.clean_text(next_elem.get_text())
+                    return ""
+                
+                if addr_elem:
+                    address = get_next_text(addr_elem)
+                if owner_elem:
+                    owner = get_next_text(owner_elem)
+                
+                if address or owner:
+                    results.append({
+                        "parcel_id": parcel_id,
+                        "address": address,
+                        "owner_name": owner,
+                        "county": self.COUNTY
+                    })
         
         return results
     
     async def get_property_details(self, parcel_id: str) -> Optional[Dict[str, Any]]:
         """Get detailed property info by parcel ID"""
         try:
-            # Try multiple URL patterns
-            urls_to_try = [
-                f"{self.BASE_URL}/parcel/{parcel_id}",
-                f"https://pascopa.com/property/{parcel_id}",
-                f"https://search.pascopa.com/Property/View/{parcel_id}"
-            ]
+            # Try to get property page by parcel ID
+            response = await self.client.get(
+                f"{self.BASE_URL}/parcel.aspx",
+                params={"pid": parcel_id}
+            )
             
-            for url in urls_to_try:
-                try:
-                    response = await self.client.get(url)
-                    if response.status_code == 200:
-                        return self._parse_detail_page(response.text, parcel_id)
-                except:
-                    continue
+            if response.status_code == 200:
+                return self._parse_detail_page(response.text, parcel_id)
+            
+            # Try account number format
+            response = await self.client.get(
+                f"{self.BASE_URL}/default.aspx",
+                params={"account": parcel_id}
+            )
+            
+            if response.status_code == 200:
+                return self._parse_detail_page(response.text, parcel_id)
                     
         except Exception as e:
             print(f"Pasco detail error: {e}")
@@ -409,15 +463,12 @@ class PascoScraper(BaseCountyScraper):
             for pattern in patterns:
                 elem = soup.find(string=re.compile(pattern, re.I))
                 if elem:
-                    parent = elem.find_parent(['tr', 'div', 'dl'])
+                    parent = elem.find_parent(['tr', 'div', 'dl', 'td'])
                     if parent:
-                        value_elem = parent.find(['td', 'dd', 'span'], class_=re.compile('value|data', re.I))
-                        if value_elem:
+                        # Try to find the value cell/element
+                        value_elem = parent.find_next(['td', 'dd', 'span'])
+                        if value_elem and value_elem != elem.parent:
                             return self.clean_text(value_elem.get_text())
-                        # Try next sibling
-                        next_elem = elem.find_next(['td', 'span', 'div'])
-                        if next_elem and next_elem != elem.parent:
-                            return self.clean_text(next_elem.get_text())
             return ""
         
         return {
