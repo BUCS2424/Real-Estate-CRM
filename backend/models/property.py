@@ -49,6 +49,7 @@ class PropertyListingResponse(BaseModel):
     garage: Optional[int] = None
     pool: bool = False
     waterfront: bool = False
+    storage_folder: Optional[str] = None  # iDrive folder path for property files
     created_at: str
 
 class MediaFile(BaseModel):
