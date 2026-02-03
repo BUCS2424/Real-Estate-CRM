@@ -43,13 +43,13 @@ async def get_idrive_client():
     })
     
     if not provider or not provider.get("credentials"):
-        return None, None
+        return None, None, None
     
     creds = provider["credentials"]
     settings = provider.get("settings", {})
     
     if not creds.get("access_key") or not creds.get("secret_key"):
-        return None, None
+        return None, None, None
     
     endpoint = settings.get("endpoint", "https://v2v7.la.idrivee2-14.com")
     
@@ -62,7 +62,7 @@ async def get_idrive_client():
     )
     
     bucket = settings.get("bucket", "")
-    return client, bucket
+    return client, bucket, endpoint
 
 # ============ CRUD OPERATIONS ============
 
