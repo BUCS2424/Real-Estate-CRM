@@ -37,6 +37,7 @@ const formatPrice = (price) => {
 
 export const PropertyDetailPage = () => {
   const { id } = useParams();
+  const { branding } = useBranding();
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
