@@ -215,6 +215,11 @@ Build a unified workspace platform called "Fusion Builder All In One CRM" for re
 - [x] Mailing List Management with import/export
 - [x] Dynamic Branding System (logos, favicon, site name)
 
+### Recently Completed (February 3, 2026)
+- [x] Contacts Import/Export with Apple vCard (.vcf) support
+- [x] CSV import/export for Contacts
+- [x] Filter-based export (by category: buyer/seller, by status: active/lead/inactive)
+
 ### P3 - Future Backlog
 - [ ] Automated task generation from deals
 - [ ] Multi-item drag-and-drop on Kanban boards
