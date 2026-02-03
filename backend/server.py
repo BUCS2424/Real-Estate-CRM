@@ -323,6 +323,9 @@ async def delete_site_image(filename: str, current_user: dict = Depends(get_curr
 # Include main API router
 app.include_router(api_router)
 
+# Mount static files AFTER api_router to serve at /api/static/site-images/*
+app.mount("/api/static", StaticFiles(directory=STATIC_DIR), name="static")
+
 # CORS Middleware
 app.add_middleware(
     CORSMiddleware,
