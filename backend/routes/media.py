@@ -338,10 +338,6 @@ async def create_folder(
     if not prop or not prop.get("storage_folder"):
         raise HTTPException(status_code=404, detail="Property folder not found")
     
-    client, bucket, endpoint = await get_idrive_client()
-    if not client or not bucket:
-        raise HTTPException(status_code=400, detail="iDrive storage not configured")
-    
     storage_folder = prop["storage_folder"]
     
     # Build folder path
@@ -350,30 +346,44 @@ async def create_folder(
     else:
         folder_path = f"{storage_folder}/{folder_name}"
     
-    try:
-        # Create folder placeholder
-        client.put_object(
-            Bucket=bucket,
-            Key=f"{folder_path}/.folder",
-            Body=b'',
-            ContentType='application/x-directory'
-        )
-        
-        # Store custom folder in DB for quick retrieval
-        await db.media_folders.insert_one({
-            "id": str(uuid.uuid4()),
-            "property_id": property_id,
-            "name": folder_name,
-            "parent_path": storage_folder if not parent_subfolder else f"{storage_folder}/{parent_subfolder}",
-            "full_path": folder_path,
-            "created_by": current_user["id"],
-            "created_at": datetime.now(timezone.utc).isoformat()
-        })
-        
-        return {"message": "Folder created successfully", "path": folder_path}
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create folder: {str(e)}")
+    # Check if folder already exists in DB
+    existing = await db.media_folders.find_one({"full_path": folder_path})
+    if existing:
+        raise HTTPException(status_code=400, detail="Folder already exists")
+    
+    # Try to create in iDrive if configured
+    idrive_created = False
+    client, bucket, endpoint = await get_idrive_client()
+    if client and bucket:
+        try:
+            client.put_object(
+                Bucket=bucket,
+                Key=f"{folder_path}/.folder",
+                Body=b'',
+                ContentType='application/x-directory'
+            )
+            idrive_created = True
+        except Exception as e:
+            print(f"Warning: Could not create folder in iDrive: {e}")
+            # Continue - we'll still create in DB
+    
+    # Always store custom folder in DB for quick retrieval
+    await db.media_folders.insert_one({
+        "id": str(uuid.uuid4()),
+        "property_id": property_id,
+        "name": folder_name,
+        "parent_path": storage_folder if not parent_subfolder else f"{storage_folder}/{parent_subfolder}",
+        "full_path": folder_path,
+        "created_by": current_user["id"],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "synced_to_storage": idrive_created
+    })
+    
+    message = "Folder created successfully"
+    if not idrive_created:
+        message += " (Note: iDrive sync pending - check storage credentials)"
+    
+    return {"message": message, "path": folder_path, "synced": idrive_created}
 
 @router.delete("/folder")
 async def delete_folder(
