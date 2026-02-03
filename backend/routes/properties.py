@@ -510,9 +510,24 @@ async def update_property(property_id: str, property_data: PropertyListingCreate
 
 @router.delete("/properties/{property_id}")
 async def delete_property(property_id: str, current_user: dict = Depends(require_role([UserRole.SUPERUSER, UserRole.ADMIN]))):
+    # Get property to find storage folder before deletion
+    property_doc = await db.properties.find_one({"id": property_id})
+    if not property_doc:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    # Delete the property from database
     result = await db.properties.delete_one({"id": property_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Property not found")
+    
+    # Delete associated landing page if exists
+    await db.landing_pages.delete_many({"listing_id": property_id})
+    
+    # Delete the storage folder from iDrive (if it exists)
+    storage_folder = property_doc.get("storage_folder")
+    if storage_folder:
+        await delete_property_folder(storage_folder)
+    
     return {"message": "Property deleted"}
 
 # Public property endpoints
