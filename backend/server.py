@@ -238,6 +238,91 @@ async def fix_database():
         "fixed_contacts": fixed_count
     }
 
+# ============ SITE IMAGES ENDPOINTS ============
+from utils.auth import get_current_user
+from models.user import UserRole
+
+@api_router.post("/site-images/upload")
+async def upload_site_image(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload an image to the site-images folder (for logos, branding, etc.)"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Validate file type
+    allowed_types = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/svg+xml', 'image/x-icon']
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail=f"Invalid file type. Allowed: PNG, JPEG, GIF, WebP, SVG, ICO")
+    
+    # Generate unique filename
+    ext = file.filename.split('.')[-1] if '.' in file.filename else 'png'
+    unique_name = f"{uuid.uuid4().hex[:12]}.{ext}"
+    file_path = os.path.join(SITE_IMAGES_DIR, unique_name)
+    
+    # Save file
+    content = await file.read()
+    with open(file_path, 'wb') as f:
+        f.write(content)
+    
+    # Build the URL - use REACT_APP_BACKEND_URL for full URL
+    base_url = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
+    if not base_url:
+        base_url = 'http://localhost:8001'
+    
+    file_url = f"{base_url}/api/static/site-images/{unique_name}"
+    
+    return {
+        "success": True,
+        "message": "Image uploaded successfully",
+        "filename": unique_name,
+        "url": file_url,
+        "size": len(content)
+    }
+
+@api_router.get("/site-images")
+async def list_site_images(current_user: dict = Depends(get_current_user)):
+    """List all images in the site-images folder"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    base_url = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
+    if not base_url:
+        base_url = 'http://localhost:8001'
+    
+    images = []
+    if os.path.exists(SITE_IMAGES_DIR):
+        for filename in os.listdir(SITE_IMAGES_DIR):
+            if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico')):
+                file_path = os.path.join(SITE_IMAGES_DIR, filename)
+                images.append({
+                    "filename": filename,
+                    "url": f"{base_url}/api/static/site-images/{filename}",
+                    "size": os.path.getsize(file_path)
+                })
+    
+    return {"images": images, "count": len(images)}
+
+@api_router.delete("/site-images/{filename}")
+async def delete_site_image(filename: str, current_user: dict = Depends(get_current_user)):
+    """Delete an image from the site-images folder"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Security: prevent path traversal
+    if '/' in filename or '\\' in filename or '..' in filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    
+    file_path = os.path.join(SITE_IMAGES_DIR, filename)
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Image not found")
+    
+    os.remove(file_path)
+    return {"success": True, "message": f"Image '{filename}' deleted"}
+
+
 # Include main API router
 app.include_router(api_router)
 
