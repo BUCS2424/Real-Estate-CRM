@@ -95,6 +95,7 @@ function App() {
               <Route path="/leads" element={<LeadsPage />} />
               <Route path="/property-submissions" element={<PropertySubmissionsPage />} />
               <Route path="/landing-pages" element={<LandingPagesPage />} />
+              <Route path="/media" element={<MediaLibraryPage />} />
               <Route path="/writer" element={<AIWriterPage />} />
               <Route path="/newsletter" element={<NewsletterPage />} />
               <Route path="/mailing-lists" element={<MailingListsPage />} />
