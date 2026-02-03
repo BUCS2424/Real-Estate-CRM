@@ -291,23 +291,37 @@ export const ContactsPage = () => {
           </h1>
           <p className="text-muted-foreground mt-1">Manage your buyer and seller contacts</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) {
-            setEditingContact(null);
-            setFormData(initialFormState);
-          }
-        }}>
-          <DialogTrigger asChild>
-            <Button data-testid="add-contact-btn">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Contact
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>{editingContact ? 'Edit Contact' : 'New Contact'}</DialogTitle>
-              <DialogDescription>
+        <div className="flex gap-2">
+          {/* Import Button */}
+          <Button variant="outline" onClick={() => setShowImportModal(true)} data-testid="import-contacts-btn">
+            <Upload className="w-4 h-4 mr-2" />
+            Import
+          </Button>
+          
+          {/* Export Button */}
+          <Button variant="outline" onClick={() => setShowExportModal(true)} data-testid="export-contacts-btn">
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+          
+          {/* Add Contact Button */}
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
+              setEditingContact(null);
+              setFormData(initialFormState);
+            }
+          }}>
+            <DialogTrigger asChild>
+              <Button data-testid="add-contact-btn">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Contact
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>{editingContact ? 'Edit Contact' : 'New Contact'}</DialogTitle>
+                <DialogDescription>
                 {editingContact ? 'Update contact information' : 'Add a new contact'}
               </DialogDescription>
             </DialogHeader>
