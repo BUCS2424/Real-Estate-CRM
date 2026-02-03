@@ -219,6 +219,13 @@ Build a unified workspace platform called "Fusion Builder All In One CRM" for re
 - [x] Contacts Import/Export with Apple vCard (.vcf) support
 - [x] CSV import/export for Contacts
 - [x] Filter-based export (by category: buyer/seller, by status: active/lead/inactive)
+- [x] **Landing Page Generator** - Create stunning property landing pages from CRM listings
+  - Select from CRM listings
+  - Add multiple videos (YouTube/Vimeo/iDrive upload)
+  - Photo gallery, virtual tour embed, map, agent info
+  - Contact form submissions → Leads in CRM
+  - Luxury dark theme for $1M+ / Modern light theme for others
+  - Preview URL: https://hiddenhavenrealty.com/[property-slug]
 
 ### P3 - Future Backlog
 - [ ] Automated task generation from deals
