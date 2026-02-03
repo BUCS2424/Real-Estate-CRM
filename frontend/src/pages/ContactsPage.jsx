@@ -202,6 +202,74 @@ export const ContactsPage = () => {
     }
   };
 
+  // Import handlers
+  const handleImport = async () => {
+    const fileInput = fileInputRef.current;
+    if (!fileInput?.files?.length) {
+      toast.error('Please select a file');
+      return;
+    }
+    
+    setImporting(true);
+    setImportResult(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      
+      const result = await contactsAPI.importFile(formData, importCategory || null);
+      setImportResult(result.data);
+      toast.success(`Imported ${result.data.imported} contacts`);
+      fetchContacts();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Import failed');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  // Export handlers
+  const handleExport = async () => {
+    setExporting(true);
+    
+    try {
+      const filters = {};
+      if (exportCategory) filters.category = exportCategory;
+      if (exportStatus) filters.status = exportStatus;
+      
+      let response;
+      let filename;
+      let mimeType;
+      
+      if (exportFormat === 'vcard') {
+        response = await contactsAPI.exportVCard(filters);
+        filename = `contacts_${exportCategory || 'all'}_${new Date().toISOString().split('T')[0]}.vcf`;
+        mimeType = 'text/vcard';
+      } else {
+        response = await contactsAPI.exportCSV(filters);
+        filename = `contacts_${exportCategory || 'all'}_${new Date().toISOString().split('T')[0]}.csv`;
+        mimeType = 'text/csv';
+      }
+      
+      // Download file
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: mimeType }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(`Exported contacts as ${exportFormat.toUpperCase()}`);
+      setShowExportModal(false);
+    } catch (error) {
+      toast.error('Export failed');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
