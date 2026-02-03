@@ -177,12 +177,12 @@ export const PropertyLookupPage = () => {
             </div>
             <div className="w-full md:w-48">
               <Label className="text-white/80">County (Optional)</Label>
-              <Select value={selectedCounty} onValueChange={setSelectedCounty}>
+              <Select value={selectedCounty || "all"} onValueChange={(val) => setSelectedCounty(val === "all" ? "" : val)}>
                 <SelectTrigger className="bg-white/10 border-white/20 text-white">
                   <SelectValue placeholder="All Counties" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Counties</SelectItem>
+                  <SelectItem value="all">All Counties</SelectItem>
                   {COUNTIES.map(c => (
                     <SelectItem key={c.key} value={c.key}>{c.name}</SelectItem>
                   ))}
