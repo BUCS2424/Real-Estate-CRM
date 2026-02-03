@@ -129,8 +129,13 @@ async def seed_data():
     ]
     
     for p in properties:
+        prop_id = str(uuid.uuid4())
+        # Create storage folder slug from address
+        address_slug = p["address"].lower().replace(" ", "-").replace(",", "")
+        storage_folder = f"properties/{address_slug}-{prop_id[:8]}"
+        
         await db.properties.insert_one({
-            "id": str(uuid.uuid4()),
+            "id": prop_id,
             **p,
             "lot_size": None,
             "year_built": 2020,
@@ -138,6 +143,7 @@ async def seed_data():
             "garage": 2,
             "pool": True,
             "waterfront": True,
+            "storage_folder": storage_folder,
             "created_by": super_user_id,
             "created_at": now
         })
