@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { mediaAPI } from '../lib/api';
 import { 
   FolderOpen,
@@ -46,13 +46,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../components/ui/select';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
 
@@ -79,7 +72,7 @@ export const MediaLibraryPage = () => {
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [selectedSubfolder, setSelectedSubfolder] = useState(null);
   const [expandedFolders, setExpandedFolders] = useState({});
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState('grid');
   const [searchQuery, setSearchQuery] = useState('');
   
   // Modals
@@ -91,13 +84,6 @@ export const MediaLibraryPage = () => {
   const [showNewFolderModal, setShowNewFolderModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
-  
-  // Upload
-  const [uploading, setUploading] = useState(false);
-  
-  // Drag state for main area
-  const [isDraggingMain, setIsDraggingMain] = useState(false);
-  const dragCounter = useRef(0);
 
   useEffect(() => {
     fetchFolders();
@@ -114,7 +100,6 @@ export const MediaLibraryPage = () => {
       const res = await mediaAPI.getFolders();
       setFolders(res.data);
       
-      // Auto-select first property if available
       if (res.data.length > 0 && !selectedProperty) {
         setSelectedProperty(res.data[0]);
       }
@@ -146,7 +131,7 @@ export const MediaLibraryPage = () => {
   const handleFileUpload = useCallback(async (file) => {
     if (!selectedProperty) {
       toast.error('Please select a property folder first');
-      return;
+      throw new Error('No property selected');
     }
     
     const formData = new FormData();
@@ -154,67 +139,13 @@ export const MediaLibraryPage = () => {
     formData.append('subfolder', selectedSubfolder || 'gallery');
     
     await mediaAPI.uploadFile(selectedProperty.id, formData);
-    fetchFolderContents();
   }, [selectedProperty, selectedSubfolder]);
 
-  // Main area drag handlers
-  const handleMainDragEnter = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounter.current++;
-    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
-      setIsDraggingMain(true);
-    }
-  }, []);
-
-  const handleMainDragLeave = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounter.current--;
-    if (dragCounter.current === 0) {
-      setIsDraggingMain(false);
-    }
-  }, []);
-
-  const handleMainDragOver = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-  }, []);
-
-  const handleMainDrop = useCallback(async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDraggingMain(false);
-    dragCounter.current = 0;
-    
-    if (!selectedProperty) {
-      toast.error('Please select a property folder first');
-      return;
-    }
-    
-    const droppedFiles = e.dataTransfer.files;
-    if (droppedFiles && droppedFiles.length > 0) {
-      setUploading(true);
-      let uploaded = 0;
-      
-      try {
-        for (const file of droppedFiles) {
-          await handleFileUpload(file);
-          uploaded++;
-        }
-        toast.success(`Uploaded ${uploaded} file${uploaded > 1 ? 's' : ''}`);
-      } catch (error) {
-        toast.error(error.response?.data?.detail || 'Upload failed');
-      } finally {
-        setUploading(false);
-      }
-    }
-  }, [selectedProperty, handleFileUpload]);
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
+  // Callback after successful uploads
+  const handleUploadComplete = useCallback(() => {
+    fetchFolderContents();
+    setShowUploadModal(false);
+  }, [selectedProperty, selectedSubfolder]);
 
   const handleDelete = async (file) => {
     if (!window.confirm(`Are you sure you want to delete "${file.name}"?`)) return;
@@ -252,7 +183,7 @@ export const MediaLibraryPage = () => {
       setShowNewFolderModal(false);
       setNewFolderName('');
       fetchFolderContents();
-      fetchFolders(); // Refresh folder list
+      fetchFolders();
     } catch (error) {
       toast.error('Failed to create folder');
     }
@@ -346,6 +277,7 @@ export const MediaLibraryPage = () => {
                         : "hover:bg-muted"
                     )}
                     onClick={() => selectPropertyFolder(folder)}
+                    data-testid={`folder-${folder.id}`}
                   >
                     <button
                       onClick={(e) => { e.stopPropagation(); toggleFolder(folder.id); }}
@@ -377,6 +309,7 @@ export const MediaLibraryPage = () => {
                               : "hover:bg-muted"
                           )}
                           onClick={() => selectPropertyFolder(folder, subfolder)}
+                          data-testid={`subfolder-${folder.id}-${subfolder}`}
                         >
                           <Folder className="w-4 h-4 text-amber-400" />
                           <span className="capitalize">{subfolder}</span>
@@ -424,6 +357,7 @@ export const MediaLibraryPage = () => {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="pl-10"
+              data-testid="search-files-input"
             />
           </div>
           
@@ -435,6 +369,7 @@ export const MediaLibraryPage = () => {
                 "p-2 transition-colors",
                 viewMode === 'grid' ? "bg-primary text-primary-foreground" : "hover:bg-muted"
               )}
+              data-testid="view-grid-btn"
             >
               <Grid className="w-4 h-4" />
             </button>
@@ -444,37 +379,46 @@ export const MediaLibraryPage = () => {
                 "p-2 transition-colors",
                 viewMode === 'list' ? "bg-primary text-primary-foreground" : "hover:bg-muted"
               )}
+              data-testid="view-list-btn"
             >
               <List className="w-4 h-4" />
             </button>
           </div>
           
           {/* New Folder */}
-          <Button variant="outline" onClick={() => setShowNewFolderModal(true)} disabled={!selectedProperty}>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowNewFolderModal(true)} 
+            disabled={!selectedProperty}
+            data-testid="new-folder-btn"
+          >
             <Plus className="w-4 h-4 mr-2" />
             New Folder
           </Button>
           
-          {/* Upload */}
-          <Button onClick={() => fileInputRef.current?.click()} disabled={!selectedProperty || uploading}>
-            {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+          {/* Upload Button - Opens Modal */}
+          <Button 
+            onClick={() => setShowUploadModal(true)} 
+            disabled={!selectedProperty}
+            data-testid="upload-files-btn"
+          >
+            <Upload className="w-4 h-4 mr-2" />
             Upload
           </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            onChange={handleUpload}
-            className="hidden"
-          />
           
           {/* Refresh */}
-          <Button variant="ghost" size="icon" onClick={fetchFolderContents} disabled={loadingFiles}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={fetchFolderContents} 
+            disabled={loadingFiles}
+            data-testid="refresh-btn"
+          >
             <RefreshCw className={cn("w-4 h-4", loadingFiles && "animate-spin")} />
           </Button>
         </div>
 
-        {/* File Display */}
+        {/* File Display Area with Drag and Drop */}
         <div className="flex-1 overflow-y-auto p-4">
           {!selectedProperty ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
@@ -497,6 +441,7 @@ export const MediaLibraryPage = () => {
                         key={subfolder}
                         onClick={() => setSelectedSubfolder(subfolder)}
                         className="flex flex-col items-center gap-2 p-4 rounded-lg border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
+                        data-testid={`folder-item-${subfolder}`}
                       >
                         <Folder className="w-10 h-10 text-amber-400" />
                         <span className="text-sm font-medium capitalize">{subfolder}</span>
@@ -506,15 +451,27 @@ export const MediaLibraryPage = () => {
                 </div>
               )}
 
-              {/* Files */}
+              {/* Files Section */}
+              <div className="mb-4">
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                  Files {filteredFiles.length > 0 && `(${filteredFiles.length})`}
+                </h3>
+              </div>
+
               {filteredFiles.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                  <File className="w-12 h-12 mb-3 opacity-50" />
-                  <p>No files in this folder</p>
-                  <Button variant="outline" className="mt-4" onClick={() => fileInputRef.current?.click()}>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload Files
-                  </Button>
+                /* Empty State with DropZone */
+                <div className="flex flex-col items-center justify-center py-8">
+                  <DropZone
+                    onUpload={async (file) => {
+                      await handleFileUpload(file);
+                      fetchFolderContents();
+                    }}
+                    accept="*/*"
+                    multiple={true}
+                    maxSize={100 * 1024 * 1024}
+                    className="w-full max-w-xl"
+                    data-testid="empty-state-dropzone"
+                  />
                 </div>
               ) : viewMode === 'grid' ? (
                 /* Grid View */
@@ -523,6 +480,7 @@ export const MediaLibraryPage = () => {
                     <div
                       key={file.id}
                       className="group relative rounded-lg border bg-card overflow-hidden hover:shadow-lg transition-shadow"
+                      data-testid={`file-item-${file.id}`}
                     >
                       {/* Thumbnail/Preview */}
                       <div 
@@ -657,6 +615,40 @@ export const MediaLibraryPage = () => {
         </div>
       </div>
 
+      {/* Upload Modal with DropZone */}
+      <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="w-5 h-5 text-primary" />
+              Upload Files
+            </DialogTitle>
+            <DialogDescription>
+              Upload files to {selectedProperty?.name} 
+              {selectedSubfolder ? ` / ${selectedSubfolder}` : ' / gallery'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <DropZone
+            onUpload={async (file) => {
+              await handleFileUpload(file);
+              fetchFolderContents();
+            }}
+            accept="*/*"
+            multiple={true}
+            maxSize={100 * 1024 * 1024}
+            showPreview={true}
+            data-testid="upload-modal-dropzone"
+          />
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowUploadModal(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Preview Modal */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="max-w-4xl max-h-[90vh]">
@@ -712,7 +704,7 @@ export const MediaLibraryPage = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Rename File</DialogTitle>
-            <DialogDescription>Enter a new name for "{renameFile?.name}"</DialogDescription>
+            <DialogDescription>Enter a new name for &quot;{renameFile?.name}&quot;</DialogDescription>
           </DialogHeader>
           <div>
             <Label>New Name</Label>
@@ -720,11 +712,12 @@ export const MediaLibraryPage = () => {
               value={newFileName}
               onChange={e => setNewFileName(e.target.value)}
               placeholder="filename.ext"
+              data-testid="rename-file-input"
             />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowRenameModal(false)}>Cancel</Button>
-            <Button onClick={handleRename}>Rename</Button>
+            <Button onClick={handleRename} data-testid="rename-file-submit">Rename</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -744,14 +737,17 @@ export const MediaLibraryPage = () => {
               value={newFolderName}
               onChange={e => setNewFolderName(e.target.value)}
               placeholder="My Folder"
+              data-testid="new-folder-input"
             />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNewFolderModal(false)}>Cancel</Button>
-            <Button onClick={handleCreateFolder}>Create Folder</Button>
+            <Button onClick={handleCreateFolder} data-testid="create-folder-submit">Create Folder</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 };
+
+export default MediaLibraryPage;
