@@ -503,6 +503,17 @@ Added a comprehensive storage provider management system with support for 5 diff
   - `POST /api/mailing-lists/{id}/import-from-contacts` - Import from contacts
   - `POST /api/mailing-lists/{id}/import-from-leads` - Import from leads
 
+### Contacts Import/Export API (New - Feb 3, 2026)
+- `POST /api/contacts/import` - Import from vCard (.vcf) or CSV file
+  - Query params: `category` (optional) - assign category to all imported contacts
+  - Supports Apple vCard VERSION:3.0 format
+  - Flexible CSV column mapping (email, first_name, last_name, phone, company, etc.)
+  - Duplicate detection by email
+- `GET /api/contacts/export/vcard` - Export contacts as Apple-compatible vCard (.vcf)
+  - Query params: `category` (buyer/seller), `status` (active/lead/inactive), `tags`
+- `GET /api/contacts/export/csv` - Export contacts as CSV spreadsheet
+  - Query params: `category`, `status`, `tags`
+
 ### Dynamic Branding System:
 - ✅ **BrandingContext** (`/app/frontend/src/contexts/BrandingContext.js`):
   - Global state management for branding settings
