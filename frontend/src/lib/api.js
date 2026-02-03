@@ -256,6 +256,26 @@ export const mailingListAPI = {
   clearSubscribers: (listId) => api.delete(`/mailing-lists/${listId}/subscribers`),
 };
 
+// Landing Pages
+export const landingPagesAPI = {
+  getAll: () => api.get('/landing-pages'),
+  get: (id) => api.get(`/landing-pages/${id}`),
+  create: (data) => api.post('/landing-pages', data),
+  update: (id, data) => api.put(`/landing-pages/${id}`, data),
+  delete: (id) => api.delete(`/landing-pages/${id}`),
+  publish: (id) => api.post(`/landing-pages/${id}/publish`),
+  unpublish: (id) => api.post(`/landing-pages/${id}/unpublish`),
+  uploadVideo: (id, formData) => api.post(`/landing-pages/${id}/upload-video`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  uploadImage: (id, formData) => api.post(`/landing-pages/${id}/upload-image`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  getAvailableListings: () => api.get('/landing-pages/available-listings'),
+  getPublicPage: (slug) => api.get(`/landing-pages/public/${slug}`),
+  submitContactForm: (slug, data) => api.post(`/landing-pages/public/${slug}/contact`, data),
+};
+
 // Seed data
 export const seedAPI = {
   seed: () => api.post('/seed'),
