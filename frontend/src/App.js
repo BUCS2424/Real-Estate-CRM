@@ -73,7 +73,8 @@ function App() {
             <Routes>
               {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
-            <Route path="/property/:id" element={<PropertyDetailPage />} />
+            <Route path="/property/:slug" element={<PropertyLandingPage />} />
+            <Route path="/listing/:id" element={<PropertyDetailPage />} />
             <Route path="/showcase" element={<PublicListingsPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/newsletter-archive" element={<NewsletterArchivePage />} />
@@ -92,6 +93,7 @@ function App() {
               <Route path="/listings" element={<ListingsPage />} />
               <Route path="/leads" element={<LeadsPage />} />
               <Route path="/property-submissions" element={<PropertySubmissionsPage />} />
+              <Route path="/landing-pages" element={<LandingPagesPage />} />
               <Route path="/writer" element={<AIWriterPage />} />
               <Route path="/newsletter" element={<NewsletterPage />} />
               <Route path="/mailing-lists" element={<MailingListsPage />} />
