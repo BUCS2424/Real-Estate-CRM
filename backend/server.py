@@ -163,6 +163,37 @@ async def reset_admin_password():
     
     return {"success": True, "message": "Admin password has been reset. You can now login with mel@a2gdesigns.com / BigDaddy2016!!"}
 
+@api_router.post("/fix-database")
+async def fix_database():
+    """Fix database issues - repairs contacts missing required fields"""
+    fixed_count = 0
+    
+    # Fix contacts missing first_name or last_name
+    contacts_cursor = db.contacts.find({
+        "$or": [
+            {"first_name": {"$exists": False}},
+            {"last_name": {"$exists": False}}
+        ]
+    })
+    
+    async for contact in contacts_cursor:
+        name = contact.get('name', 'Unknown Contact')
+        parts = name.split(' ', 1)
+        first_name = parts[0] if parts else 'Unknown'
+        last_name = parts[1] if len(parts) > 1 else ''
+        
+        await db.contacts.update_one(
+            {"id": contact['id']},
+            {"$set": {"first_name": first_name, "last_name": last_name}}
+        )
+        fixed_count += 1
+    
+    return {
+        "success": True, 
+        "message": f"Database fixed. Repaired {fixed_count} contacts.",
+        "fixed_contacts": fixed_count
+    }
+
 # Include main API router
 app.include_router(api_router)
 
