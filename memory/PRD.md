@@ -226,6 +226,15 @@ Build a unified workspace platform called "Fusion Builder All In One CRM" for re
   - Contact form submissions → Leads in CRM
   - Luxury dark theme for $1M+ / Modern light theme for others
   - Preview URL: https://hiddenhavenrealty.com/[property-slug]
+- [x] **Media Library System** - Full file management for properties
+  - Sidebar shows all property folders by address
+  - Default subfolders: gallery, videos, documents (auto-created)
+  - Grid and List view toggle
+  - File actions: Preview, Download, Delete, Rename (3-dot menu)
+  - Create custom folders
+  - Upload files to any folder
+  - Search files within folders
+  - Storage folders tied to properties (deleted when property deleted)
 
 ### P3 - Future Backlog
 - [ ] Automated task generation from deals
