@@ -150,7 +150,7 @@ export const PropertyLookupPage = () => {
     setLoadingListings(true);
     
     try {
-      const res = await propertiesAPI.getAll();
+      const res = await listingsAPI.list();
       setListings(res.data || []);
     } catch (error) {
       toast.error('Failed to load listings');
