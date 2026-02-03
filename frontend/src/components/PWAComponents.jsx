@@ -30,7 +30,7 @@ export const PWAInstallBanner = () => {
           <Smartphone className="w-6 h-6 text-amber-400" />
         </div>
         <div className="flex-1">
-          <h4 className="font-semibold text-white">Install Fusion CRM</h4>
+          <h4 className="font-semibold text-white">Install Hidden Haven Realty</h4>
           <p className="text-sm text-white/70 mt-1">
             Install our app for quick access and offline support
           </p>

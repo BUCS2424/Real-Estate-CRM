@@ -93,7 +93,7 @@ export const RegisterPage = () => {
             </div>
             <div>
               <CardTitle className="text-2xl font-serif text-white">Create Account</CardTitle>
-              <CardDescription className="text-white/50">Join Fusion CRM Platform</CardDescription>
+              <CardDescription className="text-white/50">Join Hidden Haven Realty Platform</CardDescription>
             </div>
           </CardHeader>
           <CardContent className="pt-4">

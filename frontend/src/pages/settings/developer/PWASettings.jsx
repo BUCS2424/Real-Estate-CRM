@@ -64,7 +64,7 @@ export const PWASettings = () => {
     if (permission === 'granted') {
       toast.success('Notifications enabled!');
       // Test notification
-      new Notification('Fusion CRM', {
+      new Notification('Hidden Haven Realty', {
         body: 'Notifications are now enabled!',
         icon: '/icons/icon-192x192.png'
       });
@@ -153,7 +153,7 @@ export const PWASettings = () => {
             Install Application
           </CardTitle>
           <CardDescription>
-            Install Fusion CRM as a standalone app for quick access
+            Install Hidden Haven Realty as a standalone app for quick access
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
