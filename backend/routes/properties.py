@@ -2,13 +2,100 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional, List
 from datetime import datetime, timezone
 import uuid
+import re
 import os
+import boto3
+from botocore.config import Config
 from database import db
 from models.property import PropertyListingCreate, PropertyListingResponse, PropertySubmissionCreate, PropertySubmissionResponse
 from models.user import UserRole
 from utils.auth import get_current_user, require_role
 
 router = APIRouter()
+
+def generate_storage_folder(address: str, city: str, state: str) -> str:
+    """Generate a consistent storage folder path from property address"""
+    # Combine address parts
+    full_address = f"{address} {city} {state}"
+    # Convert to lowercase, replace spaces with hyphens, remove special chars
+    folder = re.sub(r'[^a-z0-9\s-]', '', full_address.lower())
+    folder = re.sub(r'[\s]+', '-', folder)
+    folder = re.sub(r'-+', '-', folder)
+    return f"properties/{folder.strip('-')}"
+
+async def get_idrive_client():
+    """Get configured iDrive S3 client if available"""
+    from models.storage import StorageProviderType
+    
+    provider = await db.storage_providers.find_one({
+        "provider_type": StorageProviderType.IDRIVE,
+        "is_active": True
+    })
+    
+    if not provider or not provider.get("credentials"):
+        return None, None, None
+    
+    creds = provider["credentials"]
+    settings = provider.get("settings", {})
+    
+    if not creds.get("access_key") or not creds.get("secret_key"):
+        return None, None, None
+    
+    endpoint = settings.get("endpoint", "https://v2v7.la.idrivee2-14.com")
+    
+    client = boto3.client(
+        's3',
+        endpoint_url=endpoint,
+        aws_access_key_id=creds["access_key"],
+        aws_secret_access_key=creds["secret_key"],
+        config=Config(signature_version='s3v4')
+    )
+    
+    bucket = settings.get("bucket", "")
+    return client, bucket, endpoint
+
+async def create_property_folder(storage_folder: str):
+    """Create a folder in iDrive for the property (creates a placeholder object)"""
+    client, bucket, endpoint = await get_idrive_client()
+    if not client or not bucket:
+        return None  # iDrive not configured, skip folder creation
+    
+    try:
+        # S3 doesn't have real folders, but we can create a placeholder object
+        # This ensures the "folder" appears in the bucket listing
+        placeholder_key = f"{storage_folder}/.folder"
+        client.put_object(
+            Bucket=bucket,
+            Key=placeholder_key,
+            Body=b'',
+            ContentType='application/x-directory'
+        )
+        return f"{endpoint}/{bucket}/{storage_folder}"
+    except Exception as e:
+        print(f"Warning: Could not create property folder in iDrive: {e}")
+        return None
+
+async def delete_property_folder(storage_folder: str):
+    """Delete all files in a property's folder from iDrive"""
+    client, bucket, endpoint = await get_idrive_client()
+    if not client or not bucket or not storage_folder:
+        return
+    
+    try:
+        # List all objects with the folder prefix
+        response = client.list_objects_v2(Bucket=bucket, Prefix=storage_folder)
+        
+        if 'Contents' in response:
+            # Delete all objects in the folder
+            objects_to_delete = [{'Key': obj['Key']} for obj in response['Contents']]
+            if objects_to_delete:
+                client.delete_objects(
+                    Bucket=bucket,
+                    Delete={'Objects': objects_to_delete}
+                )
+        print(f"Deleted property folder: {storage_folder}")
+    except Exception as e:
+        print(f"Warning: Could not delete property folder from iDrive: {e}")
 
 # Seed luxury properties endpoint
 @router.post("/properties/seed-luxury")
