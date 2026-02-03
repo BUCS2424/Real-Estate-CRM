@@ -8,7 +8,7 @@ import os
 import io
 import csv
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://luxurycrm.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://realestate-hub-520.preview.emergentagent.com')
 
 # Test credentials
 TEST_EMAIL = "mel@a2gdesigns.com"
