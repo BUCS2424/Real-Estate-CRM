@@ -223,7 +223,7 @@ export const LandingPage = () => {
             <span className="block italic text-amber-400">Defined</span>
           </h1>
           <p className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Exclusive access to Florida's most prestigious off-market luxury estates. 
+            Exclusive access to Florida&apos;s most prestigious off-market luxury estates. 
             Where privacy meets unparalleled elegance.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -374,11 +374,11 @@ export const LandingPage = () => {
               </h2>
               <p className="text-white/70 leading-relaxed mb-6">
                 For over two and a half decades, Sheila Desautels and her husband have been helping families 
-                find their dream homes in Florida's most prestigious communities. Their dedication to service, 
+                find their dream homes in Florida&apos;s most prestigious communities. Their dedication to service, 
                 deep local knowledge, and genuine care for clients has made them a trusted name in luxury real estate.
               </p>
               <p className="text-white/70 leading-relaxed mb-8">
-                As off-market specialists, they've cultivated an exclusive network of discerning buyers and sellers 
+                As off-market specialists, they&apos;ve cultivated an exclusive network of discerning buyers and sellers 
                 seeking privacy and personalized attention. Every transaction is handled with the utmost 
                 discretion, integrity, and professionalism.
               </p>
