@@ -21,9 +21,6 @@ STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 SITE_IMAGES_DIR = os.path.join(STATIC_DIR, "site-images")
 os.makedirs(SITE_IMAGES_DIR, exist_ok=True)
 
-# Mount static files - serves /static/site-images/*
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-
 # Import database
 from database import db, close_db
 
