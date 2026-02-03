@@ -403,10 +403,10 @@ export const PropertyLookupPage = () => {
 
       {/* MLS Configuration Modal */}
       <Dialog open={showMLSConfig} onOpenChange={setShowMLSConfig}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg bg-[#0a1628] border-white/20">
           <DialogHeader>
-            <DialogTitle>MLS API Configuration</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-white">MLS API Configuration</DialogTitle>
+            <DialogDescription className="text-white/60">
               Configure your MLS API credentials to search active listings.
               Most MLS systems use the RESO Web API standard.
             </DialogDescription>
@@ -414,47 +414,52 @@ export const PropertyLookupPage = () => {
           
           <div className="space-y-4">
             <div>
-              <Label>MLS Name</Label>
+              <Label className="text-white/80">MLS Name</Label>
               <Input
                 placeholder="e.g., Stellar MLS, Bright MLS"
                 value={mlsConfig.mls_name}
                 onChange={(e) => setMlsConfig({...mlsConfig, mls_name: e.target.value})}
+                className="bg-[#0f1d32] border-white/20 text-white placeholder:text-white/40"
               />
             </div>
             <div>
-              <Label>API URL</Label>
+              <Label className="text-white/80">API URL</Label>
               <Input
                 placeholder="https://api.mlsprovider.com/reso/odata"
                 value={mlsConfig.api_url}
                 onChange={(e) => setMlsConfig({...mlsConfig, api_url: e.target.value})}
+                className="bg-[#0f1d32] border-white/20 text-white placeholder:text-white/40"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Client ID</Label>
+                <Label className="text-white/80">Client ID</Label>
                 <Input
                   placeholder="OAuth Client ID"
                   value={mlsConfig.client_id}
                   onChange={(e) => setMlsConfig({...mlsConfig, client_id: e.target.value})}
+                  className="bg-[#0f1d32] border-white/20 text-white placeholder:text-white/40"
                 />
               </div>
               <div>
-                <Label>Client Secret</Label>
+                <Label className="text-white/80">Client Secret</Label>
                 <Input
                   type="password"
                   placeholder="OAuth Client Secret"
                   value={mlsConfig.client_secret}
                   onChange={(e) => setMlsConfig({...mlsConfig, client_secret: e.target.value})}
+                  className="bg-[#0f1d32] border-white/20 text-white placeholder:text-white/40"
                 />
               </div>
             </div>
             <div>
-              <Label>API Key (if not using OAuth)</Label>
+              <Label className="text-white/80">API Key (if not using OAuth)</Label>
               <Input
                 type="password"
                 placeholder="Direct API Key"
                 value={mlsConfig.api_key}
                 onChange={(e) => setMlsConfig({...mlsConfig, api_key: e.target.value})}
+                className="bg-[#0f1d32] border-white/20 text-white placeholder:text-white/40"
               />
             </div>
 
