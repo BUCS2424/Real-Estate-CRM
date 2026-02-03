@@ -281,6 +281,30 @@ export const mediaAPI = {
   initializePropertyFolders: (propertyId) => api.post(`/media/initialize/${propertyId}`),
 };
 
+// Property Lookup API (County Records + MLS)
+export const propertyLookupAPI = {
+  // County tax records
+  searchCounty: (address, county = null) => 
+    api.post('/property-lookup/county/search', { address, county }),
+  getCountyDetails: (county, parcelId) => 
+    api.get(`/property-lookup/county/details/${county}/${parcelId}`),
+  getSupportedCounties: () => api.get('/property-lookup/county/supported'),
+  
+  // MLS
+  getMlsConfig: () => api.get('/property-lookup/mls/config'),
+  saveMlsConfig: (config) => api.post('/property-lookup/mls/config', config),
+  testMls: () => api.post('/property-lookup/mls/test'),
+  searchMls: (filters) => api.post('/property-lookup/mls/search', filters),
+  getMlsListing: (listingId) => api.get(`/property-lookup/mls/listing/${listingId}`),
+  
+  // Combined search
+  unifiedSearch: (address, includeCounty = true, includeMls = true, county = null) =>
+    api.post(`/property-lookup/search?address=${encodeURIComponent(address)}&include_county=${includeCounty}&include_mls=${includeMls}${county ? `&county=${county}` : ''}`),
+  
+  // History
+  getHistory: (limit = 50) => api.get(`/property-lookup/history?limit=${limit}`),
+};
+
 // Seed data
 export const seedAPI = {
   seed: () => api.post('/seed'),
