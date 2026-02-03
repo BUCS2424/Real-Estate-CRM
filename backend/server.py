@@ -144,6 +144,25 @@ async def seed_data():
     
     return {"message": "Data seeded successfully"}
 
+@api_router.post("/reset-admin-password")
+async def reset_admin_password():
+    """Reset the admin password - use this if login fails due to corrupted password hash"""
+    from utils.auth import hash_password
+    
+    # Find the admin user
+    user = await db.users.find_one({"email": "mel@a2gdesigns.com"})
+    if not user:
+        return {"success": False, "message": "Admin user not found. Run /api/seed first."}
+    
+    # Reset password with fresh hash
+    new_hash = hash_password("BigDaddy2016!!")
+    await db.users.update_one(
+        {"email": "mel@a2gdesigns.com"},
+        {"$set": {"password": new_hash}}
+    )
+    
+    return {"success": True, "message": "Admin password has been reset. You can now login with mel@a2gdesigns.com / BigDaddy2016!!"}
+
 # Include main API router
 app.include_router(api_router)
 
