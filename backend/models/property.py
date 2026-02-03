@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional, List
+from pydantic import BaseModel, field_validator, model_validator
+from typing import Optional, List, Union, Any
 
 class PropertyImage(BaseModel):
     url: str
@@ -37,20 +37,42 @@ class PropertyListingResponse(BaseModel):
     price: float
     bedrooms: int
     bathrooms: float
-    sqft: int
+    sqft: Optional[int] = 0  # Made optional with default for legacy data
     lot_size: Optional[float] = None
     year_built: Optional[int] = None
     property_type: str
     status: str
     description: Optional[str] = None
     features: List[str] = []
-    images: List[PropertyImage] = []
+    images: List[Any] = []  # Accept both PropertyImage objects and string URLs
     mls_number: Optional[str] = None
     garage: Optional[int] = None
     pool: bool = False
     waterfront: bool = False
     storage_folder: Optional[str] = None  # iDrive folder path for property files
     created_at: str
+    
+    @model_validator(mode='before')
+    @classmethod
+    def normalize_fields(cls, data: dict) -> dict:
+        """Handle legacy data with different field names"""
+        if isinstance(data, dict):
+            # Handle square_feet vs sqft
+            if 'square_feet' in data and 'sqft' not in data:
+                data['sqft'] = data.pop('square_feet')
+            # Ensure sqft has a default
+            if 'sqft' not in data or data.get('sqft') is None:
+                data['sqft'] = 0
+            # Normalize images - convert string URLs to PropertyImage-like dicts
+            if 'images' in data:
+                normalized_images = []
+                for img in data['images']:
+                    if isinstance(img, str):
+                        normalized_images.append({"url": img, "caption": None, "is_primary": False, "order": 0})
+                    elif isinstance(img, dict):
+                        normalized_images.append(img)
+                data['images'] = normalized_images
+        return data
 
 class MediaFile(BaseModel):
     id: str
