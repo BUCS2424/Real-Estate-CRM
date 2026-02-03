@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { mediaAPI } from '../lib/api';
 import { 
   FolderOpen,
@@ -30,6 +30,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Badge } from '../components/ui/badge';
+import { DropZone } from '../components/DropZone';
 import {
   Dialog,
   DialogContent,
