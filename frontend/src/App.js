@@ -31,6 +31,8 @@ import { PublicListingsPage } from './pages/PublicListingsPage';
 import { NewsletterPage } from './pages/NewsletterPage';
 import { NewsletterArchivePage } from './pages/NewsletterArchivePage';
 import { AboutPage } from './pages/AboutPage';
+import { LandingPagesPage } from './pages/LandingPagesPage';
+import { PropertyLandingPage } from './pages/PropertyLandingPage';
 
 // Settings Pages
 import { SettingsOverview } from './pages/settings/SettingsOverview';
