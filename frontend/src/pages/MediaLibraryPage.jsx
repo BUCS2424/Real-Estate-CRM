@@ -142,27 +142,74 @@ export const MediaLibraryPage = () => {
     }
   };
 
-  const handleUpload = async (e) => {
-    const uploadFiles = e.target.files;
-    if (!uploadFiles?.length || !selectedProperty) return;
+  // Handle file upload (called by DropZone)
+  const handleFileUpload = useCallback(async (file) => {
+    if (!selectedProperty) {
+      toast.error('Please select a property folder first');
+      return;
+    }
     
-    setUploading(true);
-    let uploaded = 0;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('subfolder', selectedSubfolder || 'gallery');
     
-    try {
-      for (const file of uploadFiles) {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('subfolder', selectedSubfolder || 'gallery');
-        
-        await mediaAPI.uploadFile(selectedProperty.id, formData);
-        uploaded++;
-      }
+    await mediaAPI.uploadFile(selectedProperty.id, formData);
+    fetchFolderContents();
+  }, [selectedProperty, selectedSubfolder]);
+
+  // Main area drag handlers
+  const handleMainDragEnter = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current++;
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setIsDraggingMain(true);
+    }
+  }, []);
+
+  const handleMainDragLeave = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current--;
+    if (dragCounter.current === 0) {
+      setIsDraggingMain(false);
+    }
+  }, []);
+
+  const handleMainDragOver = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleMainDrop = useCallback(async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingMain(false);
+    dragCounter.current = 0;
+    
+    if (!selectedProperty) {
+      toast.error('Please select a property folder first');
+      return;
+    }
+    
+    const droppedFiles = e.dataTransfer.files;
+    if (droppedFiles && droppedFiles.length > 0) {
+      setUploading(true);
+      let uploaded = 0;
       
-      toast.success(`Uploaded ${uploaded} file${uploaded > 1 ? 's' : ''}`);
-      fetchFolderContents();
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Upload failed');
+      try {
+        for (const file of droppedFiles) {
+          await handleFileUpload(file);
+          uploaded++;
+        }
+        toast.success(`Uploaded ${uploaded} file${uploaded > 1 ? 's' : ''}`);
+      } catch (error) {
+        toast.error(error.response?.data?.detail || 'Upload failed');
+      } finally {
+        setUploading(false);
+      }
+    }
+  }, [selectedProperty, handleFileUpload]);
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
