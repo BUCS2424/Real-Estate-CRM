@@ -149,23 +149,24 @@ export const LandingPage = () => {
               {branding.logoUrl ? (
                 <img 
                   src={branding.logoUrl} 
-                  alt={branding.siteName || 'Fusion Luxury Estates'} 
-                  className="h-10 object-contain"
+                  alt={branding.siteName || 'Hidden Haven Realty'} 
+                  className="h-14 object-contain"
                   onError={(e) => {
                     e.target.style.display = 'none';
                     e.target.nextSibling.style.display = 'flex';
                   }}
                 />
-              ) : null}
-              <div 
-                className={`w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded items-center justify-center ${branding.logoUrl ? 'hidden' : 'flex'}`}
-              >
-                <span className="font-serif text-black font-bold text-xl">F</span>
-              </div>
-              <div>
-                <h1 className="text-xl font-serif tracking-wide">FUSION</h1>
-                <p className="text-[10px] tracking-[0.3em] text-amber-400/80">LUXURY ESTATES</p>
-              </div>
+              ) : (
+                <>
+                  <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded flex items-center justify-center">
+                    <span className="font-serif text-black font-bold text-xl">H</span>
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-serif tracking-wide">HIDDEN HAVEN</h1>
+                    <p className="text-[10px] tracking-[0.3em] text-amber-400/80">REALTY</p>
+                  </div>
+                </>
+              )}
             </Link>
             
             <div className="hidden md:flex items-center gap-8">
