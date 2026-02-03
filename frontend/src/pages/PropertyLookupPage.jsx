@@ -171,7 +171,7 @@ export const PropertyLookupPage = () => {
                 value={searchAddress}
                 onChange={(e) => setSearchAddress(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="bg-white/10 border-white/20 text-white"
+                className="bg-[#0a1628] border-white/20 text-white placeholder:text-white/40"
                 data-testid="address-input"
               />
             </div>
