@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { publicAPI } from '../lib/api';
+import { useBranding } from '../contexts/BrandingContext';
 import { 
   ChevronLeft, 
   ChevronRight, 
