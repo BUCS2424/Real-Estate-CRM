@@ -276,6 +276,22 @@ export const landingPagesAPI = {
   submitContactForm: (slug, data) => api.post(`/landing-pages/public/${slug}/contact`, data),
 };
 
+// Media Library
+export const mediaAPI = {
+  getFolders: () => api.get('/media/folders'),
+  getFolderContents: (propertyId, subfolder) => 
+    api.get(`/media/folders/${propertyId}${subfolder ? `?subfolder=${subfolder}` : ''}`),
+  uploadFile: (propertyId, formData) => api.post(`/media/upload/${propertyId}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  deleteFile: (filePath) => api.delete(`/media/file?file_path=${encodeURIComponent(filePath)}`),
+  renameFile: (filePath, newName) => api.put(`/media/file/rename?file_path=${encodeURIComponent(filePath)}&new_name=${encodeURIComponent(newName)}`),
+  createFolder: (propertyId, folderName, parentSubfolder) => 
+    api.post(`/media/folder/create?property_id=${propertyId}&folder_name=${folderName}${parentSubfolder ? `&parent_subfolder=${parentSubfolder}` : ''}`),
+  deleteFolder: (folderPath) => api.delete(`/media/folder?folder_path=${encodeURIComponent(folderPath)}`),
+  initializePropertyFolders: (propertyId) => api.post(`/media/initialize/${propertyId}`),
+};
+
 // Seed data
 export const seedAPI = {
   seed: () => api.post('/seed'),
