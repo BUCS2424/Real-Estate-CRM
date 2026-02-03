@@ -94,6 +94,18 @@ export const ContactsPage = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [loading, setLoading] = useState(true);
   const { isAdmin } = useAuth();
+  
+  // Import/Export state
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+  const [importCategory, setImportCategory] = useState('');
+  const [exportFormat, setExportFormat] = useState('vcard');
+  const [exportCategory, setExportCategory] = useState('');
+  const [exportStatus, setExportStatus] = useState('');
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchContacts();
