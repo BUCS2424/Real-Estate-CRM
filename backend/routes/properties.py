@@ -367,13 +367,25 @@ async def create_listing(listing: PropertyListingCreate, current_user: dict = De
     listing_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     
+    # Generate storage folder path for this property
+    storage_folder = generate_storage_folder(
+        listing.address,
+        listing.city,
+        listing.state
+    )
+    
     listing_doc = {
         "id": listing_id,
         **listing.model_dump(),
+        "storage_folder": storage_folder,  # Persistent storage folder
         "created_by": current_user["id"],
         "created_at": now
     }
     await db.properties.insert_one(listing_doc)
+    
+    # Create the folder in iDrive (if configured)
+    await create_property_folder(storage_folder)
+    
     listing_doc.pop("_id", None)
     return listing_doc
 
