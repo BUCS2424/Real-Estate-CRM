@@ -21,6 +21,7 @@ from .notifications import router as notifications_router
 from .dashboard import router as dashboard_router
 from .mailing_lists import router as mailing_lists_router
 from .landing_pages import router as landing_pages_router
+from .media import router as media_router
 
 # Include all sub-routers
 api_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
@@ -39,6 +40,7 @@ api_router.include_router(notifications_router, prefix="/notifications", tags=["
 api_router.include_router(dashboard_router, prefix="/dashboard", tags=["Dashboard"])
 api_router.include_router(mailing_lists_router, tags=["Mailing Lists"])
 api_router.include_router(landing_pages_router, prefix="/landing-pages", tags=["Landing Pages"])
+api_router.include_router(media_router, prefix="/media", tags=["Media Library"])
 
 @api_router.get("/")
 async def root():
