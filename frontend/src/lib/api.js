@@ -154,17 +154,6 @@ export const listingsAPI = {
   lookupAddress: (address) => api.post('/listings/lookup-address', { address }),
 };
 
-// Media & Storage
-export const mediaAPI = {
-  list: (folder = 'general') => api.get(`/media?folder=${folder}`),
-  getFolders: () => api.get('/media/folders'),
-  createFolder: (name, parent_id) => api.post(`/media/folders?name=${encodeURIComponent(name)}${parent_id ? `&parent_id=${parent_id}` : ''}`),
-  deleteFolder: (id) => api.delete(`/media/folders/${id}`),
-  upload: (data) => api.post('/media/upload', data),
-  delete: (id) => api.delete(`/media/${id}`),
-  getStats: () => api.get('/storage/stats'),
-};
-
 // Public APIs (no auth required)
 export const publicAPI = {
   getListings: (limit = 12) => api.get(`/public/listings?limit=${limit}`),
