@@ -142,15 +142,15 @@ export const LandingPage = () => {
   return (
     <div className="min-h-screen bg-[#0a1628] text-white">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-[#0a1628]/95 to-transparent backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+      <nav className="absolute top-0 left-0 right-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <Link to={branding.logoLinkUrl || "/"} className="flex items-center gap-3">
               {branding.logoUrl ? (
                 <img 
                   src={branding.logoUrl} 
                   alt={branding.siteName || 'Hidden Haven Realty'} 
-                  className="h-14 object-contain"
+                  className="h-20 object-contain"
                   onError={(e) => {
                     e.target.style.display = 'none';
                     e.target.nextSibling.style.display = 'flex';
