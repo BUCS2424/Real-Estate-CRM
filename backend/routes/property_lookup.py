@@ -316,3 +316,107 @@ async def get_lookup_history(
     ).sort("searched_at", -1).limit(limit).to_list(limit)
     
     return {"lookups": lookups, "count": len(lookups)}
+
+
+@router.get("/recent-searches")
+async def get_recent_searches(
+    limit: int = Query(10, le=50),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get recent unique property searches with results"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get recent searches that found results
+    searches = await db.property_lookups.find(
+        {"type": "county_search", "results_count": {"$gt": 0}},
+        {"_id": 0}
+    ).sort("searched_at", -1).limit(limit * 2).to_list(limit * 2)
+    
+    # Dedupe by address
+    seen = set()
+    unique_searches = []
+    for s in searches:
+        addr_key = s.get("address", "").lower().strip()
+        if addr_key and addr_key not in seen:
+            seen.add(addr_key)
+            unique_searches.append(s)
+            if len(unique_searches) >= limit:
+                break
+    
+    return {"searches": unique_searches, "count": len(unique_searches)}
+
+
+class AssignToPropertyRequest(BaseModel):
+    property_id: str
+    county_data: Dict[str, Any]
+
+@router.post("/assign-to-property")
+async def assign_lookup_to_property(
+    request: AssignToPropertyRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Assign county lookup data to an existing property listing"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Find the property
+    property_doc = await db.properties.find_one({"id": request.property_id})
+    if not property_doc:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    # Update property with county data
+    county_info = {
+        "parcel_id": request.county_data.get("parcel_id"),
+        "owner_name": request.county_data.get("owner_name"),
+        "owner_address": request.county_data.get("owner_address"),
+        "assessed_value": request.county_data.get("assessed_value"),
+        "market_value": request.county_data.get("market_value"),
+        "land_value": request.county_data.get("land_value"),
+        "building_value": request.county_data.get("building_value"),
+        "lot_size": request.county_data.get("lot_size"),
+        "homestead": request.county_data.get("homestead"),
+        "county": request.county_data.get("county"),
+        "fetched_at": request.county_data.get("fetched_at"),
+        "source": request.county_data.get("source")
+    }
+    
+    await db.properties.update_one(
+        {"id": request.property_id},
+        {"$set": {
+            "county_data": county_info,
+            "county_data_updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Log the assignment
+    await db.property_lookups.insert_one({
+        "type": "property_assignment",
+        "property_id": request.property_id,
+        "parcel_id": request.county_data.get("parcel_id"),
+        "county": request.county_data.get("county"),
+        "assigned_by": current_user["id"],
+        "assigned_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {
+        "success": True,
+        "message": f"County data assigned to property",
+        "property_id": request.property_id
+    }
+
+
+@router.get("/saved-lookups")
+async def get_saved_lookups(
+    current_user: dict = Depends(get_current_user)
+):
+    """Get properties that have county data assigned"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    properties = await db.properties.find(
+        {"county_data": {"$exists": True}},
+        {"_id": 0, "id": 1, "address": 1, "city": 1, "county_data": 1, "county_data_updated_at": 1}
+    ).sort("county_data_updated_at", -1).to_list(100)
+    
+    return {"properties": properties, "count": len(properties)}
