@@ -572,3 +572,67 @@ Added a comprehensive storage provider management system with support for 5 diff
   - GeneralSettings - Triggers branding refresh on save
 
 ---
+
+## Update: February 3, 2026 - Drag-and-Drop Upload Implementation
+
+### Completed:
+- ✅ **Drag-and-Drop Upload Feature** in Media Library
+  - Created reusable `DropZone.jsx` component (`/app/frontend/src/components/DropZone.jsx`)
+  - File type detection (image, video, document, other) with icons
+  - File size validation with configurable max size (default 100MB)
+  - Visual drag-over effects with animated upload icon
+  - File preview list showing selected files before upload
+  - Individual file removal from queue
+  - Progress indicators during upload
+  - Success/error status per file
+  - "Upload All" button with progress tracking
+- ✅ **MediaLibraryPage Integration**
+  - DropZone displayed in empty folder state
+  - Upload modal with DropZone for adding files
+  - Proper error handling for uploads
+- ✅ **Code Quality Fixes**
+  - Fixed lint errors in LandingPage.jsx (unescaped apostrophes)
+  - Fixed broken syntax in MediaLibraryPage.jsx (duplicate code blocks removed)
+
+### DropZone Component API:
+```jsx
+<DropZone
+  onUpload={async (file) => { /* upload logic */ }}
+  accept="*/*"           // File types to accept
+  multiple={true}        // Allow multiple files
+  maxSize={104857600}    // Max file size in bytes (100MB)
+  disabled={false}       // Disable the component
+  compact={false}        // Compact mode for smaller spaces
+  showPreview={true}     // Show file preview list
+/>
+```
+
+### Known Limitations:
+- **iDrive Integration**: File uploads require iDrive credentials to be configured in Developer Settings. Without credentials, uploads will fail with "iDrive storage not configured" error.
+- **Phone/Email Verification**: Remains mocked (verification codes logged to server).
+
+---
+
+### Updated Prioritized Backlog:
+
+#### P0 - Completed
+- [x] Drag-and-drop upload for Media Library
+- [x] Lint error fixes
+
+#### P1 - High Priority (Next)
+- [ ] Extend drag-and-drop to Landing Page Generator (video/image uploads)
+- [ ] Booking notifications (email, SMS, desktop)
+- [ ] Dark mode toggle functionality
+
+#### P2 - Medium Priority
+- [ ] Lead auction/bidding system for buyers
+- [ ] Contact sync via iCloud Drive
+- [ ] Extend property-folder storage for main listing images
+- [ ] Refactor large page components (LandingPage, NewsletterPage, ContactsPage, LandingPagesPage)
+
+#### P3 - Future Backlog
+- [ ] Advanced reporting & analytics
+- [ ] Multi-item drag-and-drop on Kanban boards
+- [ ] Automated task generation from deals
+
+---
