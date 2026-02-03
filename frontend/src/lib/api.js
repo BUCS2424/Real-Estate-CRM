@@ -301,8 +301,14 @@ export const propertyLookupAPI = {
   unifiedSearch: (address, includeCounty = true, includeMls = true, county = null) =>
     api.post(`/property-lookup/search?address=${encodeURIComponent(address)}&include_county=${includeCounty}&include_mls=${includeMls}${county ? `&county=${county}` : ''}`),
   
-  // History
+  // History & Recent
   getHistory: (limit = 50) => api.get(`/property-lookup/history?limit=${limit}`),
+  getRecentSearches: (limit = 10) => api.get(`/property-lookup/recent-searches?limit=${limit}`),
+  
+  // Property Assignment
+  assignToProperty: (propertyId, countyData) => 
+    api.post('/property-lookup/assign-to-property', { property_id: propertyId, county_data: countyData }),
+  getSavedLookups: () => api.get('/property-lookup/saved-lookups'),
 };
 
 // Seed data
