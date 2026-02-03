@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { contactsAPI, tasksAPI } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { 
@@ -16,7 +16,11 @@ import {
   Users,
   ShoppingCart,
   Home,
-  CheckCircle
+  CheckCircle,
+  Upload,
+  Download,
+  FileSpreadsheet,
+  Loader2
 } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -39,6 +43,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '../components/ui/dropdown-menu';
 import {
   Select,
