@@ -70,6 +70,7 @@ export const dealsAPI = {
   list: () => api.get('/deals'),
   get: (id) => api.get(`/deals/${id}`),
   create: (data) => api.post('/deals', data),
+  update: (id, data) => api.put(`/deals/${id}`, data),
   updateStage: (id, stage) => api.patch(`/deals/${id}/stage`, { stage }),
   delete: (id) => api.delete(`/deals/${id}`),
 };
