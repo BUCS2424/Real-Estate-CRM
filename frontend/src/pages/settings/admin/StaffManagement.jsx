@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserCog, Plus, Edit, Trash2, Search, Mail, Phone, Shield } from 'lucide-react';
+import { UserCog, Plus, Edit, Trash2, Search, Mail, Phone, Shield, Loader2 } from 'lucide-react';
 import { usersAPI } from '../../../lib/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
