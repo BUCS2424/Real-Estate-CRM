@@ -747,6 +747,322 @@ const PropertyLeadDetailPage = () => {
               </div>
             </TabsContent>
 
+            {/* Marketing Tab */}
+            <TabsContent value="marketing" className="mt-0 space-y-4">
+              {/* Lead Score Card */}
+              <Card className="border-amber-500/30">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Star className="w-5 h-5 text-amber-500" />
+                        Lead Score
+                      </CardTitle>
+                      <CardDescription>
+                        Quality rating based on available information
+                      </CardDescription>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={fetchLeadScore}>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Refresh
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {leadScore ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4">
+                        <div className="text-center">
+                          <p className={`text-5xl font-bold ${getScoreColor(leadScore.score)}`}>
+                            {leadScore.score}
+                          </p>
+                          <p className="text-sm text-muted-foreground">/ 100</p>
+                        </div>
+                        <div className="flex-1">
+                          <Progress value={leadScore.score} className="h-3" />
+                          <p className={`text-sm font-medium mt-2 ${getScoreColor(leadScore.score)}`}>
+                            {leadScore.rating}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3 mt-4">
+                        <div className="p-3 bg-muted/50 rounded-lg text-center">
+                          <p className="text-xs text-muted-foreground">Address</p>
+                          <p className="font-semibold">{leadScore.breakdown?.address || 0}/15</p>
+                        </div>
+                        <div className="p-3 bg-muted/50 rounded-lg text-center">
+                          <p className="text-xs text-muted-foreground">Property</p>
+                          <p className="font-semibold">{leadScore.breakdown?.property || 0}/20</p>
+                        </div>
+                        <div className="p-3 bg-muted/50 rounded-lg text-center">
+                          <p className="text-xs text-muted-foreground">Value</p>
+                          <p className="font-semibold">{leadScore.breakdown?.value || 0}/20</p>
+                        </div>
+                        <div className="p-3 bg-muted/50 rounded-lg text-center">
+                          <p className="text-xs text-muted-foreground">Owner</p>
+                          <p className="font-semibold">{leadScore.breakdown?.owner || 0}/25</p>
+                        </div>
+                        <div className="p-3 bg-muted/50 rounded-lg text-center">
+                          <p className="text-xs text-muted-foreground">Tax Data</p>
+                          <p className="font-semibold">{leadScore.breakdown?.tax || 0}/10</p>
+                        </div>
+                        <div className="p-3 bg-muted/50 rounded-lg text-center">
+                          <p className="text-xs text-muted-foreground">Status</p>
+                          <p className="font-semibold">{leadScore.breakdown?.status || 0}/10</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-amber-500" />
+                      <p className="text-sm text-muted-foreground mt-2">Loading score...</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Brochure Generator Card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileImage className="w-5 h-5 text-amber-500" />
+                      Brochure Generator
+                    </CardTitle>
+                    <CardDescription>
+                      Create personalized brochures for direct mail or email
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label className="text-sm text-muted-foreground mb-2 block">Template Style</Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { id: 'flyer', label: 'Flyer', desc: '8.5x11' },
+                          { id: 'postcard', label: 'Postcard', desc: '6x4' },
+                          { id: 'trifold', label: 'Tri-fold', desc: 'Foldable' }
+                        ].map((template) => (
+                          <button
+                            key={template.id}
+                            onClick={() => setBrochureTemplate(template.id)}
+                            className={`p-3 rounded-lg border-2 transition-all text-center ${
+                              brochureTemplate === template.id 
+                                ? 'border-amber-500 bg-amber-500/10' 
+                                : 'border-border hover:border-amber-500/50'
+                            }`}
+                          >
+                            <p className="font-medium text-sm">{template.label}</p>
+                            <p className="text-xs text-muted-foreground">{template.desc}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={handleGenerateBrochure} 
+                        disabled={generatingBrochure}
+                        className="flex-1 bg-amber-500 hover:bg-amber-600 text-black"
+                      >
+                        {generatingBrochure ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Printer className="w-4 h-4 mr-2" />
+                        )}
+                        Download PDF
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={() => setEmailModalOpen(true)}
+                      >
+                        <Send className="w-4 h-4 mr-2" />
+                        Email
+                      </Button>
+                    </div>
+                    
+                    <div className="p-3 bg-muted/50 rounded-lg text-sm">
+                      <p className="flex items-center gap-2">
+                        <QrCode className="w-4 h-4 text-amber-500" />
+                        <span className="text-muted-foreground">
+                          QR code will link to landing page (if published)
+                        </span>
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Landing Page Card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Globe className="w-5 h-5 text-amber-500" />
+                      Property Landing Page
+                    </CardTitle>
+                    <CardDescription>
+                      Create and publish a dedicated page for this property
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {lead.landing_page_id ? (
+                      <>
+                        <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/30">
+                          <div className="flex items-center gap-2 mb-2">
+                            <CheckCircle className="w-5 h-5 text-green-500" />
+                            <span className="font-medium text-green-600">Landing Page Created</span>
+                          </div>
+                          {lead.landing_page_url && (
+                            <a 
+                              href={lead.landing_page_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-500 hover:underline flex items-center gap-1"
+                            >
+                              {lead.landing_page_url}
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                        </div>
+                        <Button 
+                          onClick={handlePublishLandingPage} 
+                          disabled={publishingPage}
+                          className="w-full"
+                        >
+                          {publishingPage ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Globe className="w-4 h-4 mr-2" />
+                          )}
+                          Publish / Update
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="p-4 bg-muted/50 rounded-lg text-center">
+                          <Globe className="w-10 h-10 mx-auto mb-2 text-muted-foreground opacity-50" />
+                          <p className="text-sm text-muted-foreground">
+                            No landing page yet. Create one to showcase this property online.
+                          </p>
+                        </div>
+                        <Button 
+                          onClick={handleCreateListing} 
+                          disabled={creatingListing}
+                          className="w-full bg-amber-500 hover:bg-amber-600 text-black"
+                        >
+                          {creatingListing ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Plus className="w-4 h-4 mr-2" />
+                          )}
+                          Create Listing & Landing Page
+                        </Button>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Video Upload Card */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Video className="w-5 h-5 text-amber-500" />
+                        Property Videos
+                      </CardTitle>
+                      <CardDescription>
+                        Add walkthrough videos to your landing page
+                      </CardDescription>
+                    </div>
+                    <Button variant="outline" onClick={() => setVideoModalOpen(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Video
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {lead.videos?.length > 0 ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {lead.videos.map((video) => (
+                        <div key={video.id} className="p-3 bg-muted/50 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Play className="w-4 h-4 text-amber-500" />
+                            <span className="text-sm font-medium truncate">{video.title}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1 truncate">{video.url}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 text-muted-foreground">
+                      <Video className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No videos added yet</p>
+                      <p className="text-xs mt-1">Record yourself with the brochure, then upload the video here</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* 1-Click Marketing Workflow */}
+              <Card className="border-2 border-amber-500/50 bg-gradient-to-r from-amber-500/5 to-amber-600/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-amber-500" />
+                    1-Click Marketing Workflow
+                  </CardTitle>
+                  <CardDescription>
+                    Automatically: Create listing → Publish landing page → Generate brochure → Email to owner
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="flex-1 flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-sm font-bold text-amber-600">1</div>
+                      <span className="text-sm">Listing</span>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1 flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-sm font-bold text-amber-600">2</div>
+                      <span className="text-sm">Landing Page</span>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1 flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-sm font-bold text-amber-600">3</div>
+                      <span className="text-sm">Brochure</span>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1 flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-sm font-bold text-amber-600">4</div>
+                      <span className="text-sm">Email</span>
+                    </div>
+                  </div>
+                  
+                  {!lead.owner_email && (
+                    <div className="p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/30 mb-4">
+                      <p className="text-sm text-yellow-600 flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4" />
+                        Owner email required for automated workflow. Add it in the edit dialog.
+                      </p>
+                    </div>
+                  )}
+                  
+                  <Button 
+                    onClick={handleRunMarketingWorkflow}
+                    disabled={runningWorkflow || !lead.owner_email}
+                    className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
+                    size="lg"
+                  >
+                    {runningWorkflow ? (
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    ) : (
+                      <Zap className="w-5 h-5 mr-2" />
+                    )}
+                    Run Full Marketing Workflow
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
             {/* Notes Tab */}
             <TabsContent value="notes" className="mt-0">
               <Card>
