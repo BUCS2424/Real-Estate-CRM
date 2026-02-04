@@ -306,23 +306,29 @@ async def import_csv(
     # Map common CSV column names to our fields
     column_mapping = {
         # Address fields
-        'address': ['address', 'street', 'street_address', 'property_address', 'situs_address'],
-        'city': ['city', 'situs_city'],
-        'state': ['state', 'situs_state'],
-        'zip_code': ['zip', 'zip_code', 'zipcode', 'postal_code', 'situs_zip'],
-        'county': ['county'],
+        'address': ['address', 'street', 'street_address', 'property_address', 'situs_address', 'Address'],
+        'city': ['city', 'situs_city', 'City'],
+        'state': ['state', 'situs_state', 'State'],
+        'zip_code': ['zip', 'zip_code', 'zipcode', 'postal_code', 'situs_zip', 'Zip'],
+        'county': ['county', 'County'],
         
-        # Property details
-        'property_type': ['property_type', 'type', 'use_code', 'land_use'],
-        'bedrooms': ['beds', 'bedrooms', 'bed', 'br'],
-        'bathrooms': ['baths', 'bathrooms', 'bath', 'ba'],
-        'sqft': ['sqft', 'square_feet', 'sq_ft', 'living_area', 'heated_sqft'],
-        'lot_size': ['lot_size', 'lot_acres', 'acres', 'land_size'],
-        'year_built': ['year_built', 'year', 'built'],
-        'parcel_id': ['parcel_id', 'parcel', 'apn', 'folio', 'pin'],
+        # Property details  
+        'property_type': ['property_type', 'type', 'use_code', 'land_use', 'Property Type'],
+        'bedrooms': ['beds', 'bedrooms', 'bed', 'br', 'Beds'],
+        'bathrooms': ['baths', 'bathrooms', 'bath', 'ba', 'Baths'],
+        'sqft': ['sqft', 'square_feet', 'sq_ft', 'living_area', 'heated_sqft', 'Square Footage'],
+        'lot_size': ['lot_size', 'lot_acres', 'acres', 'land_size', 'Lot Size'],
+        'year_built': ['year_built', 'year', 'built', 'Year Built'],
+        'parcel_id': ['parcel_id', 'parcel', 'apn', 'folio', 'pin', 'Parcel'],
+        
+        # MLS fields
+        'mls_number': ['mls', 'mls_number', 'mls_id', 'MLS #', 'MLS#', 'MLS'],
+        'mls_status': ['status', 'mls_status', 'listing_status', 'Status'],
+        'list_price': ['price', 'list_price', 'asking_price', 'Price'],
+        'price_per_sqft': ['price_per_sqft', 'ppsf', 'Price per/Sqft', 'Price/SqFt'],
         
         # Value fields
-        'estimated_value': ['value', 'estimated_value', 'market_value', 'assessed_value', 'total_value'],
+        'estimated_value': ['value', 'estimated_value', 'market_value', 'assessed_value', 'total_value', 'price', 'Price'],
         'last_sale_price': ['last_sale_price', 'sale_price', 'sold_price'],
         'last_sale_date': ['last_sale_date', 'sale_date', 'sold_date'],
         
@@ -332,6 +338,10 @@ async def import_csv(
         'owner_mailing_city': ['mailing_city', 'owner_city', 'mail_city'],
         'owner_mailing_state': ['mailing_state', 'owner_state', 'mail_state'],
         'owner_mailing_zip': ['mailing_zip', 'owner_zip', 'mail_zip'],
+        
+        # Additional fields
+        'utilities': ['utilities', 'Utilities'],
+        'favorite': ['favorite', 'Favorite'],
     }
     
     def find_column_value(row, field_names):
