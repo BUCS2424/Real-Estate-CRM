@@ -217,7 +217,7 @@ async def pull_owner_info(lead_id: str, current_user: dict = Depends(get_current
     # Search county records
     try:
         search_query = f"{address}, {city}" if city else address
-        results = await search_all_counties(search_query, lead.get("county"))
+        results = await search_property(search_query, lead.get("county"))
         
         if not results:
             return {"message": "No records found", "success": False}
