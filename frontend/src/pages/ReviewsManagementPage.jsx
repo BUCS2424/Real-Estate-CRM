@@ -169,6 +169,16 @@ const ReviewsManagementPage = () => {
     }
   };
 
+  const handleApprove = async (review) => {
+    try {
+      await reviewsAPI.update(review.id, { status: 'approved', show_on_homepage: true });
+      toast.success('Review approved and added to homepage');
+      fetchReviews();
+    } catch (error) {
+      toast.error('Failed to approve review');
+    }
+  };
+
   const handleToggleHomepage = async (review) => {
     try {
       await reviewsAPI.update(review.id, { show_on_homepage: !review.show_on_homepage });
