@@ -524,6 +524,133 @@ const PropertyLeadsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Property Lead Modal */}
+      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="w-5 h-5 text-amber-500" />
+              Add Property Lead
+            </DialogTitle>
+            <DialogDescription>
+              Create a new property lead manually. You can also import from CSV.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <div className="col-span-2">
+              <Label>Address *</Label>
+              <Input
+                value={newLead.address}
+                onChange={(e) => setNewLead({...newLead, address: e.target.value})}
+                placeholder="123 Main St"
+                data-testid="new-lead-address"
+              />
+            </div>
+            <div>
+              <Label>City *</Label>
+              <Input
+                value={newLead.city}
+                onChange={(e) => setNewLead({...newLead, city: e.target.value})}
+                placeholder="Tampa"
+                data-testid="new-lead-city"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>State</Label>
+                <Input
+                  value={newLead.state}
+                  onChange={(e) => setNewLead({...newLead, state: e.target.value})}
+                  placeholder="FL"
+                />
+              </div>
+              <div>
+                <Label>Zip</Label>
+                <Input
+                  value={newLead.zip_code}
+                  onChange={(e) => setNewLead({...newLead, zip_code: e.target.value})}
+                  placeholder="33602"
+                />
+              </div>
+            </div>
+            <div>
+              <Label>County</Label>
+              <Select value={newLead.county} onValueChange={(v) => setNewLead({...newLead, county: v})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select county" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Hillsborough">Hillsborough</SelectItem>
+                  <SelectItem value="Pinellas">Pinellas</SelectItem>
+                  <SelectItem value="Pasco">Pasco</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Property Type</Label>
+              <Select value={newLead.property_type} onValueChange={(v) => setNewLead({...newLead, property_type: v})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="single_family">Single Family</SelectItem>
+                  <SelectItem value="condo">Condo</SelectItem>
+                  <SelectItem value="townhouse">Townhouse</SelectItem>
+                  <SelectItem value="multi_family">Multi Family</SelectItem>
+                  <SelectItem value="land">Land</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Bedrooms</Label>
+              <Input
+                type="number"
+                value={newLead.bedrooms}
+                onChange={(e) => setNewLead({...newLead, bedrooms: e.target.value})}
+                placeholder="3"
+              />
+            </div>
+            <div>
+              <Label>Bathrooms</Label>
+              <Input
+                type="number"
+                step="0.5"
+                value={newLead.bathrooms}
+                onChange={(e) => setNewLead({...newLead, bathrooms: e.target.value})}
+                placeholder="2"
+              />
+            </div>
+            <div>
+              <Label>Square Feet</Label>
+              <Input
+                type="number"
+                value={newLead.sqft}
+                onChange={(e) => setNewLead({...newLead, sqft: e.target.value})}
+                placeholder="1500"
+              />
+            </div>
+            <div>
+              <Label>Estimated Value</Label>
+              <Input
+                type="number"
+                value={newLead.estimated_value}
+                onChange={(e) => setNewLead({...newLead, estimated_value: e.target.value})}
+                placeholder="350000"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddModal(false)}>Cancel</Button>
+            <Button onClick={handleCreate} disabled={creating} className="bg-amber-500 hover:bg-amber-600 text-black">
+              {creating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+              Create Lead
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
