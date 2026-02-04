@@ -590,7 +590,7 @@ const PropertyLeadDetailPage = () => {
           </TabsList>
 
           {/* Tab Content */}
-          <div className="flex-1 overflow-y-auto mt-4">
+          <div className="flex-1 mt-4 pb-8">
             {/* Overview Tab */}
             <TabsContent value="overview" className="mt-0 space-y-4">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
