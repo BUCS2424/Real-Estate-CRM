@@ -21,7 +21,8 @@ import {
   Mail,
   MessageSquare,
   BarChart3,
-  Smartphone
+  Smartphone,
+  Target
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
