@@ -126,6 +126,37 @@ const PropertyLeadsPage = () => {
     }
   };
 
+  const handleCreate = async () => {
+    if (!newLead.address || !newLead.city) {
+      toast.error('Address and City are required');
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const leadData = {
+        ...newLead,
+        bedrooms: newLead.bedrooms ? parseInt(newLead.bedrooms) : null,
+        bathrooms: newLead.bathrooms ? parseFloat(newLead.bathrooms) : null,
+        sqft: newLead.sqft ? parseInt(newLead.sqft) : null,
+        estimated_value: newLead.estimated_value ? parseFloat(newLead.estimated_value) : null
+      };
+      await propertyLeadsAPI.create(leadData);
+      toast.success('Property lead created');
+      setShowAddModal(false);
+      setNewLead({
+        address: '', city: '', state: 'FL', zip_code: '', county: '',
+        property_type: '', bedrooms: '', bathrooms: '', sqft: '', estimated_value: ''
+      });
+      fetchLeads();
+      fetchStats();
+    } catch (error) {
+      toast.error('Failed to create lead');
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const handleDelete = async (leadId, e) => {
     e.stopPropagation();
     if (!window.confirm('Delete this property lead?')) return;
