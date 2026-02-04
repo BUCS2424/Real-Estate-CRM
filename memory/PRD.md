@@ -860,3 +860,75 @@ A comprehensive marketing system for property leads that automates brochure gene
 - Some properties may not be found on any source
 
 ---
+
+
+## Update: February 4, 2026 - Property Lookup Page Enhancement
+
+### Bug Fix: Blank Property Lookup Page
+Fixed a JSX syntax error in `/app/frontend/src/pages/PropertyLookupPage.jsx` that was causing the page to render blank.
+- **Root Cause:** Missing closing brace `}` on line 863 for the conditional rendering block
+- **Error:** `SyntaxError: Expected corresponding JSX closing tag for <>.`
+- **Fix:** Added the missing `}` after the Property Leads view conditional block
+
+### New Feature: Data Source Selector on Property Lookup Page
+Added a dropdown/toggle to switch between two data sources on the Property Lookup page:
+
+#### Data Sources
+1. **County Records** (default) - Search county tax records
+   - Address input with county dropdown (Hillsborough, Pinellas, Pasco)
+   - Recent searches section with clickable history
+   - Search results list with property details
+   - Assign to Listing functionality
+
+2. **Property Leads** - View imported CSV leads
+   - List of all imported property leads
+   - Search/filter by address, city, owner name, zip
+   - Lead details panel when clicked
+   - Quick actions: View Full Details, Refresh
+   - Navigation to full lead detail page
+
+#### UI Changes
+- Two data source buttons at top of page with icons (Database, Users)
+- Visual highlight (amber border/background) on selected source
+- Dynamic content switching based on selection
+- Consistent card layouts across both views
+
+#### Files Modified
+- `/app/frontend/src/pages/PropertyLookupPage.jsx` - Added data source state, leads fetching, and conditional rendering
+
+#### Features Tested & Verified
+- Page renders without blank page error ✅
+- Data Source selector shows both options ✅
+- County Records view works with search, county dropdown, recent searches ✅
+- Property Leads view shows leads list with search filtering ✅
+- Lead details panel displays when lead selected ✅
+- View Full Details navigates to lead detail page ✅
+- Switching between views works correctly ✅
+
+---
+
+## Current Status (February 4, 2026)
+
+### Working Features
+- Property Leads Management (list + detail pages)
+- 1-Click Brochure Maker with lead scoring
+- Task Edit & Notifications
+- Property Lookup with County Records & Property Leads views
+
+### Known Issues
+- **Web Scraper Blocked (P1):** Zillow/Redfin/Realtor.com are returning 403/429 errors. Direct scraping is unreliable - recommend professional API solution.
+- **iDrive e2 Storage (P1):** Invalid credentials - blocked on user providing new credentials.
+- **Deployment Workflow (P1):** Manual data seeding process needs proper automation.
+
+### Upcoming Tasks (P1)
+- Build Buyer Lead Page
+- Build Seller Lead Page
+- "Convert Listing to Lead" feature from showcase listings
+- Implement robust scraping solution (professional API)
+
+### Backlog
+- TMS Integration
+- Advanced Lead Management (auction/bidding)
+- Advanced Reporting & Analytics
+- Booking Notifications (email, SMS, desktop)
+- PWA "Don't Ask Again" cookie (waiting for user icon asset)
