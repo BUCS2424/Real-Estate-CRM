@@ -263,8 +263,15 @@ export const MediaLibraryPage = () => {
   };
 
   const selectPropertyFolder = (property, subfolder = null) => {
+    setShowSiteImages(false);
     setSelectedProperty(property);
     setSelectedSubfolder(subfolder);
+  };
+
+  const selectSiteImages = () => {
+    setShowSiteImages(true);
+    setSelectedProperty(null);
+    setSelectedSubfolder(null);
   };
 
   const filteredFiles = files.filter(file => {
