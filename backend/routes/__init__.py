@@ -24,6 +24,7 @@ from .landing_pages import router as landing_pages_router
 from .media import router as media_router
 from .property_lookup import router as property_lookup_router
 from .ratemyagent import router as ratemyagent_router
+from .reviews import router as reviews_router
 
 # Include all sub-routers
 api_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
@@ -45,6 +46,7 @@ api_router.include_router(landing_pages_router, prefix="/landing-pages", tags=["
 api_router.include_router(media_router, prefix="/media", tags=["Media Library"])
 api_router.include_router(property_lookup_router, prefix="/property-lookup", tags=["Property Lookup"])
 api_router.include_router(ratemyagent_router, tags=["RateMyAgent"])
+api_router.include_router(reviews_router, tags=["Reviews"])
 
 @api_router.get("/")
 async def root():
