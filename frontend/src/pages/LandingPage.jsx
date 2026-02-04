@@ -785,6 +785,7 @@ export const LandingPage = () => {
               )}
             </div>
             <div className="flex gap-8 text-sm text-white/50">
+              <Link to="/write-review" className="hover:text-amber-400 transition-colors">Write a Review</Link>
               <Link to="/newsletter-archive" className="hover:text-amber-400 transition-colors">Newsletter Archive</Link>
               <a href="#" className="hover:text-amber-400 transition-colors">Privacy</a>
               <a href="#" className="hover:text-amber-400 transition-colors">Terms</a>
