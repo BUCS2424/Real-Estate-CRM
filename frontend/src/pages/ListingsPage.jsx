@@ -121,6 +121,39 @@ export const ListingsPage = () => {
     }
   };
 
+  const handleImportCSV = async () => {
+    if (!importFile) {
+      toast.error('Please select a CSV file');
+      return;
+    }
+    
+    setImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', importFile);
+      
+      let result;
+      if (importDestination === 'listings') {
+        result = await listingsAPI.importCSV(formData);
+      } else {
+        result = await propertyLeadsAPI.importCSV(formData);
+      }
+      
+      toast.success(`Imported ${result.data.imported} records, skipped ${result.data.skipped}`);
+      setIsImportOpen(false);
+      setImportFile(null);
+      
+      // Refresh listings if imported to listings
+      if (importDestination === 'listings') {
+        fetchListings();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to import CSV');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const handleAddressLookup = async () => {
     if (!formData.address) {
       toast.error('Please enter an address');
