@@ -307,6 +307,28 @@ export const MediaLibraryPage = () => {
         </div>
         
         <div className="flex-1 overflow-y-auto p-2">
+          {/* Site Images - Always at top */}
+          <div
+            className={cn(
+              "flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors mb-2",
+              showSiteImages
+                ? "bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/50"
+                : "hover:bg-muted"
+            )}
+            onClick={selectSiteImages}
+            data-testid="site-images-folder"
+          >
+            <Image className="w-4 h-4 text-amber-500" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">Site Images</p>
+              <p className="text-xs text-muted-foreground">Logos, branding, icons</p>
+            </div>
+          </div>
+          
+          <div className="border-t my-2 pt-2">
+            <p className="text-xs text-muted-foreground px-2 mb-2">Property Folders</p>
+          </div>
+          
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -324,7 +346,7 @@ export const MediaLibraryPage = () => {
                   <div
                     className={cn(
                       "flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors",
-                      selectedProperty?.id === folder.id && !selectedSubfolder
+                      selectedProperty?.id === folder.id && !selectedSubfolder && !showSiteImages
                         ? "bg-primary/10 text-primary"
                         : "hover:bg-muted"
                     )}
