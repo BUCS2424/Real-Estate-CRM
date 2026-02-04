@@ -77,7 +77,7 @@ async def create_scoring_rule(rule: ScoringRuleCreate, current_user: dict = Depe
     rule_dict = rule.model_dump()
     rule_dict["created_at"] = datetime.now(timezone.utc)
     rule_dict["updated_at"] = datetime.now(timezone.utc)
-    rule_dict["created_by"] = str(current_user["_id"])
+    rule_dict["created_by"] = current_user.get("id", "")
     
     result = await db.scoring_rules.insert_one(rule_dict)
     rule_dict["id"] = str(result.inserted_id)
