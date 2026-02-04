@@ -158,6 +158,9 @@ export const listingsAPI = {
   generateDescription: (id) => api.post(`/listings/${id}/generate-description`),
   lookupAddress: (address) => api.post('/listings/lookup-address', { address }),
   generateData: (id) => api.post(`/property-leads/listings/${id}/generate-data`),
+  importCSV: (formData) => api.post('/listings/import-csv', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
 };
 
 // Public APIs (no auth required)
