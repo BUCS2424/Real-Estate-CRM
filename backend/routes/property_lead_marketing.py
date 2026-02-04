@@ -1,6 +1,6 @@
 """
 Property Lead Marketing Routes
-Handles brochure generation, landing page creation, and email sending
+Handles brochure generation, landing page creation, email sending, and property data scraping
 """
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from fastapi.responses import StreamingResponse
@@ -18,6 +18,7 @@ from database import db
 from utils.auth import get_current_user
 from models.user import UserRole
 from services.brochure_generator import generate_brochure, calculate_lead_score
+from services.property_scraper import scrape_property_data
 
 router = APIRouter()
 
