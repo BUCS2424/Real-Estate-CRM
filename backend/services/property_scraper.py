@@ -207,10 +207,14 @@ class PropertyDataScraper:
             # Build search URL - Redfin uses a different URL structure
             search_query = self._normalize_address(address, city, state, zip_code)
             
+            # Add small delay
+            await asyncio.sleep(1)
+            
             # First, search for the property
             search_url = f"https://www.redfin.com/stingray/do/location-autocomplete?location={quote_plus(search_query)}&v=2"
             
-            async with aiohttp.ClientSession(headers=self.headers, timeout=self.timeout) as session:
+            connector = aiohttp.TCPConnector(ssl=False)
+            async with aiohttp.ClientSession(headers=self._get_headers('https://www.redfin.com/'), timeout=self.timeout, connector=connector) as session:
                 # Get autocomplete results
                 async with session.get(search_url) as response:
                     if response.status == 200:
