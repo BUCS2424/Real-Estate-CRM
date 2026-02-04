@@ -48,6 +48,7 @@ api_router.include_router(media_router, prefix="/media", tags=["Media Library"])
 api_router.include_router(property_lookup_router, prefix="/property-lookup", tags=["Property Lookup"])
 api_router.include_router(ratemyagent_router, tags=["RateMyAgent"])
 api_router.include_router(reviews_router, tags=["Reviews"])
+api_router.include_router(property_leads_router, tags=["Property Leads"])
 
 @api_router.get("/")
 async def root():
