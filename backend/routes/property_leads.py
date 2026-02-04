@@ -300,7 +300,8 @@ async def import_csv(
         raise HTTPException(status_code=400, detail="File must be a CSV")
     
     content = await file.read()
-    decoded = content.decode('utf-8')
+    # Handle UTF-8 BOM if present
+    decoded = content.decode('utf-8-sig')
     reader = csv.DictReader(io.StringIO(decoded))
     
     # Map common CSV column names to our fields
