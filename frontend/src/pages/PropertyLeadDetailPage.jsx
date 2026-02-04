@@ -1304,6 +1304,130 @@ const PropertyLeadDetailPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Email Brochure Modal */}
+      <Dialog open={emailModalOpen} onOpenChange={setEmailModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-5 h-5 text-amber-500" />
+              Email Brochure
+            </DialogTitle>
+            <DialogDescription>
+              Send the brochure with a personalized message to the property owner
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Recipient Email *</Label>
+              <Input
+                type="email"
+                value={emailData.recipient_email}
+                onChange={(e) => setEmailData({...emailData, recipient_email: e.target.value})}
+                placeholder="owner@email.com"
+              />
+            </div>
+            <div>
+              <Label>Subject (optional)</Label>
+              <Input
+                value={emailData.subject}
+                onChange={(e) => setEmailData({...emailData, subject: e.target.value})}
+                placeholder={`Exclusive Market Analysis for ${lead?.address || 'Your Property'}`}
+              />
+            </div>
+            <div>
+              <Label>Custom Message (optional)</Label>
+              <Textarea
+                value={emailData.message}
+                onChange={(e) => setEmailData({...emailData, message: e.target.value})}
+                placeholder="Leave blank to use default personalized message..."
+                rows={4}
+              />
+            </div>
+            <div className="p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+              <p>• Brochure PDF will be attached</p>
+              <p>• Landing page link included (if published)</p>
+              <p>• Uses your configured SMTP settings</p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailModalOpen(false)}>Cancel</Button>
+            <Button 
+              onClick={handleEmailBrochure} 
+              disabled={sendingEmail || !emailData.recipient_email}
+              className="bg-amber-500 hover:bg-amber-600 text-black"
+            >
+              {sendingEmail ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4 mr-2" />
+              )}
+              Send Email
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Video Modal */}
+      <Dialog open={videoModalOpen} onOpenChange={setVideoModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Video className="w-5 h-5 text-amber-500" />
+              Add Property Video
+            </DialogTitle>
+            <DialogDescription>
+              Add a video URL (YouTube, Vimeo, or direct link) to showcase this property
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Video URL *</Label>
+              <Input
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                placeholder="https://youtube.com/watch?v=... or direct video URL"
+              />
+            </div>
+            <div>
+              <Label>Video Title</Label>
+              <Input
+                value={videoTitle}
+                onChange={(e) => setVideoTitle(e.target.value)}
+                placeholder="Property Walkthrough"
+              />
+            </div>
+            <div className="p-3 bg-amber-500/10 rounded-lg border border-amber-500/30">
+              <p className="text-sm text-amber-600 flex items-center gap-2">
+                <Video className="w-4 h-4" />
+                <span>
+                  <strong>Tip:</strong> Record yourself holding the printed brochure and talking about the property, 
+                  then upload to YouTube and add the link here!
+                </span>
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setVideoModalOpen(false)}>Cancel</Button>
+            <Button 
+              onClick={handleAddVideo} 
+              disabled={addingVideo || !videoUrl}
+              className="bg-amber-500 hover:bg-amber-600 text-black"
+            >
+              {addingVideo ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Plus className="w-4 h-4 mr-2" />
+              )}
+              Add Video
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
