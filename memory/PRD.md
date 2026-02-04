@@ -976,3 +976,99 @@ Added a unified 3-dot dropdown menu for all files in the Media Library with cons
 - 3-dot dropdown menu appears on hover ✅
 - All 4 options work correctly ✅
 - Backend rename API with security checks ✅
+
+
+---
+
+## Update: February 4, 2026 - Lead Scoring Rules System
+
+### Feature: Lead Scoring Configuration in Developer Settings
+
+Built a comprehensive Lead Scoring Rules system that allows configuring rules to automatically score incoming leads based on data quality.
+
+#### Key Features
+1. **Points-Based Scoring** - Each rule adds/subtracts points from lead score
+2. **AI Verification** - Optional AI validation of data before scoring (email format, phone validity, etc.)
+3. **Two Lead Types** - Separate rule sets for Property/Seller leads and Buyer leads
+4. **Category-Based Organization** - Rules grouped by: Contact Info, Property Details, Value Info, Location, Owner Info, Source, Preferences, Qualification, Engagement
+
+#### Backend Implementation
+- **Model:** `/app/backend/models/lead_scoring.py`
+  - `ScoringRuleCreate`, `ScoringRuleUpdate` - Pydantic models
+  - `SCORING_FIELD_DEFINITIONS` - Available fields per lead type
+  - `OPERATOR_DEFINITIONS` - Comparison operators (exists, equals, greater_than, etc.)
+
+- **Service:** `/app/backend/services/lead_scoring_service.py`
+  - `evaluate_condition()` - Checks single condition
+  - `evaluate_rule()` - Checks all conditions (AND logic)
+  - `verify_data_with_ai()` - AI verification using GPT-4o-mini
+  - `calculate_lead_score()` - Main scoring function
+  - `DEFAULT_PROPERTY_SELLER_RULES` - 12 default rules
+  - `DEFAULT_BUYER_RULES` - 9 default rules
+
+- **Routes:** `/app/backend/routes/lead_scoring.py`
+  - `GET /api/lead-scoring/rules` - List rules with filters
+  - `POST /api/lead-scoring/rules` - Create rule
+  - `PUT /api/lead-scoring/rules/{id}` - Update rule
+  - `DELETE /api/lead-scoring/rules/{id}` - Delete rule
+  - `POST /api/lead-scoring/rules/{id}/toggle` - Toggle active status
+  - `POST /api/lead-scoring/score/property-lead/{id}` - Score property lead
+  - `POST /api/lead-scoring/score/buyer-lead/{id}` - Score buyer lead
+  - `POST /api/lead-scoring/score/batch` - Batch scoring
+  - `GET /api/lead-scoring/fields` - Get field definitions
+  - `GET /api/lead-scoring/operators` - Get operators
+  - `GET /api/lead-scoring/stats` - Get statistics
+  - `POST /api/lead-scoring/seed-defaults` - Seed default rules
+
+#### Frontend Implementation
+- **Settings Page:** `/app/frontend/src/pages/settings/developer/LeadScoringSettings.jsx`
+  - Stats cards (Total Rules, Active Rules, Scored Leads)
+  - Tabs for Property/Seller vs Buyer leads
+  - Collapsible category sections
+  - Rule cards with toggle, edit, delete actions
+  - Create/Edit Rule modal with condition builder
+  - AI verification toggle per rule
+  - Priority setting
+
+- **API Functions:** `/app/frontend/src/lib/api.js`
+  - `leadScoringAPI` object with all CRUD methods
+
+#### Default Rules Seeded
+**Property/Seller (12 rules):**
+- Has Owner Email (+15 pts, AI verified)
+- Has Owner Phone (+15 pts, AI verified)
+- Has Owner Name (+10 pts)
+- High Value Property $500k+ (+20 pts)
+- Luxury Property $1M+ (+30 pts)
+- Has Property Details (+10 pts)
+- Large Home 4+ beds (+10 pts)
+- Has Pool (+5 pts)
+- Waterfront Property (+15 pts)
+- Non-Homestead/Investor (+10 pts)
+- Absentee Owner (+10 pts)
+- Target City - Tampa (+5 pts, inactive)
+
+**Buyer (9 rules):**
+- Has Email (+10 pts, AI verified)
+- Has Phone (+10 pts, AI verified)
+- Pre-Approved Buyer (+25 pts)
+- Cash Buyer (+30 pts)
+- High Budget $500k+ (+20 pts)
+- Luxury Buyer $1M+ (+30 pts)
+- Ready to Buy (+15 pts)
+- Wants Waterfront (+10 pts)
+- Active Searcher (+15 pts)
+
+#### Scoring Algorithm
+```
+total_score = sum of matched rule points
+max_possible = sum of active positive-point rules
+percentage = (total_score / max_possible) * 100
+rating = excellent (80%+) | good (60-79%) | fair (40-59%) | poor (<40%)
+```
+
+#### Tests & Verification
+- All 18 backend API tests passed ✅
+- All frontend features working ✅
+- Test file: `/app/backend/tests/test_lead_scoring.py`
+- 21 rules seeded successfully
