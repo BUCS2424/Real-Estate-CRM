@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Search, 
   Building2, 
@@ -14,7 +15,13 @@ import {
   XCircle,
   Clock,
   Link2,
-  Plus
+  Plus,
+  Users,
+  Database,
+  Eye,
+  Bed,
+  Bath,
+  Square
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -36,7 +43,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
-import { propertyLookupAPI, listingsAPI } from '../lib/api';
+import { propertyLookupAPI, listingsAPI, propertyLeadsAPI } from '../lib/api';
 import { toast } from 'sonner';
 
 const COUNTIES = [
