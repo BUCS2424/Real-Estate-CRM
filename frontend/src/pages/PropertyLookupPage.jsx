@@ -84,6 +84,9 @@ export const PropertyLookupPage = () => {
   const [loadingListings, setLoadingListings] = useState(false);
   const [selectedListing, setSelectedListing] = useState('');
   const [assigning, setAssigning] = useState(false);
+  const [assignTarget, setAssignTarget] = useState('listing'); // 'listing' or 'lead'
+  const [selectedLeadForAssign, setSelectedLeadForAssign] = useState('');
+  const [allLeadsForAssign, setAllLeadsForAssign] = useState([]);
   
   // MLS Config
   const [showMLSConfig, setShowMLSConfig] = useState(false);
