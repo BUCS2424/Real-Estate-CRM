@@ -387,6 +387,39 @@ export const propertyLeadsAPI = {
   convertToShowcase: (id) => api.post(`/property-leads/${id}/convert-to-showcase`),
 };
 
+// Lead Scoring API
+export const leadScoringAPI = {
+  // Rules CRUD
+  getRules: (leadType = null, category = null, isActive = null) => {
+    const params = new URLSearchParams();
+    if (leadType) params.append('lead_type', leadType);
+    if (category) params.append('category', category);
+    if (isActive !== null) params.append('is_active', isActive);
+    return api.get(`/lead-scoring/rules?${params.toString()}`);
+  },
+  getRule: (id) => api.get(`/lead-scoring/rules/${id}`),
+  createRule: (data) => api.post('/lead-scoring/rules', data),
+  updateRule: (id, data) => api.put(`/lead-scoring/rules/${id}`, data),
+  deleteRule: (id) => api.delete(`/lead-scoring/rules/${id}`),
+  toggleRule: (id) => api.post(`/lead-scoring/rules/${id}/toggle`),
+  
+  // Scoring
+  scorePropertyLead: (id, verifyWithAi = true) => 
+    api.post(`/lead-scoring/score/property-lead/${id}?verify_with_ai=${verifyWithAi}`),
+  scoreBuyerLead: (id, verifyWithAi = true) => 
+    api.post(`/lead-scoring/score/buyer-lead/${id}?verify_with_ai=${verifyWithAi}`),
+  scoreBatch: (leadType, leadIds = null, verifyWithAi = false) => 
+    api.post('/lead-scoring/score/batch', { lead_type: leadType, lead_ids: leadIds, verify_with_ai: verifyWithAi }),
+  
+  // Metadata
+  getFields: () => api.get('/lead-scoring/fields'),
+  getOperators: () => api.get('/lead-scoring/operators'),
+  getStats: () => api.get('/lead-scoring/stats'),
+  
+  // Seed defaults
+  seedDefaults: () => api.post('/lead-scoring/seed-defaults'),
+};
+
 // Seed data
 export const seedAPI = {
   seed: () => api.post('/seed'),
