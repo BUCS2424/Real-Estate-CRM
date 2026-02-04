@@ -222,7 +222,7 @@ const PropertyLeadsPage = () => {
             <Upload className="w-4 h-4 mr-2" />
             Import CSV
           </Button>
-          <Button onClick={() => navigate('/property-leads/new')} className="bg-amber-500 hover:bg-amber-600 text-black">
+          <Button onClick={() => setShowAddModal(true)} className="bg-amber-500 hover:bg-amber-600 text-black" data-testid="add-property-btn">
             <Plus className="w-4 h-4 mr-2" />
             Add Property
           </Button>
