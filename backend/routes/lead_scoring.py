@@ -6,23 +6,21 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
 from datetime import datetime, timezone
 from bson import ObjectId
+import sys
+sys.path.append('/app/backend')
 
-from ..database import db
-from ..models.lead_scoring import (
+from database import db
+from models.lead_scoring import (
     ScoringRuleCreate,
     ScoringRuleUpdate,
     SCORING_FIELD_DEFINITIONS,
     OPERATOR_DEFINITIONS
 )
-from ..services.lead_scoring_service import (
+from services.lead_scoring_service import (
     calculate_lead_score,
     DEFAULT_PROPERTY_SELLER_RULES,
     DEFAULT_BUYER_RULES
 )
-
-# Import auth dependency from main server
-import sys
-sys.path.append('/app/backend')
 from server import get_current_user, UserRole
 
 router = APIRouter(prefix="/lead-scoring", tags=["Lead Scoring"])
