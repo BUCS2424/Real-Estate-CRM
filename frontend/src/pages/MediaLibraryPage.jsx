@@ -772,7 +772,7 @@ export const MediaLibraryPage = () => {
                           <td className="p-3">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Button variant="ghost" size="icon" className="h-8 w-8" data-testid={`file-list-menu-${file.id}`}>
                                   <MoreVertical className="w-4 h-4" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -781,13 +781,13 @@ export const MediaLibraryPage = () => {
                                   <Eye className="w-4 h-4 mr-2" />
                                   Preview
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleDownload(file)}>
-                                  <Download className="w-4 h-4 mr-2" />
-                                  Download
-                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => openRenameModal(file)}>
                                   <Edit2 className="w-4 h-4 mr-2" />
                                   Rename
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => copyToClipboard(file.url)}>
+                                  <Copy className="w-4 h-4 mr-2" />
+                                  Get URL
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => handleDelete(file)} className="text-destructive">
