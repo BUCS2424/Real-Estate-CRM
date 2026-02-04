@@ -171,6 +171,140 @@ const PropertyLeadDetailPage = () => {
     }
   };
 
+  // Marketing functions
+  const fetchLeadScore = async () => {
+    try {
+      const res = await propertyLeadsAPI.getScore(id);
+      setLeadScore(res.data);
+    } catch (error) {
+      console.error('Failed to fetch lead score');
+    }
+  };
+
+  const handleGenerateBrochure = async () => {
+    setGeneratingBrochure(true);
+    try {
+      const res = await propertyLeadsAPI.generateBrochure(id, brochureTemplate, true);
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `brochure-${lead.address?.toLowerCase().replace(/\s+/g, '-') || 'property'}-${brochureTemplate}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('Brochure downloaded!');
+      fetchLead(); // Refresh activity
+    } catch (error) {
+      toast.error('Failed to generate brochure');
+    } finally {
+      setGeneratingBrochure(false);
+    }
+  };
+
+  const handleEmailBrochure = async () => {
+    if (!emailData.recipient_email) {
+      toast.error('Recipient email is required');
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      await propertyLeadsAPI.emailBrochure(id, {
+        template: brochureTemplate,
+        recipient_email: emailData.recipient_email,
+        subject: emailData.subject || undefined,
+        message: emailData.message || undefined,
+        include_landing_page_link: true
+      });
+      toast.success(`Email queued for ${emailData.recipient_email}`);
+      setEmailModalOpen(false);
+      fetchLead();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to send email');
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const handleCreateListing = async () => {
+    setCreatingListing(true);
+    try {
+      const res = await propertyLeadsAPI.createListing(id, {
+        create_landing_page: true,
+        theme: 'luxury'
+      });
+      toast.success('Listing and landing page created!');
+      fetchLead();
+      fetchLeadScore();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to create listing');
+    } finally {
+      setCreatingListing(false);
+    }
+  };
+
+  const handlePublishLandingPage = async () => {
+    setPublishingPage(true);
+    try {
+      const res = await propertyLeadsAPI.publishLandingPage(id);
+      toast.success('Landing page published!');
+      if (res.data.url) {
+        window.open(res.data.url, '_blank');
+      }
+      fetchLead();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to publish landing page');
+    } finally {
+      setPublishingPage(false);
+    }
+  };
+
+  const handleAddVideo = async () => {
+    if (!videoUrl) {
+      toast.error('Video URL is required');
+      return;
+    }
+    setAddingVideo(true);
+    try {
+      await propertyLeadsAPI.uploadVideo(id, videoUrl, videoTitle);
+      toast.success('Video added!');
+      setVideoModalOpen(false);
+      setVideoUrl('');
+      setVideoTitle('');
+      fetchLead();
+    } catch (error) {
+      toast.error('Failed to add video');
+    } finally {
+      setAddingVideo(false);
+    }
+  };
+
+  const handleRunMarketingWorkflow = async () => {
+    if (!lead.owner_email) {
+      toast.error('Owner email is required for marketing workflow. Please add owner email first.');
+      return;
+    }
+    setRunningWorkflow(true);
+    try {
+      const res = await propertyLeadsAPI.runMarketingWorkflow(id, brochureTemplate);
+      toast.success('Marketing workflow initiated!');
+      fetchLead();
+      fetchLeadScore();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to run marketing workflow');
+    } finally {
+      setRunningWorkflow(false);
+    }
+  };
+
+  const getScoreColor = (score) => {
+    if (score >= 80) return 'text-green-500';
+    if (score >= 60) return 'text-blue-500';
+    if (score >= 40) return 'text-yellow-500';
+    return 'text-red-500';
+  };
+
   const formatCurrency = (value) => {
     if (!value) return '-';
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
