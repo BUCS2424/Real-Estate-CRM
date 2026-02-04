@@ -884,6 +884,38 @@ export const MediaLibraryPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Site Images Upload Modal */}
+      <Dialog open={showSiteUploadModal} onOpenChange={setShowSiteUploadModal}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Image className="w-5 h-5 text-amber-500" />
+              Upload Site Image
+            </DialogTitle>
+            <DialogDescription>
+              Upload logos, icons, and branding images for your site. These files are stored locally and can be used for site branding.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <DropZone
+            onUpload={async (file) => {
+              await handleSiteImageUpload(file);
+            }}
+            accept="image/*"
+            multiple={true}
+            maxSize={10 * 1024 * 1024}
+            showPreview={true}
+            data-testid="site-images-dropzone"
+          />
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSiteUploadModal(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
