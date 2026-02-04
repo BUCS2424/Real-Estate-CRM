@@ -209,12 +209,14 @@ async def score_buyer_lead(
     current_user: dict = Depends(get_current_user)
 ):
     """Calculate score for a buyer lead"""
-    if not ObjectId.is_valid(lead_id):
-        raise HTTPException(status_code=400, detail="Invalid lead ID")
-    
-    lead = await db.leads.find_one({"_id": ObjectId(lead_id), "lead_type": "buyer"})
+    # Buyer leads may use UUID as 'id' field
+    lead = await db.leads.find_one({"id": lead_id, "lead_type": "buyer"})
     if not lead:
-        raise HTTPException(status_code=404, detail="Buyer lead not found")
+        # Fallback to ObjectId lookup for backward compatibility
+        if ObjectId.is_valid(lead_id):
+            lead = await db.leads.find_one({"_id": ObjectId(lead_id), "lead_type": "buyer"})
+        if not lead:
+            raise HTTPException(status_code=404, detail="Buyer lead not found")
     
     # Get buyer rules
     rules = await db.scoring_rules.find({
@@ -227,9 +229,10 @@ async def score_buyer_lead(
     
     score_result = await calculate_lead_score(lead, rules, verify_with_ai)
     
-    # Update lead with score
+    # Update lead with score using the id field
+    update_query = {"id": lead_id} if "id" in lead else {"_id": lead["_id"]}
     await db.leads.update_one(
-        {"_id": ObjectId(lead_id)},
+        update_query,
         {"$set": {
             "score": score_result["total_score"],
             "score_percentage": score_result["percentage"],
