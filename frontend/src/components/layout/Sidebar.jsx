@@ -31,6 +31,7 @@ const navItems = [
   { path: '/deals', icon: Briefcase, label: 'Deals Pipeline' },
   { path: '/listings', icon: Home, label: 'Listings' },
   { path: '/property-lookup', icon: Search, label: 'Property Lookup' },
+  { path: '/reviews', icon: Star, label: 'Reviews' },
   { path: '/landing-pages', icon: Layout, label: 'Landing Pages' },
   { path: '/media', icon: FolderOpen, label: 'Media Library' },
   { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
