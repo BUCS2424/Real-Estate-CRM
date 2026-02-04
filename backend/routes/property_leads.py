@@ -316,7 +316,7 @@ async def import_csv(
         'property_type': ['property_type', 'type', 'use_code', 'land_use', 'Property Type'],
         'bedrooms': ['beds', 'bedrooms', 'bed', 'br', 'Beds'],
         'bathrooms': ['baths', 'bathrooms', 'bath', 'ba', 'Baths'],
-        'sqft': ['sqft', 'square_feet', 'sq_ft', 'living_area', 'heated_sqft', 'Square Footage'],
+        'sqft': ['sqft', 'square_feet', 'sq_ft', 'living_area', 'heated_sqft', 'Square Footage', 'square footage'],
         'lot_size': ['lot_size', 'lot_acres', 'acres', 'land_size', 'Lot Size'],
         'year_built': ['year_built', 'year', 'built', 'Year Built'],
         'parcel_id': ['parcel_id', 'parcel', 'apn', 'folio', 'pin', 'Parcel'],
