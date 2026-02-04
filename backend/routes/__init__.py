@@ -26,6 +26,7 @@ from .property_lookup import router as property_lookup_router
 from .ratemyagent import router as ratemyagent_router
 from .reviews import router as reviews_router
 from .property_leads import router as property_leads_router
+from .property_lead_marketing import router as property_lead_marketing_router
 
 # Include all sub-routers
 api_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
