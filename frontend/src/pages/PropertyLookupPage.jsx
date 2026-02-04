@@ -431,27 +431,27 @@ export const PropertyLookupPage = () => {
 
                 {/* Values */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3 rounded-lg bg-accent">
-                    <p className="text-xs text-muted-foreground">Market Value</p>
-                    <p className="text-lg font-semibold text-foreground">
+                  <div className="p-3 rounded-lg bg-[#1e3a5f]">
+                    <p className="text-xs text-white/70">Market Value</p>
+                    <p className="text-lg font-semibold text-white">
                       {formatCurrency(propertyDetails.market_value)}
                     </p>
                   </div>
-                  <div className="p-3 rounded-lg bg-accent">
-                    <p className="text-xs text-muted-foreground">Assessed Value</p>
-                    <p className="text-lg font-semibold text-foreground">
+                  <div className="p-3 rounded-lg bg-[#1e3a5f]">
+                    <p className="text-xs text-white/70">Assessed Value</p>
+                    <p className="text-lg font-semibold text-white">
                       {formatCurrency(propertyDetails.assessed_value)}
                     </p>
                   </div>
-                  <div className="p-3 rounded-lg bg-accent">
-                    <p className="text-xs text-muted-foreground">Land Value</p>
-                    <p className="text-lg font-semibold text-foreground">
+                  <div className="p-3 rounded-lg bg-[#1e3a5f]">
+                    <p className="text-xs text-white/70">Land Value</p>
+                    <p className="text-lg font-semibold text-white">
                       {formatCurrency(propertyDetails.land_value)}
                     </p>
                   </div>
-                  <div className="p-3 rounded-lg bg-accent">
-                    <p className="text-xs text-muted-foreground">Building Value</p>
-                    <p className="text-lg font-semibold text-foreground">
+                  <div className="p-3 rounded-lg bg-[#1e3a5f]">
+                    <p className="text-xs text-white/70">Building Value</p>
+                    <p className="text-lg font-semibold text-white">
                       {formatCurrency(propertyDetails.building_value)}
                     </p>
                   </div>
@@ -460,23 +460,23 @@ export const PropertyLookupPage = () => {
                 {/* Property Details */}
                 <div className="grid grid-cols-3 gap-3">
                   {propertyDetails.lot_size && (
-                    <div className="text-center p-2 rounded bg-accent">
-                      <p className="text-lg font-semibold text-foreground">{propertyDetails.lot_size}</p>
-                      <p className="text-xs text-muted-foreground">Acres</p>
+                    <div className="text-center p-2 rounded bg-[#1e3a5f]">
+                      <p className="text-lg font-semibold text-white">{propertyDetails.lot_size}</p>
+                      <p className="text-xs text-white/70">Acres</p>
                     </div>
                   )}
                   {propertyDetails.homestead !== undefined && (
-                    <div className="text-center p-2 rounded bg-accent">
-                      <p className="text-lg font-semibold text-foreground">
+                    <div className="text-center p-2 rounded bg-[#1e3a5f]">
+                      <p className="text-lg font-semibold text-white">
                         {propertyDetails.homestead ? 'Yes' : 'No'}
                       </p>
-                      <p className="text-xs text-muted-foreground">Homestead</p>
+                      <p className="text-xs text-white/70">Homestead</p>
                     </div>
                   )}
                   {propertyDetails.sale_price && (
-                    <div className="text-center p-2 rounded bg-accent">
-                      <p className="text-lg font-semibold text-foreground">{formatCurrency(propertyDetails.sale_price)}</p>
-                      <p className="text-xs text-muted-foreground">Last Sale</p>
+                    <div className="text-center p-2 rounded bg-[#1e3a5f]">
+                      <p className="text-lg font-semibold text-white">{formatCurrency(propertyDetails.sale_price)}</p>
+                      <p className="text-xs text-white/70">Last Sale</p>
                     </div>
                   )}
                 </div>
