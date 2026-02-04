@@ -499,6 +499,62 @@ export const TasksPage = () => {
                   onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
                 />
               </div>
+              
+              {/* Notification Settings */}
+              <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Bell className="w-4 h-4 text-amber-500" />
+                    <Label className="cursor-pointer">Enable Notifications</Label>
+                  </div>
+                  <Switch
+                    checked={formData.notifications?.enabled ?? true}
+                    onCheckedChange={(checked) => setFormData({
+                      ...formData,
+                      notifications: { ...formData.notifications, enabled: checked }
+                    })}
+                  />
+                </div>
+                
+                {formData.notifications?.enabled && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm text-muted-foreground">Remind before due</Label>
+                      <Select
+                        value={String(formData.notifications?.remind_before_hours || 24)}
+                        onValueChange={(v) => setFormData({
+                          ...formData,
+                          notifications: { ...formData.notifications, remind_before_hours: parseInt(v) }
+                        })}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1 hour</SelectItem>
+                          <SelectItem value="2">2 hours</SelectItem>
+                          <SelectItem value="6">6 hours</SelectItem>
+                          <SelectItem value="12">12 hours</SelectItem>
+                          <SelectItem value="24">1 day</SelectItem>
+                          <SelectItem value="48">2 days</SelectItem>
+                          <SelectItem value="72">3 days</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm text-muted-foreground">Remind on due date</Label>
+                      <Switch
+                        checked={formData.notifications?.remind_on_due ?? true}
+                        onCheckedChange={(checked) => setFormData({
+                          ...formData,
+                          notifications: { ...formData.notifications, remind_on_due: checked }
+                        })}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+              
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancel
@@ -509,6 +565,172 @@ export const TasksPage = () => {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Edit Task Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        setIsEditDialogOpen(open);
+        if (!open) {
+          setEditingTask(null);
+          setFormData(initialFormState);
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit2 className="w-5 h-5 text-amber-500" />
+              Edit Task
+            </DialogTitle>
+            <DialogDescription>Update the task details</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdate} className="space-y-4">
+            <div>
+              <Label htmlFor="edit-title">Task Title *</Label>
+              <Input
+                id="edit-title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                required
+                placeholder="e.g., Follow up with client"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea
+                id="edit-description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={2}
+                placeholder="Task details..."
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit-priority">Priority</Label>
+                <Select 
+                  value={formData.priority} 
+                  onValueChange={(v) => setFormData({ ...formData, priority: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="edit-status">Status</Label>
+                <Select 
+                  value={formData.status} 
+                  onValueChange={(v) => setFormData({ ...formData, status: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUSES.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="edit-contact">Associated Contact</Label>
+              <Select 
+                value={formData.contact_id} 
+                onValueChange={(v) => setFormData({ ...formData, contact_id: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a contact (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  {contacts.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="edit-due_date">Due Date</Label>
+              <Input
+                id="edit-due_date"
+                type="date"
+                value={formData.due_date}
+                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+              />
+            </div>
+            
+            {/* Notification Settings */}
+            <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Bell className="w-4 h-4 text-amber-500" />
+                  <Label className="cursor-pointer">Enable Notifications</Label>
+                </div>
+                <Switch
+                  checked={formData.notifications?.enabled ?? true}
+                  onCheckedChange={(checked) => setFormData({
+                    ...formData,
+                    notifications: { ...formData.notifications, enabled: checked }
+                  })}
+                />
+              </div>
+              
+              {formData.notifications?.enabled && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm text-muted-foreground">Remind before due</Label>
+                    <Select
+                      value={String(formData.notifications?.remind_before_hours || 24)}
+                      onValueChange={(v) => setFormData({
+                        ...formData,
+                        notifications: { ...formData.notifications, remind_before_hours: parseInt(v) }
+                      })}
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 hour</SelectItem>
+                        <SelectItem value="2">2 hours</SelectItem>
+                        <SelectItem value="6">6 hours</SelectItem>
+                        <SelectItem value="12">12 hours</SelectItem>
+                        <SelectItem value="24">1 day</SelectItem>
+                        <SelectItem value="48">2 days</SelectItem>
+                        <SelectItem value="72">3 days</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm text-muted-foreground">Remind on due date</Label>
+                    <Switch
+                      checked={formData.notifications?.remind_on_due ?? true}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        notifications: { ...formData.notifications, remind_on_due: checked }
+                      })}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+            
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={saving} className="bg-amber-500 hover:bg-amber-600 text-black">
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Edit2 className="w-4 h-4 mr-2" />}
+                Update Task
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Task Board */}
       <DndContext
