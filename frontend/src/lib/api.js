@@ -318,6 +318,24 @@ export const propertyLookupAPI = {
   getSavedLookups: () => api.get('/property-lookup/saved-lookups'),
 };
 
+// Reviews/Testimonials API
+export const reviewsAPI = {
+  getAll: (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.source) queryParams.append('source', params.source);
+    if (params.featured_only) queryParams.append('featured_only', 'true');
+    if (params.homepage_only) queryParams.append('homepage_only', 'true');
+    return api.get(`/reviews?${queryParams.toString()}`);
+  },
+  getPublic: (homepageOnly = true) => api.get(`/reviews/public?homepage_only=${homepageOnly}`),
+  getOne: (id) => api.get(`/reviews/${id}`),
+  create: (data) => api.post('/reviews', data),
+  update: (id, data) => api.put(`/reviews/${id}`, data),
+  delete: (id) => api.delete(`/reviews/${id}`),
+  syncRateMyAgent: () => api.post('/reviews/sync-ratemyagent'),
+  getSources: () => api.get('/reviews/sources/list'),
+};
+
 // Seed data
 export const seedAPI = {
   seed: () => api.post('/seed'),
