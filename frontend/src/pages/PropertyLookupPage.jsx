@@ -919,7 +919,7 @@ export const PropertyLookupPage = () => {
           <DialogHeader>
             <DialogTitle>Assign to Property Listing</DialogTitle>
             <DialogDescription>
-              Link this county data to an existing property in your listings.
+              Link this county data to an existing property listing or lead.
             </DialogDescription>
           </DialogHeader>
           
@@ -933,33 +933,98 @@ export const PropertyLookupPage = () => {
               </div>
             )}
             
-            {/* Property Selection */}
+            {/* Target Selection - Listing or Lead */}
             <div>
-              <Label>Select Property Listing</Label>
-              {loadingListings ? (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
-                </div>
-              ) : listings.length === 0 ? (
-                <div className="text-center py-4 text-muted-foreground">
-                  <p>No listings found</p>
-                  <p className="text-sm">Create a listing first to assign county data</p>
-                </div>
-              ) : (
-                <Select value={selectedListing} onValueChange={setSelectedListing}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a property..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {listings.map(listing => (
-                      <SelectItem key={listing.id} value={listing.id}>
-                        {listing.address}, {listing.city}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+              <Label>Assign To</Label>
+              <div className="flex gap-2 mt-2">
+                <Button
+                  type="button"
+                  variant={assignTarget === 'listing' ? 'default' : 'outline'}
+                  className={assignTarget === 'listing' ? 'bg-amber-500 hover:bg-amber-600 text-black' : ''}
+                  onClick={() => {
+                    setAssignTarget('listing');
+                    setSelectedLeadForAssign('');
+                  }}
+                  data-testid="assign-to-listing-btn"
+                >
+                  <Home className="w-4 h-4 mr-2" />
+                  Property Listing
+                </Button>
+                <Button
+                  type="button"
+                  variant={assignTarget === 'lead' ? 'default' : 'outline'}
+                  className={assignTarget === 'lead' ? 'bg-amber-500 hover:bg-amber-600 text-black' : ''}
+                  onClick={() => {
+                    setAssignTarget('lead');
+                    setSelectedListing('');
+                  }}
+                  data-testid="assign-to-lead-btn"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Leads
+                </Button>
+              </div>
             </div>
+            
+            {/* Property Listing Selection */}
+            {assignTarget === 'listing' && (
+              <div>
+                <Label>Select Property Listing</Label>
+                {loadingListings ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+                  </div>
+                ) : listings.length === 0 ? (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <p>No listings found</p>
+                    <p className="text-sm">Create a listing first to assign county data</p>
+                  </div>
+                ) : (
+                  <Select value={selectedListing} onValueChange={setSelectedListing}>
+                    <SelectTrigger data-testid="select-listing-dropdown">
+                      <SelectValue placeholder="Select a property..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {listings.map(listing => (
+                        <SelectItem key={listing.id} value={listing.id}>
+                          {listing.address}, {listing.city}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
+            
+            {/* Leads Selection */}
+            {assignTarget === 'lead' && (
+              <div>
+                <Label>Select Lead</Label>
+                {loadingListings ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+                  </div>
+                ) : allLeadsForAssign.length === 0 ? (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <p>No leads found</p>
+                    <p className="text-sm">Import leads first to assign county data</p>
+                  </div>
+                ) : (
+                  <Select value={selectedLeadForAssign} onValueChange={setSelectedLeadForAssign}>
+                    <SelectTrigger data-testid="select-lead-dropdown">
+                      <SelectValue placeholder="Select a lead..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allLeadsForAssign.map(lead => (
+                        <SelectItem key={lead.id} value={lead.id}>
+                          {lead.property_address || lead.address || 'Unknown'}, {lead.city || ''} - {lead.owner_name || 'No owner'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
           </div>
           
           <DialogFooter className="flex gap-2">
@@ -968,8 +1033,9 @@ export const PropertyLookupPage = () => {
             </Button>
             <Button 
               onClick={handleAssignToProperty} 
-              disabled={!selectedListing || assigning}
+              disabled={(assignTarget === 'listing' ? !selectedListing : !selectedLeadForAssign) || assigning}
               className="bg-amber-500 hover:bg-amber-600 text-black"
+              data-testid="assign-data-btn"
             >
               {assigning ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Link2 className="w-4 h-4 mr-2" />}
               Assign Data
