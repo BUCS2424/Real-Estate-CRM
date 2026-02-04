@@ -229,8 +229,14 @@ export const StaffManagement = () => {
                       <SelectItem value="client">Client</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button size="icon" variant="ghost">
-                    <Edit className="w-4 h-4" />
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => handleDeleteStaff(member.id, member.name)}
+                    data-testid={`delete-staff-${member.id}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
