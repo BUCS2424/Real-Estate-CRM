@@ -349,7 +349,7 @@ async def seed_default_rules(current_user: dict = Depends(get_current_user)):
     for rule in all_rules:
         rule["created_at"] = datetime.now(timezone.utc)
         rule["updated_at"] = datetime.now(timezone.utc)
-        rule["created_by"] = str(current_user["_id"])
+        rule["created_by"] = current_user.get("id", "")
     
     result = await db.scoring_rules.insert_many(all_rules)
     
