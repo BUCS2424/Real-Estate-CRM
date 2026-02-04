@@ -82,7 +82,8 @@ async def create_scoring_rule(rule: ScoringRuleCreate, current_user: dict = Depe
     
     result = await db.scoring_rules.insert_one(rule_dict)
     rule_dict["id"] = str(result.inserted_id)
-    del rule_dict["_id"] if "_id" in rule_dict else None
+    if "_id" in rule_dict:
+        del rule_dict["_id"]
     
     return {"message": "Rule created", "rule": rule_dict}
 
