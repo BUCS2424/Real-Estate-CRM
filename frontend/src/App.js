@@ -82,6 +82,7 @@ function App() {
             <Route path="/showcase" element={<PublicListingsPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/newsletter-archive" element={<NewsletterArchivePage />} />
+            <Route path="/write-review" element={<WriteReviewPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/book/:agentCode" element={<PublicBookingPage />} />
