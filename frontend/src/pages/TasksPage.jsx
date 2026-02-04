@@ -640,14 +640,14 @@ export const TasksPage = () => {
             <div>
               <Label htmlFor="edit-contact">Associated Contact</Label>
               <Select 
-                value={formData.contact_id} 
-                onValueChange={(v) => setFormData({ ...formData, contact_id: v })}
+                value={formData.contact_id || "none"} 
+                onValueChange={(v) => setFormData({ ...formData, contact_id: v === "none" ? "" : v })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a contact (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {contacts.map(c => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                   ))}
