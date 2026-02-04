@@ -42,6 +42,22 @@ async def update_deal_stage(deal_id: str, stage_update: StageUpdate, current_use
     updated = await db.deals.find_one({"id": deal_id}, {"_id": 0})
     return DealResponse(**updated)
 
+
+@router.put("/{deal_id}", response_model=DealResponse)
+async def update_deal(deal_id: str, deal: DealCreate, current_user: dict = Depends(get_current_user)):
+    """Update a deal's information"""
+    existing = await db.deals.find_one({"id": deal_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Deal not found")
+    
+    update_data = deal.model_dump()
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.deals.update_one({"id": deal_id}, {"$set": update_data})
+    updated = await db.deals.find_one({"id": deal_id}, {"_id": 0})
+    return DealResponse(**updated)
+
+
 @router.delete("/{deal_id}")
 async def delete_deal(deal_id: str, current_user: dict = Depends(require_role([UserRole.SUPERUSER, UserRole.ADMIN]))):
     result = await db.deals.delete_one({"id": deal_id})
