@@ -52,7 +52,14 @@ const COUNTIES = [
   { key: 'pasco', name: 'Pasco', cities: ['New Port Richey', 'Wesley Chapel', 'Zephyrhills'] }
 ];
 
+const DATA_SOURCES = [
+  { key: 'county', name: 'County Records', icon: Database, description: 'Search tax records' },
+  { key: 'leads', name: 'Property Leads', icon: Users, description: 'Imported leads' }
+];
+
 export const PropertyLookupPage = () => {
+  const navigate = useNavigate();
+  const [dataSource, setDataSource] = useState('county');
   const [searchAddress, setSearchAddress] = useState('');
   const [selectedCounty, setSelectedCounty] = useState('');
   const [searching, setSearching] = useState(false);
@@ -60,6 +67,12 @@ export const PropertyLookupPage = () => {
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [propertyDetails, setPropertyDetails] = useState(null);
+  
+  // Property Leads state
+  const [leads, setLeads] = useState([]);
+  const [loadingLeads, setLoadingLeads] = useState(false);
+  const [leadsSearchQuery, setLeadsSearchQuery] = useState('');
+  const [selectedLead, setSelectedLead] = useState(null);
   
   // Recent searches
   const [recentSearches, setRecentSearches] = useState([]);
@@ -87,6 +100,24 @@ export const PropertyLookupPage = () => {
   useEffect(() => {
     fetchRecentSearches();
   }, []);
+
+  useEffect(() => {
+    if (dataSource === 'leads') {
+      fetchLeads();
+    }
+  }, [dataSource]);
+
+  const fetchLeads = async () => {
+    setLoadingLeads(true);
+    try {
+      const res = await propertyLeadsAPI.getAll({ limit: 100 });
+      setLeads(res.data.leads || []);
+    } catch (error) {
+      toast.error('Failed to load property leads');
+    } finally {
+      setLoadingLeads(false);
+    }
+  };
 
   const fetchRecentSearches = async () => {
     try {
