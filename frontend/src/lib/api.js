@@ -325,13 +325,15 @@ export const reviewsAPI = {
     if (params.source) queryParams.append('source', params.source);
     if (params.featured_only) queryParams.append('featured_only', 'true');
     if (params.homepage_only) queryParams.append('homepage_only', 'true');
+    if (params.show_fake === false) queryParams.append('show_fake', 'false');
     return api.get(`/reviews?${queryParams.toString()}`);
   },
-  getPublic: (homepageOnly = true) => api.get(`/reviews/public?homepage_only=${homepageOnly}`),
+  getPublic: (homepageOnly = true, limit = 100) => api.get(`/reviews/public?homepage_only=${homepageOnly}&limit=${limit}`),
   getOne: (id) => api.get(`/reviews/${id}`),
   create: (data) => api.post('/reviews', data),
   update: (id, data) => api.put(`/reviews/${id}`, data),
   delete: (id) => api.delete(`/reviews/${id}`),
+  deleteAllFake: () => api.delete('/reviews/fake/all'),
   syncRateMyAgent: () => api.post('/reviews/sync-ratemyagent'),
   getSources: () => api.get('/reviews/sources/list'),
 };
