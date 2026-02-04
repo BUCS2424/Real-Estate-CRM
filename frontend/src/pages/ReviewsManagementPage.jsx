@@ -230,7 +230,7 @@ const ReviewsManagementPage = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -239,6 +239,17 @@ const ReviewsManagementPage = () => {
                 <p className="text-2xl font-bold">{reviews.length}</p>
               </div>
               <Quote className="w-8 h-8 text-amber-500" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className={reviews.filter(r => r.status === 'pending').length > 0 ? 'border-orange-500/50 bg-orange-500/5' : ''}>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Pending Approval</p>
+                <p className="text-2xl font-bold text-orange-500">{reviews.filter(r => r.status === 'pending').length}</p>
+              </div>
+              <Clock className="w-8 h-8 text-orange-500" />
             </div>
           </CardContent>
         </Card>
