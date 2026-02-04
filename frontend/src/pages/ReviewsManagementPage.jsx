@@ -308,6 +308,17 @@ const ReviewsManagementPage = () => {
             </div>
           </CardContent>
         </Card>
+        <Card className={fakeCount > 0 ? 'border-red-500/30 bg-red-500/5' : ''}>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Fake (Placeholder)</p>
+                <p className="text-2xl font-bold text-red-500">{fakeCount}</p>
+              </div>
+              <AlertCircle className="w-8 h-8 text-red-500" />
+            </div>
+          </CardContent>
+        </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
