@@ -21,7 +21,8 @@ from services.lead_scoring_service import (
     DEFAULT_PROPERTY_SELLER_RULES,
     DEFAULT_BUYER_RULES
 )
-from server import get_current_user, UserRole
+from utils.auth import get_current_user
+from models.user import UserRole
 
 router = APIRouter(prefix="/lead-scoring", tags=["Lead Scoring"])
 
