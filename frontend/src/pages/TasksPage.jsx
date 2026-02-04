@@ -346,6 +346,50 @@ export const TasksPage = () => {
     }
   };
 
+  const handleEdit = (task) => {
+    setEditingTask(task);
+    setFormData({
+      title: task.title || '',
+      description: task.description || '',
+      contact_id: task.contact_id || '',
+      deal_id: task.deal_id || '',
+      status: task.status || 'todo',
+      priority: task.priority || 'medium',
+      due_date: task.due_date ? task.due_date.split('T')[0] : '',
+      notifications: task.notifications || {
+        enabled: true,
+        remind_before_hours: 24,
+        remind_on_due: true,
+        email_notification: false
+      }
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    if (!editingTask) return;
+    
+    setSaving(true);
+    try {
+      await tasksAPI.update(editingTask.id, {
+        ...formData,
+        contact_id: formData.contact_id || null,
+        deal_id: formData.deal_id || null,
+        due_date: formData.due_date || null
+      });
+      toast.success('Task updated');
+      fetchData();
+      setIsEditDialogOpen(false);
+      setEditingTask(null);
+      setFormData(initialFormState);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to update task');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
