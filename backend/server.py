@@ -323,6 +323,45 @@ async def delete_site_image(filename: str, current_user: dict = Depends(get_curr
     return {"success": True, "message": f"Image '{filename}' deleted"}
 
 
+@api_router.put("/site-images/{filename}/rename")
+async def rename_site_image(filename: str, request: Request, current_user: dict = Depends(get_current_user)):
+    """Rename an image in the site-images folder"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Security: prevent path traversal
+    if '/' in filename or '\\' in filename or '..' in filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    
+    data = await request.json()
+    new_name = data.get("new_name", "").strip()
+    
+    if not new_name:
+        raise HTTPException(status_code=400, detail="New name is required")
+    
+    # Security: prevent path traversal in new name
+    if '/' in new_name or '\\' in new_name or '..' in new_name:
+        raise HTTPException(status_code=400, detail="Invalid new filename")
+    
+    old_path = os.path.join(SITE_IMAGES_DIR, filename)
+    new_path = os.path.join(SITE_IMAGES_DIR, new_name)
+    
+    if not os.path.exists(old_path):
+        raise HTTPException(status_code=404, detail="Image not found")
+    
+    if os.path.exists(new_path):
+        raise HTTPException(status_code=400, detail="A file with that name already exists")
+    
+    os.rename(old_path, new_path)
+    
+    base_url = str(request.base_url).rstrip('/')
+    return {
+        "success": True, 
+        "message": f"Image renamed to '{new_name}'",
+        "new_url": f"{base_url}/api/static/site-images/{new_name}"
+    }
+
+
 # Include main API router
 app.include_router(api_router)
 
