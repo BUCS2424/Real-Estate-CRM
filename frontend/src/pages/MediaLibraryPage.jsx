@@ -404,21 +404,28 @@ export const MediaLibraryPage = () => {
         <div className="p-4 border-b flex items-center gap-4 flex-wrap">
           {/* Breadcrumbs */}
           <div className="flex items-center gap-2 text-sm">
-            {getBreadcrumbs().map((crumb, idx) => (
-              <React.Fragment key={idx}>
-                {idx > 0 && <ChevronRight className="w-4 h-4 text-muted-foreground" />}
-                <button
-                  onClick={crumb.onClick}
-                  className={cn(
-                    "hover:text-primary transition-colors",
-                    !crumb.onClick && "cursor-default font-medium"
-                  )}
-                  disabled={!crumb.onClick}
-                >
-                  {crumb.label}
-                </button>
-              </React.Fragment>
-            ))}
+            {showSiteImages ? (
+              <span className="font-medium flex items-center gap-2">
+                <Image className="w-4 h-4 text-amber-500" />
+                Site Images
+              </span>
+            ) : (
+              getBreadcrumbs().map((crumb, idx) => (
+                <React.Fragment key={idx}>
+                  {idx > 0 && <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                  <button
+                    onClick={crumb.onClick}
+                    className={cn(
+                      "hover:text-primary transition-colors",
+                      !crumb.onClick && "cursor-default font-medium"
+                    )}
+                    disabled={!crumb.onClick}
+                  >
+                    {crumb.label}
+                  </button>
+                </React.Fragment>
+              ))
+            )}
           </div>
           
           <div className="flex-1" />
@@ -459,21 +466,23 @@ export const MediaLibraryPage = () => {
             </button>
           </div>
           
-          {/* New Folder */}
-          <Button 
-            variant="outline" 
-            onClick={() => setShowNewFolderModal(true)} 
-            disabled={!selectedProperty}
-            data-testid="new-folder-btn"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New Folder
-          </Button>
+          {/* New Folder - only for property folders */}
+          {!showSiteImages && (
+            <Button 
+              variant="outline" 
+              onClick={() => setShowNewFolderModal(true)} 
+              disabled={!selectedProperty}
+              data-testid="new-folder-btn"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Folder
+            </Button>
+          )}
           
-          {/* Upload Button - Opens Modal */}
+          {/* Upload Button */}
           <Button 
-            onClick={() => setShowUploadModal(true)} 
-            disabled={!selectedProperty}
+            onClick={() => showSiteImages ? setShowSiteUploadModal(true) : setShowUploadModal(true)} 
+            disabled={!showSiteImages && !selectedProperty}
             data-testid="upload-files-btn"
           >
             <Upload className="w-4 h-4 mr-2" />
@@ -484,20 +493,75 @@ export const MediaLibraryPage = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={fetchFolderContents} 
-            disabled={loadingFiles}
+            onClick={showSiteImages ? fetchSiteImages : fetchFolderContents} 
+            disabled={loadingFiles || loadingSiteImages}
             data-testid="refresh-btn"
           >
-            <RefreshCw className={cn("w-4 h-4", loadingFiles && "animate-spin")} />
+            <RefreshCw className={cn("w-4 h-4", (loadingFiles || loadingSiteImages) && "animate-spin")} />
           </Button>
         </div>
 
-        {/* File Display Area with Drag and Drop */}
+        {/* File Display Area */}
         <div className="flex-1 overflow-y-auto p-4">
-          {!selectedProperty ? (
+          {/* SITE IMAGES VIEW */}
+          {showSiteImages ? (
+            loadingSiteImages ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : siteImages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                <Image className="w-16 h-16 mb-4 opacity-50" />
+                <p className="text-lg mb-2">No site images yet</p>
+                <p className="text-sm mb-4">Upload logos, icons, and branding images here</p>
+                <Button onClick={() => setShowSiteUploadModal(true)}>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload Image
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {siteImages.map(img => (
+                  <div
+                    key={img.filename}
+                    className="group relative rounded-lg border bg-card overflow-hidden hover:shadow-lg transition-shadow"
+                  >
+                    <div className="aspect-square bg-muted flex items-center justify-center">
+                      <img src={img.url} alt={img.filename} className="w-full h-full object-contain p-2" />
+                    </div>
+                    <div className="p-2">
+                      <p className="text-sm font-medium truncate" title={img.filename}>{img.filename}</p>
+                      <p className="text-xs text-muted-foreground">{(img.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                      <Button 
+                        variant="secondary" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => copyToClipboard(img.url)}
+                        title="Copy URL"
+                      >
+                        <FileText className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => handleDeleteSiteImage(img.filename)}
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : !selectedProperty ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
               <FolderOpen className="w-16 h-16 mb-4 opacity-50" />
               <p className="text-lg">Select a property folder to view files</p>
+            </div>
             </div>
           ) : loadingFiles ? (
             <div className="flex items-center justify-center h-full">
