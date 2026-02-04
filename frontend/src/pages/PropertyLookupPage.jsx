@@ -285,7 +285,7 @@ export const PropertyLookupPage = () => {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-serif text-foreground mb-2">Property Lookup</h1>
-          <p className="text-muted-foreground">Search county tax records and MLS listings</p>
+          <p className="text-muted-foreground">Search county tax records, MLS listings, or browse imported leads</p>
         </div>
         <Button variant="outline" onClick={() => setShowMLSConfig(true)} data-testid="mls-config-btn">
           <Settings className="w-4 h-4 mr-2" />
@@ -293,107 +293,138 @@ export const PropertyLookupPage = () => {
         </Button>
       </div>
 
-      {/* Recent Searches */}
-      {recentSearches.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Clock className="w-4 h-4 text-amber-500" />
-              Recent Searches
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {recentSearches.map((search, idx) => (
-                <Button
-                  key={idx}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleSearch(search.address)}
-                  className="border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/20 hover:border-amber-500"
-                >
-                  <MapPin className="w-3 h-3 mr-1 text-amber-500" />
-                  <span className="text-foreground">{search.address}</span>
-                  <Badge className="ml-2 text-xs bg-primary/20 text-primary border-0">{search.county}</Badge>
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Data Source Selector */}
+      <div className="flex gap-4">
+        {DATA_SOURCES.map(source => {
+          const Icon = source.icon;
+          return (
+            <button
+              key={source.key}
+              onClick={() => setDataSource(source.key)}
+              className={`flex-1 p-4 rounded-lg border-2 transition-all ${
+                dataSource === source.key
+                  ? 'border-amber-500 bg-amber-500/10'
+                  : 'border-border hover:border-amber-500/50 bg-card'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${dataSource === source.key ? 'bg-amber-500/20' : 'bg-muted'}`}>
+                  <Icon className={`w-5 h-5 ${dataSource === source.key ? 'text-amber-500' : 'text-muted-foreground'}`} />
+                </div>
+                <div className="text-left">
+                  <p className="font-medium text-foreground">{source.name}</p>
+                  <p className="text-sm text-muted-foreground">{source.description}</p>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
 
-      {/* Search Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="w-5 h-5 text-amber-500" />
-            Search Property Records
-          </CardTitle>
-          <CardDescription>
-            Search Hillsborough, Pinellas, and Pasco county property appraiser records
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <Label>Property Address</Label>
-              <Input
-                placeholder="Enter street address (e.g., 123 Main St, Tampa)"
-                value={searchAddress}
-                onChange={(e) => setSearchAddress(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                data-testid="address-input"
-              />
-            </div>
-            <div className="w-full md:w-48">
-              <Label>County (Optional)</Label>
-              <Select value={selectedCounty || "all"} onValueChange={(val) => setSelectedCounty(val === "all" ? "" : val)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Counties" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Counties</SelectItem>
-                  {COUNTIES.map(c => (
-                    <SelectItem key={c.key} value={c.key}>{c.name}</SelectItem>
+      {/* County Records View */}
+      {dataSource === 'county' && (
+        <>
+          {/* Recent Searches */}
+          {recentSearches.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-amber-500" />
+                  Recent Searches
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {recentSearches.map((search, idx) => (
+                    <Button
+                      key={idx}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleSearch(search.address)}
+                      className="border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/20 hover:border-amber-500"
+                    >
+                      <MapPin className="w-3 h-3 mr-1 text-amber-500" />
+                      <span className="text-foreground">{search.address}</span>
+                      <Badge className="ml-2 text-xs bg-primary/20 text-primary border-0">{search.county}</Badge>
+                    </Button>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-end">
-              <Button 
-                onClick={() => handleSearch()} 
-                disabled={searching}
-                className="bg-amber-500 hover:bg-amber-600 text-black"
-                data-testid="search-btn"
-              >
-                {searching ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Search className="w-4 h-4 mr-2" />
-                )}
-                Search
-              </Button>
-            </div>
-          </div>
-          
-          {/* Quick County Links */}
-          <div className="mt-4 flex flex-wrap gap-2">
-            {COUNTIES.map(c => (
-              <Badge 
-                key={c.key} 
-                variant="outline" 
-                className="cursor-pointer hover:bg-accent"
-                onClick={() => setSelectedCounty(c.key)}
-              >
-                {c.name}: {c.cities.join(', ')}
-              </Badge>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-      {/* Results */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Search Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Search className="w-5 h-5 text-amber-500" />
+                Search Property Records
+              </CardTitle>
+              <CardDescription>
+                Search Hillsborough, Pinellas, and Pasco county property appraiser records
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <Label>Property Address</Label>
+                  <Input
+                    placeholder="Enter street address (e.g., 123 Main St, Tampa)"
+                    value={searchAddress}
+                    onChange={(e) => setSearchAddress(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    data-testid="address-input"
+                  />
+                </div>
+                <div className="w-full md:w-48">
+                  <Label>County (Optional)</Label>
+                  <Select value={selectedCounty || "all"} onValueChange={(val) => setSelectedCounty(val === "all" ? "" : val)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Counties" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Counties</SelectItem>
+                      {COUNTIES.map(c => (
+                        <SelectItem key={c.key} value={c.key}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-end">
+                  <Button 
+                    onClick={() => handleSearch()} 
+                    disabled={searching}
+                    className="bg-amber-500 hover:bg-amber-600 text-black"
+                    data-testid="search-btn"
+                  >
+                    {searching ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Search className="w-4 h-4 mr-2" />
+                    )}
+                    Search
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Quick County Links */}
+              <div className="mt-4 flex flex-wrap gap-2">
+                {COUNTIES.map(c => (
+                  <Badge 
+                    key={c.key} 
+                    variant="outline" 
+                    className="cursor-pointer hover:bg-accent"
+                    onClick={() => setSelectedCounty(c.key)}
+                  >
+                    {c.name}: {c.cities.join(', ')}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Results */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Search Results List */}
         <Card>
           <CardHeader>
