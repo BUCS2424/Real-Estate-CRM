@@ -363,10 +363,16 @@ export const ListingsPage = () => {
           </h1>
           <p className="text-muted-foreground mt-1">Showcase your real estate properties</p>
         </div>
-        <Button onClick={() => { resetForm(); setIsCreateOpen(true); }} data-testid="new-listing-btn">
-          <Plus className="w-4 h-4 mr-2" />
-          New Listing
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsImportOpen(true)} data-testid="import-csv-btn">
+            <FileSpreadsheet className="w-4 h-4 mr-2" />
+            Import CSV
+          </Button>
+          <Button onClick={() => { resetForm(); setIsCreateOpen(true); }} className="bg-amber-500 hover:bg-amber-600 text-black" data-testid="new-listing-btn">
+            <Plus className="w-4 h-4 mr-2" />
+            New Listing
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
