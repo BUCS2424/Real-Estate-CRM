@@ -60,6 +60,8 @@ import { PWASettings } from './pages/settings/developer/PWASettings';
 import { MailingListsPage } from './pages/MailingListsPage';
 import ReviewsManagementPage from './pages/ReviewsManagementPage';
 import WriteReviewPage from './pages/WriteReviewPage';
+import PropertyLeadsPage from './pages/PropertyLeadsPage';
+import PropertyLeadDetailPage from './pages/PropertyLeadDetailPage';
 
 import './App.css';
 
@@ -102,6 +104,8 @@ function App() {
               <Route path="/media" element={<MediaLibraryPage />} />
               <Route path="/property-lookup" element={<PropertyLookupPage />} />
               <Route path="/reviews" element={<ReviewsManagementPage />} />
+              <Route path="/property-leads" element={<PropertyLeadsPage />} />
+              <Route path="/property-leads/:id" element={<PropertyLeadDetailPage />} />
               <Route path="/writer" element={<AIWriterPage />} />
               <Route path="/newsletter" element={<NewsletterPage />} />
               <Route path="/mailing-lists" element={<MailingListsPage />} />
