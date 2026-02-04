@@ -1072,3 +1072,51 @@ rating = excellent (80%+) | good (60-79%) | fair (40-59%) | poor (<40%)
 - All frontend features working ✅
 - Test file: `/app/backend/tests/test_lead_scoring.py`
 - 21 rules seeded successfully
+
+
+---
+
+## Update: February 4, 2026 - Deal Pipeline View Toggle
+
+### Feature: Kanban & List View Toggle for Deal Pipeline
+
+Enhanced the Deal Pipeline page with a view toggle to switch between Kanban board and List/Table view with sortable columns.
+
+#### View Toggle
+- **Kanban View** (default): Cards arranged in 5 stage columns with drag-and-drop
+- **List View**: Table format with sortable column headers and drag-to-reorder rows
+
+#### Kanban View Features
+- 5 stage columns: Leads, Qualified, Proposal, Negotiation, Closed Won
+- Drag-and-drop cards between columns to change stage
+- Visual feedback during drag (rotation, shadow, opacity)
+- Uses @dnd-kit library for smooth drag interactions
+- Framer Motion animations for card transitions
+
+#### List View Features
+- Sortable columns: Deal, Stage, Value, Contact, Property, Created
+- Click column header to sort (toggles asc/desc)
+- Amber arrow indicator on active sort column
+- Drag rows to reorder
+- Inline stage dropdown to change stage without modal
+- 3-dot menu with Edit/Delete options
+
+#### Stats Summary Cards
+- Shows count and total value for each stage
+- Updates automatically when deals move between stages
+
+#### Backend Updates
+- Added `PUT /api/deals/{id}` endpoint for full deal update
+- Updated Deal model to include `property_address` and `updated_at` fields
+- Made `contact_id` optional
+
+#### Files Modified
+- `/app/frontend/src/pages/DealsPage.jsx` - Complete rewrite with dual views
+- `/app/frontend/src/lib/api.js` - Added `dealsAPI.update()` function
+- `/app/backend/routes/deals.py` - Added PUT update endpoint
+- `/app/backend/models/deal.py` - Added property_address, made contact_id optional
+
+#### Tests & Verification
+- All 15 backend API tests passed ✅
+- All frontend features verified ✅
+- Test file: `/app/backend/tests/test_deals.py`
