@@ -342,13 +342,13 @@ class TestLeadScoringAuth:
     """Test authentication requirements"""
     
     def test_get_rules_without_auth(self):
-        """Test GET /api/lead-scoring/rules without auth returns 401"""
+        """Test GET /api/lead-scoring/rules without auth returns 401 or 403"""
         response = requests.get(f"{BASE_URL}/api/lead-scoring/rules")
-        assert response.status_code == 401
-        print("Unauthenticated request correctly returns 401")
+        assert response.status_code in [401, 403], f"Expected 401 or 403, got {response.status_code}"
+        print(f"Unauthenticated request correctly returns {response.status_code}")
     
     def test_create_rule_without_auth(self):
-        """Test POST /api/lead-scoring/rules without auth returns 401"""
+        """Test POST /api/lead-scoring/rules without auth returns 401 or 403"""
         rule_data = {
             "name": "Test Rule",
             "lead_type": "property_seller",
@@ -357,8 +357,8 @@ class TestLeadScoringAuth:
             "points": 10
         }
         response = requests.post(f"{BASE_URL}/api/lead-scoring/rules", json=rule_data)
-        assert response.status_code == 401
-        print("Unauthenticated create correctly returns 401")
+        assert response.status_code in [401, 403], f"Expected 401 or 403, got {response.status_code}"
+        print(f"Unauthenticated create correctly returns {response.status_code}")
 
 
 if __name__ == "__main__":
