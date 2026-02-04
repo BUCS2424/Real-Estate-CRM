@@ -696,3 +696,69 @@ A comprehensive property-centric lead management system for managing leads impor
 - Edit functionality ✅
 
 ---
+
+## Update: February 4, 2026 - Marketing & Brochure System
+
+### New Feature: 1-Click Brochure Maker & Marketing Workflow
+
+A comprehensive marketing system for property leads that automates brochure generation, landing page creation, and email outreach.
+
+#### Backend Implementation
+- **Lead Scoring Service:** `/app/backend/services/brochure_generator.py`
+  - `calculate_lead_score()` - Scores leads 0-100 based on data completeness
+  - Categories: Address (15pts), Property (20pts), Value (20pts), Owner (25pts), Tax (10pts), Status (10pts)
+  - Ratings: Excellent (80+), Good (60+), Fair (40+), Needs Data (<40)
+
+- **Brochure Generator:** `/app/backend/services/brochure_generator.py`
+  - `generate_single_page_brochure()` - 8.5x11 flyer with full property details
+  - `generate_postcard_brochure()` - 6x4 postcard for direct mail
+  - `generate_trifold_brochure()` - Landscape tri-fold layout
+  - Features: Personalized owner name, property details, value display, QR code to landing page, agent contact info
+
+- **Marketing Routes:** `/app/backend/routes/property_lead_marketing.py`
+  - `GET /{lead_id}/score` - Get lead quality score
+  - `POST /{lead_id}/brochure/generate` - Download brochure PDF
+  - `POST /{lead_id}/brochure/preview` - Preview brochure inline
+  - `POST /{lead_id}/brochure/email` - Email brochure to owner
+  - `POST /{lead_id}/create-listing` - Create listing + landing page from lead
+  - `POST /{lead_id}/publish-landing-page` - Publish the landing page
+  - `POST /{lead_id}/upload-video` - Add walkthrough video
+  - `POST /{lead_id}/marketing-workflow` - Run full automated workflow
+
+#### Frontend Implementation
+- **Marketing Tab:** Added to `/app/frontend/src/pages/PropertyLeadDetailPage.jsx`
+  - Lead Score Card with visual breakdown
+  - Brochure Generator with 3 template options
+  - Property Landing Page management
+  - Video upload section
+  - 1-Click Marketing Workflow button
+
+- **API Functions:** Added to `/app/frontend/src/lib/api.js`
+  - `propertyLeadsAPI.getScore()`
+  - `propertyLeadsAPI.generateBrochure()`
+  - `propertyLeadsAPI.emailBrochure()`
+  - `propertyLeadsAPI.createListing()`
+  - `propertyLeadsAPI.publishLandingPage()`
+  - `propertyLeadsAPI.uploadVideo()`
+  - `propertyLeadsAPI.runMarketingWorkflow()`
+
+#### Dependencies Added
+- `reportlab` - PDF generation
+- `qrcode` - QR code generation for brochures
+- `pillow` - Image processing
+
+#### Marketing Workflow Steps
+1. **Create Listing** - Auto-generate listing from lead data
+2. **Create Landing Page** - Generate property landing page with slug
+3. **Add Video** - User records themselves with brochure, uploads video
+4. **Publish Landing Page** - Make page publicly accessible
+5. **Generate Brochure** - Create PDF with QR code linking to landing page
+6. **Email to Owner** - Send personalized email with brochure attachment and landing page link
+
+#### Features Tested & Verified
+- Lead scoring calculates correctly ✅
+- PDF brochure generation works (flyer template) ✅
+- Marketing tab displays all components ✅
+- API endpoints respond correctly ✅
+
+---
