@@ -35,6 +35,7 @@ const settingsMenu = [
     items: [
       { path: '/settings/developer/general', label: 'General Settings', icon: Cog },
       { path: '/settings/developer/email', label: 'Email / SMTP', icon: Mail },
+      { path: '/settings/developer/lead-scoring', label: 'Lead Scoring', icon: Target },
       { path: '/settings/developer/custom-code', label: 'Custom Code', icon: Code },
       { path: '/settings/developer/system-messages', label: 'System Messages', icon: MessageSquare },
       { path: '/settings/developer/pwa', label: 'PWA Settings', icon: Smartphone },
