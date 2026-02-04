@@ -72,10 +72,26 @@ const PropertyLeadDetailPage = () => {
   // Notes
   const [newNote, setNewNote] = useState('');
   const [addingNote, setAddingNote] = useState(false);
+  
+  // Marketing tab state
+  const [leadScore, setLeadScore] = useState(null);
+  const [brochureTemplate, setBrochureTemplate] = useState('flyer');
+  const [generatingBrochure, setGeneratingBrochure] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailData, setEmailData] = useState({ recipient_email: '', subject: '', message: '' });
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [creatingListing, setCreatingListing] = useState(false);
+  const [publishingPage, setPublishingPage] = useState(false);
+  const [runningWorkflow, setRunningWorkflow] = useState(false);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [videoUrl, setVideoUrl] = useState('');
+  const [videoTitle, setVideoTitle] = useState('');
+  const [addingVideo, setAddingVideo] = useState(false);
 
   useEffect(() => {
     if (id) {
       fetchLead();
+      fetchLeadScore();
     }
   }, [id]);
 
@@ -85,6 +101,10 @@ const PropertyLeadDetailPage = () => {
       const res = await propertyLeadsAPI.getOne(id);
       setLead(res.data);
       setEditData(res.data);
+      // Pre-fill email data with owner email
+      if (res.data.owner_email) {
+        setEmailData(prev => ({ ...prev, recipient_email: res.data.owner_email }));
+      }
     } catch (error) {
       toast.error('Failed to load property lead');
       navigate('/property-leads');
