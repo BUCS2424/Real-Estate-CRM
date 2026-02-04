@@ -453,6 +453,9 @@ export const LandingPage = () => {
         </div>
       </section>
 
+      {/* Testimonials Section */}
+      <TestimonialsCarousel />
+
       {/* Contact Section */}
       <section id="contact" className="py-20 md:py-32 bg-gradient-to-b from-transparent to-[#071020]">
         <div className="max-w-4xl mx-auto px-6 text-center">
