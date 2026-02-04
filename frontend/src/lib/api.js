@@ -291,6 +291,7 @@ export const mediaAPI = {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   deleteSiteImage: (filename) => api.delete(`/site-images/${filename}`),
+  renameSiteImage: (filename, newName) => api.put(`/site-images/${filename}/rename`, { new_name: newName }),
 };
 
 // Property Lookup API (County Records + MLS)
