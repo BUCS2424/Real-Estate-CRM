@@ -207,20 +207,34 @@ async def pull_owner_info(lead_id: str, current_user: dict = Depends(get_current
     if not lead:
         raise HTTPException(status_code=404, detail="Property lead not found")
     
-    # Build search address
-    address = lead.get("address", "")
+    # Build search address - try multiple address fields
+    address = lead.get("property_address") or lead.get("address", "")
     city = lead.get("city", "")
+    county = lead.get("county", "")
     
     if not address:
         raise HTTPException(status_code=400, detail="Property address is required")
     
+    # Clean up address for better search results
+    # Remove trailing periods, extra spaces, standardize abbreviations
+    import re
+    address = address.strip().rstrip('.')
+    address = re.sub(r'\s+', ' ', address)  # Remove extra spaces
+    # Don't include "Ave.", "St.", etc. variations - the scraper handles it
+    
     # Search county records
     try:
         search_query = f"{address}, {city}" if city else address
-        results = await search_property(search_query, lead.get("county"))
+        
+        # If county is specified, search that county first, otherwise search all
+        results = await search_property(search_query, county.lower() if county else None)
         
         if not results:
-            return {"message": "No records found", "success": False}
+            # Try without city
+            results = await search_property(address, county.lower() if county else None)
+        
+        if not results:
+            return {"message": "No records found in county database", "success": False}
         
         # Use the first/best result
         result = results[0]
