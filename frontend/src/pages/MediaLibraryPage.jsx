@@ -75,6 +75,12 @@ export const MediaLibraryPage = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [searchQuery, setSearchQuery] = useState('');
   
+  // Site Images state
+  const [showSiteImages, setShowSiteImages] = useState(false);
+  const [siteImages, setSiteImages] = useState([]);
+  const [loadingSiteImages, setLoadingSiteImages] = useState(false);
+  const [showSiteUploadModal, setShowSiteUploadModal] = useState(false);
+  
   // Modals
   const [showPreview, setShowPreview] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
@@ -90,10 +96,12 @@ export const MediaLibraryPage = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedProperty) {
+    if (showSiteImages) {
+      fetchSiteImages();
+    } else if (selectedProperty) {
       fetchFolderContents();
     }
-  }, [selectedProperty, selectedSubfolder]);
+  }, [selectedProperty, selectedSubfolder, showSiteImages]);
 
   const fetchFolders = async () => {
     try {
@@ -107,6 +115,19 @@ export const MediaLibraryPage = () => {
       toast.error('Failed to load folders');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSiteImages = async () => {
+    setLoadingSiteImages(true);
+    try {
+      const res = await mediaAPI.getSiteImages();
+      setSiteImages(res.data.images || []);
+    } catch (error) {
+      toast.error('Failed to load site images');
+      setSiteImages([]);
+    } finally {
+      setLoadingSiteImages(false);
     }
   };
 
@@ -125,6 +146,30 @@ export const MediaLibraryPage = () => {
     } finally {
       setLoadingFiles(false);
     }
+  };
+
+  // Handle site image upload
+  const handleSiteImageUpload = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    await mediaAPI.uploadSiteImage(formData);
+    fetchSiteImages();
+  };
+
+  const handleDeleteSiteImage = async (filename) => {
+    if (!window.confirm(`Delete "${filename}"?`)) return;
+    try {
+      await mediaAPI.deleteSiteImage(filename);
+      toast.success('Image deleted');
+      fetchSiteImages();
+    } catch (error) {
+      toast.error('Failed to delete image');
+    }
+  };
+
+  const copyToClipboard = (url) => {
+    navigator.clipboard.writeText(url);
+    toast.success('URL copied to clipboard!');
   };
 
   // Handle file upload (called by DropZone)
