@@ -57,6 +57,7 @@ import { EmailSettings } from './pages/settings/developer/EmailSettings';
 import { CustomCode } from './pages/settings/developer/CustomCode';
 import { SystemMessages } from './pages/settings/developer/SystemMessages';
 import { PWASettings } from './pages/settings/developer/PWASettings';
+import { LeadScoringSettings } from './pages/settings/developer/LeadScoringSettings';
 import { MailingListsPage } from './pages/MailingListsPage';
 import ReviewsManagementPage from './pages/ReviewsManagementPage';
 import WriteReviewPage from './pages/WriteReviewPage';
