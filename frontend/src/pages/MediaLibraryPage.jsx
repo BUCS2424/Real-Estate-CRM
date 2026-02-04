@@ -563,7 +563,6 @@ export const MediaLibraryPage = () => {
               <FolderOpen className="w-16 h-16 mb-4 opacity-50" />
               <p className="text-lg">Select a property folder to view files</p>
             </div>
-            </div>
           ) : loadingFiles ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
