@@ -551,10 +551,14 @@ export const DealsPage = () => {
     }
   };
 
-  const handleDialogClose = () => {
-    setIsDialogOpen(false);
-    setFormData(initialFormState);
-    setEditingDeal(null);
+  const handleDialogClose = (open) => {
+    if (!open) {
+      setIsDialogOpen(false);
+      setFormData(initialFormState);
+      setEditingDeal(null);
+    } else {
+      setIsDialogOpen(true);
+    }
   };
 
   if (loading) {
