@@ -21,7 +21,9 @@ import {
   Award,
   Loader2,
   Search,
-  Filter
+  Filter,
+  Clock,
+  CheckCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { reviewsAPI } from '../lib/api';
