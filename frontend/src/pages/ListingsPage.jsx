@@ -859,6 +859,110 @@ export const ListingsPage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Import CSV Dialog */}
+      <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5" />
+              Import CSV
+            </DialogTitle>
+            <DialogDescription>
+              Import properties from a CSV file (MLS format supported)
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Destination Selection */}
+            <div>
+              <Label>Import To</Label>
+              <div className="flex gap-2 mt-2">
+                <Button
+                  type="button"
+                  variant={importDestination === 'listings' ? 'default' : 'outline'}
+                  className={`flex-1 ${importDestination === 'listings' ? 'bg-amber-500 hover:bg-amber-600 text-black' : ''}`}
+                  onClick={() => setImportDestination('listings')}
+                  data-testid="import-to-listings"
+                >
+                  <Home className="w-4 h-4 mr-2" />
+                  Listings
+                </Button>
+                <Button
+                  type="button"
+                  variant={importDestination === 'leads' ? 'default' : 'outline'}
+                  className={`flex-1 ${importDestination === 'leads' ? 'bg-amber-500 hover:bg-amber-600 text-black' : ''}`}
+                  onClick={() => setImportDestination('leads')}
+                  data-testid="import-to-leads"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Property Leads
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {importDestination === 'listings' 
+                  ? 'Import to public showcase listings' 
+                  : 'Import to CRM property leads for tracking'}
+              </p>
+            </div>
+
+            {/* File Upload */}
+            <div>
+              <Label>CSV File</Label>
+              <div className="mt-2">
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                  className="block w-full text-sm text-muted-foreground
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-lg file:border-0
+                    file:text-sm file:font-medium
+                    file:bg-amber-500/10 file:text-amber-600
+                    hover:file:bg-amber-500/20
+                    cursor-pointer"
+                  data-testid="import-file-input"
+                />
+              </div>
+              {importFile && (
+                <p className="text-sm text-green-600 mt-2">
+                  ✓ Selected: {importFile.name}
+                </p>
+              )}
+            </div>
+
+            {/* Expected Format Info */}
+            <div className="p-3 rounded-lg bg-muted/50 text-sm">
+              <p className="font-medium mb-1">Expected CSV columns:</p>
+              <p className="text-xs text-muted-foreground">
+                MLS #, Status, Price, Address, City, Property Type, Beds, Baths, Square Footage, Lot Size
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setIsImportOpen(false)}>Cancel</Button>
+            <Button 
+              onClick={handleImportCSV}
+              disabled={!importFile || importing}
+              className="bg-amber-500 hover:bg-amber-600 text-black"
+              data-testid="import-submit-btn"
+            >
+              {importing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Import
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
