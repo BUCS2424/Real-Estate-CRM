@@ -55,10 +55,20 @@ async def register(user_data: UserCreate):
 @router.post("/login", response_model=TokenResponse)
 async def login(credentials: UserLogin):
     user = await db.users.find_one({"email": credentials.email})
-    if not user or not verify_password(credentials.password, user["password"]):
+    
+    # Check user exists and has password field
+    if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    token = create_access_token({"sub": user["id"]})
+    # Get password safely - if missing, user can't login
+    stored_password = user.get("password")
+    if not stored_password:
+        raise HTTPException(status_code=401, detail="Account not properly configured. Please contact support.")
+    
+    if not verify_password(credentials.password, stored_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    token = create_access_token({"sub": user.get("id", str(user.get("_id", "")))})
     
     return TokenResponse(
         access_token=token,
