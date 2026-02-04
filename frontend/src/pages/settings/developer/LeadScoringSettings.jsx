@@ -482,7 +482,7 @@ export const LeadScoringSettings = () => {
                             <SelectItem key={f.field} value={f.field}>{f.label}</SelectItem>
                           ))}
                           {!ruleForm.category && (
-                            <SelectItem value="" disabled>Select a category first</SelectItem>
+                            <SelectItem value="__placeholder__" disabled>Select a category first</SelectItem>
                           )}
                         </SelectContent>
                       </Select>
