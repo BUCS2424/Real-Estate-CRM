@@ -223,16 +223,25 @@ const initialFormState = {
   deal_id: '',
   status: 'todo',
   priority: 'medium',
-  due_date: ''
+  due_date: '',
+  notifications: {
+    enabled: true,
+    remind_before_hours: 24,
+    remind_on_due: true,
+    email_notification: false
+  }
 };
 
 export const TasksPage = () => {
   const [tasks, setTasks] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [formData, setFormData] = useState(initialFormState);
+  const [editingTask, setEditingTask] = useState(null);
   const [activeId, setActiveId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
