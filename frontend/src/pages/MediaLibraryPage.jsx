@@ -542,7 +542,7 @@ export const MediaLibraryPage = () => {
                         onClick={() => copyToClipboard(img.url)}
                         title="Copy URL"
                       >
-                        <FileText className="w-4 h-4" />
+                        <Copy className="w-4 h-4" />
                       </Button>
                       <Button 
                         variant="destructive" 
