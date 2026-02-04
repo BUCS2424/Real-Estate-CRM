@@ -87,6 +87,12 @@ export const ListingsPage = () => {
   const [activeTab, setActiveTab] = useState('details');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
+  // Import CSV state
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [importDestination, setImportDestination] = useState('listings');
+  const [importFile, setImportFile] = useState(null);
+  const [importing, setImporting] = useState(false);
+  
   // Form state
   const [formData, setFormData] = useState({
     address: '', city: '', state: '', zip_code: '', country: 'USA',
