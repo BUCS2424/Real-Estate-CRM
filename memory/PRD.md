@@ -762,3 +762,46 @@ A comprehensive marketing system for property leads that automates brochure gene
 - API endpoints respond correctly ✅
 
 ---
+
+## Update: February 4, 2026 - Task Notifications & Edit Feature
+
+### New Features: Task Management Enhancements
+
+#### Backend Changes
+- **Task Model Update:** `/app/backend/models/task.py`
+  - Added `TaskUpdate` model for PUT updates
+  - Added `TaskNotificationSettings` model with fields:
+    - `enabled` (bool)
+    - `remind_before_hours` (int) - 1, 2, 6, 12, 24, 48, 72 hours
+    - `remind_on_due` (bool)
+    - `email_notification` (bool)
+
+- **Task Routes Update:** `/app/backend/routes/tasks.py`
+  - `PUT /api/tasks/{id}` - Full task update endpoint
+  - `GET /api/tasks/{id}` - Get single task
+  - `GET /api/tasks/due/today` - Get tasks due today
+  - `GET /api/tasks/due/upcoming` - Get tasks due in next X days
+  - Automatic notification creation on task create/update/status change/delete
+
+#### Frontend Changes
+- **TasksPage.jsx:**
+  - Added Edit button in task card dropdown menu
+  - Edit dialog with all task fields + notification settings
+  - Notification settings section in Create dialog
+  - Bell icon on task cards indicating notifications enabled
+  - Fixed SelectItem empty value error
+
+- **API Functions:** `/app/frontend/src/lib/api.js`
+  - `tasksAPI.get(id)`
+  - `tasksAPI.update(id, data)`
+  - `tasksAPI.getDueToday()`
+  - `tasksAPI.getUpcoming(days)`
+
+#### Features Tested & Verified
+- Task creation with notifications ✅
+- Task update via Edit dialog ✅
+- Status change creates notification ✅
+- Notification settings persist ✅
+- Bell icon displays on cards with notifications ✅
+
+---
