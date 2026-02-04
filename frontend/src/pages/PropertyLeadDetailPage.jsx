@@ -537,6 +537,10 @@ const PropertyLeadDetailPage = () => {
               <Home className="w-4 h-4" />
               Overview
             </TabsTrigger>
+            <TabsTrigger value="marketing" className="flex items-center gap-2">
+              <Megaphone className="w-4 h-4" />
+              Marketing
+            </TabsTrigger>
             <TabsTrigger value="notes" className="flex items-center gap-2">
               <StickyNote className="w-4 h-4" />
               Notes ({lead.notes?.length || 0})
