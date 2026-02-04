@@ -20,6 +20,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { EmailVerification } from '../components/EmailVerification';
 import { PhoneVerification } from '../components/PhoneVerification';
+import TestimonialsCarousel from '../components/TestimonialsCarousel';
 import { toast } from 'sonner';
 import { useBranding } from '../contexts/BrandingContext';
 
