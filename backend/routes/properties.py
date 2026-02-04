@@ -464,6 +464,153 @@ async def delete_listing(listing_id: str, current_user: dict = Depends(require_r
     
     return {"message": "Listing deleted"}
 
+
+@router.post("/listings/import-csv")
+async def import_listings_csv(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(require_role([UserRole.SUPERUSER, UserRole.ADMIN]))
+):
+    """Import listings from CSV file (MLS format)"""
+    import csv
+    import io
+    
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="File must be CSV")
+    
+    content = await file.read()
+    decoded = content.decode('utf-8-sig')  # Handle UTF-8 BOM
+    reader = csv.DictReader(io.StringIO(decoded))
+    
+    # Column mappings for MLS format
+    column_mapping = {
+        'address': ['address', 'street', 'Address'],
+        'city': ['city', 'City'],
+        'state': ['state', 'State'],
+        'zip_code': ['zip', 'zip_code', 'Zip'],
+        'price': ['price', 'list_price', 'Price'],
+        'property_type': ['property_type', 'type', 'Property Type'],
+        'bedrooms': ['beds', 'bedrooms', 'Beds'],
+        'bathrooms': ['baths', 'bathrooms', 'Baths'],
+        'sqft': ['sqft', 'square_feet', 'Square Footage'],
+        'lot_size': ['lot_size', 'Lot Size'],
+        'mls_number': ['mls', 'mls_number', 'MLS #', 'MLS#'],
+        'status': ['status', 'Status'],
+    }
+    
+    def find_column_value(row, field_names):
+        for name in field_names:
+            for key in row.keys():
+                if key.lower().strip() == name.lower().strip():
+                    return row[key]
+        return None
+    
+    def parse_number(val, is_float=False):
+        if not val:
+            return None
+        try:
+            clean = str(val).replace('$', '').replace(',', '').replace(' sqft', '').replace(' acres', '').strip()
+            if clean and clean != '- -':
+                return float(clean) if is_float else int(float(clean))
+        except:
+            pass
+        return None
+    
+    imported = 0
+    skipped = 0
+    errors = []
+    
+    for row_num, row in enumerate(reader, start=2):
+        try:
+            address = find_column_value(row, column_mapping['address'])
+            city = find_column_value(row, column_mapping['city'])
+            
+            if not address or not city:
+                skipped += 1
+                continue
+            
+            # Check for duplicate
+            existing = await db.properties.find_one({
+                "address": {"$regex": f"^{address.strip()}$", "$options": "i"},
+                "city": {"$regex": f"^{city.strip()}$", "$options": "i"}
+            })
+            
+            if existing:
+                # Update existing listing
+                update_data = {}
+                price = parse_number(find_column_value(row, column_mapping['price']), is_float=True)
+                if price:
+                    update_data['price'] = price
+                sqft = parse_number(find_column_value(row, column_mapping['sqft']))
+                if sqft:
+                    update_data['sqft'] = sqft
+                beds = parse_number(find_column_value(row, column_mapping['bedrooms']))
+                if beds:
+                    update_data['bedrooms'] = beds
+                baths = parse_number(find_column_value(row, column_mapping['bathrooms']), is_float=True)
+                if baths:
+                    update_data['bathrooms'] = baths
+                lot = parse_number(find_column_value(row, column_mapping['lot_size']), is_float=True)
+                if lot:
+                    update_data['lot_size'] = lot
+                mls = find_column_value(row, column_mapping['mls_number'])
+                if mls:
+                    update_data['mls_number'] = str(mls).strip()
+                status = find_column_value(row, column_mapping['status'])
+                if status:
+                    update_data['mls_status'] = str(status).strip()
+                
+                if update_data:
+                    await db.properties.update_one({"id": existing["id"]}, {"$set": update_data})
+                    imported += 1
+                else:
+                    skipped += 1
+                continue
+            
+            # Create new listing
+            state = find_column_value(row, column_mapping['state']) or 'FL'
+            zip_code = find_column_value(row, column_mapping['zip_code']) or ''
+            
+            listing_id = str(uuid.uuid4())
+            now = datetime.now(timezone.utc).isoformat()
+            
+            storage_folder = generate_storage_folder(address, city, state)
+            
+            listing_doc = {
+                "id": listing_id,
+                "address": address.strip(),
+                "city": city.strip(),
+                "state": state.strip(),
+                "zip_code": str(zip_code).strip(),
+                "price": parse_number(find_column_value(row, column_mapping['price']), is_float=True) or 0,
+                "bedrooms": parse_number(find_column_value(row, column_mapping['bedrooms'])) or 0,
+                "bathrooms": parse_number(find_column_value(row, column_mapping['bathrooms']), is_float=True) or 0,
+                "sqft": parse_number(find_column_value(row, column_mapping['sqft'])) or 0,
+                "lot_size": parse_number(find_column_value(row, column_mapping['lot_size']), is_float=True),
+                "property_type": (find_column_value(row, column_mapping['property_type']) or 'single_family').strip(),
+                "mls_number": (find_column_value(row, column_mapping['mls_number']) or '').strip(),
+                "mls_status": (find_column_value(row, column_mapping['status']) or 'active').strip(),
+                "status": "active",
+                "description": None,
+                "features": [],
+                "images": [],
+                "storage_folder": storage_folder,
+                "created_by": current_user["id"],
+                "created_at": now
+            }
+            
+            await db.properties.insert_one(listing_doc)
+            imported += 1
+            
+        except Exception as e:
+            errors.append(f"Row {row_num}: {str(e)}")
+    
+    return {
+        "message": "Import complete",
+        "imported": imported,
+        "skipped": skipped,
+        "errors": errors[:10]
+    }
+
 @router.post("/listings/lookup-address")
 async def lookup_address(data: dict, current_user: dict = Depends(get_current_user)):
     """AI property lookup by address"""
