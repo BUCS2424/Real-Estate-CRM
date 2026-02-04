@@ -46,6 +46,7 @@ async def get_reviews(
     source: Optional[str] = None,
     featured_only: bool = False,
     homepage_only: bool = False,
+    show_fake: bool = True,
     current_user: dict = Depends(get_current_user)
 ):
     """Get all reviews with optional filters"""
@@ -57,17 +58,31 @@ async def get_reviews(
         query["featured"] = True
     if homepage_only:
         query["show_on_homepage"] = True
+    if not show_fake:
+        query["is_fake"] = {"$ne": True}
     
-    reviews = await db.reviews.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    reviews = await db.reviews.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
     return {"reviews": reviews, "count": len(reviews)}
 
 
 @router.get("/public")
-async def get_public_reviews(homepage_only: bool = True):
-    """Get reviews for public display (no auth required)"""
+async def get_public_reviews(homepage_only: bool = True, limit: int = 50):
+    """Get reviews for public display (no auth required) - excludes is_fake field"""
     query = {"show_on_homepage": True, "status": {"$ne": "pending"}} if homepage_only else {"status": {"$ne": "pending"}}
-    reviews = await db.reviews.find(query, {"_id": 0}).sort("created_at", -1).to_list(50)
+    # Exclude sensitive fields from public response
+    projection = {"_id": 0, "is_fake": 0, "reviewer_email": 0, "reviewer_phone": 0, "created_by": 0}
+    reviews = await db.reviews.find(query, projection).sort("created_at", -1).to_list(limit)
     return {"reviews": reviews, "count": len(reviews)}
+
+
+@router.delete("/fake/all")
+async def delete_all_fake_reviews(current_user: dict = Depends(get_current_user)):
+    """Delete all fake reviews"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.reviews.delete_many({"is_fake": True})
+    return {"message": f"Deleted {result.deleted_count} fake reviews", "deleted": result.deleted_count}
 
 
 class PublicReviewSubmit(BaseModel):
