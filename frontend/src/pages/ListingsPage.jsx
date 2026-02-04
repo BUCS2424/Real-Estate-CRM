@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { listingsAPI, contactsAPI, mediaAPI } from '../lib/api';
+import { listingsAPI, contactsAPI, mediaAPI, propertyLeadsAPI } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Home,
@@ -26,7 +26,9 @@ import {
   Maximize,
   Share2,
   Heart,
-  ExternalLink
+  ExternalLink,
+  FileSpreadsheet,
+  Users
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
