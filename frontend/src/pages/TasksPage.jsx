@@ -533,6 +533,7 @@ export const TasksPage = () => {
                       task={task}
                       contacts={contacts}
                       onDelete={handleDelete}
+                      onEdit={handleEdit}
                     />
                   ))
                 )}
