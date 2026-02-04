@@ -248,6 +248,37 @@ export const PropertyLookupPage = () => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
   };
 
+  // Filter leads by search query
+  const filteredLeads = leads.filter(lead => {
+    if (!leadsSearchQuery) return true;
+    const query = leadsSearchQuery.toLowerCase();
+    return (
+      lead.address?.toLowerCase().includes(query) ||
+      lead.city?.toLowerCase().includes(query) ||
+      lead.owner_name?.toLowerCase().includes(query) ||
+      lead.zip_code?.includes(query)
+    );
+  });
+
+  const handleViewLead = (lead) => {
+    setSelectedLead(lead);
+    // Clear county results when viewing a lead
+    setSelectedProperty(null);
+    setPropertyDetails(null);
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+      new: 'bg-blue-500/20 text-blue-600',
+      contacted: 'bg-yellow-500/20 text-yellow-600',
+      qualified: 'bg-green-500/20 text-green-600',
+      nurturing: 'bg-purple-500/20 text-purple-600',
+      converted: 'bg-amber-500/20 text-amber-600',
+      not_interested: 'bg-gray-500/20 text-gray-600',
+    };
+    return colors[status] || 'bg-gray-500/20 text-gray-600';
+  };
+
   return (
     <div className="space-y-6 animate-fade-in" data-testid="property-lookup-page">
       {/* Header */}
