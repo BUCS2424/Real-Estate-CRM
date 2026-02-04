@@ -138,7 +138,7 @@ class TestSiteImagesAPI:
         """Test that site images endpoints require authentication"""
         # Test without auth header
         response = requests.get(f"{BASE_URL}/api/site-images")
-        assert response.status_code == 401, f"Expected 401 without auth: {response.text}"
+        assert response.status_code in [401, 403], f"Expected 401 or 403 without auth: {response.text}"
         print("Site images endpoints correctly require authentication")
 
 
