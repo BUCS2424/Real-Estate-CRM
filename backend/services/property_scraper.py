@@ -316,7 +316,11 @@ class PropertyDataScraper:
             if zip_code:
                 search_url += f"_{zip_code}"
             
-            async with aiohttp.ClientSession(headers=self.headers, timeout=self.timeout) as session:
+            # Add small delay
+            await asyncio.sleep(1)
+            
+            connector = aiohttp.TCPConnector(ssl=False)
+            async with aiohttp.ClientSession(headers=self._get_headers('https://www.realtor.com/'), timeout=self.timeout, connector=connector) as session:
                 async with session.get(search_url) as response:
                     if response.status == 200:
                         html = await response.text()
