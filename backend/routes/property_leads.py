@@ -347,15 +347,19 @@ async def import_csv(
     
     def find_column_value(row, field_names):
         """Find value from multiple possible column names"""
+        # First try exact matches (case insensitive)
         for name in field_names:
-            # Try exact match (case insensitive)
             for key in row.keys():
-                if key.lower().strip() == name.lower():
+                if key.lower().strip() == name.lower().strip():
                     return row[key]
-            # Try partial match
+        # Then try if column name contains field name (but only if unique)
+        for name in field_names:
+            matches = []
             for key in row.keys():
-                if name.lower() in key.lower():
-                    return row[key]
+                if name.lower() in key.lower() and len(name) > 3:  # Only for longer names to avoid false positives
+                    matches.append(key)
+            if len(matches) == 1:  # Only if exactly one match
+                return row[matches[0]]
         return None
     
     imported = 0
