@@ -8,7 +8,8 @@ import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../components/ui/dialog';
+import { Progress } from '../components/ui/progress';
 import { 
   Home, 
   MapPin, 
@@ -40,7 +41,17 @@ import {
   ChevronRight,
   MoreVertical,
   Copy,
-  ExternalLink
+  ExternalLink,
+  FileImage,
+  Send,
+  Video,
+  Globe,
+  Printer,
+  Megaphone,
+  Star,
+  Zap,
+  QrCode,
+  Play
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { propertyLeadsAPI } from '../lib/api';
