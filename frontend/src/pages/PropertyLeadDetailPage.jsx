@@ -87,6 +87,11 @@ const PropertyLeadDetailPage = () => {
   const [videoUrl, setVideoUrl] = useState('');
   const [videoTitle, setVideoTitle] = useState('');
   const [addingVideo, setAddingVideo] = useState(false);
+  
+  // Generate data state
+  const [generatingData, setGeneratingData] = useState(false);
+  const [convertingToShowcase, setConvertingToShowcase] = useState(false);
+  const [showImagesModal, setShowImagesModal] = useState(false);
 
   useEffect(() => {
     if (id) {
