@@ -402,7 +402,7 @@ const PropertyLeadDetailPage = () => {
   }
 
   return (
-    <div className="flex gap-6 h-[calc(100vh-6rem)]" data-testid="property-lead-detail">
+    <div className="flex gap-6 min-h-[calc(100vh-6rem)]" data-testid="property-lead-detail">
       {/* Left Sidebar */}
       <div className="w-80 flex-shrink-0 flex flex-col gap-4 overflow-y-auto">
         {/* Property Card */}
