@@ -18,7 +18,8 @@ import {
   Layout,
   FolderOpen,
   Search,
-  Star
+  Star,
+  MapPinHouse
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
@@ -28,6 +29,7 @@ const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/contacts', icon: Users, label: 'Contacts' },
   { path: '/leads', icon: UserPlus, label: 'Leads' },
+  { path: '/property-leads', icon: MapPinHouse, label: 'Property Leads' },
   { path: '/property-submissions', icon: FileInput, label: 'Submissions' },
   { path: '/deals', icon: Briefcase, label: 'Deals Pipeline' },
   { path: '/listings', icon: Home, label: 'Listings' },
