@@ -805,3 +805,58 @@ A comprehensive marketing system for property leads that automates brochure gene
 - Bell icon displays on cards with notifications ✅
 
 ---
+
+## Update: February 4, 2026 - Property Data Scraper (Generate Button)
+
+### New Feature: Property Data Generation from Real Estate Websites
+
+#### Backend Implementation
+- **Property Scraper Service:** `/app/backend/services/property_scraper.py`
+  - Multi-source scraper for Zillow, Redfin, and Realtor.com
+  - Extracts: price, bedrooms, bathrooms, sqft, lot size, year built, property type, description
+  - Scrapes property listing images (up to 30 images)
+  - Generates Google Street View links
+  - Combines data from all sources (first found wins)
+  - Deduplicates images across sources
+  - Handles rate limiting with delays and rotating user agents
+
+- **API Endpoints Added:** `/app/backend/routes/property_lead_marketing.py`
+  - `POST /api/property-leads/{id}/generate-data` - Scrape property data from all sources
+  - `POST /api/property-leads/{id}/convert-to-showcase` - Convert lead to showcase listing with scraped images
+  - `POST /api/property-leads/listings/{id}/generate-data` - Scrape data for existing listings
+
+#### Frontend Implementation
+- **Generate Property Data Card:** Added to Marketing tab in PropertyLeadDetailPage
+  - Blue-themed card with "Generate" button
+  - Displays sources found (Zillow, Redfin, Realtor.com badges)
+  - Shows source URLs with external links
+  - Image preview grid (first 4 images)
+  - "View All" button opens images modal
+  - Google Street View link
+  - "Convert to Showcase Listing" button
+  - Last scraped timestamp
+
+- **Images Modal:** Full-screen gallery of all scraped images
+  - Grid view with source badges
+  - External link to view original
+  - "Convert to Showcase" action
+
+- **API Functions:** Added to `/app/frontend/src/lib/api.js`
+  - `propertyLeadsAPI.generateData(id)`
+  - `propertyLeadsAPI.convertToShowcase(id)`
+  - `listingsAPI.generateData(id)`
+
+#### Data Flow
+1. User clicks "Generate" on Property Lead
+2. Backend scrapes Zillow, Redfin, Realtor.com concurrently
+3. Data is combined (price, beds, baths, sqft, etc.)
+4. Images are collected and deduplicated
+5. Lead is updated with scraped data
+6. User can "Convert to Showcase" to create a full listing with images
+
+#### Limitations
+- Real estate websites may block scrapers (403/429 errors)
+- Results vary based on property availability on each platform
+- Some properties may not be found on any source
+
+---
