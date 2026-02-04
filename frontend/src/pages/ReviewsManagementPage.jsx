@@ -221,6 +221,21 @@ const ReviewsManagementPage = () => {
     );
   });
 
+  const handleDeleteAllFake = async () => {
+    const fakeCount = reviews.filter(r => r.is_fake).length;
+    if (!window.confirm(`Are you sure you want to delete all ${fakeCount} fake reviews? This cannot be undone.`)) return;
+    
+    try {
+      const res = await reviewsAPI.deleteAllFake();
+      toast.success(res.data.message);
+      fetchReviews();
+    } catch (error) {
+      toast.error('Failed to delete fake reviews');
+    }
+  };
+
+  const fakeCount = reviews.filter(r => r.is_fake).length;
+
   return (
     <div className="space-y-6 animate-fade-in" data-testid="reviews-management-page">
       {/* Header */}
@@ -229,7 +244,13 @@ const ReviewsManagementPage = () => {
           <h1 className="text-3xl font-serif text-foreground mb-2">Reviews Management</h1>
           <p className="text-muted-foreground">Manage testimonials from all sources</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {fakeCount > 0 && (
+            <Button variant="destructive" onClick={handleDeleteAllFake}>
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete All Fake ({fakeCount})
+            </Button>
+          )}
           <Button variant="outline" onClick={handleSyncRateMyAgent} disabled={syncing}>
             <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
             Sync RateMyAgent
@@ -242,7 +263,7 @@ const ReviewsManagementPage = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
