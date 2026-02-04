@@ -590,6 +590,277 @@ export const PropertyLookupPage = () => {
           </CardContent>
         </Card>
       </div>
+        </>
+      )}
+
+      {/* Property Leads View */}
+      {dataSource === 'leads' && (
+        <>
+          {/* Search Leads */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-amber-500" />
+                    Imported Property Leads
+                  </CardTitle>
+                  <CardDescription>
+                    Browse and manage property leads imported from CSV
+                  </CardDescription>
+                </div>
+                <Button 
+                  onClick={() => navigate('/property-leads')}
+                  className="bg-amber-500 hover:bg-amber-600 text-black"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Import Leads
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <Input
+                    placeholder="Search by address, city, owner name, or zip..."
+                    value={leadsSearchQuery}
+                    onChange={(e) => setLeadsSearchQuery(e.target.value)}
+                    data-testid="leads-search-input"
+                  />
+                </div>
+                <Button variant="outline" onClick={fetchLeads}>
+                  <Loader2 className={`w-4 h-4 mr-2 ${loadingLeads ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Leads Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Leads List */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Property Leads</CardTitle>
+                <CardDescription>
+                  {filteredLeads.length > 0 ? `${filteredLeads.length} leads found` : 'No leads imported yet'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingLeads ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+                  </div>
+                ) : filteredLeads.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No property leads found</p>
+                    <p className="text-sm mt-1">Import leads from CSV on the Property Leads page</p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={() => navigate('/property-leads')}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Go to Property Leads
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                    {filteredLeads.map((lead) => (
+                      <div
+                        key={lead.id}
+                        className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                          selectedLead?.id === lead.id
+                            ? 'border-amber-500 bg-amber-500/10'
+                            : 'border-border hover:border-amber-500/50 hover:bg-accent'
+                        }`}
+                        onClick={() => handleViewLead(lead)}
+                        data-testid={`lead-${lead.id}`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium text-foreground">{lead.address || 'No address'}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {lead.city}, {lead.state} {lead.zip_code}
+                            </p>
+                          </div>
+                          <Badge className={getStatusColor(lead.status)}>
+                            {lead.status?.replace('_', ' ').toUpperCase() || 'NEW'}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                          {lead.owner_name && (
+                            <span className="flex items-center gap-1">
+                              <User className="w-3 h-3" />
+                              {lead.owner_name}
+                            </span>
+                          )}
+                          {lead.estimated_value && (
+                            <span className="flex items-center gap-1">
+                              <DollarSign className="w-3 h-3" />
+                              {formatCurrency(lead.estimated_value)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                          {lead.bedrooms && (
+                            <span className="flex items-center gap-1">
+                              <Bed className="w-3 h-3" /> {lead.bedrooms}
+                            </span>
+                          )}
+                          {lead.bathrooms && (
+                            <span className="flex items-center gap-1">
+                              <Bath className="w-3 h-3" /> {lead.bathrooms}
+                            </span>
+                          )}
+                          {lead.sqft && (
+                            <span className="flex items-center gap-1">
+                              <Square className="w-3 h-3" /> {lead.sqft.toLocaleString()} sqft
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Lead Details */}
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-amber-500" />
+                      Lead Details
+                    </CardTitle>
+                    <CardDescription>
+                      {selectedLead ? `Viewing: ${selectedLead.address}` : 'Select a lead to view details'}
+                    </CardDescription>
+                  </div>
+                  {selectedLead && (
+                    <Button 
+                      onClick={() => navigate(`/property-leads/${selectedLead.id}`)}
+                      size="sm"
+                      className="bg-amber-500 hover:bg-amber-600 text-black"
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      View Full Details
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {!selectedLead ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Home className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>Select a lead from the list</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Owner Info */}
+                    {selectedLead.owner_name && (
+                      <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                        <div className="flex items-center gap-2 mb-2">
+                          <User className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                          <span className="text-sm font-medium text-amber-600 dark:text-amber-400">Owner Information</span>
+                        </div>
+                        <p className="text-xl font-semibold text-foreground">{selectedLead.owner_name}</p>
+                        {selectedLead.owner_mailing_address && (
+                          <p className="text-sm text-muted-foreground mt-1">{selectedLead.owner_mailing_address}</p>
+                        )}
+                        {selectedLead.owner_phone && (
+                          <p className="text-sm text-muted-foreground">{selectedLead.owner_phone}</p>
+                        )}
+                        {selectedLead.owner_email && (
+                          <p className="text-sm text-muted-foreground">{selectedLead.owner_email}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Address */}
+                    <div className="flex items-start gap-3">
+                      <MapPin className="w-5 h-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-foreground">{selectedLead.address}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedLead.city}, {selectedLead.state} {selectedLead.zip_code}
+                        </p>
+                        {selectedLead.county && (
+                          <Badge variant="outline" className="mt-1">{selectedLead.county} County</Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Values */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-3 rounded-lg bg-[#1e3a5f]">
+                        <p className="text-xs text-white/70">Estimated Value</p>
+                        <p className="text-lg font-semibold text-white">
+                          {formatCurrency(selectedLead.estimated_value)}
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-[#1e3a5f]">
+                        <p className="text-xs text-white/70">Tax Assessed</p>
+                        <p className="text-lg font-semibold text-white">
+                          {formatCurrency(selectedLead.tax_assessed_value)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Property Details */}
+                    <div className="grid grid-cols-4 gap-3">
+                      {selectedLead.bedrooms && (
+                        <div className="text-center p-2 rounded bg-[#1e3a5f]">
+                          <p className="text-lg font-semibold text-white">{selectedLead.bedrooms}</p>
+                          <p className="text-xs text-white/70">Beds</p>
+                        </div>
+                      )}
+                      {selectedLead.bathrooms && (
+                        <div className="text-center p-2 rounded bg-[#1e3a5f]">
+                          <p className="text-lg font-semibold text-white">{selectedLead.bathrooms}</p>
+                          <p className="text-xs text-white/70">Baths</p>
+                        </div>
+                      )}
+                      {selectedLead.sqft && (
+                        <div className="text-center p-2 rounded bg-[#1e3a5f]">
+                          <p className="text-lg font-semibold text-white">{selectedLead.sqft.toLocaleString()}</p>
+                          <p className="text-xs text-white/70">Sq Ft</p>
+                        </div>
+                      )}
+                      {selectedLead.year_built && (
+                        <div className="text-center p-2 rounded bg-[#1e3a5f]">
+                          <p className="text-lg font-semibold text-white">{selectedLead.year_built}</p>
+                          <p className="text-xs text-white/70">Built</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2 pt-2">
+                      <Button 
+                        onClick={() => navigate(`/property-leads/${selectedLead.id}`)}
+                        className="flex-1 bg-amber-500 hover:bg-amber-600 text-black"
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Open Full Details
+                      </Button>
+                    </div>
+
+                    {/* Source */}
+                    <p className="text-xs text-muted-foreground text-right">
+                      Status: {selectedLead.status?.replace('_', ' ').toUpperCase() || 'NEW'} | 
+                      Priority: {selectedLead.priority?.toUpperCase() || 'MEDIUM'}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )
 
       {/* Assign to Property Modal */}
       <Dialog open={showAssignModal} onOpenChange={setShowAssignModal}>
