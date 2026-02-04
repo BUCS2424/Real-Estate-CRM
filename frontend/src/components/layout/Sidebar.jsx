@@ -17,7 +17,8 @@ import {
   ListPlus,
   Layout,
   FolderOpen,
-  Search
+  Search,
+  Star
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
