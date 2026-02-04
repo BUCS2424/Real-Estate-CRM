@@ -65,9 +65,48 @@ async def get_reviews(
 @router.get("/public")
 async def get_public_reviews(homepage_only: bool = True):
     """Get reviews for public display (no auth required)"""
-    query = {"show_on_homepage": True} if homepage_only else {}
+    query = {"show_on_homepage": True, "status": {"$ne": "pending"}} if homepage_only else {"status": {"$ne": "pending"}}
     reviews = await db.reviews.find(query, {"_id": 0}).sort("created_at", -1).to_list(50)
     return {"reviews": reviews, "count": len(reviews)}
+
+
+class PublicReviewSubmit(BaseModel):
+    title: str
+    text: str
+    rating: int = 5
+    reviewer_name: str
+    reviewer_email: str
+    reviewer_phone: Optional[str] = None
+    property_address: Optional[str] = None
+    transaction_type: Optional[str] = None
+    source: str = "Website"
+
+
+@router.post("/submit")
+async def submit_public_review(review: PublicReviewSubmit):
+    """Public endpoint for visitors to submit reviews (requires moderation)"""
+    review_doc = {
+        "id": str(uuid.uuid4()),
+        "title": review.title,
+        "text": review.text,
+        "rating": review.rating,
+        "reviewer_name": review.reviewer_name,
+        "reviewer_email": review.reviewer_email,  # Not displayed publicly
+        "reviewer_phone": review.reviewer_phone,
+        "reviewer_title": review.transaction_type.replace('_', ' ').title() if review.transaction_type else None,
+        "reviewer_location": None,
+        "property_address": review.property_address,
+        "source": review.source,
+        "featured": False,
+        "show_on_homepage": False,  # Requires admin approval
+        "status": "pending",  # pending, approved, rejected
+        "created_by": None,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.reviews.insert_one(review_doc)
+    return {"message": "Review submitted successfully. It will be visible after approval.", "id": review_doc["id"]}
 
 
 @router.get("/{review_id}")
