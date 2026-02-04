@@ -303,6 +303,37 @@ const PropertyLeadDetailPage = () => {
     }
   };
 
+  const handleGenerateData = async () => {
+    setGeneratingData(true);
+    try {
+      const res = await propertyLeadsAPI.generateData(id);
+      if (res.data.success) {
+        toast.success(`Found data from ${res.data.sources_found.join(', ')}! ${res.data.images_count} images found.`);
+      } else {
+        toast.info('No data found from Zillow, Redfin, or Realtor.com for this address.');
+      }
+      fetchLead();
+      fetchLeadScore();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to generate property data');
+    } finally {
+      setGeneratingData(false);
+    }
+  };
+
+  const handleConvertToShowcase = async () => {
+    setConvertingToShowcase(true);
+    try {
+      const res = await propertyLeadsAPI.convertToShowcase(id);
+      toast.success(`Converted to showcase listing! ${res.data.images_added} images added.`);
+      fetchLead();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to convert to showcase');
+    } finally {
+      setConvertingToShowcase(false);
+    }
+  };
+
   const getScoreColor = (score) => {
     if (score >= 80) return 'text-green-500';
     if (score >= 60) return 'text-blue-500';
