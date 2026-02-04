@@ -620,6 +620,8 @@ Added a comprehensive storage provider management system with support for 5 diff
 - [x] Lint error fixes
 
 #### P1 - High Priority (Next)
+- [ ] Build Buyer Lead Page
+- [ ] Build Seller Lead Page
 - [ ] Extend drag-and-drop to Landing Page Generator (video/image uploads)
 - [ ] Booking notifications (email, SMS, desktop)
 - [ ] Dark mode toggle functionality
@@ -629,10 +631,68 @@ Added a comprehensive storage provider management system with support for 5 diff
 - [ ] Contact sync via iCloud Drive
 - [ ] Extend property-folder storage for main listing images
 - [ ] Refactor large page components (LandingPage, NewsletterPage, ContactsPage, LandingPagesPage)
+- [ ] Stabilize Property Lookup Scrapers (Hillsborough/Pinellas)
 
 #### P3 - Future Backlog
 - [ ] Advanced reporting & analytics
 - [ ] Multi-item drag-and-drop on Kanban boards
 - [ ] Automated task generation from deals
+- [ ] TMS Integration (needs TMS name from user)
+- [ ] MLS API integration (needs credentials from user)
+
+---
+
+## Update: February 4, 2026 - Property Leads Management System
+
+### New Feature: Property Leads
+A comprehensive property-centric lead management system for managing leads imported from CSV or created manually.
+
+#### Backend Implementation
+- **Model:** `/app/backend/models/property_lead.py`
+  - PropertyLeadCreate, PropertyLeadUpdate, PropertyLeadNote Pydantic models
+  - Fields: address, city, state, zip, county, property details (beds, baths, sqft), value info, tax collector data, owner info, status, priority, tags, marketing data
+- **Routes:** `/app/backend/routes/property_leads.py`
+  - GET `/api/property-leads` - List with filters (status, priority, city) and pagination
+  - GET `/api/property-leads/stats` - Statistics dashboard
+  - GET `/api/property-leads/{id}` - Single lead detail
+  - POST `/api/property-leads` - Create new lead
+  - PUT `/api/property-leads/{id}` - Update lead
+  - DELETE `/api/property-leads/{id}` - Delete lead
+  - POST `/api/property-leads/{id}/notes` - Add note
+  - DELETE `/api/property-leads/{id}/notes/{note_id}` - Delete note
+  - POST `/api/property-leads/{id}/pull-owner-info` - Fetch tax records from county scrapers
+  - POST `/api/property-leads/import-csv` - CSV import with flexible column mapping
+  - GET `/api/property-leads/export/csv` - Export to CSV
+
+#### Frontend Implementation
+- **List Page:** `/app/frontend/src/pages/PropertyLeadsPage.jsx`
+  - Stats cards (Total, New, Qualified, With Owner, With Value)
+  - Search by address/city/owner/parcel
+  - Status filter (All, New, Contacted, Qualified, Nurturing, Converted)
+  - Priority filter (All, Urgent, High, Medium, Low)
+  - Lead cards with quick actions
+  - Import CSV modal with file upload
+  - Add Property modal for manual entry
+- **Detail Page:** `/app/frontend/src/pages/PropertyLeadDetailPage.jsx`
+  - Left sidebar: Property card, Quick Stats, Owner Info (when available), Tags
+  - Tabbed content: Overview, Notes, Activity
+  - Overview tab: Property Details, Value Indicator, Tax Collector Data
+  - Pull Owner Info button to fetch county tax records
+  - Edit Property modal
+  - Notes management (add/delete)
+  - Activity log
+
+#### Navigation
+- Added "Property Leads" to sidebar with MapPinHouse icon
+- Routes: `/property-leads` (list), `/property-leads/:id` (detail)
+
+#### Features Tested & Verified
+- List page with stats cards and filters ✅
+- Manual lead creation via Add Property modal ✅
+- CSV import functionality ✅
+- Detail page with tabbed layout ✅
+- Pull Owner Info from county scrapers ✅
+- Notes and Activity tracking ✅
+- Edit functionality ✅
 
 ---
