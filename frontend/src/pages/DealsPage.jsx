@@ -694,7 +694,7 @@ export const DealsPage = () => {
                   />
                 </div>
                 <DialogFooter>
-                  <Button type="button" variant="outline" onClick={handleDialogClose}>
+                  <Button type="button" variant="outline" onClick={() => handleDialogClose(false)}>
                     Cancel
                   </Button>
                   <Button type="submit" className="bg-amber-500 hover:bg-amber-600 text-black" data-testid="deal-submit-btn">
