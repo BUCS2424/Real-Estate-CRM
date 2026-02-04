@@ -478,17 +478,21 @@ async def upload_video_to_lead(
         "uploaded_by": current_user["name"]
     }
     
+    activity_entry = {
+        "type": "video_added",
+        "description": f"Video added by {current_user['name']}",
+        "user": current_user["name"],
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "data": {"video_url": video_url}
+    }
+    
     await db.property_leads.update_one(
         {"id": lead_id},
         {
-            "$push": {"videos": video_entry},
-            "$push": {"activity": {
-                "type": "video_added",
-                "description": f"Video added by {current_user['name']}",
-                "user": current_user["name"],
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "data": {"video_url": video_url}
-            }}
+            "$push": {
+                "videos": video_entry,
+                "activity": activity_entry
+            }
         }
     )
     
