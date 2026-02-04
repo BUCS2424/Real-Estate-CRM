@@ -1607,6 +1607,65 @@ const PropertyLeadDetailPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Scraped Images Modal */}
+      <Dialog open={showImagesModal} onOpenChange={setShowImagesModal}>
+        <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileImage className="w-5 h-5 text-blue-500" />
+              Property Images ({lead?.scraped_images?.length || 0})
+            </DialogTitle>
+            <DialogDescription>
+              Images scraped from Zillow, Redfin, and Realtor.com
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 py-4">
+            {lead?.scraped_images?.map((img, idx) => (
+              <div key={idx} className="relative group">
+                <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                  <img 
+                    src={img.url} 
+                    alt={`Property ${idx + 1}`}
+                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                    onError={(e) => e.target.parentElement.style.display = 'none'}
+                  />
+                </div>
+                <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Badge variant="secondary" className="text-xs">
+                    {img.source}
+                  </Badge>
+                  <a 
+                    href={img.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="p-1 bg-black/50 rounded-full hover:bg-black/70"
+                  >
+                    <ExternalLink className="w-3 h-3 text-white" />
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowImagesModal(false)}>Close</Button>
+            {lead?.scraped_images?.length > 0 && !lead?.listing_id && (
+              <Button 
+                onClick={() => {
+                  setShowImagesModal(false);
+                  handleConvertToShowcase();
+                }}
+                className="bg-amber-500 hover:bg-amber-600 text-black"
+              >
+                <Star className="w-4 h-4 mr-2" />
+                Convert to Showcase
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
