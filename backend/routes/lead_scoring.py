@@ -166,12 +166,14 @@ async def score_property_lead(
     current_user: dict = Depends(get_current_user)
 ):
     """Calculate score for a property lead"""
-    if not ObjectId.is_valid(lead_id):
-        raise HTTPException(status_code=400, detail="Invalid lead ID")
-    
-    lead = await db.property_leads.find_one({"_id": ObjectId(lead_id)})
+    # Property leads use UUID as 'id' field, not MongoDB ObjectId
+    lead = await db.property_leads.find_one({"id": lead_id})
     if not lead:
-        raise HTTPException(status_code=404, detail="Lead not found")
+        # Fallback to ObjectId lookup for backward compatibility
+        if ObjectId.is_valid(lead_id):
+            lead = await db.property_leads.find_one({"_id": ObjectId(lead_id)})
+        if not lead:
+            raise HTTPException(status_code=404, detail="Lead not found")
     
     # Get property/seller rules
     rules = await db.scoring_rules.find({
@@ -185,9 +187,9 @@ async def score_property_lead(
     
     score_result = await calculate_lead_score(lead, rules, verify_with_ai)
     
-    # Update lead with score
+    # Update lead with score using the id field
     await db.property_leads.update_one(
-        {"_id": ObjectId(lead_id)},
+        {"id": lead_id},
         {"$set": {
             "score": score_result["total_score"],
             "score_percentage": score_result["percentage"],
