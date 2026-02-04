@@ -857,6 +857,149 @@ const PropertyLeadDetailPage = () => {
                 </CardContent>
               </Card>
 
+              {/* Property Data Generator Card */}
+              <Card className="border-2 border-blue-500/30 bg-gradient-to-r from-blue-500/5 to-cyan-500/5">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Search className="w-5 h-5 text-blue-500" />
+                        Generate Property Data
+                      </CardTitle>
+                      <CardDescription>
+                        Scrape Zillow, Redfin & Realtor.com for property details and images
+                      </CardDescription>
+                    </div>
+                    <Button 
+                      onClick={handleGenerateData}
+                      disabled={generatingData}
+                      className="bg-blue-500 hover:bg-blue-600 text-white"
+                    >
+                      {generatingData ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Zap className="w-4 h-4 mr-2" />
+                      )}
+                      Generate
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {lead.scraped_data ? (
+                    <div className="space-y-4">
+                      {/* Sources Found */}
+                      <div className="flex flex-wrap gap-2">
+                        {lead.scraped_data.sources_found?.map((source) => (
+                          <Badge key={source} className="bg-green-500/20 text-green-600 border-green-500/50">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            {source.charAt(0).toUpperCase() + source.slice(1)}
+                          </Badge>
+                        ))}
+                        {lead.scraped_data.sources_checked?.filter(s => !lead.scraped_data.sources_found?.includes(s)).map((source) => (
+                          <Badge key={source} variant="outline" className="text-muted-foreground">
+                            {source.charAt(0).toUpperCase() + source.slice(1)}
+                          </Badge>
+                        ))}
+                      </div>
+                      
+                      {/* Source URLs */}
+                      {lead.scraped_data.source_urls && Object.keys(lead.scraped_data.source_urls).length > 0 && (
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">Source Links:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(lead.scraped_data.source_urls).map(([source, url]) => (
+                              <a 
+                                key={source}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-500 hover:underline flex items-center gap-1"
+                              >
+                                {source} <ExternalLink className="w-3 h-3" />
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Images Preview */}
+                      {lead.scraped_images && lead.scraped_images.length > 0 && (
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-sm font-medium">{lead.scraped_images.length} Images Found</p>
+                            <Button variant="outline" size="sm" onClick={() => setShowImagesModal(true)}>
+                              View All
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-4 gap-2">
+                            {lead.scraped_images.slice(0, 4).map((img, idx) => (
+                              <div key={idx} className="aspect-video rounded-lg overflow-hidden bg-muted">
+                                <img 
+                                  src={img.url} 
+                                  alt={`Property ${idx + 1}`}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => e.target.style.display = 'none'}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Street View */}
+                      {lead.street_view && (
+                        <div>
+                          <p className="text-sm font-medium mb-2">Google Street View</p>
+                          <a 
+                            href={`https://www.google.com/maps/place/${encodeURIComponent(lead.address + ', ' + lead.city + ', ' + lead.state)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-500 hover:underline flex items-center gap-1"
+                          >
+                            View on Google Maps <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      )}
+                      
+                      {/* Last Scraped */}
+                      {lead.last_scraped_at && (
+                        <p className="text-xs text-muted-foreground">
+                          Last updated: {new Date(lead.last_scraped_at).toLocaleString()}
+                        </p>
+                      )}
+                      
+                      {/* Convert to Showcase Button */}
+                      {lead.scraped_images && lead.scraped_images.length > 0 && (
+                        <Button 
+                          onClick={handleConvertToShowcase}
+                          disabled={convertingToShowcase}
+                          className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black"
+                        >
+                          {convertingToShowcase ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Star className="w-4 h-4 mr-2" />
+                          )}
+                          Convert to Showcase Listing
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <Search className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Click "Generate" to scrape property data and images from Zillow, Redfin, and Realtor.com
+                      </p>
+                      <div className="flex justify-center gap-4 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Property Details</span>
+                        <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Listing Photos</span>
+                        <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Street View</span>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Brochure Generator Card */}
                 <Card>
