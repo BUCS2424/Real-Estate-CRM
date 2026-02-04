@@ -209,12 +209,20 @@ export const MediaLibraryPage = () => {
     if (!renameFile || !newFileName.trim()) return;
     
     try {
-      await mediaAPI.renameFile(renameFile.path, newFileName);
-      toast.success('File renamed');
+      if (renameFile.isSiteImage) {
+        // Rename site image
+        await mediaAPI.renameSiteImage(renameFile.name, newFileName);
+        toast.success('Image renamed');
+        fetchSiteImages();
+      } else {
+        // Rename property folder file
+        await mediaAPI.renameFile(renameFile.path, newFileName);
+        toast.success('File renamed');
+        fetchFolderContents();
+      }
       setShowRenameModal(false);
       setRenameFile(null);
       setNewFileName('');
-      fetchFolderContents();
     } catch (error) {
       toast.error('Failed to rename file');
     }
