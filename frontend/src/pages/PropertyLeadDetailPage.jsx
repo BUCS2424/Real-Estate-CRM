@@ -51,7 +51,9 @@ import {
   Star,
   Zap,
   QrCode,
-  Play
+  Play,
+  Search,
+  Image
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { propertyLeadsAPI } from '../lib/api';
