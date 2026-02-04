@@ -77,7 +77,7 @@ const priorityColors = {
 };
 
 // Sortable Task Card
-const SortableTaskCard = ({ task, contacts, onDelete }) => {
+const SortableTaskCard = ({ task, contacts, onDelete, onEdit }) => {
   const {
     attributes,
     listeners,
@@ -93,6 +93,7 @@ const SortableTaskCard = ({ task, contacts, onDelete }) => {
   };
 
   const contact = task.contact_id ? contacts.find(c => c.id === task.contact_id) : null;
+  const hasNotifications = task.notifications?.enabled !== false;
 
   return (
     <motion.div
@@ -122,19 +123,29 @@ const SortableTaskCard = ({ task, contacts, onDelete }) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <h4 className="font-medium">{task.title}</h4>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0">
-                    <MoreVertical className="w-3 h-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onDelete(task.id)} className="text-destructive">
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="flex items-center gap-1">
+                {hasNotifications && task.due_date && (
+                  <Bell className="w-3 h-3 text-amber-500" title="Notifications enabled" />
+                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0">
+                      <MoreVertical className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onEdit(task)}>
+                      <Edit2 className="w-4 h-4 mr-2" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onDelete(task.id)} className="text-destructive">
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
             {task.description && (
               <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
