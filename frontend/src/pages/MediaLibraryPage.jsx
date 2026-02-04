@@ -526,33 +526,80 @@ export const MediaLibraryPage = () => {
                   <div
                     key={img.filename}
                     className="group relative rounded-lg border bg-card overflow-hidden hover:shadow-lg transition-shadow"
+                    data-testid={`site-image-${img.filename}`}
                   >
-                    <div className="aspect-square bg-muted flex items-center justify-center">
-                      <img src={img.url} alt={img.filename} className="w-full h-full object-contain p-2" />
+                    {/* Image Preview */}
+                    <div 
+                      className="aspect-square bg-muted flex items-center justify-center cursor-pointer overflow-hidden"
+                      onClick={() => {
+                        setPreviewFile({ 
+                          name: img.filename, 
+                          url: img.url, 
+                          type: 'image', 
+                          size_formatted: `${(img.size / 1024).toFixed(1)} KB`,
+                          isSiteImage: true
+                        });
+                        setShowPreview(true);
+                      }}
+                    >
+                      <img 
+                        src={img.url} 
+                        alt={img.filename} 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.parentElement.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-muted-foreground"><svg class="w-10 h-10 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-xs">Failed to load</span></div>';
+                        }}
+                      />
                     </div>
+                    
+                    {/* File Info */}
                     <div className="p-2">
                       <p className="text-sm font-medium truncate" title={img.filename}>{img.filename}</p>
                       <p className="text-xs text-muted-foreground">{(img.size / 1024).toFixed(1)} KB</p>
                     </div>
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                      <Button 
-                        variant="secondary" 
-                        size="icon" 
-                        className="h-8 w-8"
-                        onClick={() => copyToClipboard(img.url)}
-                        title="Copy URL"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        variant="destructive" 
-                        size="icon" 
-                        className="h-8 w-8"
-                        onClick={() => handleDeleteSiteImage(img.filename)}
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                    
+                    {/* 3-Dot Dropdown Menu */}
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="secondary" size="icon" className="h-8 w-8" data-testid={`site-image-menu-${img.filename}`}>
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => {
+                            setPreviewFile({ 
+                              name: img.filename, 
+                              url: img.url, 
+                              type: 'image', 
+                              size_formatted: `${(img.size / 1024).toFixed(1)} KB`,
+                              isSiteImage: true
+                            });
+                            setShowPreview(true);
+                          }}>
+                            <Eye className="w-4 h-4 mr-2" />
+                            Preview
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            setRenameFile({ name: img.filename, isSiteImage: true });
+                            setNewFileName(img.filename);
+                            setShowRenameModal(true);
+                          }}>
+                            <Edit2 className="w-4 h-4 mr-2" />
+                            Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => copyToClipboard(img.url)}>
+                            <Copy className="w-4 h-4 mr-2" />
+                            Get URL
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleDeleteSiteImage(img.filename)} className="text-destructive">
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 ))}
