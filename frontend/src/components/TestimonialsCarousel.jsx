@@ -199,19 +199,19 @@ const TestimonialsCarousel = () => {
           <div
             key={`${review.id}-${idx}`}
             onClick={() => setSelectedReview(review)}
-            className="group flex-shrink-0 w-[380px] md:w-[420px] cursor-pointer"
+            className="group flex-shrink-0 w-[380px] md:w-[420px] cursor-pointer pt-6"
           >
             <div className="relative h-full bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-sm border border-white/10 rounded-2xl p-8 transition-all duration-500 hover:border-amber-500/30 hover:shadow-2xl hover:shadow-amber-500/10 hover:-translate-y-2">
               {/* Glow effect on hover */}
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-amber-500/0 to-amber-500/0 group-hover:from-amber-500/5 group-hover:to-transparent transition-all duration-500" />
               
-              {/* Quote Icon */}
-              <div className="absolute -top-4 -left-2 w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30">
+              {/* Quote Icon - Inside the card */}
+              <div className="absolute top-4 left-6 w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30">
                 <Quote className="w-6 h-6 text-black" />
               </div>
 
               {/* Content */}
-              <div className="relative pt-4">
+              <div className="relative pt-12">
                 {/* Rating */}
                 <div className="flex items-center justify-between mb-4">
                   {renderStars(review.rating, 'w-5 h-5')}
