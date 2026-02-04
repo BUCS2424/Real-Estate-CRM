@@ -393,11 +393,18 @@ async def import_csv(
                 "county": (find_column_value(row, column_mapping['county']) or "").strip(),
                 "property_type": (find_column_value(row, column_mapping['property_type']) or "").strip(),
                 "parcel_id": (find_column_value(row, column_mapping['parcel_id']) or "").strip(),
+                
+                # MLS fields
+                "mls_number": (find_column_value(row, column_mapping['mls_number']) or "").strip(),
+                "mls_status": (find_column_value(row, column_mapping['mls_status']) or "").strip(),
+                
+                # Owner fields
                 "owner_name": (find_column_value(row, column_mapping['owner_name']) or "").strip(),
                 "owner_mailing_address": (find_column_value(row, column_mapping['owner_mailing_address']) or "").strip(),
                 "owner_mailing_city": (find_column_value(row, column_mapping['owner_mailing_city']) or "").strip(),
                 "owner_mailing_state": (find_column_value(row, column_mapping['owner_mailing_state']) or "").strip(),
                 "owner_mailing_zip": (find_column_value(row, column_mapping['owner_mailing_zip']) or "").strip(),
+                
                 "status": "new",
                 "priority": "medium",
                 "tags": [],
