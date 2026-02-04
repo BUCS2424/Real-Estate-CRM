@@ -16,6 +16,13 @@ export const StaffManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [newStaff, setNewStaff] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'client'
+  });
 
   useEffect(() => {
     fetchStaff();
@@ -32,6 +39,26 @@ export const StaffManagement = () => {
     }
   };
 
+  const handleAddStaff = async () => {
+    if (!newStaff.name.trim() || !newStaff.email.trim() || !newStaff.password.trim()) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      await usersAPI.create(newStaff);
+      toast.success('Staff member added successfully');
+      setIsDialogOpen(false);
+      setNewStaff({ name: '', email: '', password: '', role: 'client' });
+      fetchStaff();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to add staff member');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleRoleChange = async (userId, newRole) => {
     try {
       await usersAPI.updateRole(userId, newRole);
@@ -39,6 +66,18 @@ export const StaffManagement = () => {
       fetchStaff();
     } catch (error) {
       toast.error('Failed to update role');
+    }
+  };
+
+  const handleDeleteStaff = async (userId, userName) => {
+    if (!window.confirm(`Are you sure you want to remove ${userName}?`)) return;
+    
+    try {
+      await usersAPI.delete(userId);
+      toast.success('Staff member removed');
+      fetchStaff();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to remove staff member');
     }
   };
 
