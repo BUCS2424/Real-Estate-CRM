@@ -379,6 +379,10 @@ export const propertyLeadsAPI = {
     api.post(`/property-leads/${id}/upload-video?video_url=${encodeURIComponent(videoUrl)}&video_title=${encodeURIComponent(videoTitle || '')}`),
   runMarketingWorkflow: (id, template = 'flyer') => 
     api.post(`/property-leads/${id}/marketing-workflow?template=${template}`),
+  
+  // Property data scraping
+  generateData: (id) => api.post(`/property-leads/${id}/generate-data`),
+  convertToShowcase: (id) => api.post(`/property-leads/${id}/convert-to-showcase`),
 };
 
 // Seed data
