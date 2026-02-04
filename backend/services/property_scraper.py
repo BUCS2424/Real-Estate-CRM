@@ -99,7 +99,11 @@ class PropertyDataScraper:
             search_query = self._normalize_address(address, city, state, zip_code)
             search_url = f"https://www.zillow.com/homes/{quote_plus(search_query)}_rb/"
             
-            async with aiohttp.ClientSession(headers=self.headers, timeout=self.timeout) as session:
+            # Add small delay to avoid rate limiting
+            await asyncio.sleep(1)
+            
+            connector = aiohttp.TCPConnector(ssl=False)
+            async with aiohttp.ClientSession(headers=self._get_headers('https://www.zillow.com/'), timeout=self.timeout, connector=connector) as session:
                 async with session.get(search_url) as response:
                     if response.status != 200:
                         result["error"] = f"HTTP {response.status}"
