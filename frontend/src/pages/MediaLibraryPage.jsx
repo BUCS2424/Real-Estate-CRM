@@ -23,7 +23,8 @@ import {
   Loader2,
   Home,
   Play,
-  RefreshCw
+  RefreshCw,
+  Copy
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
