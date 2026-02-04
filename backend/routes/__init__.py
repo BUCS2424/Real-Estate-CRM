@@ -50,6 +50,7 @@ api_router.include_router(property_lookup_router, prefix="/property-lookup", tag
 api_router.include_router(ratemyagent_router, tags=["RateMyAgent"])
 api_router.include_router(reviews_router, tags=["Reviews"])
 api_router.include_router(property_leads_router, tags=["Property Leads"])
+api_router.include_router(property_lead_marketing_router, prefix="/property-leads", tags=["Property Lead Marketing"])
 
 @api_router.get("/")
 async def root():
