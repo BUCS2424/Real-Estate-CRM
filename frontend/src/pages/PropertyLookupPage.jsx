@@ -860,7 +860,7 @@ export const PropertyLookupPage = () => {
             </Card>
           </div>
         </>
-      )
+      )}
 
       {/* Assign to Property Modal */}
       <Dialog open={showAssignModal} onOpenChange={setShowAssignModal}>
