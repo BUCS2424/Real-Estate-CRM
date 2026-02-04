@@ -427,7 +427,9 @@ async def import_csv(
                 val = find_column_value(row, column_mapping.get(field, [field]))
                 if val:
                     try:
-                        lead_doc[field] = int(float(str(val).replace(',', '')))
+                        # Remove commas and "sqft" suffix
+                        clean_val = str(val).replace(',', '').replace(' sqft', '').strip()
+                        lead_doc[field] = int(float(clean_val))
                     except:
                         pass
             
@@ -435,17 +437,21 @@ async def import_csv(
                 val = find_column_value(row, column_mapping.get(field, [field]))
                 if val:
                     try:
-                        lead_doc[field] = float(str(val).replace(',', ''))
+                        # Remove "acres" suffix
+                        clean_val = str(val).replace(',', '').replace(' acres', '').strip()
+                        lead_doc[field] = float(clean_val)
                     except:
                         pass
             
-            for field in ['estimated_value', 'last_sale_price']:
+            # Price fields - handle $ and commas
+            for field in ['estimated_value', 'last_sale_price', 'list_price', 'price_per_sqft']:
                 val = find_column_value(row, column_mapping.get(field, [field]))
                 if val:
                     try:
                         # Remove $ and commas
                         clean_val = str(val).replace('$', '').replace(',', '').strip()
-                        lead_doc[field] = float(clean_val)
+                        if clean_val and clean_val != '- -':
+                            lead_doc[field] = float(clean_val)
                     except:
                         pass
             
