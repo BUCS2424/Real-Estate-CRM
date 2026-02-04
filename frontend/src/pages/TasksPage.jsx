@@ -26,7 +26,11 @@ import {
   User,
   CheckCircle2,
   Circle,
-  Clock
+  Clock,
+  Edit2,
+  Bell,
+  BellOff,
+  Loader2
 } from 'lucide-react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -34,6 +38,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
+import { Switch } from '../components/ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -47,6 +52,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
 import {
