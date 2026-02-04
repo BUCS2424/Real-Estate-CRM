@@ -374,14 +374,52 @@ async def import_csv(
             state = find_column_value(row, column_mapping['state']) or "FL"
             zip_code = find_column_value(row, column_mapping['zip_code']) or ""
             
-            # Check for duplicate
+            # Check for duplicate - if exists, UPDATE instead of skip
             existing = await db.property_leads.find_one({
                 "address": {"$regex": f"^{address.strip()}$", "$options": "i"},
                 "city": {"$regex": f"^{city.strip()}$", "$options": "i"}
             })
             
             if existing:
-                skipped += 1
+                # Update existing lead with new data
+                update_data = {}
+                
+                # Only update fields that have new values
+                for field in ['sqft', 'bedrooms', 'bathrooms', 'lot_size', 'year_built', 
+                             'estimated_value', 'list_price', 'price_per_sqft',
+                             'mls_number', 'mls_status', 'property_type']:
+                    val = find_column_value(row, column_mapping.get(field, [field]))
+                    if val:
+                        if field in ['bedrooms', 'sqft', 'year_built']:
+                            try:
+                                clean_val = str(val).replace(',', '').replace(' sqft', '').strip()
+                                update_data[field] = int(float(clean_val))
+                            except:
+                                pass
+                        elif field in ['bathrooms', 'lot_size']:
+                            try:
+                                clean_val = str(val).replace(',', '').replace(' acres', '').strip()
+                                update_data[field] = float(clean_val)
+                            except:
+                                pass
+                        elif field in ['estimated_value', 'list_price', 'price_per_sqft']:
+                            try:
+                                clean_val = str(val).replace('$', '').replace(',', '').strip()
+                                if clean_val and clean_val != '- -':
+                                    update_data[field] = float(clean_val)
+                            except:
+                                pass
+                        else:
+                            update_data[field] = str(val).strip()
+                
+                if update_data:
+                    await db.property_leads.update_one(
+                        {"id": existing["id"]},
+                        {"$set": update_data}
+                    )
+                    imported += 1  # Count as imported (updated)
+                else:
+                    skipped += 1
                 continue
             
             # Build lead document
