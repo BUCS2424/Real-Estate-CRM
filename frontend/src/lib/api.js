@@ -338,6 +338,31 @@ export const reviewsAPI = {
   getSources: () => api.get('/reviews/sources/list'),
 };
 
+// Property Leads API
+export const propertyLeadsAPI = {
+  getAll: (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.status) queryParams.append('status', params.status);
+    if (params.priority) queryParams.append('priority', params.priority);
+    if (params.city) queryParams.append('city', params.city);
+    if (params.skip) queryParams.append('skip', params.skip);
+    if (params.limit) queryParams.append('limit', params.limit);
+    return api.get(`/property-leads?${queryParams.toString()}`);
+  },
+  getStats: () => api.get('/property-leads/stats'),
+  getOne: (id) => api.get(`/property-leads/${id}`),
+  create: (data) => api.post('/property-leads', data),
+  update: (id, data) => api.put(`/property-leads/${id}`, data),
+  delete: (id) => api.delete(`/property-leads/${id}`),
+  addNote: (id, note) => api.post(`/property-leads/${id}/notes`, note),
+  deleteNote: (id, noteId) => api.delete(`/property-leads/${id}/notes/${noteId}`),
+  pullOwnerInfo: (id) => api.post(`/property-leads/${id}/pull-owner-info`),
+  importCSV: (formData) => api.post('/property-leads/import-csv', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  exportCSV: (status) => api.get(`/property-leads/export/csv${status ? `?status=${status}` : ''}`),
+};
+
 // Seed data
 export const seedAPI = {
   seed: () => api.post('/seed'),
