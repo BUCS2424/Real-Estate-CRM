@@ -194,7 +194,9 @@ export const dashboardAPI = {
 // Users (admin only)
 export const usersAPI = {
   list: () => api.get('/users'),
+  create: (data) => api.post('/auth/register', data),
   updateRole: (id, role) => api.patch(`/users/${id}/role?role=${role}`),
+  delete: (id) => api.delete(`/users/${id}`),
 };
 
 // Newsletter System
