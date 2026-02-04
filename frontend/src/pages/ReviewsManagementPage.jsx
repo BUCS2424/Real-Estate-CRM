@@ -353,19 +353,24 @@ const ReviewsManagementPage = () => {
               {filteredReviews.map(review => (
                 <div
                   key={review.id}
-                  className="p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
+                  className={`p-4 rounded-lg border bg-card hover:shadow-md transition-shadow ${review.status === 'pending' ? 'border-orange-500/50 bg-orange-500/5' : ''}`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                         {renderStars(review.rating)}
                         <Badge variant="outline" className="ml-2">{review.source}</Badge>
+                        {review.status === 'pending' && (
+                          <Badge className="bg-orange-500/20 text-orange-600 border-orange-500/50">
+                            <Clock className="w-3 h-3 mr-1" /> Pending Approval
+                          </Badge>
+                        )}
                         {review.featured && (
                           <Badge className="bg-purple-500/20 text-purple-600 border-purple-500/50">
                             <Award className="w-3 h-3 mr-1" /> Featured
                           </Badge>
                         )}
-                        {!review.show_on_homepage && (
+                        {!review.show_on_homepage && review.status !== 'pending' && (
                           <Badge variant="secondary">
                             <EyeOff className="w-3 h-3 mr-1" /> Hidden
                           </Badge>
@@ -375,10 +380,22 @@ const ReviewsManagementPage = () => {
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{review.text}</p>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span className="font-medium">{review.reviewer_name}</span>
+                        {review.reviewer_email && <span className="text-amber-600">• {review.reviewer_email}</span>}
                         {review.property_address && <span>• {review.property_address}</span>}
                       </div>
                     </div>
                     <div className="flex gap-2 flex-shrink-0">
+                      {review.status === 'pending' && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleApprove(review)}
+                          className="bg-green-500 hover:bg-green-600 text-white"
+                          title="Approve and show on homepage"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-1" /> Approve
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
