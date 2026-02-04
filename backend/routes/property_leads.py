@@ -11,7 +11,7 @@ from utils.auth import get_current_user
 from models.user import UserRole
 from models.property_lead import PropertyLeadCreate, PropertyLeadUpdate, PropertyLeadNote
 from database import db
-from services.county_scrapers import search_all_counties
+from services.county_scrapers import search_property
 
 router = APIRouter(prefix="/property-leads", tags=["Property Leads"])
 
