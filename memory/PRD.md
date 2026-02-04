@@ -932,3 +932,47 @@ Added a dropdown/toggle to switch between two data sources on the Property Looku
 - Advanced Reporting & Analytics
 - Booking Notifications (email, SMS, desktop)
 - PWA "Don't Ask Again" cookie (waiting for user icon asset)
+
+
+---
+
+## Update: February 4, 2026 - Media Library Dropdown Menu Enhancement
+
+### Feature: 3-Dot Dropdown Menu for Media Files
+
+Added a unified 3-dot dropdown menu for all files in the Media Library with consistent actions.
+
+#### UI Changes
+- **Site Images:** Replaced inline buttons with dropdown menu on hover
+- **Property Folder Files:** Updated dropdown to match Site Images (removed Download, added Get URL)
+- **List View:** Same dropdown menu pattern for consistency
+
+#### Dropdown Menu Options
+1. **Preview** - Opens image/video preview modal
+2. **Rename** - Opens rename dialog with current filename pre-filled
+3. **Get URL** - Copies file URL to clipboard (shows toast "URL copied to clipboard!")
+4. **Delete** - Removes file (with confirmation)
+
+#### Backend Changes
+- Added `PUT /api/site-images/{filename}/rename` endpoint for renaming site images
+- Security: Path traversal protection on all file operations
+
+#### Frontend Changes
+- Updated `/app/frontend/src/pages/MediaLibraryPage.jsx`:
+  - Replaced inline buttons with DropdownMenu component for Site Images
+  - Added `Get URL` option to property folder file dropdowns
+  - Consistent 4-option menu across all file types
+  - Images use `object-cover` for proper rendering in grid boxes
+- Added `renameSiteImage()` to `/app/frontend/src/lib/api.js`
+
+#### Files Modified
+- `/app/frontend/src/pages/MediaLibraryPage.jsx`
+- `/app/frontend/src/lib/api.js`
+- `/app/backend/server.py`
+
+#### Features Tested & Verified
+- Media Library page loads with folder sidebar ✅
+- Site Images grid shows proper image rendering ✅
+- 3-dot dropdown menu appears on hover ✅
+- All 4 options work correctly ✅
+- Backend rename API with security checks ✅
