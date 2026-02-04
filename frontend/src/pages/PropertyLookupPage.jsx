@@ -189,33 +189,81 @@ export const PropertyLookupPage = () => {
     
     setShowAssignModal(true);
     setLoadingListings(true);
+    setAssignTarget('listing');
+    setSelectedListing('');
+    setSelectedLeadForAssign('');
     
     try {
-      const res = await listingsAPI.list();
-      setListings(res.data || []);
+      // Fetch both listings and leads
+      const [listingsRes, leadsRes] = await Promise.all([
+        listingsAPI.list(),
+        propertyLeadsAPI.getAll({ limit: 100 })
+      ]);
+      setListings(listingsRes.data || []);
+      setAllLeadsForAssign(leadsRes.data.leads || []);
     } catch (error) {
-      toast.error('Failed to load listings');
+      toast.error('Failed to load data');
     } finally {
       setLoadingListings(false);
     }
   };
 
   const handleAssignToProperty = async () => {
-    if (!selectedListing || !propertyDetails) {
-      toast.error('Please select a listing');
-      return;
-    }
-    
-    setAssigning(true);
-    try {
-      await propertyLookupAPI.assignToProperty(selectedListing, propertyDetails);
-      toast.success('County data assigned to property!');
-      setShowAssignModal(false);
-      setSelectedListing('');
-    } catch (error) {
-      toast.error('Failed to assign: ' + (error.response?.data?.detail || error.message));
-    } finally {
-      setAssigning(false);
+    if (assignTarget === 'listing') {
+      if (!selectedListing || !propertyDetails) {
+        toast.error('Please select a listing');
+        return;
+      }
+      
+      setAssigning(true);
+      try {
+        await propertyLookupAPI.assignToProperty(selectedListing, propertyDetails);
+        toast.success('County data assigned to listing!');
+        setShowAssignModal(false);
+        setSelectedListing('');
+      } catch (error) {
+        toast.error('Failed to assign: ' + (error.response?.data?.detail || error.message));
+      } finally {
+        setAssigning(false);
+      }
+    } else {
+      // Assign to lead
+      if (!selectedLeadForAssign || !propertyDetails) {
+        toast.error('Please select a lead');
+        return;
+      }
+      
+      setAssigning(true);
+      try {
+        // Update the lead with county data
+        await propertyLeadsAPI.update(selectedLeadForAssign, {
+          owner_name: propertyDetails.owner_name,
+          owner_mailing_address: propertyDetails.mailing_address,
+          estimated_value: propertyDetails.market_value,
+          tax_assessed_value: propertyDetails.assessed_value,
+          bedrooms: propertyDetails.bedrooms,
+          bathrooms: propertyDetails.bathrooms,
+          sqft: propertyDetails.sqft,
+          year_built: propertyDetails.year_built,
+          lot_size: propertyDetails.lot_size,
+          zoning: propertyDetails.zoning,
+          homestead: propertyDetails.homestead,
+          county: propertyDetails.county,
+          county_data_imported: true,
+          county_data_imported_at: new Date().toISOString()
+        });
+        toast.success('County data assigned to lead!');
+        setShowAssignModal(false);
+        setSelectedLeadForAssign('');
+        // Refresh leads if we're viewing them
+        if (dataSource === 'leads') {
+          fetchLeads();
+        }
+      } catch (error) {
+        toast.error('Failed to assign: ' + (error.response?.data?.detail || error.message));
+      } finally {
+        setAssigning(false);
+      }
     }
   };
 
