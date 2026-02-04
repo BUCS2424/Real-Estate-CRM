@@ -112,7 +112,7 @@ export const StaffManagement = () => {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-amber-500 hover:bg-amber-600 text-black">
               <Plus className="w-4 h-4 mr-2" />
               Add Staff
             </Button>
@@ -120,21 +120,42 @@ export const StaffManagement = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add New Staff Member</DialogTitle>
-              <DialogDescription>Invite a new team member</DialogDescription>
+              <DialogDescription>Create a new team member account</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label>Full Name</Label>
-                <Input placeholder="John Doe" />
+                <Label>Full Name *</Label>
+                <Input 
+                  placeholder="John Doe" 
+                  value={newStaff.name}
+                  onChange={(e) => setNewStaff({...newStaff, name: e.target.value})}
+                  data-testid="staff-name-input"
+                />
               </div>
               <div>
-                <Label>Email</Label>
-                <Input type="email" placeholder="john@example.com" />
+                <Label>Email *</Label>
+                <Input 
+                  type="email" 
+                  placeholder="john@example.com"
+                  value={newStaff.email}
+                  onChange={(e) => setNewStaff({...newStaff, email: e.target.value})}
+                  data-testid="staff-email-input"
+                />
+              </div>
+              <div>
+                <Label>Password *</Label>
+                <Input 
+                  type="password" 
+                  placeholder="Minimum 8 characters"
+                  value={newStaff.password}
+                  onChange={(e) => setNewStaff({...newStaff, password: e.target.value})}
+                  data-testid="staff-password-input"
+                />
               </div>
               <div>
                 <Label>Role</Label>
-                <Select defaultValue="client">
-                  <SelectTrigger>
+                <Select value={newStaff.role} onValueChange={(v) => setNewStaff({...newStaff, role: v})}>
+                  <SelectTrigger data-testid="staff-role-select">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -147,7 +168,14 @@ export const StaffManagement = () => {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-              <Button onClick={() => { setIsDialogOpen(false); toast.success('Invitation sent'); }}>Send Invite</Button>
+              <Button 
+                onClick={handleAddStaff} 
+                disabled={saving}
+                className="bg-amber-500 hover:bg-amber-600 text-black"
+                data-testid="add-staff-btn"
+              >
+                {saving ? 'Adding...' : 'Add Staff'}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
