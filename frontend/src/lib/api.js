@@ -361,6 +361,20 @@ export const propertyLeadsAPI = {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   exportCSV: (status) => api.get(`/property-leads/export/csv${status ? `?status=${status}` : ''}`),
+  
+  // Marketing features
+  getScore: (id) => api.get(`/property-leads/${id}/score`),
+  generateBrochure: (id, template = 'flyer', includeQr = true) => 
+    api.post(`/property-leads/${id}/brochure/generate`, { template, include_qr: includeQr }, { responseType: 'blob' }),
+  previewBrochure: (id, template = 'flyer', includeQr = true) => 
+    api.post(`/property-leads/${id}/brochure/preview`, { template, include_qr: includeQr }, { responseType: 'blob' }),
+  emailBrochure: (id, data) => api.post(`/property-leads/${id}/brochure/email`, data),
+  createListing: (id, data) => api.post(`/property-leads/${id}/create-listing`, data),
+  publishLandingPage: (id) => api.post(`/property-leads/${id}/publish-landing-page`),
+  uploadVideo: (id, videoUrl, videoTitle) => 
+    api.post(`/property-leads/${id}/upload-video?video_url=${encodeURIComponent(videoUrl)}&video_title=${encodeURIComponent(videoTitle || '')}`),
+  runMarketingWorkflow: (id, template = 'flyer') => 
+    api.post(`/property-leads/${id}/marketing-workflow?template=${template}`),
 };
 
 // Seed data
