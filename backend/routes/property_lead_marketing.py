@@ -667,3 +667,307 @@ async def run_marketing_workflow(
     results["recipient"] = recipient_email
     
     return results
+
+
+# ============ PROPERTY DATA SCRAPER ============
+
+@router.post("/{lead_id}/generate-data")
+async def generate_property_data(
+    lead_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Scrape property data from Zillow, Redfin, and Realtor.com
+    Updates the lead with found data and images
+    """
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    lead = await db.property_leads.find_one({"id": lead_id}, {"_id": 0})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Property lead not found")
+    
+    address = lead.get("address")
+    city = lead.get("city")
+    state = lead.get("state", "FL")
+    zip_code = lead.get("zip_code", "")
+    
+    if not address or not city:
+        raise HTTPException(status_code=400, detail="Address and city are required for property lookup")
+    
+    # Scrape property data
+    scrape_result = await scrape_property_data(address, city, state, zip_code)
+    
+    # Prepare update data
+    update_data = {
+        "scraped_data": scrape_result,
+        "last_scraped_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Update lead with scraped data if found
+    if scrape_result.get("success") and scrape_result.get("data"):
+        scraped = scrape_result["data"]
+        
+        # Only update fields that are empty in the lead
+        if scraped.get("price") and not lead.get("estimated_value"):
+            update_data["estimated_value"] = scraped["price"]
+        if scraped.get("bedrooms") and not lead.get("bedrooms"):
+            update_data["bedrooms"] = int(scraped["bedrooms"])
+        if scraped.get("bathrooms") and not lead.get("bathrooms"):
+            update_data["bathrooms"] = float(scraped["bathrooms"])
+        if scraped.get("sqft") and not lead.get("sqft"):
+            update_data["sqft"] = int(scraped["sqft"])
+        if scraped.get("year_built") and not lead.get("year_built"):
+            update_data["year_built"] = int(scraped["year_built"])
+        if scraped.get("lot_size") and not lead.get("lot_size"):
+            update_data["lot_size"] = scraped["lot_size"]
+        if scraped.get("property_type") and not lead.get("property_type"):
+            update_data["property_type"] = scraped["property_type"]
+        if scraped.get("description") and not lead.get("description"):
+            update_data["description"] = scraped["description"]
+        if scraped.get("zestimate"):
+            update_data["zestimate"] = scraped["zestimate"]
+    
+    # Store images
+    if scrape_result.get("images"):
+        update_data["scraped_images"] = scrape_result["images"]
+    
+    # Store street view
+    if scrape_result.get("street_view"):
+        update_data["street_view"] = scrape_result["street_view"]
+    
+    # Log activity
+    activity_entry = {
+        "type": "data_generated",
+        "description": f"Property data scraped from {', '.join(scrape_result.get('sources_found', []))} by {current_user['name']}",
+        "user": current_user["name"],
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "data": {
+            "sources_found": scrape_result.get("sources_found", []),
+            "images_found": len(scrape_result.get("images", [])),
+            "data_fields": list(scrape_result.get("data", {}).keys())
+        }
+    }
+    
+    await db.property_leads.update_one(
+        {"id": lead_id},
+        {
+            "$set": update_data,
+            "$push": {"activity": activity_entry}
+        }
+    )
+    
+    # Get updated lead
+    updated_lead = await db.property_leads.find_one({"id": lead_id}, {"_id": 0})
+    
+    return {
+        "success": scrape_result.get("success", False),
+        "message": f"Found data from {len(scrape_result.get('sources_found', []))} sources" if scrape_result.get("success") else "No data found from any source",
+        "sources_found": scrape_result.get("sources_found", []),
+        "source_urls": scrape_result.get("source_urls", {}),
+        "data_found": scrape_result.get("data", {}),
+        "images_count": len(scrape_result.get("images", [])),
+        "images": scrape_result.get("images", [])[:10],  # Return first 10 images in response
+        "street_view": scrape_result.get("street_view"),
+        "errors": scrape_result.get("errors", {}),
+        "lead": updated_lead
+    }
+
+
+@router.post("/{lead_id}/convert-to-showcase")
+async def convert_lead_to_showcase(
+    lead_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Convert a property lead to a showcase listing
+    Creates a full listing with all scraped data and images
+    """
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    lead = await db.property_leads.find_one({"id": lead_id}, {"_id": 0})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Property lead not found")
+    
+    # Check if listing already exists
+    if lead.get("listing_id"):
+        existing = await db.properties.find_one({"id": lead["listing_id"]}, {"_id": 0})
+        if existing:
+            # Update existing listing with scraped data
+            update_fields = {}
+            if lead.get("scraped_images") and not existing.get("images"):
+                update_fields["images"] = [img["url"] for img in lead["scraped_images"][:20]]
+            if lead.get("street_view"):
+                update_fields["street_view"] = lead["street_view"]
+            
+            if update_fields:
+                update_fields["updated_at"] = datetime.now(timezone.utc).isoformat()
+                await db.properties.update_one({"id": lead["listing_id"]}, {"$set": update_fields})
+            
+            return {
+                "message": "Listing updated with scraped data",
+                "listing_id": lead["listing_id"],
+                "listing": await db.properties.find_one({"id": lead["listing_id"]}, {"_id": 0})
+            }
+    
+    now = datetime.now(timezone.utc).isoformat()
+    listing_id = str(uuid.uuid4())
+    
+    # Get images from scraped data
+    images = []
+    if lead.get("scraped_images"):
+        images = [img["url"] for img in lead["scraped_images"][:20]]
+    
+    # Create showcase listing
+    listing = {
+        "id": listing_id,
+        "title": lead.get("address", "Property"),
+        "address": lead.get("address", ""),
+        "city": lead.get("city", ""),
+        "state": lead.get("state", "FL"),
+        "zip_code": lead.get("zip_code", ""),
+        "county": lead.get("county", ""),
+        "price": lead.get("estimated_value") or lead.get("scraped_data", {}).get("data", {}).get("price"),
+        "property_type": lead.get("property_type", "single_family"),
+        "bedrooms": lead.get("bedrooms"),
+        "bathrooms": lead.get("bathrooms"),
+        "sqft": lead.get("sqft"),
+        "square_feet": lead.get("sqft"),
+        "lot_size": lead.get("lot_size"),
+        "year_built": lead.get("year_built"),
+        "description": lead.get("description") or lead.get("scraped_data", {}).get("data", {}).get("description", ""),
+        "features": [],
+        "images": images,
+        "street_view": lead.get("street_view"),
+        "status": "showcase",
+        "is_showcase": True,
+        "mls_number": "",
+        "source": "property_lead",
+        "source_lead_id": lead_id,
+        "source_urls": lead.get("scraped_data", {}).get("source_urls", {}),
+        "zestimate": lead.get("zestimate") or lead.get("scraped_data", {}).get("data", {}).get("zestimate"),
+        "created_at": now,
+        "updated_at": now
+    }
+    
+    await db.properties.insert_one(listing)
+    
+    # Update lead with listing reference
+    await db.property_leads.update_one(
+        {"id": lead_id},
+        {
+            "$set": {
+                "listing_id": listing_id,
+                "status": "converted",
+                "updated_at": now
+            },
+            "$push": {"activity": {
+                "type": "converted_to_showcase",
+                "description": f"Converted to showcase listing by {current_user['name']}",
+                "user": current_user["name"],
+                "timestamp": now,
+                "data": {
+                    "listing_id": listing_id,
+                    "images_count": len(images)
+                }
+            }}
+        }
+    )
+    
+    return {
+        "message": "Property lead converted to showcase listing",
+        "listing_id": listing_id,
+        "listing": listing,
+        "images_added": len(images)
+    }
+
+
+# ============ LISTINGS DATA SCRAPER ============
+
+@router.post("/listings/{listing_id}/generate-data")
+async def generate_listing_data(
+    listing_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Scrape property data for an existing listing
+    Updates the listing with found data and images
+    """
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    listing = await db.properties.find_one({"id": listing_id}, {"_id": 0})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    address = listing.get("address")
+    city = listing.get("city")
+    state = listing.get("state", "FL")
+    zip_code = listing.get("zip_code", "")
+    
+    if not address or not city:
+        raise HTTPException(status_code=400, detail="Address and city are required for property lookup")
+    
+    # Scrape property data
+    scrape_result = await scrape_property_data(address, city, state, zip_code)
+    
+    # Prepare update data
+    update_data = {
+        "scraped_data": scrape_result,
+        "last_scraped_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Update listing with scraped data if found
+    if scrape_result.get("success") and scrape_result.get("data"):
+        scraped = scrape_result["data"]
+        
+        # Only update fields that are empty
+        if scraped.get("price") and not listing.get("price"):
+            update_data["price"] = scraped["price"]
+        if scraped.get("bedrooms") and not listing.get("bedrooms"):
+            update_data["bedrooms"] = int(scraped["bedrooms"])
+        if scraped.get("bathrooms") and not listing.get("bathrooms"):
+            update_data["bathrooms"] = float(scraped["bathrooms"])
+        if scraped.get("sqft") and not listing.get("sqft"):
+            update_data["sqft"] = int(scraped["sqft"])
+            update_data["square_feet"] = int(scraped["sqft"])
+        if scraped.get("year_built") and not listing.get("year_built"):
+            update_data["year_built"] = int(scraped["year_built"])
+        if scraped.get("lot_size") and not listing.get("lot_size"):
+            update_data["lot_size"] = scraped["lot_size"]
+        if scraped.get("description") and not listing.get("description"):
+            update_data["description"] = scraped["description"]
+        if scraped.get("zestimate"):
+            update_data["zestimate"] = scraped["zestimate"]
+    
+    # Store/update images
+    if scrape_result.get("images") and not listing.get("images"):
+        update_data["images"] = [img["url"] for img in scrape_result["images"][:20]]
+    
+    # Store street view
+    if scrape_result.get("street_view"):
+        update_data["street_view"] = scrape_result["street_view"]
+    
+    # Store source URLs
+    if scrape_result.get("source_urls"):
+        update_data["source_urls"] = scrape_result["source_urls"]
+    
+    await db.properties.update_one({"id": listing_id}, {"$set": update_data})
+    
+    # Get updated listing
+    updated_listing = await db.properties.find_one({"id": listing_id}, {"_id": 0})
+    
+    return {
+        "success": scrape_result.get("success", False),
+        "message": f"Found data from {len(scrape_result.get('sources_found', []))} sources" if scrape_result.get("success") else "No data found",
+        "sources_found": scrape_result.get("sources_found", []),
+        "source_urls": scrape_result.get("source_urls", {}),
+        "data_found": scrape_result.get("data", {}),
+        "images_count": len(scrape_result.get("images", [])),
+        "street_view": scrape_result.get("street_view"),
+        "listing": updated_listing
+    }
+
