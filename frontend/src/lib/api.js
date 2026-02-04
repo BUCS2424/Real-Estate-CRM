@@ -77,9 +77,13 @@ export const dealsAPI = {
 // Tasks
 export const tasksAPI = {
   list: () => api.get('/tasks'),
+  get: (id) => api.get(`/tasks/${id}`),
   create: (data) => api.post('/tasks', data),
+  update: (id, data) => api.put(`/tasks/${id}`, data),
   updateStatus: (id, status) => api.patch(`/tasks/${id}/status`, { status }),
   delete: (id) => api.delete(`/tasks/${id}`),
+  getDueToday: () => api.get('/tasks/due/today'),
+  getUpcoming: (days = 7) => api.get(`/tasks/due/upcoming?days=${days}`),
 };
 
 // Articles
