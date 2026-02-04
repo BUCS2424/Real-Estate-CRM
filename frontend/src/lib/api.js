@@ -279,6 +279,13 @@ export const mediaAPI = {
     api.post(`/media/folder/create?property_id=${propertyId}&folder_name=${folderName}${parentSubfolder ? `&parent_subfolder=${parentSubfolder}` : ''}`),
   deleteFolder: (folderPath) => api.delete(`/media/folder?folder_path=${encodeURIComponent(folderPath)}`),
   initializePropertyFolders: (propertyId) => api.post(`/media/initialize/${propertyId}`),
+  
+  // Site Images (logos, branding, etc.)
+  getSiteImages: () => api.get('/site-images'),
+  uploadSiteImage: (formData) => api.post('/site-images/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  deleteSiteImage: (filename) => api.delete(`/site-images/${filename}`),
 };
 
 // Property Lookup API (County Records + MLS)
