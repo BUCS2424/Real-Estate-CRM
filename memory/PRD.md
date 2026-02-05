@@ -1120,3 +1120,44 @@ Enhanced the Deal Pipeline page with a view toggle to switch between Kanban boar
 - All 15 backend API tests passed ✅
 - All frontend features verified ✅
 - Test file: `/app/backend/tests/test_deals.py`
+
+---
+
+## Update: February 5, 2026 - Unified CSV Import System
+
+### Feature: Unified CSV Import Modal
+
+Completed the unified CSV import system that allows users to choose the destination (Listings or Property Leads) when importing CSV data.
+
+#### Implementation Details
+- **PropertyLeadsPage**: Added unified import modal with destination toggle
+  - Default destination: "Property Leads"
+  - Can toggle to "Listings" to import to public showcase
+- **ListingsPage**: Already had the unified import modal
+  - Default destination: "Listings"
+  - Can toggle to "Property Leads" to import to CRM
+
+#### Modal UI Features
+- Destination toggle buttons with icons (Users for Property Leads, Home for Listings)
+- Dynamic description text based on selected destination
+- File upload input with styled button
+- Expected CSV columns info box
+- Import result display with success/skip counts
+- Cancel and Import action buttons
+- Import button disabled until file is selected
+
+#### Files Modified
+- `/app/frontend/src/pages/PropertyLeadsPage.jsx`
+  - Added `listingsAPI` import
+  - Added `importDestination` state (default: 'leads')
+  - Updated `handleImport` to route to correct API based on destination
+  - Replaced old import modal with unified modal matching ListingsPage
+
+#### Tests & Verification
+- All 14 frontend tests passed ✅
+- Modal opens correctly on both pages
+- Destination toggle works correctly
+- Default destinations are context-appropriate
+- File input and button states work correctly
+- Test report: `/app/test_reports/iteration_12.json`
+
