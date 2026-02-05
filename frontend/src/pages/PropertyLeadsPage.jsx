@@ -47,6 +47,7 @@ const PropertyLeadsPage = () => {
   const [importing, setImporting] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [importResult, setImportResult] = useState(null);
+  const [importDestination, setImportDestination] = useState('leads');
   
   // Add lead modal
   const [showAddModal, setShowAddModal] = useState(false);
