@@ -450,43 +450,76 @@ const PropertyLeadsPage = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileSpreadsheet className="w-5 h-5 text-amber-500" />
-              Import Property Leads from CSV
+              Import CSV
             </DialogTitle>
             <DialogDescription>
-              Upload a CSV file with property data. The importer will automatically map common column names.
+              Import properties from a CSV file (MLS format supported)
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
-            {/* File Input */}
-            <div 
-              className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-amber-500/50 transition-colors"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-              <Upload className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
-              {importFile ? (
-                <p className="text-foreground font-medium">{importFile.name}</p>
-              ) : (
-                <>
-                  <p className="text-muted-foreground">Click to select a CSV file</p>
-                  <p className="text-xs text-muted-foreground mt-1">or drag and drop</p>
-                </>
+            {/* Destination Selection */}
+            <div>
+              <Label>Import To</Label>
+              <div className="flex gap-2 mt-2">
+                <Button
+                  type="button"
+                  variant={importDestination === 'leads' ? 'default' : 'outline'}
+                  className={`flex-1 ${importDestination === 'leads' ? 'bg-amber-500 hover:bg-amber-600 text-black' : ''}`}
+                  onClick={() => setImportDestination('leads')}
+                  data-testid="import-to-leads"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Property Leads
+                </Button>
+                <Button
+                  type="button"
+                  variant={importDestination === 'listings' ? 'default' : 'outline'}
+                  className={`flex-1 ${importDestination === 'listings' ? 'bg-amber-500 hover:bg-amber-600 text-black' : ''}`}
+                  onClick={() => setImportDestination('listings')}
+                  data-testid="import-to-listings"
+                >
+                  <Home className="w-4 h-4 mr-2" />
+                  Listings
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {importDestination === 'leads' 
+                  ? 'Import to CRM property leads for tracking' 
+                  : 'Import to public showcase listings'}
+              </p>
+            </div>
+
+            {/* File Upload */}
+            <div>
+              <Label>CSV File</Label>
+              <div className="mt-2">
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileChange}
+                  className="block w-full text-sm text-muted-foreground
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-lg file:border-0
+                    file:text-sm file:font-medium
+                    file:bg-amber-500/10 file:text-amber-600
+                    hover:file:bg-amber-500/20
+                    cursor-pointer"
+                  data-testid="import-file-input"
+                />
+              </div>
+              {importFile && (
+                <p className="text-sm text-green-600 mt-2">
+                  ✓ Selected: {importFile.name}
+                </p>
               )}
             </div>
             
-            {/* Supported Columns Info */}
-            <div className="bg-muted/50 rounded-lg p-4">
-              <p className="text-sm font-medium mb-2">Supported columns:</p>
+            {/* Expected Format Info */}
+            <div className="p-3 rounded-lg bg-muted/50 text-sm">
+              <p className="font-medium mb-1">Expected CSV columns:</p>
               <p className="text-xs text-muted-foreground">
-                address, city, state, zip, county, beds, baths, sqft, year_built, 
-                parcel_id, value, owner, mailing_address, and more...
+                MLS #, Status, Price, Address, City, Property Type, Beds, Baths, Square Footage, Lot Size
               </p>
             </div>
             
@@ -516,7 +549,7 @@ const PropertyLeadsPage = () => {
             )}
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="mt-4">
             <Button variant="outline" onClick={() => setShowImportModal(false)}>
               Cancel
             </Button>
@@ -524,13 +557,19 @@ const PropertyLeadsPage = () => {
               onClick={handleImport} 
               disabled={!importFile || importing}
               className="bg-amber-500 hover:bg-amber-600 text-black"
+              data-testid="import-submit-btn"
             >
               {importing ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Importing...
+                </>
               ) : (
-                <Upload className="w-4 h-4 mr-2" />
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Import
+                </>
               )}
-              Import
             </Button>
           </DialogFooter>
         </DialogContent>
