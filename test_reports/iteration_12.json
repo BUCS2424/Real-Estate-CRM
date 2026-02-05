@@ -1,0 +1,63 @@
+{
+  "summary": "Completed frontend testing of unified CSV import modal on PropertyLeadsPage and ListingsPage. All 14 tests passed. Both pages show consistent modal UI with destination selection toggle buttons working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "PropertyLeadsPage: Import CSV modal opens correctly",
+    "PropertyLeadsPage: Default destination is 'Property Leads' (correct)",
+    "PropertyLeadsPage: Import button is disabled without file selected",
+    "PropertyLeadsPage: Can toggle to 'Listings' destination",
+    "PropertyLeadsPage: Description text updates when toggling to Listings",
+    "PropertyLeadsPage: Can toggle back to 'Property Leads' destination",
+    "PropertyLeadsPage: File input exists and is functional",
+    "ListingsPage: Import CSV modal opens correctly",
+    "ListingsPage: Default destination is 'Listings' (correct)",
+    "ListingsPage: Import button is disabled without file selected",
+    "ListingsPage: Can toggle to 'Property Leads' destination",
+    "ListingsPage: Description text updates when toggling to Property Leads",
+    "ListingsPage: Can toggle back to 'Listings' destination",
+    "ListingsPage: File input exists and is functional"
+  ],
+  "ui_consistency_verified": {
+    "modal_title": "Both pages show 'Import CSV' title with FileSpreadsheet icon",
+    "modal_description": "Both pages show 'Import properties from a CSV file (MLS format supported)'",
+    "destination_buttons": "Both pages have 'Property Leads' and 'Listings' toggle buttons with correct icons",
+    "button_order": "PropertyLeadsPage shows 'Property Leads' first, ListingsPage shows 'Listings' first",
+    "default_selection": "Each page defaults to its own destination (amber highlight)",
+    "description_text": "Dynamic text updates based on selected destination",
+    "file_input": "Both pages have file input with 'Choose File' button",
+    "expected_columns_info": "Both pages show expected CSV columns info",
+    "action_buttons": "Both pages have Cancel and Import buttons"
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only testing)",
+    "frontend": "100% (14/14 tests passed)"
+  },
+  "test_credentials": {
+    "email": "mel@a2gdesigns.com",
+    "password": "BigDaddy2016!!"
+  },
+  "seed_data_creation": "None - used existing data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Unified CSV import modal is fully functional on both PropertyLeadsPage and ListingsPage. The modal allows users to choose destination (Property Leads or Listings) before importing. Default destination is context-aware - PropertyLeadsPage defaults to 'leads', ListingsPage defaults to 'listings'. Import button is correctly disabled until a file is selected. Backend import endpoints (listingsAPI.importCSV and propertyLeadsAPI.importCSV) were tested in previous iterations.",
+  "features_verified": {
+    "property_leads_import_modal": "Working - opens correctly with 'Property Leads' as default destination",
+    "listings_import_modal": "Working - opens correctly with 'Listings' as default destination",
+    "destination_toggle": "Working - can switch between Property Leads and Listings on both pages",
+    "file_input": "Working - file input accepts CSV files",
+    "import_button_disabled": "Working - Import button is disabled until file is selected",
+    "modal_ui_consistency": "Verified - both pages have consistent modal UI elements"
+  }
+}
