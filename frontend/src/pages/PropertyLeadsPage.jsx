@@ -33,7 +33,6 @@ import { propertyLeadsAPI, listingsAPI } from '../lib/api';
 
 const PropertyLeadsPage = () => {
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
   
   const [leads, setLeads] = useState([]);
   const [stats, setStats] = useState(null);
