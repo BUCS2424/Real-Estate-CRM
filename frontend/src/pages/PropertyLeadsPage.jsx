@@ -228,8 +228,8 @@ const PropertyLeadsPage = () => {
           <p className="text-muted-foreground">Manage property-centric leads imported from CSV</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowImportModal(true)}>
-            <Upload className="w-4 h-4 mr-2" />
+          <Button variant="outline" onClick={() => setShowImportModal(true)} data-testid="import-csv-btn">
+            <FileSpreadsheet className="w-4 h-4 mr-2" />
             Import CSV
           </Button>
           <Button onClick={() => setShowAddModal(true)} className="bg-amber-500 hover:bg-amber-600 text-black" data-testid="add-property-btn">
