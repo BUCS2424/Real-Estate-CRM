@@ -25,10 +25,11 @@ import {
   RefreshCw,
   Building2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Users
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { propertyLeadsAPI } from '../lib/api';
+import { propertyLeadsAPI, listingsAPI } from '../lib/api';
 
 const PropertyLeadsPage = () => {
   const navigate = useNavigate();
