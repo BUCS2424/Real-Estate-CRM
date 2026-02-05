@@ -113,13 +113,22 @@ const PropertyLeadsPage = () => {
       const formData = new FormData();
       formData.append('file', importFile);
       
-      const res = await propertyLeadsAPI.importCSV(formData);
+      let res;
+      if (importDestination === 'leads') {
+        res = await propertyLeadsAPI.importCSV(formData);
+      } else {
+        res = await listingsAPI.importCSV(formData);
+      }
+      
       setImportResult(res.data);
       
       if (res.data.imported > 0) {
-        toast.success(`Imported ${res.data.imported} properties`);
-        fetchLeads();
-        fetchStats();
+        toast.success(`Imported ${res.data.imported} records to ${importDestination === 'leads' ? 'Property Leads' : 'Listings'}`);
+        // Refresh leads if imported to leads
+        if (importDestination === 'leads') {
+          fetchLeads();
+          fetchStats();
+        }
       }
     } catch (error) {
       toast.error('Import failed');
