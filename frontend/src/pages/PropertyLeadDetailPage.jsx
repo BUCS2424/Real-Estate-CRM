@@ -1015,46 +1015,40 @@ const PropertyLeadDetailPage = () => {
                       Brochure Generator
                     </CardTitle>
                     <CardDescription>
-                      Create personalized brochures for direct mail or email
+                      Create beautifully designed property brochures
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div>
-                      <Label className="text-sm text-muted-foreground mb-2 block">Template Style</Label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {[
-                          { id: 'flyer', label: 'Flyer', desc: '8.5x11' },
-                          { id: 'postcard', label: 'Postcard', desc: '6x4' },
-                          { id: 'trifold', label: 'Tri-fold', desc: 'Foldable' }
-                        ].map((template) => (
-                          <button
-                            key={template.id}
-                            onClick={() => setBrochureTemplate(template.id)}
-                            className={`p-3 rounded-lg border-2 transition-all text-center ${
-                              brochureTemplate === template.id 
-                                ? 'border-amber-500 bg-amber-500/10' 
-                                : 'border-border hover:border-amber-500/50'
-                            }`}
-                          >
-                            <p className="font-medium text-sm">{template.label}</p>
-                            <p className="text-xs text-muted-foreground">{template.desc}</p>
-                          </button>
-                        ))}
+                    <div className="p-4 rounded-lg bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border border-amber-200 dark:border-amber-800">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="p-2 bg-amber-500/20 rounded-lg">
+                          <FileText className="w-6 h-6 text-amber-600" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-amber-900 dark:text-amber-100">Professional Brochures</p>
+                          <p className="text-sm text-amber-700 dark:text-amber-300">8.5" x 11" luxury design with QR codes</p>
+                        </div>
                       </div>
+                      <ul className="text-sm text-amber-800 dark:text-amber-200 space-y-1 mb-4">
+                        <li className="flex items-center gap-2">
+                          <CheckCircle className="w-3 h-3" /> Navy & gold luxury theme
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <CheckCircle className="w-3 h-3" /> Property details & valuation
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <CheckCircle className="w-3 h-3" /> Agent contact with QR code
+                        </li>
+                      </ul>
                     </div>
                     
                     <div className="flex gap-2">
                       <Button 
-                        onClick={handleGenerateBrochure} 
-                        disabled={generatingBrochure}
+                        onClick={() => setShowBrochureModal(true)} 
                         className="flex-1 bg-amber-500 hover:bg-amber-600 text-black"
                       >
-                        {generatingBrochure ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <Printer className="w-4 h-4 mr-2" />
-                        )}
-                        Download PDF
+                        <Printer className="w-4 h-4 mr-2" />
+                        Generate Brochure
                       </Button>
                       <Button 
                         variant="outline"
@@ -1063,15 +1057,6 @@ const PropertyLeadDetailPage = () => {
                         <Send className="w-4 h-4 mr-2" />
                         Email
                       </Button>
-                    </div>
-                    
-                    <div className="p-3 bg-muted/50 rounded-lg text-sm">
-                      <p className="flex items-center gap-2">
-                        <QrCode className="w-4 h-4 text-amber-500" />
-                        <span className="text-muted-foreground">
-                          QR code will link to landing page (if published)
-                        </span>
-                      </p>
                     </div>
                   </CardContent>
                 </Card>
