@@ -751,6 +751,67 @@ const PropertyLeadsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* SMS Modal */}
+      <Dialog open={showSMSModal} onOpenChange={(open) => { setShowSMSModal(open); if (!open) { setSmsMessage(''); setSmsRecipient(null); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-green-500" />
+              Send SMS
+            </DialogTitle>
+            <DialogDescription>
+              Send a text message to property owner
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="p-3 rounded-lg bg-muted/50">
+              <p className="text-sm font-medium">{smsRecipient?.owner_name || smsRecipient?.address}</p>
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <Phone className="w-3 h-3" />
+                {smsRecipient?.owner_phone || smsRecipient?.phone}
+              </p>
+            </div>
+            
+            <div>
+              <Label>Message</Label>
+              <Textarea
+                value={smsMessage}
+                onChange={(e) => setSmsMessage(e.target.value)}
+                placeholder="Type your message..."
+                rows={4}
+                maxLength={160}
+                className="mt-2"
+              />
+              <p className="text-xs text-muted-foreground mt-1 text-right">
+                {smsMessage.length}/160 characters
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setShowSMSModal(false)}>Cancel</Button>
+            <Button 
+              onClick={handleSendSMS} 
+              disabled={!smsMessage.trim() || sendingSMS}
+              className="bg-green-500 hover:bg-green-600 text-white"
+            >
+              {sendingSMS ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  Send SMS
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
