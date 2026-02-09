@@ -279,7 +279,7 @@ const SellerLeadsPage = () => {
 
       {/* Filters */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 space-y-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -315,6 +315,40 @@ const SellerLeadsPage = () => {
             <Button variant="outline" onClick={() => { fetchLeads(); fetchStats(); }}>
               <RefreshCw className="w-4 h-4" />
             </Button>
+          </div>
+          
+          {/* Alphabet Filter */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select value={nameFilter} onValueChange={setNameFilter}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="last">Last Name</SelectItem>
+                <SelectItem value="first">First Name</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex gap-1 flex-wrap">
+              <Button
+                variant={selectedLetter === null ? "default" : "ghost"}
+                size="sm"
+                className={`w-8 h-8 p-0 ${selectedLetter === null ? 'bg-amber-500 hover:bg-amber-600 text-black' : ''}`}
+                onClick={() => setSelectedLetter(null)}
+              >
+                All
+              </Button>
+              {ALPHABET.map(letter => (
+                <Button
+                  key={letter}
+                  variant={selectedLetter === letter ? "default" : "ghost"}
+                  size="sm"
+                  className={`w-8 h-8 p-0 ${selectedLetter === letter ? 'bg-amber-500 hover:bg-amber-600 text-black' : ''}`}
+                  onClick={() => setSelectedLetter(letter)}
+                >
+                  {letter}
+                </Button>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
