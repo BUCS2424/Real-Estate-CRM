@@ -43,7 +43,8 @@ import {
   FileSpreadsheet,
   Smartphone,
   Apple,
-  AlertCircle
+  AlertCircle,
+  MessageSquare
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { contactsAPI } from '../lib/api';
