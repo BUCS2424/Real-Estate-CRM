@@ -46,6 +46,8 @@ const PRIORITY_OPTIONS = [
   { value: 'urgent', label: 'Urgent', color: 'bg-red-500/20 text-red-600' },
 ];
 
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
 const SellerLeadsPage = () => {
   const navigate = useNavigate();
   
@@ -55,6 +57,8 @@ const SellerLeadsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
+  const [selectedLetter, setSelectedLetter] = useState(null);
+  const [nameFilter, setNameFilter] = useState('last'); // 'first' or 'last'
   
   // Add modal
   const [showAddModal, setShowAddModal] = useState(false);
