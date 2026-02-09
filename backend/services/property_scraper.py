@@ -324,83 +324,104 @@ class PropertyDataScraper:
         }
         
         try:
+            # Add longer delay for Realtor (they rate limit aggressively)
+            await asyncio.sleep(3)
+            
             # Build search URL
-            # Realtor.com URL format: /realestateandhomes-detail/ADDRESS_CITY_STATE_ZIP
             addr_slug = re.sub(r'[^a-zA-Z0-9\s]', '', address).replace(' ', '-')
             city_slug = city.replace(' ', '-')
             search_url = f"https://www.realtor.com/realestateandhomes-detail/{addr_slug}_{city_slug}_{state}"
             if zip_code:
                 search_url += f"_{zip_code}"
             
-            # Add small delay
-            await asyncio.sleep(1)
-            
             connector = aiohttp.TCPConnector(ssl=False)
-            async with aiohttp.ClientSession(headers=self._get_headers('https://www.realtor.com/'), timeout=self.timeout, connector=connector) as session:
-                async with session.get(search_url) as response:
+            headers = self._get_headers('https://www.google.com/')
+            
+            async with aiohttp.ClientSession(headers=headers, timeout=self.timeout, connector=connector) as session:
+                async with session.get(search_url, allow_redirects=True) as response:
                     if response.status == 200:
                         html = await response.text()
                         soup = BeautifulSoup(html, 'lxml')
+                        result["url"] = str(response.url)
                         
-                        # Check if we found the property
-                        if soup.find('div', {'data-testid': 'property-detail'}):
+                        # Look for images in various places
+                        # 1. Check og:image meta tag
+                        og_image = soup.find('meta', property='og:image')
+                        if og_image and og_image.get('content'):
+                            result["images"].append({
+                                "url": og_image.get('content'),
+                                "source": "realtor"
+                            })
                             result["found"] = True
-                            result["url"] = search_url
-                            
-                            # Extract price
-                            price_elem = soup.find('div', {'data-testid': 'list-price'})
-                            if price_elem:
-                                result["data"]["price"] = self._extract_price(price_elem.text)
-                            
-                            # Extract beds/baths/sqft
-                            meta_items = soup.find_all('li', {'data-testid': re.compile(r'property-meta')})
-                            for item in meta_items:
-                                text = item.text.lower()
-                                if 'bed' in text:
-                                    result["data"]["bedrooms"] = self._extract_number(text)
-                                elif 'bath' in text:
-                                    result["data"]["bathrooms"] = self._extract_number(text)
-                                elif 'sqft' in text or 'sq ft' in text:
-                                    result["data"]["sqft"] = self._extract_number(text)
-                            
-                            # Extract images from gallery
-                            gallery_imgs = soup.find_all('img', {'data-testid': re.compile(r'hero-image|gallery')})
-                            for img in gallery_imgs[:20]:
-                                src = img.get('src') or img.get('data-src')
-                                if src:
+                        
+                        # 2. Look for images in script tags
+                        for script in soup.find_all('script'):
+                            if script.string:
+                                # Find image URLs
+                                img_matches = re.findall(r'https://[^"\']+rdcpix\.com/[^"\']+\.(?:jpg|jpeg|png|webp)', script.string)
+                                for img_url in img_matches[:15]:
+                                    clean_url = img_url.split('?')[0]
+                                    if clean_url not in [i['url'] for i in result["images"]]:
+                                        result["images"].append({
+                                            "url": clean_url,
+                                            "source": "realtor"
+                                        })
+                                        result["found"] = True
+                        
+                        # 3. Look in img tags
+                        for img in soup.find_all('img'):
+                            src = img.get('src', '') or img.get('data-src', '')
+                            if src and ('rdcpix' in src or 'realtor' in src) and any(ext in src.lower() for ext in ['.jpg', '.jpeg', '.png']):
+                                clean_url = src.split('?')[0]
+                                if clean_url not in [i['url'] for i in result["images"]]:
                                     result["images"].append({
-                                        "url": src,
+                                        "url": clean_url,
                                         "source": "realtor"
                                     })
-                            
-                            # Also check meta og:image
-                            og_image = soup.find('meta', property='og:image')
-                            if og_image and og_image.get('content'):
-                                result["images"].insert(0, {
-                                    "url": og_image.get('content'),
-                                    "source": "realtor"
-                                })
+                                    result["found"] = True
                         
-                        # Try JSON-LD data
-                        scripts = soup.find_all('script', type='application/ld+json')
-                        for script in scripts:
+                        # Extract property data
+                        page_text = soup.get_text()
+                        
+                        # Price
+                        price_match = re.search(r'\$[\d,]+', page_text)
+                        if price_match:
+                            result["data"]["price"] = self._extract_price(price_match.group())
+                        
+                        # Beds/Baths/Sqft
+                        bed_match = re.search(r'(\d+)\s*(?:bed|bd)', page_text, re.I)
+                        bath_match = re.search(r'(\d+\.?\d*)\s*(?:bath|ba)', page_text, re.I)
+                        sqft_match = re.search(r'([\d,]+)\s*(?:sqft|sq\s*ft)', page_text, re.I)
+                        
+                        if bed_match:
+                            result["data"]["bedrooms"] = int(bed_match.group(1))
+                        if bath_match:
+                            result["data"]["bathrooms"] = float(bath_match.group(1))
+                        if sqft_match:
+                            result["data"]["sqft"] = int(sqft_match.group(1).replace(',', ''))
+                        
+                        # Check JSON-LD data
+                        for script in soup.find_all('script', type='application/ld+json'):
                             try:
                                 data = json.loads(script.string)
-                                if isinstance(data, dict) and data.get('@type') == 'SingleFamilyResidence':
-                                    result["found"] = True
-                                    result["data"].update({
-                                        "description": data.get('description'),
-                                        "sqft": data.get('floorSize', {}).get('value') if isinstance(data.get('floorSize'), dict) else None,
-                                    })
-                                    if data.get('image'):
-                                        images = data['image'] if isinstance(data['image'], list) else [data['image']]
-                                        for img_url in images[:20]:
-                                            result["images"].append({
-                                                "url": img_url,
-                                                "source": "realtor"
-                                            })
+                                if isinstance(data, dict):
+                                    if data.get('@type') in ['SingleFamilyResidence', 'House', 'Apartment']:
+                                        result["found"] = True
+                                        if data.get('description'):
+                                            result["data"]["description"] = data['description']
+                                        if data.get('image'):
+                                            images = data['image'] if isinstance(data['image'], list) else [data['image']]
+                                            for img_url in images[:10]:
+                                                if img_url not in [i['url'] for i in result["images"]]:
+                                                    result["images"].append({
+                                                        "url": img_url,
+                                                        "source": "realtor"
+                                                    })
                             except:
                                 continue
+                                
+                    elif response.status == 429:
+                        result["error"] = "Rate limited - try again later"
                     else:
                         result["error"] = f"HTTP {response.status}"
                         
