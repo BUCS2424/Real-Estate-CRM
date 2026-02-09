@@ -202,6 +202,42 @@ const SellerLeadsPage = () => {
     setShowSMSModal(true);
   };
 
+  const openEmailModal = (lead, e) => {
+    e.stopPropagation();
+    setEmailRecipient(lead);
+    setEmailSubject('');
+    setEmailBody('');
+    setShowEmailModal(true);
+  };
+
+  const getSignatureText = () => {
+    if (!userSignature) return '';
+    const sig = userSignature;
+    let text = '\n\n--\n';
+    if (sig.name) text += sig.name + '\n';
+    if (sig.title) text += sig.title + '\n';
+    if (sig.company) text += sig.company + '\n';
+    if (sig.phone) text += 'Phone: ' + sig.phone + '\n';
+    if (sig.email) text += 'Email: ' + sig.email + '\n';
+    if (sig.website) text += sig.website + '\n';
+    return text;
+  };
+
+  const handleSendEmail = () => {
+    if (!emailRecipient?.email) return;
+    
+    const signature = getSignatureText();
+    const fullBody = emailBody + signature;
+    
+    const mailtoUrl = `mailto:${emailRecipient.email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(fullBody)}`;
+    window.open(mailtoUrl, '_blank');
+    
+    setShowEmailModal(false);
+    setEmailSubject('');
+    setEmailBody('');
+    toast.success('Opening email client...');
+  };
+
   const formatCurrency = (value) => {
     if (!value) return '-';
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
