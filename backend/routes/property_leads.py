@@ -200,6 +200,84 @@ async def delete_note(lead_id: str, note_id: str, current_user: dict = Depends(g
     return {"message": "Note deleted"}
 
 
+@router.post("/{lead_id}/convert-to-showcase")
+async def convert_to_showcase(lead_id: str, current_user: dict = Depends(get_current_user)):
+    """Convert a property lead to a showcase listing"""
+    lead = await db.property_leads.find_one({"id": lead_id}, {"_id": 0})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Property lead not found")
+    
+    # Check if already converted
+    if lead.get("status") == "converted":
+        raise HTTPException(status_code=400, detail="This property has already been converted")
+    
+    # Create listing from lead data
+    listing_id = str(uuid.uuid4())
+    listing_data = {
+        "id": listing_id,
+        "address": lead.get("address", ""),
+        "city": lead.get("city", ""),
+        "state": lead.get("state", ""),
+        "zip_code": lead.get("zip_code", ""),
+        "county": lead.get("county", ""),
+        "property_type": lead.get("property_type", "Single Family"),
+        "bedrooms": lead.get("bedrooms"),
+        "bathrooms": lead.get("bathrooms"),
+        "sqft": lead.get("sqft"),
+        "lot_size": lead.get("lot_size"),
+        "year_built": lead.get("year_built"),
+        "price": lead.get("estimated_value") or lead.get("price"),
+        "description": lead.get("description", ""),
+        "features": lead.get("features", []),
+        "status": "active",
+        "source": "property_lead",
+        "source_lead_id": lead_id,
+        "owner_name": lead.get("owner_name"),
+        "owner_email": lead.get("owner_email"),
+        "owner_phone": lead.get("owner_phone"),
+        "gallery_images": lead.get("gallery_images", []),
+        "created_by": current_user["name"],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Insert listing
+    await db.listings.insert_one(listing_data)
+    
+    # Update lead status to converted
+    await db.property_leads.update_one(
+        {"id": lead_id},
+        {
+            "$set": {
+                "status": "converted",
+                "converted_to_listing_id": listing_id,
+                "converted_at": datetime.now(timezone.utc).isoformat(),
+                "converted_by": current_user["name"],
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    # Add activity log
+    activity = {
+        "type": "converted_to_listing",
+        "description": f"Converted to Showcase Listing by {current_user['name']}",
+        "user": current_user["name"],
+        "listing_id": listing_id,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+    await db.property_leads.update_one(
+        {"id": lead_id},
+        {"$push": {"activity": activity}}
+    )
+    
+    return {
+        "message": "Property lead converted to showcase listing",
+        "listing_id": listing_id,
+        "lead_id": lead_id
+    }
+
+
 @router.post("/{lead_id}/pull-owner-info")
 async def pull_owner_info(lead_id: str, current_user: dict = Depends(get_current_user)):
     """Pull owner information from county tax records"""
