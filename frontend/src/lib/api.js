@@ -63,6 +63,9 @@ export const contactsAPI = {
     if (filters.tags) params.append('tags', filters.tags);
     return api.get(`/contacts/export/vcard?${params.toString()}`, { responseType: 'blob' });
   },
+  importVCard: (formData) => api.post('/contacts/import-vcard', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
 };
 
 // Deals
