@@ -1657,6 +1657,17 @@ const PropertyLeadDetailPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Brochure Generator Modal */}
+      <BrochureGeneratorModal
+        isOpen={showBrochureModal}
+        onClose={() => setShowBrochureModal(false)}
+        leadId={id}
+        leadAddress={lead?.address}
+        onComplete={() => {
+          toast.success('Brochure generated successfully!');
+        }}
+      />
     </div>
   );
 };
