@@ -306,6 +306,96 @@ async def import_contacts(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to parse file: {str(e)}")
 
+@router.post("/import-vcard")
+async def import_contacts_vcard(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Import contacts from vCard (.vcf) file - supports iPhone, Android, Outlook exports"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    if not file.filename.lower().endswith(('.vcf', '.vcard')):
+        raise HTTPException(status_code=400, detail="File must be a .vcf or .vcard file")
+    
+    try:
+        content = await file.read()
+        content_str = content.decode('utf-8', errors='ignore')
+        
+        # Parse vCard content
+        vcard_contacts = parse_vcard(content_str)
+        
+        if not vcard_contacts:
+            return {"imported": 0, "skipped": 0, "errors": ["No contacts found in file"]}
+        
+        imported = 0
+        skipped = 0
+        errors = []
+        now = datetime.now(timezone.utc).isoformat()
+        
+        for vc in vcard_contacts:
+            try:
+                # Build name from vCard data
+                first_name = vc.get('first_name', '')
+                last_name = vc.get('last_name', '')
+                full_name = vc.get('full_name', '')
+                
+                # If no first/last but have full name, split it
+                if not first_name and not last_name and full_name:
+                    parts = full_name.strip().split(' ', 1)
+                    first_name = parts[0]
+                    last_name = parts[1] if len(parts) > 1 else ''
+                
+                # Skip if no name
+                name = f"{first_name} {last_name}".strip()
+                if not name:
+                    skipped += 1
+                    continue
+                
+                email = vc.get('email', '')
+                
+                # Check for duplicate by email
+                if email:
+                    existing = await db.contacts.find_one({"email": email.lower()})
+                    if existing:
+                        skipped += 1
+                        continue
+                
+                # Create contact document
+                contact_doc = {
+                    "id": str(uuid.uuid4()),
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "name": name,
+                    "email": email.lower() if email else None,
+                    "phone": vc.get('phone'),
+                    "company": vc.get('company'),
+                    "position": vc.get('position'),
+                    "notes": vc.get('notes'),
+                    "tags": vc.get('tags', []),
+                    "category": None,
+                    "status": "new",
+                    "lead_score": 0,
+                    "created_at": now,
+                    "updated_at": now,
+                    "created_by": str(current_user.get("id", current_user.get("_id", "")))
+                }
+                
+                await db.contacts.insert_one(contact_doc)
+                imported += 1
+                
+            except Exception as e:
+                errors.append(str(e))
+        
+        return {
+            "imported": imported,
+            "skipped": skipped,
+            "errors": errors[:5]
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to parse vCard: {str(e)}")
+
 @router.get("/export/csv")
 async def export_contacts_csv(
     category: Optional[str] = Query(None, description="Filter by category: buyer, seller"),
