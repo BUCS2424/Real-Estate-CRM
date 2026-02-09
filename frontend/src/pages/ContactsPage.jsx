@@ -885,6 +885,11 @@ export const ContactsPage = () => {
                         {contact.category && <Badge className={getCategoryColor(contact.category)}>{contact.category?.toUpperCase()}</Badge>}
                       </div>
                       <div className="flex gap-1">
+                        {contact.email && (
+                          <Button variant="ghost" size="icon" onClick={(e) => openEmailModal(contact, e)} className="text-blue-500 hover:text-blue-600" title="Send Email">
+                            <Mail className="w-4 h-4" />
+                          </Button>
+                        )}
                         {contact.phone && (
                           <Button variant="ghost" size="icon" onClick={(e) => openSMSModal(contact, e)} className="text-green-500 hover:text-green-600" title="Send SMS">
                             <MessageSquare className="w-4 h-4" />
