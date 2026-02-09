@@ -522,6 +522,17 @@ const SellerLeadsPage = () => {
                         </Badge>
                       </div>
                       <div className="flex gap-1">
+                        {lead.email && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={(e) => openEmailModal(lead, e)}
+                            className="text-blue-500 hover:text-blue-600"
+                            title="Send Email"
+                          >
+                            <Mail className="w-4 h-4" />
+                          </Button>
+                        )}
                         {lead.phone && (
                           <Button 
                             variant="ghost" 
