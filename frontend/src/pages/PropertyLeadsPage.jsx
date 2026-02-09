@@ -67,6 +67,12 @@ const PropertyLeadsPage = () => {
     sqft: '',
     estimated_value: ''
   });
+  
+  // SMS modal
+  const [showSMSModal, setShowSMSModal] = useState(false);
+  const [smsRecipient, setSmsRecipient] = useState(null);
+  const [smsMessage, setSmsMessage] = useState('');
+  const [sendingSMS, setSendingSMS] = useState(false);
 
   useEffect(() => {
     fetchLeads();
