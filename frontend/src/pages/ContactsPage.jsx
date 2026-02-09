@@ -539,6 +539,12 @@ export const ContactsPage = () => {
   const [importing, setImporting] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [importResult, setImportResult] = useState(null);
+  
+  // SMS modal
+  const [showSMSModal, setShowSMSModal] = useState(false);
+  const [smsRecipient, setSmsRecipient] = useState(null);
+  const [smsMessage, setSmsMessage] = useState('');
+  const [sendingSMS, setSendingSMS] = useState(false);
 
   useEffect(() => {
     fetchContacts();
