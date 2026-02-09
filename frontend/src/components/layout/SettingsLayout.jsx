@@ -44,6 +44,13 @@ const settingsMenu = [
     ]
   },
   {
+    category: 'Profile',
+    icon: UserCog,
+    items: [
+      { path: '/settings/profile/signature', label: 'Email Signature', icon: Mail },
+    ]
+  },
+  {
     category: 'Admin',
     icon: Shield,
     items: [
