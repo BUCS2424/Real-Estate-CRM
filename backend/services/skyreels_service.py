@@ -57,18 +57,17 @@ class SkyReelsService:
         if not self.api_key:
             return {"success": False, "error": "SkyReels API key not configured"}
         
-        # Try Vyro/Imagine API first
-        result = await self._try_vyro_api(image_url, image_bytes, prompt, style, aspect_ratio)
-        if result.get("success"):
-            return result
-        
-        # Try PiAPI as fallback
+        # Try PiAPI first (primary provider for user's API key)
         result = await self._try_piapi(image_url, prompt, aspect_ratio, duration)
         if result.get("success"):
             return result
         
-        # Try direct SkyReels API
-        result = await self._try_skyreels_direct(image_url, prompt, audio_url, aspect_ratio)
+        # Try Vyro/Imagine API as fallback
+        result = await self._try_vyro_api(image_url, image_bytes, prompt, style, aspect_ratio)
+        if result.get("success"):
+            return result
+        
+        # Return the PiAPI error (most relevant)
         return result
     
     async def _try_vyro_api(
