@@ -107,7 +107,8 @@ async def create_seller_lead(lead_data: dict, current_user: dict = Depends(get_c
     
     result = await db.leads.insert_one(lead)
     lead["id"] = str(result.inserted_id)
-    del lead["_id"] if "_id" in lead else None
+    if "_id" in lead:
+        del lead["_id"]
     
     return lead
 
