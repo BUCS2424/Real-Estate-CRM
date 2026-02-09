@@ -80,6 +80,12 @@ const SellerLeadsPage = () => {
     status: 'new',
     priority: 'medium'
   });
+  
+  // SMS modal
+  const [showSMSModal, setShowSMSModal] = useState(false);
+  const [smsRecipient, setSmsRecipient] = useState(null);
+  const [smsMessage, setSmsMessage] = useState('');
+  const [sendingSMS, setSendingSMS] = useState(false);
 
   useEffect(() => {
     fetchLeads();
