@@ -430,6 +430,17 @@ export const leadScoringAPI = {
   seedDefaults: () => api.post('/lead-scoring/seed-defaults'),
 };
 
+// Email API (SMTP-based email sending)
+export const smtpEmailAPI = {
+  // SMTP Settings
+  getSettings: () => api.get('/email/smtp-settings'),
+  saveSettings: (data) => api.post('/email/smtp-settings', data),
+  testConnection: (email) => api.post('/email/smtp-settings/test', { email }),
+  
+  // Send Email
+  send: (data) => api.post('/email/send', data),
+};
+
 // Seed data
 export const seedAPI = {
   seed: () => api.post('/seed'),
