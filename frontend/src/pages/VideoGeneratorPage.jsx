@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Video, Upload, Play, Clock, AlertCircle, CheckCircle, Loader2, Image as ImageIcon, RefreshCw } from 'lucide-react';
+import { Video, Upload, Play, Clock, AlertCircle, CheckCircle, Loader2, Image as ImageIcon, RefreshCw, Info } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
@@ -11,23 +11,20 @@ import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../lib/api';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
-
 export default function VideoGeneratorPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [checking, setChecking] = useState(false);
   const [history, setHistory] = useState([]);
+  const pollingRef = useRef(null);
   
   // Form state
   const [imageUrl, setImageUrl] = useState('');
-  const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
-  const [prompt, setPrompt] = useState('Professional real estate agent presenting a luxury property with confidence');
-  const [aspectRatio, setAspectRatio] = useState('9:16');
+  const [prompt, setPrompt] = useState('Professional real estate agent presenting a luxury property with confidence. Natural hand gestures, warm smile, making eye contact with the camera.');
+  const [audioUrl, setAudioUrl] = useState('');
   
   // Task tracking
   const [currentTask, setCurrentTask] = useState(null);
@@ -36,6 +33,13 @@ export default function VideoGeneratorPage() {
   useEffect(() => {
     loadConfig();
     loadHistory();
+    
+    // Cleanup polling on unmount
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+      }
+    };
   }, []);
 
   const loadConfig = async () => {
@@ -56,28 +60,14 @@ export default function VideoGeneratorPage() {
     }
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-      setImageUrl('');
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleImageUrlChange = (e) => {
     setImageUrl(e.target.value);
-    setImageFile(null);
     setImagePreview(e.target.value);
   };
 
   const handleGenerate = async () => {
-    if (!imageUrl && !imageFile) {
-      toast.error('Please provide an image URL or upload an image');
+    if (!imageUrl) {
+      toast.error('Please provide an image URL. Upload your image to Media Library first.');
       return;
     }
 
@@ -86,103 +76,97 @@ export default function VideoGeneratorPage() {
     setTaskStatus(null);
 
     try {
-      let response;
-      
-      if (imageFile) {
-        // Upload with file
-        const formData = new FormData();
-        formData.append('image', imageFile);
-        formData.append('prompt', prompt);
-        formData.append('aspect_ratio', aspectRatio);
-        
-        response = await api.post('/skyreels/generate-with-image', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-      } else {
-        // Use URL
-        response = await api.post('/skyreels/generate', {
-          image_url: imageUrl,
-          prompt: prompt,
-          aspect_ratio: aspectRatio
-        });
-      }
+      const response = await api.post('/skyreels/generate', {
+        image_url: imageUrl,
+        prompt: prompt,
+        audio_url: audioUrl || undefined
+      });
 
       const result = response.data;
       
       if (result.success) {
-        if (result.task_id) {
-          setCurrentTask(result.task_id);
-          setTaskStatus({ status: result.status || 'pending', progress: 0 });
-          toast.success('Video generation started! Checking status...');
-          // Start polling for status
-          pollTaskStatus(result.task_id);
-        } else if (result.video_url) {
-          toast.success('Video generated successfully!');
-          setTaskStatus({ status: 'completed', video_url: result.video_url });
-        }
+        const requestId = result.request_id || result.task_id;
+        setCurrentTask(requestId);
+        setTaskStatus({ status: 'processing', progress: 0 });
+        toast.success('Video generation started! This may take a few minutes...');
+        
+        // Start polling for status
+        startPolling(requestId);
       } else {
-        toast.error(result.error || 'Failed to generate video');
+        toast.error(result.error || 'Failed to start video generation');
       }
       
       loadHistory();
     } catch (error) {
       console.error('Generation error:', error);
-      toast.error(error.response?.data?.detail || 'Failed to generate video');
+      toast.error(error.response?.data?.detail || error.response?.data?.error || 'Failed to generate video');
     } finally {
       setGenerating(false);
     }
   };
 
-  const pollTaskStatus = async (taskId) => {
-    let attempts = 0;
-    const maxAttempts = 60; // 5 minutes with 5 second intervals
+  const startPolling = (requestId) => {
+    // Clear any existing polling
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+    }
     
-    const checkStatus = async () => {
+    let attempts = 0;
+    const maxAttempts = 120; // 10 minutes with 5 second intervals
+    
+    pollingRef.current = setInterval(async () => {
       if (attempts >= maxAttempts) {
-        toast.error('Video generation timed out. Please check history later.');
+        clearInterval(pollingRef.current);
+        toast.error('Video generation timed out. Check history later.');
         return;
       }
       
-      setChecking(true);
       try {
-        const response = await api.get(`/skyreels/status/${taskId}?provider=piapi`);
+        const response = await api.get(`/skyreels/status/${requestId}`);
         const result = response.data;
         
         if (result.success) {
+          const status = result.status;
+          
           setTaskStatus({
-            status: result.status,
-            progress: result.progress || 0,
-            video_url: result.video_url
+            status: status,
+            video_url: result.video_url,
+            time_info: result.time_info
           });
           
-          if (result.status === 'completed' || result.status === 'success') {
+          if (status === 'success') {
+            clearInterval(pollingRef.current);
             toast.success('Video generation complete!');
             loadHistory();
-            return;
-          } else if (result.status === 'failed' || result.status === 'error') {
+            
+            // If we have the video URL, show it
+            if (result.video_url) {
+              setTaskStatus(prev => ({ ...prev, video_url: result.video_url }));
+            } else {
+              // Fetch the result
+              const resultResponse = await api.get(`/skyreels/result/${requestId}`);
+              if (resultResponse.data.success && resultResponse.data.video_url) {
+                setTaskStatus(prev => ({ ...prev, video_url: resultResponse.data.video_url }));
+              }
+            }
+          } else if (status === 'error' || status === 'failed') {
+            clearInterval(pollingRef.current);
             toast.error('Video generation failed');
-            return;
           }
         }
         
         attempts++;
-        setTimeout(checkStatus, 5000);
       } catch (error) {
         console.error('Status check error:', error);
         attempts++;
-        setTimeout(checkStatus, 5000);
-      } finally {
-        setChecking(false);
       }
-    };
-    
-    checkStatus();
+    }, 5000); // Poll every 5 seconds
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'completed':
       case 'success':
+      case 'completed':
         return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'failed':
       case 'error':
@@ -195,13 +179,27 @@ export default function VideoGeneratorPage() {
     }
   };
 
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'processing':
+        return 'Generating video... This may take 2-5 minutes';
+      case 'success':
+        return 'Video ready!';
+      case 'error':
+      case 'failed':
+        return 'Generation failed';
+      default:
+        return status;
+    }
+  };
+
   return (
     <div className="space-y-6" data-testid="video-generator-page">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">AI Video Generator</h1>
-          <p className="text-muted-foreground">Create stunning AI-generated videos from images</p>
+          <p className="text-muted-foreground">Create AI avatar videos with SkyReels V3</p>
         </div>
         <Button variant="outline" onClick={loadHistory}>
           <RefreshCw className="h-4 w-4 mr-2" />
@@ -217,12 +215,12 @@ export default function VideoGeneratorPage() {
               {config.configured ? (
                 <>
                   <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span className="text-sm">SkyReels API configured ({config.key_preview})</span>
+                  <span className="text-sm">APIFree.ai SkyReels configured ({config.key_preview})</span>
                 </>
               ) : (
                 <>
                   <AlertCircle className="h-5 w-5 text-amber-500" />
-                  <span className="text-sm">SkyReels API key not configured. Go to Settings → Developer to add your key.</span>
+                  <span className="text-sm">SkyReels API key not configured. Add SKYREELS_API_KEY to backend/.env</span>
                 </>
               )}
             </div>
@@ -239,40 +237,36 @@ export default function VideoGeneratorPage() {
               Generate Video
             </CardTitle>
             <CardDescription>
-              Upload an image or provide a URL to generate an AI video
+              Create an AI-generated talking avatar video
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Image Input */}
-            <div className="space-y-2">
-              <Label>Source Image</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Paste image URL..."
-                  value={imageUrl}
-                  onChange={handleImageUrlChange}
-                  className="flex-1"
-                  data-testid="image-url-input"
-                />
-                <Label className="cursor-pointer">
-                  <div className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors">
-                    <Upload className="h-4 w-4" />
-                    Upload
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                    data-testid="image-upload-input"
-                  />
-                </Label>
+            {/* Info Box */}
+            <div className="flex items-start gap-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-blue-200">
+                <strong>How it works:</strong> Upload your image to the <strong>Media Library</strong> first, 
+                then paste the URL here. The AI will animate the face to create a talking video.
               </div>
+            </div>
+
+            {/* Image URL Input */}
+            <div className="space-y-2">
+              <Label>Avatar Image URL <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="https://... (paste URL from Media Library)"
+                value={imageUrl}
+                onChange={handleImageUrlChange}
+                data-testid="image-url-input"
+              />
+              <p className="text-xs text-muted-foreground">
+                Use a clear headshot or portrait image for best results
+              </p>
             </div>
 
             {/* Image Preview */}
             {imagePreview && (
-              <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
+              <div className="relative aspect-video bg-muted rounded-lg overflow-hidden max-h-48">
                 <img
                   src={imagePreview}
                   alt="Preview"
@@ -286,42 +280,44 @@ export default function VideoGeneratorPage() {
 
             {/* Prompt */}
             <div className="space-y-2">
-              <Label>Prompt</Label>
+              <Label>Video Description / Prompt</Label>
               <Textarea
-                placeholder="Describe what the video should look like..."
+                placeholder="Describe how the person should appear and act..."
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 rows={3}
                 data-testid="prompt-input"
               />
+              <p className="text-xs text-muted-foreground">
+                Describe expressions, gestures, and speaking style
+              </p>
             </div>
 
-            {/* Aspect Ratio */}
+            {/* Audio URL (Optional) */}
             <div className="space-y-2">
-              <Label>Aspect Ratio</Label>
-              <Select value={aspectRatio} onValueChange={setAspectRatio}>
-                <SelectTrigger data-testid="aspect-ratio-select">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="9:16">9:16 (Portrait/Reels)</SelectItem>
-                  <SelectItem value="16:9">16:9 (Landscape)</SelectItem>
-                  <SelectItem value="1:1">1:1 (Square)</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>Audio URL <span className="text-muted-foreground">(optional)</span></Label>
+              <Input
+                placeholder="https://... (audio file for lip-sync)"
+                value={audioUrl}
+                onChange={(e) => setAudioUrl(e.target.value)}
+                data-testid="audio-url-input"
+              />
+              <p className="text-xs text-muted-foreground">
+                Leave empty to use default audio. Upload custom audio to Media Library for personalized narration.
+              </p>
             </div>
 
             {/* Generate Button */}
             <Button 
               onClick={handleGenerate} 
-              disabled={generating || !config?.configured}
+              disabled={generating || !config?.configured || !imageUrl}
               className="w-full"
               data-testid="generate-button"
             >
               {generating ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Generating...
+                  Starting Generation...
                 </>
               ) : (
                 <>
@@ -346,43 +342,58 @@ export default function VideoGeneratorPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Task ID:</span>
-                  <code className="bg-muted px-2 py-1 rounded text-xs">{currentTask}</code>
+                  <span className="text-muted-foreground">Request ID:</span>
+                  <code className="bg-muted px-2 py-1 rounded text-xs">{currentTask.slice(0, 16)}...</code>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Status:</span>
-                  <span className="capitalize font-medium">{taskStatus.status}</span>
+                  <span className="font-medium">{getStatusText(taskStatus.status)}</span>
                 </div>
-                {taskStatus.progress > 0 && (
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Progress:</span>
-                      <span>{taskStatus.progress}%</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full transition-all"
-                        style={{ width: `${taskStatus.progress}%` }}
-                      />
-                    </div>
+                
+                {taskStatus.status === 'processing' && (
+                  <div className="flex items-center gap-2 text-sm text-amber-500">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Checking status every 5 seconds...</span>
                   </div>
                 )}
+                
+                {taskStatus.time_info && (
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    {taskStatus.time_info.submit_time && (
+                      <p>Submitted: {new Date(taskStatus.time_info.submit_time).toLocaleString()}</p>
+                    )}
+                    {taskStatus.time_info.start_execute && (
+                      <p>Started: {new Date(taskStatus.time_info.start_execute).toLocaleString()}</p>
+                    )}
+                  </div>
+                )}
+                
                 {taskStatus.video_url && (
-                  <div className="pt-4">
+                  <div className="pt-4 space-y-3">
                     <video 
                       src={taskStatus.video_url} 
                       controls 
                       className="w-full rounded-lg"
                       data-testid="generated-video"
                     />
-                    <a 
-                      href={taskStatus.video_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="mt-2 inline-block text-sm text-primary hover:underline"
-                    >
-                      Open in new tab
-                    </a>
+                    <div className="flex gap-2">
+                      <a 
+                        href={taskStatus.video_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline"
+                      >
+                        Open in new tab
+                      </a>
+                      <span className="text-muted-foreground">|</span>
+                      <a 
+                        href={taskStatus.video_url} 
+                        download
+                        className="text-sm text-primary hover:underline"
+                      >
+                        Download
+                      </a>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -410,26 +421,41 @@ export default function VideoGeneratorPage() {
                       className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg"
                     >
                       <div className="flex-shrink-0">
-                        {item.result?.success ? (
+                        {item.result?.success || item.status === 'completed' ? (
                           <CheckCircle className="h-5 w-5 text-green-500" />
-                        ) : (
+                        ) : item.result?.error ? (
                           <AlertCircle className="h-5 w-5 text-red-500" />
+                        ) : (
+                          <Clock className="h-5 w-5 text-amber-500" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{item.prompt}</p>
+                        <p className="text-sm font-medium truncate">{item.prompt?.slice(0, 60)}...</p>
                         <p className="text-xs text-muted-foreground">
                           {new Date(item.created_at).toLocaleString()}
                         </p>
-                        {item.result?.video_url && (
+                        {item.video_url && (
                           <a 
-                            href={item.result.video_url}
+                            href={item.video_url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs text-primary hover:underline"
                           >
                             View Video
                           </a>
+                        )}
+                        {item.request_id && !item.video_url && (
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="text-xs p-0 h-auto"
+                            onClick={() => {
+                              setCurrentTask(item.request_id);
+                              startPolling(item.request_id);
+                            }}
+                          >
+                            Check Status
+                          </Button>
                         )}
                       </div>
                     </div>
