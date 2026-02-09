@@ -233,15 +233,15 @@ class SkyReelsService:
         except Exception as e:
             return {"success": False, "error": f"SkyReels exception: {str(e)}"}
     
-    async def check_task_status(self, task_id: str, provider: str = "skyreels") -> Dict[str, Any]:
+    async def check_task_status(self, task_id: str, provider: str = "piapi") -> Dict[str, Any]:
         """Check the status of a video generation task"""
         try:
             headers = {
-                "Authorization": f"Bearer {self.api_key}"
+                "x-api-key": self.api_key
             }
             
             if provider == "piapi":
-                url = f"{PIAPI_URL}/status/{task_id}"
+                url = f"https://api.piapi.ai/api/v1/task/{task_id}"
             else:
                 url = f"https://api.skyreels.ai/v1/tasks/{task_id}"
             
@@ -249,11 +249,12 @@ class SkyReelsService:
             
             if response.status_code == 200:
                 result = response.json()
+                data = result.get("data", result)
                 return {
                     "success": True,
-                    "status": result.get("status"),
-                    "video_url": result.get("video_url") or result.get("output"),
-                    "progress": result.get("progress", 0),
+                    "status": data.get("status"),
+                    "video_url": data.get("output", {}).get("video") if isinstance(data.get("output"), dict) else data.get("output"),
+                    "progress": data.get("progress", 0),
                     "data": result
                 }
             else:
