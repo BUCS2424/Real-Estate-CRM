@@ -56,6 +56,8 @@ const CATEGORY_OPTIONS = [
   { value: 'seller', label: 'Seller', color: 'bg-orange-500/20 text-orange-600', icon: Home },
 ];
 
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
 // Contact Detail Component
 const ContactDetail = ({ contactId, onBack }) => {
   const [contact, setContact] = useState(null);
