@@ -329,14 +329,17 @@ const PropertyLeadDetailPage = () => {
   };
 
   const handleConvertToShowcase = async () => {
+    if (!window.confirm(`Convert "${lead.address}" to Showcase Listing?`)) {
+      return;
+    }
+    
     setConvertingToShowcase(true);
     try {
       const res = await propertyLeadsAPI.convertToShowcase(id);
-      toast.success(`Converted to showcase listing! ${res.data.images_added} images added.`);
-      fetchLead();
+      toast.success('Converted to Showcase Listing');
+      navigate(`/listings/${res.data.listing_id}`);
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to convert to showcase');
-    } finally {
+      toast.error(error.response?.data?.detail || 'Failed to convert');
       setConvertingToShowcase(false);
     }
   };
