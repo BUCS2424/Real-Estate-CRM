@@ -1,6 +1,6 @@
 """
 SkyReels V3 Video Generation Service
-Generates AI avatar videos using SkyReels API
+Generates AI avatar videos using SkyReels API via APIFree.ai
 """
 import os
 import io
@@ -11,14 +11,14 @@ from datetime import datetime
 
 SKYREELS_API_KEY = os.environ.get('SKYREELS_API_KEY')
 
-# API Endpoints - try multiple providers
+# API Endpoints
+APIFREE_URL = "https://api.apifree.ai/v1/chat/completions"
 VYRO_API_URL = "https://api.vyro.ai/v2/video/image-to-video"
 PIAPI_URL = "https://api.piapi.ai/api/v1/task"
-SKYREELS_DIRECT_URL = "https://api.skyreels.ai/v1/generate"
 
 
 class SkyReelsService:
-    """Service for generating AI avatar videos using SkyReels"""
+    """Service for generating AI avatar videos using SkyReels via APIFree.ai"""
     
     def __init__(self, api_key: str = None):
         self.api_key = api_key or SKYREELS_API_KEY
@@ -53,26 +53,85 @@ class SkyReelsService:
         if not self.api_key:
             return {"success": False, "error": "SkyReels API key not configured"}
         
-        # Try Vyro/Imagine API first (user's key appears to be for this provider)
+        # Try APIFree.ai first (user's key is from apifree.ai)
+        result = await self._try_apifree(image_url, prompt, aspect_ratio)
+        if result.get("success"):
+            return result
+        
+        # Try Vyro/Imagine API as fallback
         result = await self._try_vyro_api(image_url, image_bytes, prompt, style, aspect_ratio)
         if result.get("success"):
             return result
         
-        # Try PiAPI as fallback
-        result = await self._try_piapi(image_url, prompt, aspect_ratio, duration)
-        if result.get("success"):
-            return result
-        
-        # Return the Vyro error (most relevant for user's key)
+        # Return the APIFree error (most relevant for user's key)
         return result
     
-    async def _try_vyro_api(
+    async def _try_apifree(
         self,
         image_url: str,
-        image_bytes: bytes,
         prompt: str,
-        style: str,
         aspect_ratio: str
+    ) -> Dict[str, Any]:
+        """Try generating video via APIFree.ai unified gateway"""
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                headers = {
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                }
+                
+                # Build the message content for img2video
+                content = f"Generate video: FPS-24, {prompt}. Aspect ratio: {aspect_ratio}."
+                if image_url:
+                    content += f" Image: {image_url}"
+                
+                payload = {
+                    "model": "Qubico/skyreels",
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": content
+                        }
+                    ],
+                    "aspect_ratio": aspect_ratio
+                }
+                
+                response = await client.post(
+                    APIFREE_URL,
+                    headers=headers,
+                    json=payload
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    # APIFree returns in OpenAI-compatible format
+                    choices = result.get("choices", [])
+                    if choices:
+                        message = choices[0].get("message", {})
+                        video_url = message.get("content") or result.get("video_url") or result.get("output")
+                        return {
+                            "success": True,
+                            "video_url": video_url,
+                            "task_id": result.get("id"),
+                            "provider": "apifree",
+                            "data": result
+                        }
+                    return {
+                        "success": True,
+                        "video_url": result.get("video_url") or result.get("output"),
+                        "task_id": result.get("id"),
+                        "provider": "apifree",
+                        "data": result
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "error": f"APIFree error: {response.status_code}",
+                        "details": response.text
+                    }
+                
+        except Exception as e:
+            return {"success": False, "error": f"APIFree exception: {str(e)}"}
     ) -> Dict[str, Any]:
         """Try generating video via Vyro/Imagine API"""
         try:
