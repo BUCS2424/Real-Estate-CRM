@@ -117,6 +117,7 @@ function App() {
               <Route path="/seller-leads" element={<SellerLeadsPage />} />
               <Route path="/seller-leads/:id" element={<SellerLeadDetailPage />} />
               <Route path="/writer" element={<AIWriterPage />} />
+              <Route path="/video-generator" element={<VideoGeneratorPage />} />
               <Route path="/newsletter" element={<NewsletterPage />} />
               <Route path="/mailing-lists" element={<MailingListsPage />} />
               <Route path="/admin/users" element={<AdminUsersPage />} />
