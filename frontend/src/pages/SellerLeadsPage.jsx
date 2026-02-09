@@ -160,6 +160,17 @@ const SellerLeadsPage = () => {
     return PRIORITY_OPTIONS.find(p => p.value === priority)?.color || 'bg-gray-500/20 text-gray-600';
   };
 
+  const getFirstName = (name) => {
+    if (!name) return '';
+    return name.split(' ')[0] || '';
+  };
+
+  const getLastName = (name) => {
+    if (!name) return '';
+    const parts = name.split(' ');
+    return parts.length > 1 ? parts[parts.length - 1] : parts[0];
+  };
+
   const filteredLeads = leads.filter(lead => {
     const matchesSearch = !searchQuery || 
       lead.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -167,7 +178,15 @@ const SellerLeadsPage = () => {
       lead.property_address?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = filterStatus === 'all' || lead.status === filterStatus;
     const matchesPriority = filterPriority === 'all' || lead.priority === filterPriority;
-    return matchesSearch && matchesStatus && matchesPriority;
+    
+    // Alphabet filter
+    let matchesLetter = true;
+    if (selectedLetter) {
+      const nameToCheck = nameFilter === 'first' ? getFirstName(lead.name) : getLastName(lead.name);
+      matchesLetter = nameToCheck.toUpperCase().startsWith(selectedLetter);
+    }
+    
+    return matchesSearch && matchesStatus && matchesPriority && matchesLetter;
   });
 
   return (
