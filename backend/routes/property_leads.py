@@ -554,3 +554,286 @@ async def export_csv(
         "csv": output.getvalue(),
         "count": len(leads)
     }
+
+
+
+# ============ PROPERTY IMAGES ============
+
+import os
+import shutil
+from fastapi import Form
+from fastapi.responses import FileResponse
+
+PROPERTY_IMAGES_DIR = "/app/backend/static/property-images"
+
+def get_property_images_dir(lead_id: str) -> str:
+    """Get or create the images directory for a property lead"""
+    dir_path = os.path.join(PROPERTY_IMAGES_DIR, lead_id)
+    os.makedirs(dir_path, exist_ok=True)
+    return dir_path
+
+
+@router.get("/{lead_id}/images")
+async def get_property_images(lead_id: str, current_user: dict = Depends(get_current_user)):
+    """Get all images for a property lead"""
+    # Verify lead exists
+    lead = await db.property_leads.find_one({"id": lead_id}, {"_id": 0})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Property lead not found")
+    
+    # Get images from database
+    images = lead.get("gallery_images", [])
+    
+    return {
+        "lead_id": lead_id,
+        "images": images,
+        "total": len(images)
+    }
+
+
+@router.post("/{lead_id}/images/upload")
+async def upload_property_image(
+    lead_id: str,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload an image to a property lead's gallery"""
+    # Verify lead exists
+    lead = await db.property_leads.find_one({"id": lead_id}, {"_id": 0})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Property lead not found")
+    
+    # Validate file type
+    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, PNG, GIF, WEBP allowed.")
+    
+    # Create directory for this property
+    images_dir = get_property_images_dir(lead_id)
+    
+    # Generate unique filename
+    file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+    unique_filename = f"{uuid.uuid4().hex[:12]}.{file_ext}"
+    file_path = os.path.join(images_dir, unique_filename)
+    
+    # Save file
+    try:
+        content = await file.read()
+        with open(file_path, "wb") as f:
+            f.write(content)
+        
+        file_size = len(content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
+    
+    # Create image record
+    image_record = {
+        "id": str(uuid.uuid4()),
+        "filename": unique_filename,
+        "original_name": file.filename,
+        "url": f"/api/property-leads/{lead_id}/images/file/{unique_filename}",
+        "size": file_size,
+        "content_type": file.content_type,
+        "uploaded_by": current_user["name"],
+        "uploaded_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Update lead with new image
+    await db.property_leads.update_one(
+        {"id": lead_id},
+        {
+            "$push": {"gallery_images": image_record},
+            "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+        }
+    )
+    
+    # Add activity
+    activity = {
+        "type": "image_uploaded",
+        "description": f"Image '{file.filename}' uploaded to gallery",
+        "user": current_user["name"],
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+    await db.property_leads.update_one(
+        {"id": lead_id},
+        {"$push": {"activity": activity}}
+    )
+    
+    return {
+        "message": "Image uploaded successfully",
+        "image": image_record
+    }
+
+
+@router.post("/{lead_id}/images/upload-multiple")
+async def upload_multiple_property_images(
+    lead_id: str,
+    files: List[UploadFile] = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload multiple images to a property lead's gallery"""
+    # Verify lead exists
+    lead = await db.property_leads.find_one({"id": lead_id}, {"_id": 0})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Property lead not found")
+    
+    images_dir = get_property_images_dir(lead_id)
+    uploaded = []
+    errors = []
+    
+    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    
+    for file in files:
+        if file.content_type not in allowed_types:
+            errors.append(f"{file.filename}: Invalid file type")
+            continue
+        
+        try:
+            file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+            unique_filename = f"{uuid.uuid4().hex[:12]}.{file_ext}"
+            file_path = os.path.join(images_dir, unique_filename)
+            
+            content = await file.read()
+            with open(file_path, "wb") as f:
+                f.write(content)
+            
+            image_record = {
+                "id": str(uuid.uuid4()),
+                "filename": unique_filename,
+                "original_name": file.filename,
+                "url": f"/api/property-leads/{lead_id}/images/file/{unique_filename}",
+                "size": len(content),
+                "content_type": file.content_type,
+                "uploaded_by": current_user["name"],
+                "uploaded_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            await db.property_leads.update_one(
+                {"id": lead_id},
+                {"$push": {"gallery_images": image_record}}
+            )
+            
+            uploaded.append(image_record)
+            
+        except Exception as e:
+            errors.append(f"{file.filename}: {str(e)}")
+    
+    # Update timestamp and add activity
+    if uploaded:
+        await db.property_leads.update_one(
+            {"id": lead_id},
+            {"$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        activity = {
+            "type": "images_uploaded",
+            "description": f"{len(uploaded)} images uploaded to gallery",
+            "user": current_user["name"],
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        await db.property_leads.update_one(
+            {"id": lead_id},
+            {"$push": {"activity": activity}}
+        )
+    
+    return {
+        "message": f"Uploaded {len(uploaded)} images",
+        "uploaded": uploaded,
+        "errors": errors
+    }
+
+
+@router.get("/{lead_id}/images/file/{filename}")
+async def get_property_image_file(lead_id: str, filename: str):
+    """Serve a property image file"""
+    file_path = os.path.join(PROPERTY_IMAGES_DIR, lead_id, filename)
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Image not found")
+    
+    return FileResponse(file_path)
+
+
+@router.delete("/{lead_id}/images/{image_id}")
+async def delete_property_image(
+    lead_id: str,
+    image_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete an image from a property lead's gallery"""
+    # Verify lead exists
+    lead = await db.property_leads.find_one({"id": lead_id}, {"_id": 0})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Property lead not found")
+    
+    # Find the image
+    gallery_images = lead.get("gallery_images", [])
+    image_to_delete = None
+    for img in gallery_images:
+        if img["id"] == image_id:
+            image_to_delete = img
+            break
+    
+    if not image_to_delete:
+        raise HTTPException(status_code=404, detail="Image not found")
+    
+    # Delete the file
+    file_path = os.path.join(PROPERTY_IMAGES_DIR, lead_id, image_to_delete["filename"])
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    
+    # Remove from database
+    await db.property_leads.update_one(
+        {"id": lead_id},
+        {
+            "$pull": {"gallery_images": {"id": image_id}},
+            "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+        }
+    )
+    
+    # Add activity
+    activity = {
+        "type": "image_deleted",
+        "description": f"Image '{image_to_delete['original_name']}' removed from gallery",
+        "user": current_user["name"],
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+    await db.property_leads.update_one(
+        {"id": lead_id},
+        {"$push": {"activity": activity}}
+    )
+    
+    return {"message": "Image deleted successfully"}
+
+
+@router.put("/{lead_id}/images/reorder")
+async def reorder_property_images(
+    lead_id: str,
+    image_ids: List[str],
+    current_user: dict = Depends(get_current_user)
+):
+    """Reorder images in the gallery"""
+    lead = await db.property_leads.find_one({"id": lead_id}, {"_id": 0})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Property lead not found")
+    
+    current_images = lead.get("gallery_images", [])
+    images_by_id = {img["id"]: img for img in current_images}
+    
+    # Reorder based on provided order
+    reordered = []
+    for img_id in image_ids:
+        if img_id in images_by_id:
+            reordered.append(images_by_id[img_id])
+    
+    # Add any images not in the provided list at the end
+    for img in current_images:
+        if img["id"] not in image_ids:
+            reordered.append(img)
+    
+    await db.property_leads.update_one(
+        {"id": lead_id},
+        {"$set": {"gallery_images": reordered, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"message": "Images reordered successfully", "images": reordered}
