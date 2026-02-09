@@ -51,7 +51,7 @@ const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/contacts', icon: Users, label: 'Contacts' },
   { type: 'sales', icon: DollarSign, label: 'Sales' },
-  { path: '/listings', icon: Home, label: 'Listings' },
+  { path: '/listings', icon: Home, label: 'Showcase Listings' },
   { path: '/property-lookup', icon: Search, label: 'Property Lookup' },
   { path: '/reviews', icon: Star, label: 'Reviews' },
   { path: '/landing-pages', icon: Layout, label: 'Landing Pages' },
