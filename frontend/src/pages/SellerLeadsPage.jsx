@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Badge } from '../components/ui/badge';
+import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../components/ui/dialog';
 import { 
@@ -25,10 +26,12 @@ import {
   Mail,
   TrendingUp,
   Clock,
-  UserCheck
+  UserCheck,
+  MessageSquare,
+  Send
 } from 'lucide-react';
 import { toast } from 'sonner';
-import api from '../lib/api';
+import api, { contactsAPI } from '../lib/api';
 
 const STATUS_OPTIONS = [
   { value: 'new', label: 'New', color: 'bg-blue-500/20 text-blue-600 border-blue-500/50' },
