@@ -66,6 +66,7 @@ export const contactsAPI = {
   importVCard: (formData) => api.post('/contacts/import-vcard', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
+  sendSMS: (data) => api.post('/contacts/send-sms', data),
 };
 
 // Deals
