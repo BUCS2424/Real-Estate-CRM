@@ -1271,3 +1271,35 @@ Integrated SkyReels V3 API via PiAPI for AI video generation from images.
 - Generation history displays past attempts ✅
 - Sidebar navigation works ✅
 
+
+### APIFree.ai Integration Details (Updated)
+
+**Provider:** APIFree.ai (https://api.apifree.ai)
+**Model:** skywork-ai/skyreels-v3/pro/single-avatar
+
+**Endpoints Used:**
+- `POST /v1/video/submit` - Submit video generation request
+- `GET /v1/video/{request_id}/status` - Check generation status
+- `GET /v1/video/{request_id}/result` - Get final video URL
+
+**Request Format:**
+```json
+{
+  "model": "skywork-ai/skyreels-v3/pro/single-avatar",
+  "first_frame_image": "URL to avatar image",
+  "audios": ["URL to audio file"],
+  "prompt": "Description of video content"
+}
+```
+
+**Async Workflow:**
+1. Submit request → receive request_id
+2. Poll status endpoint until status = "success"
+3. Get result with video URL
+
+**Status Values:**
+- `queuing` - Request in queue
+- `processing` - Video being generated
+- `success` - Complete, video ready
+- `error` - Generation failed
+
