@@ -21,7 +21,8 @@ import {
   Search,
   Star,
   MapPinHouse,
-  DollarSign
+  DollarSign,
+  Wrench
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
