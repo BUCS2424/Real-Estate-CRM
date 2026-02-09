@@ -95,6 +95,9 @@ const PropertyLeadDetailPage = () => {
   const [generatingData, setGeneratingData] = useState(false);
   const [convertingToShowcase, setConvertingToShowcase] = useState(false);
   const [showImagesModal, setShowImagesModal] = useState(false);
+  
+  // Brochure generator modal
+  const [showBrochureModal, setShowBrochureModal] = useState(false);
 
   useEffect(() => {
     if (id) {
