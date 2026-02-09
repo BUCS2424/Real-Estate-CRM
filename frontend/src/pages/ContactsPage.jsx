@@ -547,30 +547,17 @@ export const ContactsPage = () => {
   const [smsMessage, setSmsMessage] = useState('');
   const [sendingSMS, setSendingSMS] = useState(false);
   
-  // Email modal
+  // Email modal (using EmailComposerModal component)
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailRecipient, setEmailRecipient] = useState(null);
-  const [emailSubject, setEmailSubject] = useState('');
-  const [emailBody, setEmailBody] = useState('');
-  const [userSignature, setUserSignature] = useState(null);
 
   useEffect(() => {
     fetchContacts();
-    fetchSignature();
   }, []);
 
   useEffect(() => {
     if (id) setSelectedContact(id);
   }, [id]);
-
-  const fetchSignature = async () => {
-    try {
-      const res = await api.get('/users/me/signature');
-      setUserSignature(res.data);
-    } catch (error) {
-      // No signature set
-    }
-  };
 
   const fetchContacts = async () => {
     setLoading(true);
