@@ -395,6 +395,17 @@ export const propertyLeadsAPI = {
   // Property data scraping
   generateData: (id) => api.post(`/property-leads/${id}/generate-data`),
   convertToShowcase: (id) => api.post(`/property-leads/${id}/convert-to-showcase`),
+  
+  // Property Images Gallery
+  getImages: (id) => api.get(`/property-leads/${id}/images`),
+  uploadImage: (id, formData) => api.post(`/property-leads/${id}/images/upload`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  uploadMultipleImages: (id, formData) => api.post(`/property-leads/${id}/images/upload-multiple`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  deleteImage: (id, imageId) => api.delete(`/property-leads/${id}/images/${imageId}`),
+  reorderImages: (id, imageIds) => api.put(`/property-leads/${id}/images/reorder`, imageIds),
 };
 
 // Lead Scoring API
