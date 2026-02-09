@@ -1121,6 +1121,78 @@ export const ContactsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Email Modal */}
+      <Dialog open={showEmailModal} onOpenChange={(open) => { setShowEmailModal(open); if (!open) { setEmailSubject(''); setEmailBody(''); setEmailRecipient(null); } }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="w-5 h-5 text-blue-500" />
+              Compose Email
+            </DialogTitle>
+            <DialogDescription>
+              Send an email to {emailRecipient?.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="p-3 rounded-lg bg-muted/50">
+              <p className="text-sm font-medium">{emailRecipient?.name}</p>
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <Mail className="w-3 h-3" />
+                {emailRecipient?.email}
+              </p>
+            </div>
+            
+            <div>
+              <Label>Subject</Label>
+              <Input
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                placeholder="Enter subject..."
+                className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label>Message</Label>
+              <Textarea
+                value={emailBody}
+                onChange={(e) => setEmailBody(e.target.value)}
+                placeholder="Type your message..."
+                rows={8}
+                className="mt-2"
+              />
+            </div>
+
+            {userSignature && (
+              <div className="p-3 rounded-lg bg-muted/30 border border-dashed">
+                <p className="text-xs text-muted-foreground mb-2">Your signature will be added:</p>
+                <div className="text-sm text-muted-foreground whitespace-pre-line">
+                  --{'\n'}
+                  {userSignature.name && <>{userSignature.name}{'\n'}</>}
+                  {userSignature.title && <>{userSignature.title}{'\n'}</>}
+                  {userSignature.company && <>{userSignature.company}{'\n'}</>}
+                  {userSignature.phone && <>Phone: {userSignature.phone}{'\n'}</>}
+                  {userSignature.email && <>Email: {userSignature.email}{'\n'}</>}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setShowEmailModal(false)}>Cancel</Button>
+            <Button 
+              onClick={handleSendEmail} 
+              disabled={!emailRecipient?.email}
+              className="bg-blue-500 hover:bg-blue-600 text-white"
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Open in Email Client
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
