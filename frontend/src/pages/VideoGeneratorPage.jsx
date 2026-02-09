@@ -40,7 +40,7 @@ export default function VideoGeneratorPage() {
 
   const loadConfig = async () => {
     try {
-      const response = await api.get('/api/skyreels/config');
+      const response = await api.get('/skyreels/config');
       setConfig(response.data);
     } catch (error) {
       console.error('Failed to load config:', error);
@@ -49,7 +49,7 @@ export default function VideoGeneratorPage() {
 
   const loadHistory = async () => {
     try {
-      const response = await api.get('/api/skyreels/history');
+      const response = await api.get('/skyreels/history');
       setHistory(response.data.videos || []);
     } catch (error) {
       console.error('Failed to load history:', error);
