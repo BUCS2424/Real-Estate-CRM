@@ -47,7 +47,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { contactsAPI } from '../lib/api';
+import api, { contactsAPI } from '../lib/api';
 
 const STATUS_OPTIONS = [
   { value: 'new', label: 'New', color: 'bg-blue-500/20 text-blue-600 border-blue-500/50' },

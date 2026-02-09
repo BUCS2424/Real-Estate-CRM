@@ -30,10 +30,11 @@ import {
   Users,
   MessageSquare,
   Phone,
-  Send
+  Send,
+  Mail
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { propertyLeadsAPI, listingsAPI, contactsAPI } from '../lib/api';
+import api, { propertyLeadsAPI, listingsAPI, contactsAPI } from '../lib/api';
 
 const PropertyLeadsPage = () => {
   const navigate = useNavigate();

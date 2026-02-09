@@ -28,7 +28,8 @@ import {
   Clock,
   UserCheck,
   MessageSquare,
-  Send
+  Send,
+  Mail as MailIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api, { contactsAPI } from '../lib/api';
