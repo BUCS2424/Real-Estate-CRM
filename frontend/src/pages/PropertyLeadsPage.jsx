@@ -80,6 +80,9 @@ const PropertyLeadsPage = () => {
   // Email modal (using EmailComposerModal component)
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailRecipient, setEmailRecipient] = useState(null);
+  
+  // Convert to showcase state
+  const [convertingId, setConvertingId] = useState(null);
 
   useEffect(() => {
     fetchLeads();
