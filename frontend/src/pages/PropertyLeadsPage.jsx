@@ -31,8 +31,7 @@ import {
   MessageSquare,
   Phone,
   Send,
-  Mail,
-  Star
+  Mail
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api, { propertyLeadsAPI, listingsAPI, contactsAPI } from '../lib/api';
