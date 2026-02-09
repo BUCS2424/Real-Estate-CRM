@@ -532,6 +532,12 @@ export const ContactsPage = () => {
   const [newContact, setNewContact] = useState({
     name: '', email: '', phone: '', company: '', category: '', status: 'new', budget: '', property_interest: '', notes: ''
   });
+  
+  // Import modal
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importResult, setImportResult] = useState(null);
 
   useEffect(() => {
     fetchContacts();
