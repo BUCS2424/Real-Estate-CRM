@@ -674,9 +674,15 @@ export const ContactsPage = () => {
           <h1 className="text-3xl font-serif text-foreground mb-2">Contacts</h1>
           <p className="text-muted-foreground">Manage your buyers and sellers</p>
         </div>
-        <Button onClick={() => setShowAddModal(true)} className="bg-amber-500 hover:bg-amber-600 text-black" data-testid="add-contact-btn">
-          <Plus className="w-4 h-4 mr-2" />Add Contact
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowImportModal(true)} data-testid="import-contacts-btn">
+            <Upload className="w-4 h-4 mr-2" />
+            Import
+          </Button>
+          <Button onClick={() => setShowAddModal(true)} className="bg-amber-500 hover:bg-amber-600 text-black" data-testid="add-contact-btn">
+            <Plus className="w-4 h-4 mr-2" />Add Contact
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
