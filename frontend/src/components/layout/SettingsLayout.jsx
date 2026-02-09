@@ -22,7 +22,8 @@ import {
   MessageSquare,
   BarChart3,
   Smartphone,
-  Target
+  Target,
+  Phone
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
@@ -35,6 +36,7 @@ const settingsMenu = [
     items: [
       { path: '/settings/developer/general', label: 'General Settings', icon: Cog },
       { path: '/settings/developer/email', label: 'Email / SMTP', icon: Mail },
+      { path: '/settings/developer/telnyx', label: 'Telnyx SMS', icon: Phone },
       { path: '/settings/developer/lead-scoring', label: 'Lead Scoring', icon: Target },
       { path: '/settings/developer/custom-code', label: 'Custom Code', icon: Code },
       { path: '/settings/developer/system-messages', label: 'System Messages', icon: MessageSquare },
