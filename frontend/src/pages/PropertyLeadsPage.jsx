@@ -231,26 +231,6 @@ const PropertyLeadsPage = () => {
     }
   };
 
-  const handleConvertToShowcase = async (lead, e) => {
-    e.stopPropagation();
-    
-    if (!window.confirm(`Convert "${lead.address}" to Showcase Listing?`)) {
-      return;
-    }
-    
-    setConvertingId(lead.id);
-    try {
-      const res = await propertyLeadsAPI.convertToShowcase(lead.id);
-      toast.success('Converted to Showcase Listing');
-      // Navigate to the new listing
-      navigate(`/listings/${res.data.listing_id}`);
-    } catch (error) {
-      const message = error.response?.data?.detail || 'Failed to convert';
-      toast.error(message);
-      setConvertingId(null);
-    }
-  };
-
   const formatCurrency = (value) => {
     if (!value) return '-';
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
