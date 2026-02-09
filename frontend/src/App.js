@@ -148,6 +148,7 @@ function App() {
                 {/* Developer Settings */}
                 <Route path="developer/general" element={<GeneralSettings />} />
                 <Route path="developer/email" element={<EmailSettings />} />
+                <Route path="developer/telnyx" element={<TelnyxSettings />} />
                 <Route path="developer/lead-scoring" element={<LeadScoringSettings />} />
                 <Route path="developer/custom-code" element={<CustomCode />} />
                 <Route path="developer/system-messages" element={<SystemMessages />} />
