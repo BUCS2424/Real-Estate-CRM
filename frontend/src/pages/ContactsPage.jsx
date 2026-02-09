@@ -854,6 +854,114 @@ export const ContactsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Import Contacts Modal */}
+      <Dialog open={showImportModal} onOpenChange={(open) => { setShowImportModal(open); if (!open) { setImportFile(null); setImportResult(null); } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="w-5 h-5 text-amber-500" />
+              Import Contacts
+            </DialogTitle>
+            <DialogDescription>
+              Import contacts from vCard files (.vcf) exported from iPhone, Android, or other devices
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Supported Formats */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="p-3 rounded-lg bg-muted/50 text-center">
+                <Smartphone className="w-6 h-6 mx-auto mb-1 text-green-500" />
+                <p className="text-xs font-medium">Android</p>
+                <p className="text-xs text-muted-foreground">.vcf</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50 text-center">
+                <Apple className="w-6 h-6 mx-auto mb-1 text-gray-500" />
+                <p className="text-xs font-medium">iPhone</p>
+                <p className="text-xs text-muted-foreground">.vcf</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50 text-center">
+                <FileSpreadsheet className="w-6 h-6 mx-auto mb-1 text-blue-500" />
+                <p className="text-xs font-medium">Outlook</p>
+                <p className="text-xs text-muted-foreground">.vcf</p>
+              </div>
+            </div>
+
+            {/* File Upload */}
+            <div>
+              <Label>Select File</Label>
+              <div className="mt-2">
+                <input
+                  type="file"
+                  accept=".vcf,.vcard"
+                  onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                  className="block w-full text-sm text-muted-foreground
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-lg file:border-0
+                    file:text-sm file:font-medium
+                    file:bg-amber-500/10 file:text-amber-600
+                    hover:file:bg-amber-500/20
+                    cursor-pointer"
+                  data-testid="import-file-input"
+                />
+              </div>
+              {importFile && (
+                <p className="text-sm text-green-600 mt-2">
+                  ✓ Selected: {importFile.name}
+                </p>
+              )}
+            </div>
+
+            {/* Import Result */}
+            {importResult && (
+              <div className={`p-4 rounded-lg ${importResult.imported > 0 ? 'bg-green-500/10 border border-green-500/30' : 'bg-yellow-500/10 border border-yellow-500/30'}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  {importResult.imported > 0 ? (
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5 text-yellow-500" />
+                  )}
+                  <span className="font-medium">Import Complete</span>
+                </div>
+                <p className="text-sm">
+                  <span className="text-green-600">{importResult.imported} imported</span>
+                  {importResult.skipped > 0 && (
+                    <span className="text-yellow-600 ml-2">{importResult.skipped} skipped</span>
+                  )}
+                </p>
+                {importResult.errors?.length > 0 && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Errors: {importResult.errors.join(', ')}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setShowImportModal(false)}>Cancel</Button>
+            <Button 
+              onClick={handleImport} 
+              disabled={!importFile || importing}
+              className="bg-amber-500 hover:bg-amber-600 text-black"
+              data-testid="import-submit-btn"
+            >
+              {importing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Import
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
