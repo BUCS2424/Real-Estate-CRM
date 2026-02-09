@@ -84,7 +84,7 @@ class PropertyDataScraper:
         return None
 
     async def search_zillow(self, address: str, city: str, state: str, zip_code: str = "") -> Dict[str, Any]:
-        """Search Zillow for property data"""
+        """Search Zillow for property data using their public search"""
         result = {
             "source": "zillow",
             "found": False,
@@ -95,96 +95,93 @@ class PropertyDataScraper:
         }
         
         try:
-            # Build search URL
-            search_query = self._normalize_address(address, city, state, zip_code)
-            search_url = f"https://www.zillow.com/homes/{quote_plus(search_query)}_rb/"
+            # Build search URL - use simpler format
+            addr_parts = address.lower().replace('.', '').replace(',', '').split()
+            addr_slug = '-'.join(addr_parts)
+            city_slug = city.lower().replace(' ', '-')
             
-            # Add small delay to avoid rate limiting
-            await asyncio.sleep(1)
+            # Try direct property URL format
+            property_url = f"https://www.zillow.com/homedetails/{addr_slug}-{city_slug}-{state.lower()}-{zip_code}"
+            
+            # Add delay to avoid rate limiting
+            await asyncio.sleep(2)
             
             connector = aiohttp.TCPConnector(ssl=False)
-            async with aiohttp.ClientSession(headers=self._get_headers('https://www.zillow.com/'), timeout=self.timeout, connector=connector) as session:
-                async with session.get(search_url) as response:
-                    if response.status != 200:
-                        result["error"] = f"HTTP {response.status}"
-                        return result
-                    
-                    html = await response.text()
-                    soup = BeautifulSoup(html, 'lxml')
-                    
-                    # Try to find property data in script tags (Zillow uses JSON-LD)
-                    scripts = soup.find_all('script', type='application/json')
-                    for script in scripts:
-                        try:
-                            data = json.loads(script.string)
-                            if isinstance(data, dict):
-                                # Look for property data
-                                if 'props' in data or 'cat1' in data or 'searchResults' in data:
-                                    result["raw_data"] = data
-                        except:
-                            continue
-                    
-                    # Try to extract from Next.js data
-                    next_data = soup.find('script', id='__NEXT_DATA__')
-                    if next_data:
-                        try:
-                            data = json.loads(next_data.string)
-                            props = data.get('props', {}).get('pageProps', {})
-                            
-                            # Extract property info
-                            if 'initialReduxState' in props:
-                                redux = props['initialReduxState']
-                                if 'gdp' in redux:
-                                    gdp = redux['gdp']
-                                    property_data = gdp.get('property', {})
-                                    
-                                    result["found"] = True
-                                    result["data"] = {
-                                        "price": property_data.get('price'),
-                                        "bedrooms": property_data.get('bedrooms'),
-                                        "bathrooms": property_data.get('bathrooms'),
-                                        "sqft": property_data.get('livingArea'),
-                                        "lot_size": property_data.get('lotSize'),
-                                        "year_built": property_data.get('yearBuilt'),
-                                        "property_type": property_data.get('homeType'),
-                                        "description": property_data.get('description'),
-                                        "zestimate": property_data.get('zestimate'),
-                                    }
-                                    
-                                    # Extract images
-                                    photos = property_data.get('responsivePhotos', [])
-                                    for photo in photos[:20]:  # Limit to 20 images
-                                        if isinstance(photo, dict):
-                                            url = photo.get('mixedSources', {}).get('jpeg', [{}])
-                                            if url and isinstance(url, list) and len(url) > 0:
-                                                # Get highest resolution
-                                                for size in reversed(url):
-                                                    if 'url' in size:
-                                                        result["images"].append({
-                                                            "url": size['url'],
-                                                            "source": "zillow"
-                                                        })
-                                                        break
-                        except Exception as e:
-                            result["error"] = str(e)
-                    
-                    # Fallback: Try to extract from meta tags
-                    if not result["found"]:
-                        og_image = soup.find('meta', property='og:image')
-                        if og_image:
-                            result["images"].append({
-                                "url": og_image.get('content'),
-                                "source": "zillow"
-                            })
+            headers = self._get_headers('https://www.google.com/')
+            headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+            
+            async with aiohttp.ClientSession(headers=headers, timeout=self.timeout, connector=connector) as session:
+                # Try the search page approach
+                search_query = f"{address}, {city}, {state} {zip_code}".strip()
+                search_url = f"https://www.zillow.com/homes/{quote_plus(search_query)}_rb/"
+                
+                async with session.get(search_url, allow_redirects=True) as response:
+                    if response.status == 200:
+                        html = await response.text()
+                        soup = BeautifulSoup(html, 'lxml')
                         
-                        # Look for price in page
-                        price_elem = soup.find('span', {'data-testid': 'price'})
-                        if price_elem:
-                            result["data"]["price"] = self._extract_price(price_elem.text)
+                        result["url"] = str(response.url)
+                        
+                        # Look for JSON data in script tags
+                        for script in soup.find_all('script'):
+                            if script.string and 'zpid' in script.string:
+                                try:
+                                    # Try to find image URLs in the script
+                                    img_matches = re.findall(r'https://[^"\']+\.(?:jpg|jpeg|png|webp)[^"\']*', script.string)
+                                    for img_url in img_matches[:15]:
+                                        if 'zillow' in img_url.lower() or 'zillowstatic' in img_url.lower():
+                                            result["images"].append({
+                                                "url": img_url.split('?')[0],  # Remove query params
+                                                "source": "zillow"
+                                            })
+                                except:
+                                    pass
+                        
+                        # Try to find images in img tags
+                        for img in soup.find_all('img'):
+                            src = img.get('src', '') or img.get('data-src', '')
+                            if src and ('zillow' in src or 'zillowstatic' in src) and any(ext in src.lower() for ext in ['.jpg', '.jpeg', '.png', '.webp']):
+                                if src not in [i['url'] for i in result["images"]]:
+                                    result["images"].append({
+                                        "url": src.split('?')[0],
+                                        "source": "zillow"
+                                    })
+                        
+                        # Try to extract property data from page
+                        # Price
+                        price_patterns = [
+                            soup.find('span', {'data-testid': 'price'}),
+                            soup.find('span', class_=re.compile(r'price', re.I)),
+                            soup.find('div', {'data-testid': 'price'}),
+                        ]
+                        for elem in price_patterns:
+                            if elem:
+                                result["data"]["price"] = self._extract_price(elem.text)
+                                result["found"] = True
+                                break
+                        
+                        # Beds/Baths/Sqft from various possible locations
+                        stat_texts = soup.get_text()
+                        bed_match = re.search(r'(\d+)\s*(?:bd|bed|bedroom)', stat_texts, re.I)
+                        bath_match = re.search(r'(\d+\.?\d*)\s*(?:ba|bath|bathroom)', stat_texts, re.I)
+                        sqft_match = re.search(r'([\d,]+)\s*(?:sq\s*ft|sqft|square\s*feet)', stat_texts, re.I)
+                        
+                        if bed_match:
+                            result["data"]["bedrooms"] = int(bed_match.group(1))
                             result["found"] = True
-                    
-                    result["url"] = search_url
-                    
+                        if bath_match:
+                            result["data"]["bathrooms"] = float(bath_match.group(1))
+                            result["found"] = True
+                        if sqft_match:
+                            result["data"]["sqft"] = int(sqft_match.group(1).replace(',', ''))
+                            result["found"] = True
+                        
+                        if result["images"]:
+                            result["found"] = True
+                            
+                    else:
+                        result["error"] = f"HTTP {response.status}"
+                        
         except asyncio.TimeoutError:
             result["error"] = "Timeout"
         except Exception as e:
