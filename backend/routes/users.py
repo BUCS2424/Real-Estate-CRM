@@ -39,3 +39,48 @@ async def delete_user(user_id: str, current_user: dict = Depends(require_role([U
         raise HTTPException(status_code=404, detail="User not found")
     
     return {"message": "User deleted successfully"}
+
+@router.get("/me/signature")
+async def get_my_signature(current_user: dict = Depends(get_current_user)):
+    """Get current user's email signature"""
+    user_id = current_user.get("id", str(current_user.get("_id", "")))
+    signature = await db.user_signatures.find_one({"user_id": user_id}, {"_id": 0})
+    if not signature:
+        # Return user info as defaults
+        return {
+            "name": current_user.get("name", ""),
+            "email": current_user.get("email", ""),
+            "title": "",
+            "phone": "",
+            "company": "Hidden Haven Realty",
+            "website": "",
+            "customHtml": ""
+        }
+    return signature
+
+@router.post("/me/signature")
+async def save_my_signature(signature_data: dict, current_user: dict = Depends(get_current_user)):
+    """Save current user's email signature"""
+    from datetime import datetime, timezone
+    
+    user_id = current_user.get("id", str(current_user.get("_id", "")))
+    
+    signature_doc = {
+        "user_id": user_id,
+        "name": signature_data.get("name", ""),
+        "title": signature_data.get("title", ""),
+        "phone": signature_data.get("phone", ""),
+        "email": signature_data.get("email", ""),
+        "company": signature_data.get("company", "Hidden Haven Realty"),
+        "website": signature_data.get("website", ""),
+        "customHtml": signature_data.get("customHtml", ""),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.user_signatures.update_one(
+        {"user_id": user_id},
+        {"$set": signature_doc},
+        upsert=True
+    )
+    
+    return {"message": "Signature saved"}
