@@ -36,21 +36,26 @@ const salesItems = [
   { path: '/deals', icon: Briefcase, label: 'Deals Pipeline' },
 ];
 
-// Main nav items (excluding sales items which are now nested)
-const navItems = [
-  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/contacts', icon: Users, label: 'Contacts' },
-  { type: 'sales', icon: DollarSign, label: 'Sales' }, // Sales accordion
-  { path: '/listings', icon: Home, label: 'Listings' },
-  { path: '/property-lookup', icon: Search, label: 'Property Lookup' },
-  { path: '/reviews', icon: Star, label: 'Reviews' },
-  { path: '/landing-pages', icon: Layout, label: 'Landing Pages' },
+// Tools sub-items
+const toolsItems = [
   { path: '/media', icon: FolderOpen, label: 'Media Library' },
   { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
   { path: '/bookings', icon: CalendarCheck, label: 'Bookings' },
   { path: '/newsletter', icon: Mail, label: 'Newsletter' },
   { path: '/mailing-lists', icon: ListPlus, label: 'Mailing Lists' },
   { path: '/writer', icon: FileText, label: 'AI Writer' },
+];
+
+// Main nav items (excluding nested items)
+const navItems = [
+  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/contacts', icon: Users, label: 'Contacts' },
+  { type: 'sales', icon: DollarSign, label: 'Sales' },
+  { path: '/listings', icon: Home, label: 'Listings' },
+  { path: '/property-lookup', icon: Search, label: 'Property Lookup' },
+  { path: '/reviews', icon: Star, label: 'Reviews' },
+  { path: '/landing-pages', icon: Layout, label: 'Landing Pages' },
+  { type: 'tools', icon: Wrench, label: 'Tools' },
 ];
 
 export const Sidebar = ({ collapsed, onToggle }) => {
