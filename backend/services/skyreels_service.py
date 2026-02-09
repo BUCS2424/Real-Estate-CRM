@@ -76,50 +76,51 @@ class SkyReelsService:
     ) -> Dict[str, Any]:
         """Try generating video via Vyro/Imagine API"""
         try:
-            headers = {
-                "Authorization": f"Bearer {self.api_key}"
-            }
-            
-            # Build form data
-            data = {
-                "prompt": prompt,
-                "style": style,
-                "aspect_ratio": aspect_ratio
-            }
-            
-            files = None
-            if image_bytes:
-                files = {"image": ("avatar.jpg", image_bytes, "image/jpeg")}
-            elif image_url:
-                # Download image first
-                img_response = await self.client.get(image_url)
-                if img_response.status_code == 200:
-                    files = {"image": ("avatar.jpg", img_response.content, "image/jpeg")}
-            
-            if not files:
-                return {"success": False, "error": "No image provided"}
-            
-            response = await self.client.post(
-                VYRO_API_URL,
-                headers=headers,
-                data=data,
-                files=files
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                return {
-                    "success": True,
-                    "video_url": result.get("video_url") or result.get("output"),
-                    "provider": "vyro",
-                    "data": result
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                headers = {
+                    "Authorization": f"Bearer {self.api_key}"
                 }
-            else:
-                return {
-                    "success": False,
-                    "error": f"Vyro API error: {response.status_code}",
-                    "details": response.text
+                
+                # Build form data
+                data = {
+                    "prompt": prompt,
+                    "style": style,
+                    "aspect_ratio": aspect_ratio
                 }
+                
+                files = None
+                if image_bytes:
+                    files = {"image": ("avatar.jpg", image_bytes, "image/jpeg")}
+                elif image_url:
+                    # Download image first
+                    img_response = await client.get(image_url)
+                    if img_response.status_code == 200:
+                        files = {"image": ("avatar.jpg", img_response.content, "image/jpeg")}
+                
+                if not files:
+                    return {"success": False, "error": "No image provided"}
+                
+                response = await client.post(
+                    VYRO_API_URL,
+                    headers=headers,
+                    data=data,
+                    files=files
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    return {
+                        "success": True,
+                        "video_url": result.get("video_url") or result.get("output"),
+                        "provider": "vyro",
+                        "data": result
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "error": f"Vyro API error: {response.status_code}",
+                        "details": response.text
+                    }
                 
         except Exception as e:
             return {"success": False, "error": f"Vyro API exception: {str(e)}"}
