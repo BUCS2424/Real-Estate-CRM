@@ -84,6 +84,9 @@ async def generate_brochure_endpoint(
         "title": settings.get("agent_title", "Real Estate Specialist") if settings else "Real Estate Specialist"
     }
     
+    # Get branding
+    branding = await db.settings.find_one({"type": "branding"}, {"_id": 0})
+    
     # Check for landing page URL
     landing_page_url = None
     if request.include_qr and lead.get("landing_page_id"):
@@ -91,13 +94,26 @@ async def generate_brochure_endpoint(
         if landing_page:
             landing_page_url = landing_page.get("preview_url")
     
-    # Generate brochure
-    pdf_buffer, filename = await generate_brochure(
-        lead=lead,
-        agent_info=agent_info,
-        template=request.template,
-        landing_page_url=landing_page_url
-    )
+    # Generate brochure based on template type
+    if request.template == 'foldable':
+        # Generate 2-page foldable brochure
+        pdf_buffer = await generate_foldable_brochure(
+            lead=lead,
+            agent_info=agent_info,
+            branding=branding,
+            landing_page_url=landing_page_url,
+            property_images=request.property_images or lead.get('images', [])
+        )
+        address_slug = lead.get('address', 'property').lower().replace(' ', '-')[:30]
+        filename = f"brochure-{address_slug}-foldable.pdf"
+    else:
+        # Generate standard brochure
+        pdf_buffer, filename = await generate_brochure(
+            lead=lead,
+            agent_info=agent_info,
+            template=request.template,
+            landing_page_url=landing_page_url
+        )
     
     # Log activity
     activity_entry = {
