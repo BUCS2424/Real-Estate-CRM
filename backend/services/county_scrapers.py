@@ -413,3 +413,16 @@ async def get_property_details(parcel_id: str, county: str) -> Optional[Dict[str
         return results[0] if results else None
     finally:
         await scraper.close()
+
+
+def get_scraper(county: str):
+    """Get a scraper instance for a specific county"""
+    county_lower = county.lower() if county else ''
+    if county_lower in COUNTY_SCRAPERS:
+        return COUNTY_SCRAPERS[county_lower]()
+    return None
+
+
+def get_supported_counties() -> List[str]:
+    """Get list of supported counties"""
+    return list(COUNTY_SCRAPERS.keys())
