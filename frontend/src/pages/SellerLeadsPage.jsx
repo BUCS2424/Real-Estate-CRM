@@ -156,6 +156,34 @@ const SellerLeadsPage = () => {
     }
   };
 
+  const handleSendSMS = async () => {
+    if (!smsRecipient || !smsMessage.trim()) return;
+    
+    setSendingSMS(true);
+    try {
+      await contactsAPI.sendSMS({
+        phone: smsRecipient.phone,
+        message: smsMessage,
+        contact_id: smsRecipient.id,
+        contact_type: 'seller_lead'
+      });
+      toast.success(`SMS sent to ${smsRecipient.name}`);
+      setShowSMSModal(false);
+      setSmsMessage('');
+      setSmsRecipient(null);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to send SMS');
+    } finally {
+      setSendingSMS(false);
+    }
+  };
+
+  const openSMSModal = (lead, e) => {
+    e.stopPropagation();
+    setSmsRecipient(lead);
+    setShowSMSModal(true);
+  };
+
   const formatCurrency = (value) => {
     if (!value) return '-';
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
