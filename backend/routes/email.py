@@ -140,10 +140,6 @@ async def test_smtp_connection(test_email: dict, current_user: dict = Depends(ge
         msg.attach(MIMEText(text_content, "plain"))
         msg.attach(MIMEText(html_content, "html"))
         
-        # Determine SSL/TLS settings
-        use_tls = settings.get("encryption") == "tls"
-        start_tls = settings.get("encryption") == "tls"
-        
         # Send email
         await aiosmtplib.send(
             msg,
@@ -151,7 +147,7 @@ async def test_smtp_connection(test_email: dict, current_user: dict = Depends(ge
             port=settings.get("port", 587),
             username=settings["username"],
             password=settings["password"],
-            start_tls=start_tls,
+            start_tls=(settings.get("encryption") == "tls"),
             use_tls=(settings.get("encryption") == "ssl")
         )
         
