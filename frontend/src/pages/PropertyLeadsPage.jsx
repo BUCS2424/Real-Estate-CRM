@@ -520,6 +520,17 @@ const PropertyLeadsPage = () => {
                         )}
                       </div>
                       <div className="flex gap-1">
+                        {(lead.owner_email || lead.email) && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={(e) => openEmailModal(lead, e)}
+                            className="text-blue-500 hover:text-blue-600"
+                            title="Send Email"
+                          >
+                            <Mail className="w-4 h-4" />
+                          </Button>
+                        )}
                         {(lead.owner_phone || lead.phone) && (
                           <Button 
                             variant="ghost" 
