@@ -1209,3 +1209,65 @@ Added a comprehensive in-app email composer that intercepts email actions and pr
 - Shows "SMTP Not Configured" warning when SMTP is not set up ✅
 - Signature is fetched and displayed in preview ✅
 - Email icon visible on Contacts, Property Leads, Seller Leads pages ✅
+
+---
+
+## Update: February 9, 2026 - SkyReels V3 Video Generation Integration
+
+### Feature: AI Video Generator Page
+
+Integrated SkyReels V3 API via PiAPI for AI video generation from images.
+
+#### Implementation Details
+
+**Backend Service:** `/app/backend/services/skyreels_service.py`
+- Supports multiple providers: Vyro/Imagine API, PiAPI, SkyReels Direct
+- Image-to-video generation with customizable prompts
+- Async task status polling for long-running video generation
+- Configurable aspect ratios (9:16, 16:9, 1:1)
+
+**Backend Routes:** `/app/backend/routes/skyreels.py`
+- `POST /api/skyreels/generate` - Generate video from image URL
+- `POST /api/skyreels/generate-with-image` - Generate video with uploaded image
+- `POST /api/skyreels/property-video` - Generate property introduction video
+- `GET /api/skyreels/status/{task_id}` - Check video generation status
+- `GET /api/skyreels/history` - Get user's video generation history
+- `GET /api/skyreels/config` - Check if API is configured
+
+**Frontend Page:** `/app/frontend/src/pages/VideoGeneratorPage.jsx`
+- Source Image input (URL or file upload)
+- Prompt customization for video generation
+- Aspect ratio selector (Portrait/Landscape/Square)
+- Real-time generation status with progress tracking
+- Generation history with timestamps
+- API configuration status banner
+
+**Sidebar Integration:**
+- Added "Video Generator" to Tools menu in sidebar
+- Uses Video icon from lucide-react
+
+#### Environment Variables
+- `SKYREELS_API_KEY` - API key for SkyReels/PiAPI/Vyro
+
+#### Files Created/Modified
+- `/app/backend/services/skyreels_service.py` - SkyReels service class
+- `/app/backend/routes/skyreels.py` - API routes
+- `/app/backend/routes/__init__.py` - Router registration
+- `/app/backend/server.py` - Added dotenv loading for .env file support
+- `/app/frontend/src/pages/VideoGeneratorPage.jsx` - **NEW** Video generator page
+- `/app/frontend/src/App.js` - Added route for /video-generator
+- `/app/frontend/src/components/layout/Sidebar.jsx` - Added Video Generator to Tools menu
+
+#### API Key Status
+- User provided API key has been saved but returned "Invalid api key" from both Vyro and PiAPI
+- User needs to verify the API key or provide a valid one from:
+  - PiAPI: https://piapi.ai/workspace/skyreels
+  - Imagine.art/Vyro: https://www.imagine.art/api/home
+  - SkyReels.ai: https://www.skyreels.ai/document
+
+#### Tests & Verification
+- Config endpoint returns API configured status ✅
+- Video generator page renders correctly ✅
+- Generation history displays past attempts ✅
+- Sidebar navigation works ✅
+
