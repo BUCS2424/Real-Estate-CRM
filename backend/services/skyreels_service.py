@@ -136,19 +136,23 @@ class SkyReelsService:
         aspect_ratio: str,
         duration: int
     ) -> Dict[str, Any]:
-        """Try generating video via PiAPI"""
+        """Try generating video via PiAPI - Primary provider"""
         try:
             headers = {
-                "Authorization": f"Bearer {self.api_key}",
+                "x-api-key": self.api_key,
                 "Content-Type": "application/json"
             }
             
             payload = {
-                "model": "skyreels-v3",
-                "prompt": f"{prompt} FPS-24",
-                "image_url": image_url,
-                "aspect_ratio": aspect_ratio,
-                "duration": duration
+                "model": "Qubico/skyreels",
+                "task_type": "img2video",
+                "input": {
+                    "prompt": f"FPS-24, {prompt}",
+                    "negative_prompt": "chaotic, distortion, morphing, blurry, low quality",
+                    "image": image_url,
+                    "aspect_ratio": aspect_ratio,
+                    "guidance_scale": 3.5
+                }
             }
             
             response = await self.client.post(
@@ -159,10 +163,12 @@ class SkyReelsService:
             
             if response.status_code == 200:
                 result = response.json()
+                data = result.get("data", result)
                 return {
                     "success": True,
-                    "video_url": result.get("video_url") or result.get("output", {}).get("url"),
-                    "task_id": result.get("task_id"),
+                    "video_url": data.get("output", {}).get("video") if isinstance(data.get("output"), dict) else data.get("output"),
+                    "task_id": data.get("task_id") or result.get("task_id"),
+                    "status": data.get("status"),
                     "provider": "piapi",
                     "data": result
                 }
