@@ -145,7 +145,7 @@ export default function VideoGeneratorPage() {
       
       setChecking(true);
       try {
-        const response = await api.get(`/api/skyreels/status/${taskId}?provider=piapi`);
+        const response = await api.get(`/skyreels/status/${taskId}?provider=piapi`);
         const result = response.data;
         
         if (result.success) {
