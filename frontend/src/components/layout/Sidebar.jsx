@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, useLocation, Link } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -8,6 +8,7 @@ import {
   FileText, 
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Building2,
   CalendarCheck,
   Home,
@@ -20,19 +21,25 @@ import {
   Search,
   Star,
   MapPinHouse,
-  UserCheck
+  DollarSign
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
 import { useBranding } from '../../contexts/BrandingContext';
 
-const navItems = [
-  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/contacts', icon: Users, label: 'Contacts' },
+// Sales sub-items
+const salesItems = [
   { path: '/leads', icon: UserPlus, label: 'Leads' },
   { path: '/property-leads', icon: MapPinHouse, label: 'Property Leads' },
   { path: '/property-submissions', icon: FileInput, label: 'Submissions' },
   { path: '/deals', icon: Briefcase, label: 'Deals Pipeline' },
+];
+
+// Main nav items (excluding sales items which are now nested)
+const navItems = [
+  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/contacts', icon: Users, label: 'Contacts' },
+  { type: 'sales', icon: DollarSign, label: 'Sales' }, // Sales accordion
   { path: '/listings', icon: Home, label: 'Listings' },
   { path: '/property-lookup', icon: Search, label: 'Property Lookup' },
   { path: '/reviews', icon: Star, label: 'Reviews' },
@@ -48,6 +55,99 @@ const navItems = [
 export const Sidebar = ({ collapsed, onToggle }) => {
   const location = useLocation();
   const { branding } = useBranding();
+  
+  // Check if current path is a sales item to auto-expand
+  const isSalesPath = salesItems.some(item => 
+    location.pathname === item.path || location.pathname.startsWith(item.path)
+  );
+  
+  const [salesOpen, setSalesOpen] = useState(isSalesPath);
+
+  const renderNavItem = (item) => {
+    // Sales accordion
+    if (item.type === 'sales') {
+      const isActive = isSalesPath;
+      
+      return (
+        <div key="sales" className="space-y-1">
+          <button
+            onClick={() => !collapsed && setSalesOpen(!salesOpen)}
+            data-testid="nav-sales"
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+              "hover:bg-sidebar-accent",
+              isActive 
+                ? "bg-sidebar-primary/50 text-sidebar-primary-foreground" 
+                : "text-sidebar-foreground"
+            )}
+          >
+            <item.icon className={cn("w-5 h-5 flex-shrink-0", collapsed && "mx-auto")} />
+            {!collapsed && (
+              <>
+                <span className="font-medium flex-1 text-left">{item.label}</span>
+                <ChevronDown 
+                  className={cn(
+                    "w-4 h-4 transition-transform duration-200",
+                    salesOpen ? "rotate-180" : ""
+                  )} 
+                />
+              </>
+            )}
+          </button>
+          
+          {/* Sales sub-items */}
+          {!collapsed && salesOpen && (
+            <div className="ml-4 pl-3 border-l border-sidebar-border space-y-1">
+              {salesItems.map((subItem) => {
+                const subIsActive = location.pathname === subItem.path || 
+                  location.pathname.startsWith(subItem.path);
+                
+                return (
+                  <NavLink
+                    key={subItem.path}
+                    to={subItem.path}
+                    data-testid={`nav-${subItem.label.toLowerCase().replace(' ', '-')}`}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm",
+                      "hover:bg-sidebar-accent",
+                      subIsActive 
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground" 
+                        : "text-sidebar-foreground"
+                    )}
+                  >
+                    <subItem.icon className="w-4 h-4 flex-shrink-0" />
+                    <span className="font-medium">{subItem.label}</span>
+                  </NavLink>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Regular nav item
+    const isActive = location.pathname === item.path || 
+      (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+    
+    return (
+      <NavLink
+        key={item.path}
+        to={item.path}
+        data-testid={`nav-${item.label.toLowerCase().replace(' ', '-')}`}
+        className={cn(
+          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+          "hover:bg-sidebar-accent",
+          isActive 
+            ? "bg-sidebar-primary text-sidebar-primary-foreground" 
+            : "text-sidebar-foreground"
+        )}
+      >
+        <item.icon className={cn("w-5 h-5 flex-shrink-0", collapsed && "mx-auto")} />
+        {!collapsed && <span className="font-medium">{item.label}</span>}
+      </NavLink>
+    );
+  };
 
   return (
     <aside
@@ -89,29 +189,8 @@ export const Sidebar = ({ collapsed, onToggle }) => {
       </div>
 
       {/* Navigation */}
-      <nav className="p-3 space-y-1">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path || 
-            (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
-          
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              data-testid={`nav-${item.label.toLowerCase().replace(' ', '-')}`}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                "hover:bg-sidebar-accent",
-                isActive 
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground" 
-                  : "text-sidebar-foreground"
-              )}
-            >
-              <item.icon className={cn("w-5 h-5 flex-shrink-0", collapsed && "mx-auto")} />
-              {!collapsed && <span className="font-medium">{item.label}</span>}
-            </NavLink>
-          );
-        })}
+      <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-8rem)]">
+        {navItems.map(renderNavItem)}
       </nav>
 
       {/* Collapse Toggle */}
