@@ -111,6 +111,8 @@ function App() {
               <Route path="/reviews" element={<ReviewsManagementPage />} />
               <Route path="/property-leads" element={<PropertyLeadsPage />} />
               <Route path="/property-leads/:id" element={<PropertyLeadDetailPage />} />
+              <Route path="/seller-leads" element={<SellerLeadsPage />} />
+              <Route path="/seller-leads/:id" element={<SellerLeadDetailPage />} />
               <Route path="/writer" element={<AIWriterPage />} />
               <Route path="/newsletter" element={<NewsletterPage />} />
               <Route path="/mailing-lists" element={<MailingListsPage />} />
