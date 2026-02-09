@@ -87,3 +87,83 @@ async def update_general_settings(settings_data: dict, current_user: dict = Depe
     )
     
     return {"message": "Settings saved successfully", "data": settings_data}
+
+# ============ TELNYX SETTINGS ============
+
+@router.get("/telnyx")
+async def get_telnyx_settings(current_user: dict = Depends(get_current_user)):
+    """Get Telnyx SMS settings"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    settings = await db.telnyx_settings.find_one({}, {"_id": 0})
+    if not settings:
+        return {"apiKey": "", "phoneNumber": ""}
+    
+    # Mask API key for security
+    masked_key = ""
+    if settings.get("apiKey"):
+        key = settings["apiKey"]
+        masked_key = key[:8] + "..." + key[-4:] if len(key) > 12 else "***"
+    
+    return {
+        "apiKey": masked_key,
+        "phoneNumber": settings.get("phoneNumber", "")
+    }
+
+@router.post("/telnyx")
+async def save_telnyx_settings(settings_data: dict, current_user: dict = Depends(get_current_user)):
+    """Save Telnyx SMS settings"""
+    import os
+    
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Only save if new key provided (not masked)
+    update_data = {
+        "phoneNumber": settings_data.get("phoneNumber", ""),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_by": current_user["id"]
+    }
+    
+    # Check if apiKey is a real key (not masked)
+    api_key = settings_data.get("apiKey", "")
+    if api_key and "..." not in api_key and api_key != "***":
+        update_data["apiKey"] = api_key
+        # Also update environment variable for current session
+        os.environ["TELNYX_API_KEY"] = api_key
+    
+    if update_data.get("phoneNumber"):
+        os.environ["TELNYX_PHONE_NUMBER"] = update_data["phoneNumber"]
+    
+    await db.telnyx_settings.update_one(
+        {},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    return {"message": "Telnyx settings saved"}
+
+@router.post("/telnyx/test")
+async def test_telnyx_connection(current_user: dict = Depends(get_current_user)):
+    """Test Telnyx connection"""
+    import os
+    import telnyx
+    
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get settings from DB
+    settings = await db.telnyx_settings.find_one({}, {"_id": 0})
+    api_key = settings.get("apiKey") if settings else os.environ.get("TELNYX_API_KEY")
+    
+    if not api_key:
+        raise HTTPException(status_code=400, detail="No API key configured")
+    
+    try:
+        telnyx.api_key = api_key
+        # Try to list phone numbers to verify connection
+        telnyx.PhoneNumber.list(page_size=1)
+        return {"success": True, "message": "Connection successful!"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Connection failed: {str(e)}")
