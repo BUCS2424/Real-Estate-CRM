@@ -74,10 +74,18 @@ const PropertyLeadsPage = () => {
   const [smsRecipient, setSmsRecipient] = useState(null);
   const [smsMessage, setSmsMessage] = useState('');
   const [sendingSMS, setSendingSMS] = useState(false);
+  
+  // Email modal
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailRecipient, setEmailRecipient] = useState(null);
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
+  const [userSignature, setUserSignature] = useState(null);
 
   useEffect(() => {
     fetchLeads();
     fetchStats();
+    fetchSignature();
   }, [filterStatus, filterPriority]);
 
   const fetchLeads = async () => {
