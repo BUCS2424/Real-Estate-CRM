@@ -155,18 +155,33 @@ async def preview_brochure(
         "title": settings.get("agent_title", "Real Estate Specialist") if settings else "Real Estate Specialist"
     }
     
+    # Get branding
+    branding = await db.settings.find_one({"type": "branding"}, {"_id": 0})
+    
     landing_page_url = None
     if request.include_qr and lead.get("landing_page_id"):
         landing_page = await db.landing_pages.find_one({"id": lead["landing_page_id"]}, {"_id": 0})
         if landing_page:
             landing_page_url = landing_page.get("preview_url")
     
-    pdf_buffer, filename = await generate_brochure(
-        lead=lead,
-        agent_info=agent_info,
-        template=request.template,
-        landing_page_url=landing_page_url
-    )
+    # Generate brochure based on template type
+    if request.template == 'foldable':
+        pdf_buffer = await generate_foldable_brochure(
+            lead=lead,
+            agent_info=agent_info,
+            branding=branding,
+            landing_page_url=landing_page_url,
+            property_images=request.property_images or lead.get('images', [])
+        )
+        address_slug = lead.get('address', 'property').lower().replace(' ', '-')[:30]
+        filename = f"brochure-{address_slug}-foldable.pdf"
+    else:
+        pdf_buffer, filename = await generate_brochure(
+            lead=lead,
+            agent_info=agent_info,
+            template=request.template,
+            landing_page_url=landing_page_url
+        )
     
     return StreamingResponse(
         pdf_buffer,
