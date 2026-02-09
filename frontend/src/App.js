@@ -100,6 +100,7 @@ function App() {
               <Route path="/tasks" element={<TasksPage />} />
               <Route path="/bookings" element={<BookingPage />} />
               <Route path="/listings" element={<ListingsPage />} />
+              <Route path="/listings/:id" element={<ListingDetailPage />} />
               <Route path="/leads" element={<LeadsPage />} />
               <Route path="/property-submissions" element={<PropertySubmissionsPage />} />
               <Route path="/landing-pages" element={<LandingPagesPage />} />
