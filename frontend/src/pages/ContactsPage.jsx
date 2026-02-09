@@ -38,7 +38,12 @@ import {
   Copy,
   Calendar,
   Target,
-  Briefcase
+  Briefcase,
+  Upload,
+  FileSpreadsheet,
+  Smartphone,
+  Apple,
+  AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { contactsAPI } from '../lib/api';
