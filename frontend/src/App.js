@@ -54,6 +54,7 @@ import { MetaInformation } from './pages/settings/seo/MetaInformation';
 import { StructuredData } from './pages/settings/seo/StructuredData';
 import { GeneralSettings } from './pages/settings/developer/GeneralSettings';
 import { EmailSettings } from './pages/settings/developer/EmailSettings';
+import { TelnyxSettings } from './pages/settings/developer/TelnyxSettings';
 import { CustomCode } from './pages/settings/developer/CustomCode';
 import { SystemMessages } from './pages/settings/developer/SystemMessages';
 import { PWASettings } from './pages/settings/developer/PWASettings';
