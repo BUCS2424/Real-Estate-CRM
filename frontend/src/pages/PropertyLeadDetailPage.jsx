@@ -438,6 +438,20 @@ const PropertyLeadDetailPage = () => {
             
             {/* Quick Actions */}
             <div className="space-y-2">
+              {lead.status !== 'converted' && (
+                <Button 
+                  onClick={handleConvertToShowcase} 
+                  disabled={convertingToShowcase}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {convertingToShowcase ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Building2 className="w-4 h-4 mr-2" />
+                  )}
+                  Convert to Showcase Listing
+                </Button>
+              )}
               <Button 
                 onClick={handlePullOwnerInfo} 
                 disabled={pullingOwner}
