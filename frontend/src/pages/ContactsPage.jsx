@@ -1,812 +1,501 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { contactsAPI, tasksAPI } from '../lib/api';
-import { useAuth } from '../contexts/AuthContext';
-import { 
-  Plus, 
-  Search, 
-  Mail, 
-  Building2, 
-  DollarSign,
-  Star,
-  MoreVertical,
-  Trash2,
-  Edit,
-  UserPlus,
-  Phone,
-  Users,
-  ShoppingCart,
-  Home,
-  CheckCircle,
-  Upload,
-  Download,
-  FileSpreadsheet,
-  Loader2
-} from 'lucide-react';
-import { Card, CardContent } from '../components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Badge } from '../components/ui/badge';
 import { Label } from '../components/ui/label';
+import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
-import { PhoneVerification } from '../components/PhoneVerification';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '../components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../components/ui/dialog';
+import { 
+  Users, 
+  Plus, 
+  Search, 
+  MapPin,
+  DollarSign,
+  User,
+  Loader2,
+  Trash2,
+  Eye,
+  RefreshCw,
+  Building2,
+  CheckCircle,
+  Phone,
+  Mail,
+  TrendingUp,
+  Clock,
+  UserCheck,
+  Home,
+  ShoppingCart,
+  StickyNote,
+  Activity,
+  Tag,
+  Edit2,
+  ArrowLeft,
+  Send,
+  Copy,
+  Calendar,
+  Target,
+  Briefcase
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { contactsAPI } from '../lib/api';
 
-const statusColors = {
-  new: 'bg-blue-500',
-  active: 'bg-green-500',
-  contacted: 'bg-yellow-500',
-  qualified: 'bg-green-500',
-  negotiation: 'bg-purple-500',
-  closed: 'bg-gray-500'
-};
+const STATUS_OPTIONS = [
+  { value: 'new', label: 'New', color: 'bg-blue-500/20 text-blue-600 border-blue-500/50' },
+  { value: 'contacted', label: 'Contacted', color: 'bg-yellow-500/20 text-yellow-600 border-yellow-500/50' },
+  { value: 'qualified', label: 'Qualified', color: 'bg-green-500/20 text-green-600 border-green-500/50' },
+  { value: 'negotiation', label: 'Negotiation', color: 'bg-purple-500/20 text-purple-600 border-purple-500/50' },
+  { value: 'closed', label: 'Closed', color: 'bg-gray-500/20 text-gray-600 border-gray-500/50' },
+];
 
-const categoryColors = {
-  buyer: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  seller: 'bg-orange-100 text-orange-700 border-orange-200',
-};
+const CATEGORY_OPTIONS = [
+  { value: 'buyer', label: 'Buyer', color: 'bg-emerald-500/20 text-emerald-600', icon: ShoppingCart },
+  { value: 'seller', label: 'Seller', color: 'bg-orange-500/20 text-orange-600', icon: Home },
+];
 
-const initialFormState = {
-  name: '',
-  email: '',
-  phone: '',
-  company: '',
-  property_interest: '',
-  budget: '',
-  lead_score: 50,
-  status: 'new',
-  notes: '',
-  tags: [],
-  category: ''
-};
-
-export const ContactsPage = () => {
-  const [contacts, setContacts] = useState([]);
-  const [filteredContacts, setFilteredContacts] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingContact, setEditingContact] = useState(null);
-  const [formData, setFormData] = useState(initialFormState);
+// Contact Detail Component
+const ContactDetail = ({ contactId, onBack }) => {
+  const [contact, setContact] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { isAdmin } = useAuth();
-  
-  // Import/Export state
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const [importResult, setImportResult] = useState(null);
-  const [importCategory, setImportCategory] = useState('');
-  const [exportFormat, setExportFormat] = useState('vcard');
-  const [exportCategory, setExportCategory] = useState('');
-  const [exportStatus, setExportStatus] = useState('');
-  const fileInputRef = useRef(null);
+  const [editMode, setEditMode] = useState(false);
+  const [editData, setEditData] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [newNote, setNewNote] = useState('');
+  const [addingNote, setAddingNote] = useState(false);
 
   useEffect(() => {
-    fetchContacts();
-  }, []);
+    if (contactId) fetchContact();
+  }, [contactId]);
 
-  useEffect(() => {
-    let filtered = contacts;
-    if (searchQuery) {
-      filtered = filtered.filter(c => 
-        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.company?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(c => c.status === statusFilter);
-    }
-    if (categoryFilter !== 'all') {
-      filtered = filtered.filter(c => c.category === categoryFilter);
-    }
-    setFilteredContacts(filtered);
-  }, [contacts, searchQuery, statusFilter, categoryFilter]);
-
-  const fetchContacts = async () => {
+  const fetchContact = async () => {
+    setLoading(true);
     try {
-      const res = await contactsAPI.list();
-      setContacts(res.data || []);
+      const res = await contactsAPI.get(contactId);
+      setContact(res.data);
+      setEditData(res.data);
     } catch (error) {
-      toast.error('Failed to load contacts');
+      toast.error('Failed to load contact');
+      onBack();
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSave = async () => {
+    setSaving(true);
     try {
-      if (editingContact) {
-        await contactsAPI.update(editingContact.id, formData);
-        toast.success('Contact updated');
-      } else {
-        await contactsAPI.create(formData);
-        toast.success('Contact created');
-      }
-      fetchContacts();
-      setIsDialogOpen(false);
-      setFormData(initialFormState);
-      setEditingContact(null);
+      await contactsAPI.update(contactId, editData);
+      toast.success('Contact updated');
+      setEditMode(false);
+      fetchContact();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Operation failed');
+      toast.error('Failed to update');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleEdit = (contact) => {
-    setEditingContact(contact);
-    setFormData({
-      name: contact.name,
-      email: contact.email || '',
-      phone: contact.phone || '',
-      company: contact.company || '',
-      property_interest: contact.property_interest || '',
-      budget: contact.budget || '',
-      lead_score: contact.lead_score || 50,
-      status: contact.status || 'new',
-      notes: contact.notes || '',
-      tags: contact.tags || [],
-      category: contact.category || ''
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleDelete = async (id) => {
+  const handleDelete = async () => {
     if (!window.confirm('Delete this contact?')) return;
     try {
-      await contactsAPI.delete(id);
+      await contactsAPI.delete(contactId);
       toast.success('Contact deleted');
-      fetchContacts();
+      onBack();
     } catch (error) {
-      toast.error('Failed to delete contact');
+      toast.error('Failed to delete');
     }
   };
 
-  const handleCreateTask = async (contact) => {
+  const handleAddNote = async () => {
+    if (!newNote.trim()) return;
+    setAddingNote(true);
     try {
-      await tasksAPI.create({
-        title: `Follow up with ${contact.name}`,
-        description: `Contact: ${contact.email || contact.phone}`,
-        priority: 'medium',
-        status: 'todo'
-      });
-      toast.success('Task created');
+      const notes = [...(contact.notes_list || []), {
+        id: Date.now().toString(),
+        content: newNote,
+        created_at: new Date().toISOString(),
+        created_by: 'Admin'
+      }];
+      await contactsAPI.update(contactId, { notes_list: notes });
+      toast.success('Note added');
+      setNewNote('');
+      fetchContact();
     } catch (error) {
-      toast.error('Failed to create task');
-    }
-  };
-
-  // Import handlers
-  const handleImport = async () => {
-    const fileInput = fileInputRef.current;
-    if (!fileInput?.files?.length) {
-      toast.error('Please select a file');
-      return;
-    }
-    
-    setImporting(true);
-    setImportResult(null);
-    
-    try {
-      const formData = new FormData();
-      formData.append('file', fileInput.files[0]);
-      
-      const result = await contactsAPI.importFile(formData, importCategory || null);
-      setImportResult(result.data);
-      toast.success(`Imported ${result.data.imported} contacts`);
-      fetchContacts();
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Import failed');
+      toast.error('Failed to add note');
     } finally {
-      setImporting(false);
-    }
-  };
-
-  // Export handlers
-  const handleExport = async () => {
-    setExporting(true);
-    
-    try {
-      const filters = {};
-      if (exportCategory) filters.category = exportCategory;
-      if (exportStatus) filters.status = exportStatus;
-      
-      let response;
-      let filename;
-      let mimeType;
-      
-      if (exportFormat === 'vcard') {
-        response = await contactsAPI.exportVCard(filters);
-        filename = `contacts_${exportCategory || 'all'}_${new Date().toISOString().split('T')[0]}.vcf`;
-        mimeType = 'text/vcard';
-      } else {
-        response = await contactsAPI.exportCSV(filters);
-        filename = `contacts_${exportCategory || 'all'}_${new Date().toISOString().split('T')[0]}.csv`;
-        mimeType = 'text/csv';
-      }
-      
-      // Download file
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: mimeType }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      
-      toast.success(`Exported contacts as ${exportFormat.toUpperCase()}`);
-      setShowExportModal(false);
-    } catch (error) {
-      toast.error('Export failed');
-    } finally {
-      setExporting(false);
+      setAddingNote(false);
     }
   };
 
   const formatDate = (dateStr) => {
-    if (!dateStr) return 'N/A';
+    if (!dateStr) return '-';
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  // Stats
-  const totalCount = contacts.length;
-  const buyerCount = contacts.filter(c => c.category === 'buyer').length;
-  const sellerCount = contacts.filter(c => c.category === 'seller').length;
+  const getStatusColor = (status) => STATUS_OPTIONS.find(s => s.value === status)?.color || 'bg-gray-500/20 text-gray-600';
+  const getCategoryColor = (cat) => CATEGORY_OPTIONS.find(c => c.value === cat)?.color || 'bg-gray-500/20 text-gray-600';
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Copied to clipboard');
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+      </div>
+    );
+  }
+
+  if (!contact) return null;
 
   return (
-    <div className="space-y-6 animate-fade-in" data-testid="contacts-page">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-serif font-bold flex items-center gap-3">
-            <Users className="w-8 h-8" />
-            Contacts
-          </h1>
-          <p className="text-muted-foreground mt-1">Manage your buyer and seller contacts</p>
-        </div>
-        <div className="flex gap-2">
-          {/* Import Button */}
-          <Button variant="outline" onClick={() => setShowImportModal(true)} data-testid="import-contacts-btn">
-            <Upload className="w-4 h-4 mr-2" />
-            Import
-          </Button>
-          
-          {/* Export Button */}
-          <Button variant="outline" onClick={() => setShowExportModal(true)} data-testid="export-contacts-btn">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-          
-          {/* Add Contact Button */}
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) {
-              setEditingContact(null);
-              setFormData(initialFormState);
-            }
-          }}>
-            <DialogTrigger asChild>
-              <Button data-testid="add-contact-btn">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Contact
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>{editingContact ? 'Edit Contact' : 'New Contact'}</DialogTitle>
-                <DialogDescription>
-                {editingContact ? 'Update contact information' : 'Add a new contact'}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <Label htmlFor="name">Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                    data-testid="contact-name-input"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    data-testid="contact-email-input"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="category">Category</Label>
-                  <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="buyer">Buyer</SelectItem>
-                      <SelectItem value="seller">Seller</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="contacted">Contacted</SelectItem>
-                      <SelectItem value="qualified">Qualified</SelectItem>
-                      <SelectItem value="negotiation">Negotiation</SelectItem>
-                      <SelectItem value="closed">Closed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="company">Company</Label>
-                  <Input
-                    id="company"
-                    value={formData.company}
-                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="budget">Budget</Label>
-                  <Input
-                    id="budget"
-                    value={formData.budget}
-                    onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                    placeholder="e.g., $300K-$500K"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <Label htmlFor="property_interest">Property Interest</Label>
-                  <Input
-                    id="property_interest"
-                    value={formData.property_interest}
-                    onChange={(e) => setFormData({ ...formData, property_interest: e.target.value })}
-                    placeholder="e.g., Luxury Condos, Single Family"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    rows={3}
-                  />
-                </div>
+    <div className="flex gap-6 min-h-[calc(100vh-6rem)]" data-testid="contact-detail">
+      {/* Left Sidebar */}
+      <div className="w-80 flex-shrink-0 flex flex-col gap-4 overflow-y-auto">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-amber-400/20 to-amber-600/20 rounded-full flex items-center justify-center border-2 border-amber-500/30">
+              <User className="w-10 h-10 text-amber-500" />
+            </div>
+            
+            <h2 className="text-xl font-semibold text-center text-foreground mb-1">{contact.name}</h2>
+            
+            {(contact.email || contact.phone) && (
+              <div className="text-center text-muted-foreground text-sm mb-4 space-y-1">
+                {contact.email && (
+                  <p className="flex items-center justify-center gap-1">
+                    <Mail className="w-3 h-3" />{contact.email}
+                  </p>
+                )}
+                {contact.phone && (
+                  <p className="flex items-center justify-center gap-1">
+                    <Phone className="w-3 h-3" />{contact.phone}
+                  </p>
+                )}
               </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
+            )}
+            
+            <div className="flex justify-center gap-2 mb-4">
+              <Badge className={getStatusColor(contact.status)}>
+                {contact.status?.toUpperCase()}
+              </Badge>
+              {contact.category && (
+                <Badge className={getCategoryColor(contact.category)}>
+                  {contact.category?.toUpperCase()}
+                </Badge>
+              )}
+            </div>
+            
+            <div className="space-y-2">
+              {contact.phone && (
+                <Button asChild className="w-full bg-amber-500 hover:bg-amber-600 text-black">
+                  <a href={`tel:${contact.phone}`}>
+                    <Phone className="w-4 h-4 mr-2" />Call
+                  </a>
                 </Button>
-                <Button type="submit" data-testid="contact-submit-btn">
-                  {editingContact ? 'Update' : 'Create'}
+              )}
+              {contact.email && (
+                <Button asChild variant="outline" className="w-full">
+                  <a href={`mailto:${contact.email}`}>
+                    <Mail className="w-4 h-4 mr-2" />Email
+                  </a>
                 </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+              )}
+              <Button variant="outline" className="w-full" onClick={() => setEditMode(true)}>
+                <Edit2 className="w-4 h-4 mr-2" />Edit Contact
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Target className="w-4 h-4 text-amber-500" />Quick Info
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Category</span>
+              <span className="text-sm font-medium capitalize">{contact.category || '-'}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Company</span>
+              <span className="text-sm font-medium">{contact.company || '-'}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Budget</span>
+              <span className="text-sm font-medium">{contact.budget || '-'}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Lead Score</span>
+              <span className="text-sm font-medium">{contact.lead_score || '-'}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Tag className="w-4 h-4 text-amber-500" />Tags
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {contact.tags?.length > 0 ? (
+                contact.tags.map((tag, idx) => <Badge key={idx} variant="outline">{tag}</Badge>)
+              ) : (
+                <p className="text-sm text-muted-foreground">No tags</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex items-center justify-between mb-4">
+          <Button variant="ghost" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-2" />Back to Contacts
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleDelete} className="text-red-500 hover:text-red-600">
+            <Trash2 className="w-4 h-4 mr-2" />Delete
+          </Button>
         </div>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <Users className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{totalCount}</p>
-              <p className="text-sm text-muted-foreground">Total Contacts</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-emerald-100 rounded-lg">
-              <ShoppingCart className="w-6 h-6 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{buyerCount}</p>
-              <p className="text-sm text-muted-foreground">Buyers</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-orange-100 rounded-lg">
-              <Home className="w-6 h-6 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{sellerCount}</p>
-              <p className="text-sm text-muted-foreground">Sellers</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col lg:flex-row gap-4">
-        <Tabs value={categoryFilter} onValueChange={setCategoryFilter} className="flex-shrink-0">
-          <TabsList>
-            <TabsTrigger value="all">All Contacts</TabsTrigger>
-            <TabsTrigger value="buyer">Buyers ({buyerCount})</TabsTrigger>
-            <TabsTrigger value="seller">Sellers ({sellerCount})</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+          <TabsList className="w-full justify-start bg-muted/50 p-1 rounded-lg">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <User className="w-4 h-4" />Overview
+            </TabsTrigger>
+            <TabsTrigger value="notes" className="flex items-center gap-2">
+              <StickyNote className="w-4 h-4" />Notes ({contact.notes_list?.length || 0})
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="flex items-center gap-2">
+              <Activity className="w-4 h-4" />Activity
+            </TabsTrigger>
           </TabsList>
-        </Tabs>
-        <div className="flex flex-1 gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search contacts..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-              data-testid="contact-search"
-            />
+
+          <div className="flex-1 mt-4 pb-8 overflow-y-auto">
+            <TabsContent value="overview" className="mt-0 space-y-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <User className="w-5 h-5 text-amber-500" />Contact Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="col-span-2 space-y-1">
+                        <Label className="text-xs text-muted-foreground">Full Name</Label>
+                        <p className="font-medium">{contact.name}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Email</Label>
+                        <p className="font-medium flex items-center gap-1">
+                          {contact.email || '-'}
+                          {contact.email && <button onClick={() => copyToClipboard(contact.email)}><Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Phone</Label>
+                        <p className="font-medium flex items-center gap-1">
+                          {contact.phone || '-'}
+                          {contact.phone && <button onClick={() => copyToClipboard(contact.phone)}><Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Company</Label>
+                        <p className="font-medium">{contact.company || '-'}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Property Interest</Label>
+                        <p className="font-medium">{contact.property_interest || '-'}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-amber-500/30">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Target className="w-5 h-5 text-amber-500" />Lead Status
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <p className="text-xs text-muted-foreground">Status</p>
+                        <Badge className={`${getStatusColor(contact.status)} mt-1`}>{contact.status?.toUpperCase()}</Badge>
+                      </div>
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <p className="text-xs text-muted-foreground">Category</p>
+                        <Badge className={`${getCategoryColor(contact.category)} mt-1`}>{contact.category?.toUpperCase() || '-'}</Badge>
+                      </div>
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <p className="text-xs text-muted-foreground">Budget</p>
+                        <p className="font-semibold">{contact.budget || '-'}</p>
+                      </div>
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <p className="text-xs text-muted-foreground">Lead Score</p>
+                        <p className="font-semibold">{contact.lead_score || '-'}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="lg:col-span-2">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="w-5 h-5 text-amber-500" />Timeline
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <p className="text-xs text-muted-foreground">Created</p>
+                        <p className="font-semibold">{formatDate(contact.created_at)}</p>
+                      </div>
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <p className="text-xs text-muted-foreground">Last Updated</p>
+                        <p className="font-semibold">{formatDate(contact.updated_at)}</p>
+                      </div>
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <p className="text-xs text-muted-foreground">Source</p>
+                        <p className="font-semibold capitalize">{contact.source || '-'}</p>
+                      </div>
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <p className="text-xs text-muted-foreground">Assigned To</p>
+                        <p className="font-semibold">{contact.assigned_to || '-'}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {contact.notes && (
+                  <Card className="lg:col-span-2">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <StickyNote className="w-5 h-5 text-amber-500" />Notes
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm whitespace-pre-wrap">{contact.notes}</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="notes" className="mt-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <StickyNote className="w-5 h-5 text-amber-500" />Notes
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-2 mb-4">
+                    <Textarea placeholder="Add a note..." value={newNote} onChange={(e) => setNewNote(e.target.value)} rows={2} className="flex-1" />
+                    <Button onClick={handleAddNote} disabled={!newNote.trim() || addingNote} className="bg-amber-500 hover:bg-amber-600 text-black">
+                      {addingNote ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {contact.notes_list?.length > 0 ? (
+                      [...contact.notes_list].reverse().map((note, idx) => (
+                        <div key={note.id || idx} className="p-3 bg-muted/50 rounded-lg">
+                          <p className="text-sm">{note.content}</p>
+                          <p className="text-xs text-muted-foreground mt-2">{note.created_by} • {formatDate(note.created_at)}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-center text-muted-foreground py-8">No notes yet</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="activity" className="mt-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-amber-500" />Activity History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                      <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Contact Created</p>
+                        <p className="text-sm text-muted-foreground">{formatDate(contact.created_at)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="new">New</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="contacted">Contacted</SelectItem>
-              <SelectItem value="qualified">Qualified</SelectItem>
-              <SelectItem value="negotiation">Negotiation</SelectItem>
-              <SelectItem value="closed">Closed</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        </Tabs>
       </div>
 
-      {/* Contacts List */}
-      {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-        </div>
-      ) : filteredContacts.length === 0 ? (
-        <Card className="p-12 text-center">
-          <UserPlus className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No contacts found</h3>
-          <p className="text-muted-foreground">Add your first contact to get started</p>
-        </Card>
-      ) : (
-        <Card>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="text-left p-4 font-medium">Contact</th>
-                  <th className="text-left p-4 font-medium">Category</th>
-                  <th className="text-left p-4 font-medium">Details</th>
-                  <th className="text-left p-4 font-medium">Status</th>
-                  <th className="text-left p-4 font-medium">Score</th>
-                  <th className="text-left p-4 font-medium">Added</th>
-                  <th className="text-left p-4 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredContacts.map(contact => (
-                  <tr key={contact.id} className="border-b hover:bg-muted/30 transition-colors">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <span className="text-sm font-semibold text-primary">
-                            {contact.name?.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-medium">{contact.name}</p>
-                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                            {contact.email && (
-                              <span className="flex items-center gap-1">
-                                <Mail className="w-3 h-3" />
-                                {contact.email}
-                              </span>
-                            )}
-                            {contact.phone && (
-                              <span className="flex items-center gap-1">
-                                <Phone className="w-3 h-3" />
-                                {contact.phone}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      {contact.category ? (
-                        <Badge variant="outline" className={`capitalize ${categoryColors[contact.category] || ''}`}>
-                          {contact.category === 'buyer' && <ShoppingCart className="w-3 h-3 mr-1" />}
-                          {contact.category === 'seller' && <Home className="w-3 h-3 mr-1" />}
-                          {contact.category}
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">—</span>
-                      )}
-                    </td>
-                    <td className="p-4 text-sm">
-                      {contact.property_interest && (
-                        <p className="flex items-center gap-1">
-                          <Building2 className="w-3 h-3 text-muted-foreground" />
-                          {contact.property_interest}
-                        </p>
-                      )}
-                      {contact.budget && (
-                        <p className="flex items-center gap-1 text-muted-foreground">
-                          <DollarSign className="w-3 h-3" />
-                          {contact.budget}
-                        </p>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${statusColors[contact.status] || 'bg-gray-400'}`} />
-                        <span className="text-sm capitalize">{contact.status}</span>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-1">
-                        <Star className={`w-4 h-4 ${contact.lead_score >= 80 ? 'text-amber-500 fill-amber-500' : contact.lead_score >= 60 ? 'text-amber-400' : 'text-muted-foreground'}`} />
-                        <span className="text-sm font-medium">{contact.lead_score}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-sm text-muted-foreground">
-                      {formatDate(contact.created_at)}
-                    </td>
-                    <td className="p-4">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(contact)}>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleCreateTask(contact)}>
-                            <Plus className="w-4 h-4 mr-2" />
-                            Create Task
-                          </DropdownMenuItem>
-                          {isAdmin() && (
-                            <DropdownMenuItem onClick={() => handleDelete(contact.id)} className="text-destructive">
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
-
-      {/* Import Modal */}
-      <Dialog open={showImportModal} onOpenChange={(open) => {
-        setShowImportModal(open);
-        if (!open) {
-          setImportResult(null);
-          setImportCategory('');
-          if (fileInputRef.current) fileInputRef.current.value = '';
-        }
-      }}>
-        <DialogContent className="max-w-lg">
+      {/* Edit Modal */}
+      <Dialog open={editMode} onOpenChange={setEditMode}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Upload className="w-5 h-5" />
-              Import Contacts
-            </DialogTitle>
-            <DialogDescription>
-              Import contacts from Apple vCard (.vcf) or CSV file
-            </DialogDescription>
+            <DialogTitle>Edit Contact</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>File (vCard or CSV)</Label>
-              <Input
-                ref={fileInputRef}
-                type="file"
-                accept=".vcf,.vcard,.csv"
-                className="cursor-pointer"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Supported: Apple vCard (.vcf), CSV with email, name columns
-              </p>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>Name *</Label><Input value={editData.name || ''} onChange={(e) => setEditData({ ...editData, name: e.target.value })} /></div>
+              <div><Label>Email</Label><Input type="email" value={editData.email || ''} onChange={(e) => setEditData({ ...editData, email: e.target.value })} /></div>
             </div>
-            
-            <div>
-              <Label>Assign Category (optional)</Label>
-              <Select value={importCategory || "none"} onValueChange={(v) => setImportCategory(v === "none" ? "" : v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Keep original or none" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Keep Original</SelectItem>
-                  <SelectItem value="buyer">Buyer</SelectItem>
-                  <SelectItem value="seller">Seller</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>Phone</Label><Input value={editData.phone || ''} onChange={(e) => setEditData({ ...editData, phone: e.target.value })} /></div>
+              <div><Label>Company</Label><Input value={editData.company || ''} onChange={(e) => setEditData({ ...editData, company: e.target.value })} /></div>
             </div>
-
-            {importResult && (
-              <div className="p-4 bg-muted/30 rounded-lg space-y-2">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span className="font-medium">Import Complete</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Imported:</span>
-                    <span className="ml-1 font-medium text-green-600">{importResult.imported}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Duplicates:</span>
-                    <span className="ml-1 font-medium text-yellow-600">{importResult.duplicates}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Errors:</span>
-                    <span className="ml-1 font-medium text-red-600">{importResult.errors || 0}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowImportModal(false)}>
-              {importResult ? 'Close' : 'Cancel'}
-            </Button>
-            {!importResult && (
-              <Button onClick={handleImport} disabled={importing}>
-                {importing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Import
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Export Modal */}
-      <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Download className="w-5 h-5" />
-              Export Contacts
-            </DialogTitle>
-            <DialogDescription>
-              Export contacts to Apple vCard (.vcf) or CSV format with filters
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Export Format</Label>
-              <Select value={exportFormat} onValueChange={setExportFormat}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="vcard">
-                    <div className="flex items-center gap-2">
-                      <FileSpreadsheet className="w-4 h-4" />
-                      vCard (.vcf) - Apple Compatible
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="csv">
-                    <div className="flex items-center gap-2">
-                      <FileSpreadsheet className="w-4 h-4" />
-                      CSV Spreadsheet
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Filter by Category</Label>
-                <Select value={exportCategory || "all"} onValueChange={(v) => setExportCategory(v === "all" ? "" : v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Categories" />
-                  </SelectTrigger>
+                <Label>Category</Label>
+                <Select value={editData.category || ''} onValueChange={(v) => setEditData({ ...editData, category: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Contacts</SelectItem>
-                    <SelectItem value="buyer">Buyers Only</SelectItem>
-                    <SelectItem value="seller">Sellers Only</SelectItem>
+                    <SelectItem value="buyer">Buyer</SelectItem>
+                    <SelectItem value="seller">Seller</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              
               <div>
-                <Label>Filter by Status</Label>
-                <Select value={exportStatus || "all"} onValueChange={(v) => setExportStatus(v === "all" ? "" : v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Statuses" />
-                  </SelectTrigger>
+                <Label>Status</Label>
+                <Select value={editData.status || ''} onValueChange={(v) => setEditData({ ...editData, status: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="lead">Lead</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
+                    {STATUS_OPTIONS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-
-            <div className="p-3 bg-muted/30 rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                <strong>Export preview:</strong> {exportCategory ? `${exportCategory}s` : 'All contacts'} 
-                {exportStatus ? ` with ${exportStatus} status` : ''} 
-                {' as '}{exportFormat === 'vcard' ? 'Apple vCard (.vcf)' : 'CSV spreadsheet'}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Matching contacts: {contacts.filter(c => 
-                  (!exportCategory || c.category === exportCategory) &&
-                  (!exportStatus || c.status === exportStatus)
-                ).length}
-              </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>Budget</Label><Input value={editData.budget || ''} onChange={(e) => setEditData({ ...editData, budget: e.target.value })} placeholder="$300K-$500K" /></div>
+              <div><Label>Property Interest</Label><Input value={editData.property_interest || ''} onChange={(e) => setEditData({ ...editData, property_interest: e.target.value })} /></div>
             </div>
+            <div><Label>Notes</Label><Textarea rows={3} value={editData.notes || ''} onChange={(e) => setEditData({ ...editData, notes: e.target.value })} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowExportModal(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleExport} disabled={exporting}>
-              {exporting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Export {exportFormat === 'vcard' ? 'vCard' : 'CSV'}
+            <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
+            <Button onClick={handleSave} disabled={saving} className="bg-amber-500 hover:bg-amber-600 text-black">
+              {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}Save
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -814,3 +503,262 @@ export const ContactsPage = () => {
     </div>
   );
 };
+
+// Main Contacts List Page
+export const ContactsPage = () => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  
+  const [contacts, setContacts] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [selectedContact, setSelectedContact] = useState(id || null);
+  
+  // Add modal
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [newContact, setNewContact] = useState({
+    name: '', email: '', phone: '', company: '', category: '', status: 'new', budget: '', property_interest: '', notes: ''
+  });
+
+  useEffect(() => {
+    fetchContacts();
+  }, []);
+
+  useEffect(() => {
+    if (id) setSelectedContact(id);
+  }, [id]);
+
+  const fetchContacts = async () => {
+    setLoading(true);
+    try {
+      const res = await contactsAPI.list();
+      const data = res.data || [];
+      setContacts(data);
+      
+      const total = data.length;
+      const buyers = data.filter(c => c.category === 'buyer').length;
+      const sellers = data.filter(c => c.category === 'seller').length;
+      const newCount = data.filter(c => c.status === 'new').length;
+      const qualified = data.filter(c => c.status === 'qualified').length;
+      
+      setStats({ total, buyers, sellers, new: newCount, qualified });
+    } catch (error) {
+      toast.error('Failed to load contacts');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddContact = async () => {
+    if (!newContact.name) { toast.error('Name is required'); return; }
+    setSaving(true);
+    try {
+      await contactsAPI.create(newContact);
+      toast.success('Contact added');
+      setShowAddModal(false);
+      setNewContact({ name: '', email: '', phone: '', company: '', category: '', status: 'new', budget: '', property_interest: '', notes: '' });
+      fetchContacts();
+    } catch (error) {
+      toast.error('Failed to add contact');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id, e) => {
+    e.stopPropagation();
+    if (!window.confirm('Delete this contact?')) return;
+    try {
+      await contactsAPI.delete(id);
+      toast.success('Contact deleted');
+      fetchContacts();
+    } catch (error) {
+      toast.error('Failed to delete');
+    }
+  };
+
+  const handleSelectContact = (contactId) => {
+    setSelectedContact(contactId);
+    navigate(`/contacts/${contactId}`);
+  };
+
+  const handleBack = () => {
+    setSelectedContact(null);
+    navigate('/contacts');
+  };
+
+  const getStatusColor = (status) => STATUS_OPTIONS.find(s => s.value === status)?.color || 'bg-gray-500/20 text-gray-600';
+  const getCategoryColor = (cat) => CATEGORY_OPTIONS.find(c => c.value === cat)?.color || 'bg-gray-500/20 text-gray-600';
+
+  const filteredContacts = contacts.filter(contact => {
+    const matchesSearch = !searchQuery || 
+      contact.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      contact.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      contact.company?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || contact.status === filterStatus;
+    const matchesCategory = filterCategory === 'all' || contact.category === filterCategory;
+    return matchesSearch && matchesStatus && matchesCategory;
+  });
+
+  // Show detail view if contact is selected
+  if (selectedContact) {
+    return <ContactDetail contactId={selectedContact} onBack={handleBack} />;
+  }
+
+  return (
+    <div className="space-y-6" data-testid="contacts-page">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-serif text-foreground mb-2">Contacts</h1>
+          <p className="text-muted-foreground">Manage your buyers and sellers</p>
+        </div>
+        <Button onClick={() => setShowAddModal(true)} className="bg-amber-500 hover:bg-amber-600 text-black" data-testid="add-contact-btn">
+          <Plus className="w-4 h-4 mr-2" />Add Contact
+        </Button>
+      </div>
+
+      {/* Stats Cards */}
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Total</p><p className="text-2xl font-bold">{stats.total}</p></div><Users className="w-8 h-8 text-amber-500" /></div></CardContent></Card>
+          <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Buyers</p><p className="text-2xl font-bold text-emerald-600">{stats.buyers}</p></div><ShoppingCart className="w-8 h-8 text-emerald-500" /></div></CardContent></Card>
+          <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Sellers</p><p className="text-2xl font-bold text-orange-600">{stats.sellers}</p></div><Home className="w-8 h-8 text-orange-500" /></div></CardContent></Card>
+          <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">New</p><p className="text-2xl font-bold text-blue-600">{stats.new}</p></div><Clock className="w-8 h-8 text-blue-500" /></div></CardContent></Card>
+          <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Qualified</p><p className="text-2xl font-bold text-green-600">{stats.qualified}</p></div><CheckCircle className="w-8 h-8 text-green-500" /></div></CardContent></Card>
+        </div>
+      )}
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Search by name, email, or company..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
+            </div>
+            <Select value={filterCategory} onValueChange={setFilterCategory}>
+              <SelectTrigger className="w-40"><SelectValue placeholder="Category" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="buyer">Buyers</SelectItem>
+                <SelectItem value="seller">Sellers</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                {STATUS_OPTIONS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" onClick={fetchContacts}><RefreshCw className="w-4 h-4" /></Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Contacts List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Contacts ({filteredContacts.length})</CardTitle>
+          <CardDescription>Click on a contact to view details</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-amber-500" /></div>
+          ) : filteredContacts.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg">No contacts found</p>
+              <Button onClick={() => setShowAddModal(true)} className="mt-4 bg-amber-500 hover:bg-amber-600 text-black"><Plus className="w-4 h-4 mr-2" />Add Contact</Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredContacts.map(contact => (
+                <div key={contact.id} onClick={() => handleSelectContact(contact.id)} className="p-4 rounded-lg border bg-card hover:shadow-md hover:border-amber-500/50 transition-all cursor-pointer">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                        <User className="w-6 h-6 text-amber-500" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-foreground">{contact.name}</h3>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                          {contact.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{contact.email}</span>}
+                          {contact.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{contact.phone}</span>}
+                        </div>
+                        {contact.company && <p className="text-sm text-muted-foreground mt-1"><Building2 className="w-3 h-3 inline mr-1" />{contact.company}</p>}
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="flex flex-col items-end gap-2">
+                        <Badge className={getStatusColor(contact.status)}>{contact.status?.toUpperCase()}</Badge>
+                        {contact.category && <Badge className={getCategoryColor(contact.category)}>{contact.category?.toUpperCase()}</Badge>}
+                      </div>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleSelectContact(contact.id); }} className="text-muted-foreground hover:text-foreground"><Eye className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={(e) => handleDelete(contact.id, e)} className="text-red-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Add Contact Modal */}
+      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Users className="w-5 h-5 text-amber-500" />Add Contact</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>Name *</Label><Input value={newContact.name} onChange={(e) => setNewContact({ ...newContact, name: e.target.value })} placeholder="Full name" /></div>
+              <div><Label>Email</Label><Input type="email" value={newContact.email} onChange={(e) => setNewContact({ ...newContact, email: e.target.value })} placeholder="email@example.com" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>Phone</Label><Input value={newContact.phone} onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })} placeholder="(555) 123-4567" /></div>
+              <div><Label>Company</Label><Input value={newContact.company} onChange={(e) => setNewContact({ ...newContact, company: e.target.value })} /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Category</Label>
+                <Select value={newContact.category} onValueChange={(v) => setNewContact({ ...newContact, category: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                  <SelectContent><SelectItem value="buyer">Buyer</SelectItem><SelectItem value="seller">Seller</SelectItem></SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Select value={newContact.status} onValueChange={(v) => setNewContact({ ...newContact, status: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{STATUS_OPTIONS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>Budget</Label><Input value={newContact.budget} onChange={(e) => setNewContact({ ...newContact, budget: e.target.value })} placeholder="$300K-$500K" /></div>
+              <div><Label>Property Interest</Label><Input value={newContact.property_interest} onChange={(e) => setNewContact({ ...newContact, property_interest: e.target.value })} /></div>
+            </div>
+            <div><Label>Notes</Label><Textarea rows={3} value={newContact.notes} onChange={(e) => setNewContact({ ...newContact, notes: e.target.value })} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddModal(false)}>Cancel</Button>
+            <Button onClick={handleAddContact} disabled={saving} className="bg-amber-500 hover:bg-amber-600 text-black">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}Add Contact
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default ContactsPage;
