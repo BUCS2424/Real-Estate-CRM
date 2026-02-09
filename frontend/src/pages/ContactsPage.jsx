@@ -518,6 +518,8 @@ export const ContactsPage = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [selectedContact, setSelectedContact] = useState(id || null);
+  const [selectedLetter, setSelectedLetter] = useState(null);
+  const [nameFilter, setNameFilter] = useState('last');
   
   // Add modal
   const [showAddModal, setShowAddModal] = useState(false);
