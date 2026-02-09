@@ -63,6 +63,7 @@ import ReviewsManagementPage from './pages/ReviewsManagementPage';
 import WriteReviewPage from './pages/WriteReviewPage';
 import PropertyLeadsPage from './pages/PropertyLeadsPage';
 import PropertyLeadDetailPage from './pages/PropertyLeadDetailPage';
+import ListingDetailPage from './pages/ListingDetailPage';
 
 import './App.css';
 
