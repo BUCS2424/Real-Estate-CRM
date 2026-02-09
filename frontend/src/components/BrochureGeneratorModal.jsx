@@ -22,7 +22,7 @@ export const BrochureGeneratorModal = ({
   leadAddress,
   onComplete
 }) => {
-  const [template, setTemplate] = useState('flyer');
+  const [template, setTemplate] = useState('foldable');
   const [includeQR, setIncludeQR] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
