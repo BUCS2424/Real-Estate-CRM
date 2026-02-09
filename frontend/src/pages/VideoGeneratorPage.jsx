@@ -95,12 +95,12 @@ export default function VideoGeneratorPage() {
         formData.append('prompt', prompt);
         formData.append('aspect_ratio', aspectRatio);
         
-        response = await api.post('/api/skyreels/generate-with-image', formData, {
+        response = await api.post('/skyreels/generate-with-image', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
       } else {
         // Use URL
-        response = await api.post('/api/skyreels/generate', {
+        response = await api.post('/skyreels/generate', {
           image_url: imageUrl,
           prompt: prompt,
           aspect_ratio: aspectRatio
