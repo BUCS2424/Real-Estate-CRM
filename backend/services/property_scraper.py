@@ -201,90 +201,109 @@ class PropertyDataScraper:
         }
         
         try:
-            # Build search URL - Redfin uses a different URL structure
-            search_query = self._normalize_address(address, city, state, zip_code)
+            # Add delay
+            await asyncio.sleep(2)
             
-            # Add small delay
-            await asyncio.sleep(1)
-            
-            # First, search for the property
-            search_url = f"https://www.redfin.com/stingray/do/location-autocomplete?location={quote_plus(search_query)}&v=2"
+            # Build search query
+            search_query = f"{address}, {city}, {state} {zip_code}".strip()
             
             connector = aiohttp.TCPConnector(ssl=False)
-            async with aiohttp.ClientSession(headers=self._get_headers('https://www.redfin.com/'), timeout=self.timeout, connector=connector) as session:
-                # Get autocomplete results
-                async with session.get(search_url) as response:
+            headers = self._get_headers('https://www.google.com/')
+            
+            async with aiohttp.ClientSession(headers=headers, timeout=self.timeout, connector=connector) as session:
+                # Use Redfin's autocomplete API
+                autocomplete_url = f"https://www.redfin.com/stingray/do/location-autocomplete?location={quote_plus(search_query)}&v=2"
+                
+                async with session.get(autocomplete_url) as response:
                     if response.status == 200:
                         text = await response.text()
                         # Redfin returns {}&&{...} format
                         if '&&' in text:
-                            text = text.split('&&')[1]
+                            text = text.split('&&', 1)[1]
+                        
                         try:
                             data = json.loads(text)
                             payload = data.get('payload', {})
                             sections = payload.get('sections', [])
                             
+                            property_url = None
                             for section in sections:
                                 rows = section.get('rows', [])
                                 for row in rows:
-                                    if row.get('type') == 'ADDRESS':
-                                        # Found the property
-                                        property_url = row.get('url')
-                                        if property_url:
-                                            result["url"] = f"https://www.redfin.com{property_url}"
-                                            
-                                            # Fetch property page
-                                            async with session.get(result["url"]) as prop_response:
-                                                if prop_response.status == 200:
-                                                    html = await prop_response.text()
-                                                    soup = BeautifulSoup(html, 'lxml')
-                                                    
-                                                    result["found"] = True
-                                                    
-                                                    # Extract price
-                                                    price_elem = soup.find('div', class_='statsValue')
-                                                    if price_elem:
-                                                        result["data"]["price"] = self._extract_price(price_elem.text)
-                                                    
-                                                    # Extract basic stats
-                                                    stats = soup.find_all('div', class_='stat-block')
-                                                    for stat in stats:
-                                                        label = stat.find('span', class_='label')
-                                                        value = stat.find('div', class_='statsValue')
-                                                        if label and value:
-                                                            label_text = label.text.lower()
-                                                            if 'bed' in label_text:
-                                                                result["data"]["bedrooms"] = self._extract_number(value.text)
-                                                            elif 'bath' in label_text:
-                                                                result["data"]["bathrooms"] = self._extract_number(value.text)
-                                                            elif 'sq ft' in label_text or 'sqft' in label_text:
-                                                                result["data"]["sqft"] = self._extract_number(value.text)
-                                                    
-                                                    # Extract images
-                                                    img_tags = soup.find_all('img', class_='widenPhoto')
-                                                    for img in img_tags[:20]:
-                                                        src = img.get('src') or img.get('data-src')
-                                                        if src and 'redfin' in src:
-                                                            result["images"].append({
-                                                                "url": src,
-                                                                "source": "redfin"
-                                                            })
-                                                    
-                                                    # Also check for background images in gallery
-                                                    gallery = soup.find('div', class_='PhotosView')
-                                                    if gallery:
-                                                        style_imgs = gallery.find_all(style=re.compile(r'background-image'))
-                                                        for elem in style_imgs[:20]:
-                                                            style = elem.get('style', '')
-                                                            match = re.search(r'url\(["\']?([^"\']+)["\']?\)', style)
-                                                            if match:
-                                                                result["images"].append({
-                                                                    "url": match.group(1),
-                                                                    "source": "redfin"
-                                                                })
-                                            break
-                        except json.JSONDecodeError:
-                            pass
+                                    if row.get('type') == 'ADDRESS' and row.get('url'):
+                                        property_url = f"https://www.redfin.com{row['url']}"
+                                        break
+                                if property_url:
+                                    break
+                            
+                            if property_url:
+                                await asyncio.sleep(1)
+                                result["url"] = property_url
+                                
+                                async with session.get(property_url) as prop_response:
+                                    if prop_response.status == 200:
+                                        html = await prop_response.text()
+                                        soup = BeautifulSoup(html, 'lxml')
+                                        result["found"] = True
+                                        
+                                        # Extract images from various sources
+                                        # 1. Look for image URLs in scripts
+                                        for script in soup.find_all('script'):
+                                            if script.string:
+                                                img_matches = re.findall(r'https://ssl\.cdn-redfin\.com/[^"\']+\.(?:jpg|jpeg|png|webp)', script.string)
+                                                for img_url in img_matches[:15]:
+                                                    if img_url not in [i['url'] for i in result["images"]]:
+                                                        result["images"].append({
+                                                            "url": img_url,
+                                                            "source": "redfin"
+                                                        })
+                                        
+                                        # 2. Look in img tags
+                                        for img in soup.find_all('img'):
+                                            src = img.get('src', '') or img.get('data-src', '')
+                                            if src and 'redfin' in src and any(ext in src.lower() for ext in ['.jpg', '.jpeg', '.png']):
+                                                if src not in [i['url'] for i in result["images"]]:
+                                                    result["images"].append({
+                                                        "url": src,
+                                                        "source": "redfin"
+                                                    })
+                                        
+                                        # 3. Look for background images
+                                        for elem in soup.find_all(style=re.compile(r'background.*url')):
+                                            style = elem.get('style', '')
+                                            match = re.search(r'url\(["\']?([^"\']+)["\']?\)', style)
+                                            if match and 'redfin' in match.group(1):
+                                                if match.group(1) not in [i['url'] for i in result["images"]]:
+                                                    result["images"].append({
+                                                        "url": match.group(1),
+                                                        "source": "redfin"
+                                                    })
+                                        
+                                        # Extract property data from page text
+                                        page_text = soup.get_text()
+                                        
+                                        # Price
+                                        price_match = re.search(r'\$[\d,]+', page_text)
+                                        if price_match:
+                                            result["data"]["price"] = self._extract_price(price_match.group())
+                                        
+                                        # Beds/Baths/Sqft
+                                        bed_match = re.search(r'(\d+)\s*(?:Beds?|BD)', page_text, re.I)
+                                        bath_match = re.search(r'(\d+\.?\d*)\s*(?:Baths?|BA)', page_text, re.I)
+                                        sqft_match = re.search(r'([\d,]+)\s*(?:Sq\.?\s*Ft|SF)', page_text, re.I)
+                                        
+                                        if bed_match:
+                                            result["data"]["bedrooms"] = int(bed_match.group(1))
+                                        if bath_match:
+                                            result["data"]["bathrooms"] = float(bath_match.group(1))
+                                        if sqft_match:
+                                            result["data"]["sqft"] = int(sqft_match.group(1).replace(',', ''))
+                                    else:
+                                        result["error"] = f"Property page HTTP {prop_response.status}"
+                        except json.JSONDecodeError as e:
+                            result["error"] = f"JSON decode error: {str(e)}"
+                    else:
+                        result["error"] = f"HTTP {response.status}"
                             
         except asyncio.TimeoutError:
             result["error"] = "Timeout"
