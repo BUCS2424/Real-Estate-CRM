@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
-import { Mail, Send, Loader2, X, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
+import Link from '@tiptap/extension-link';
+import TextAlign from '@tiptap/extension-text-align';
+import { Mail, Send, Loader2, AlertCircle, Bold, Italic, Underline as UnderlineIcon, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Link2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -9,26 +12,103 @@ import { Label } from './ui/label';
 import { toast } from 'sonner';
 import api, { smtpEmailAPI } from '../lib/api';
 
-const quillModules = {
-  toolbar: [
-    [{ 'header': [1, 2, 3, false] }],
-    ['bold', 'italic', 'underline', 'strike'],
-    [{ 'color': [] }, { 'background': [] }],
-    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-    [{ 'align': [] }],
-    ['link'],
-    ['clean']
-  ],
-};
+const MenuBar = ({ editor }) => {
+  if (!editor) return null;
 
-const quillFormats = [
-  'header',
-  'bold', 'italic', 'underline', 'strike',
-  'color', 'background',
-  'list', 'bullet',
-  'align',
-  'link'
-];
+  return (
+    <div className="flex flex-wrap gap-1 p-2 border-b bg-muted/30">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        className={editor.isActive('bold') ? 'bg-muted' : ''}
+      >
+        <Bold className="w-4 h-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        className={editor.isActive('italic') ? 'bg-muted' : ''}
+      >
+        <Italic className="w-4 h-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
+        className={editor.isActive('underline') ? 'bg-muted' : ''}
+      >
+        <UnderlineIcon className="w-4 h-4" />
+      </Button>
+      <div className="w-px bg-border mx-1" />
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => editor.chain().focus().setTextAlign('left').run()}
+        className={editor.isActive({ textAlign: 'left' }) ? 'bg-muted' : ''}
+      >
+        <AlignLeft className="w-4 h-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => editor.chain().focus().setTextAlign('center').run()}
+        className={editor.isActive({ textAlign: 'center' }) ? 'bg-muted' : ''}
+      >
+        <AlignCenter className="w-4 h-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => editor.chain().focus().setTextAlign('right').run()}
+        className={editor.isActive({ textAlign: 'right' }) ? 'bg-muted' : ''}
+      >
+        <AlignRight className="w-4 h-4" />
+      </Button>
+      <div className="w-px bg-border mx-1" />
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        className={editor.isActive('bulletList') ? 'bg-muted' : ''}
+      >
+        <List className="w-4 h-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        className={editor.isActive('orderedList') ? 'bg-muted' : ''}
+      >
+        <ListOrdered className="w-4 h-4" />
+      </Button>
+      <div className="w-px bg-border mx-1" />
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => {
+          const url = window.prompt('Enter URL:');
+          if (url) {
+            editor.chain().focus().setLink({ href: url }).run();
+          }
+        }}
+        className={editor.isActive('link') ? 'bg-muted' : ''}
+      >
+        <Link2 className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+};
 
 export const EmailComposerModal = ({ 
   isOpen, 
@@ -38,19 +118,39 @@ export const EmailComposerModal = ({
   defaultSubject = ''
 }) => {
   const [subject, setSubject] = useState(defaultSubject);
-  const [bodyHtml, setBodyHtml] = useState('');
   const [sending, setSending] = useState(false);
   const [signature, setSignature] = useState(null);
   const [smtpConfigured, setSmtpConfigured] = useState(null);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      Link.configure({
+        openOnClick: false,
+      }),
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+    ],
+    content: '',
+    editorProps: {
+      attributes: {
+        class: 'prose prose-sm max-w-none min-h-[200px] p-3 focus:outline-none',
+      },
+    },
+  });
 
   useEffect(() => {
     if (isOpen) {
       fetchSignature();
       checkSmtpConfig();
       setSubject(defaultSubject);
-      setBodyHtml('');
+      if (editor) {
+        editor.commands.setContent('');
+      }
     }
-  }, [isOpen, defaultSubject]);
+  }, [isOpen, defaultSubject, editor]);
 
   const fetchSignature = async () => {
     try {
@@ -79,7 +179,9 @@ export const EmailComposerModal = ({
       toast.error('Subject is required');
       return;
     }
-    if (!bodyHtml.trim() || bodyHtml === '<p><br></p>') {
+    
+    const bodyHtml = editor?.getHTML() || '';
+    if (!bodyHtml.trim() || bodyHtml === '<p></p>') {
       toast.error('Message body is required');
       return;
     }
@@ -103,7 +205,9 @@ export const EmailComposerModal = ({
 
   const handleClose = () => {
     setSubject('');
-    setBodyHtml('');
+    if (editor) {
+      editor.commands.setContent('');
+    }
     onClose();
   };
 
@@ -157,15 +261,8 @@ export const EmailComposerModal = ({
           <div>
             <Label>Message *</Label>
             <div className="mt-2 border rounded-lg overflow-hidden">
-              <ReactQuill
-                theme="snow"
-                value={bodyHtml}
-                onChange={setBodyHtml}
-                modules={quillModules}
-                formats={quillFormats}
-                placeholder="Type your message..."
-                style={{ minHeight: '200px' }}
-              />
+              <MenuBar editor={editor} />
+              <EditorContent editor={editor} />
             </div>
           </div>
 
