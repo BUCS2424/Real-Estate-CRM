@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional, List
 from datetime import datetime, timezone
 from bson import ObjectId
-from ..database import get_db
-from ..routes.auth import get_current_user
+from database import get_db
+from routes.auth import get_current_user
 
 router = APIRouter(prefix="/seller-leads", tags=["seller-leads"])
 
