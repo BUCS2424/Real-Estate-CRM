@@ -58,6 +58,7 @@ import {
 import { toast } from 'sonner';
 import { propertyLeadsAPI } from '../lib/api';
 import BrochureGeneratorModal from '../components/BrochureGeneratorModal';
+import PropertyImagesGallery from '../components/PropertyImagesGallery';
 
 const PropertyLeadDetailPage = () => {
   const { id } = useParams();
