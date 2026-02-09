@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import api from '../lib/api';
 
 const TEMPLATES = [
+  { value: 'foldable', label: 'Foldable Brochure (2-Page)', description: 'Professional fold-in-half brochure with front, back, and inside panels' },
   { value: 'flyer', label: 'Full Page Flyer (8.5" x 11")', description: 'Professional single-page brochure' },
   { value: 'postcard', label: 'Postcard (6" x 4")', description: 'Compact mailer design' },
   { value: 'trifold', label: 'Tri-Fold Brochure', description: 'Three-panel foldable layout' },
