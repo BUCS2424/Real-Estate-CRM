@@ -500,23 +500,6 @@ const PropertyLeadsPage = () => {
                         )}
                       </div>
                       <div className="flex gap-1">
-                        {/* Convert to Showcase Button */}
-                        {lead.status !== 'converted' && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={(e) => handleConvertToShowcase(lead, e)}
-                            disabled={convertingId === lead.id}
-                            className="text-amber-600 border-amber-500/50 hover:bg-amber-500/10"
-                          >
-                            {convertingId === lead.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin mr-1" />
-                            ) : (
-                              <Building2 className="w-4 h-4 mr-1" />
-                            )}
-                            Convert to Showcase
-                          </Button>
-                        )}
                         {(lead.owner_email || lead.email) && (
                           <Button 
                             variant="ghost" 
