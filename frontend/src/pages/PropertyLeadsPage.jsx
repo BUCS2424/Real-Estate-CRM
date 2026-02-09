@@ -113,6 +113,15 @@ const PropertyLeadsPage = () => {
     }
   };
 
+  const fetchSignature = async () => {
+    try {
+      const res = await api.get('/users/me/signature');
+      setUserSignature(res.data);
+    } catch (error) {
+      // No signature set
+    }
+  };
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file && file.name.endsWith('.csv')) {
