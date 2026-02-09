@@ -464,14 +464,27 @@ const PropertyLeadsPage = () => {
                           <span className="text-xs text-muted-foreground">{lead.source}</span>
                         )}
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={(e) => handleDelete(lead.id, e)}
-                        className="text-red-500 hover:text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        {(lead.owner_phone || lead.phone) && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={(e) => openSMSModal(lead, e)}
+                            className="text-green-500 hover:text-green-600"
+                            title="Send SMS"
+                          >
+                            <MessageSquare className="w-4 h-4" />
+                          </Button>
+                        )}
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={(e) => handleDelete(lead.id, e)}
+                          className="text-red-500 hover:text-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
