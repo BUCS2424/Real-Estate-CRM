@@ -615,6 +615,34 @@ export const ContactsPage = () => {
     }
   };
 
+  const handleSendSMS = async () => {
+    if (!smsRecipient || !smsMessage.trim()) return;
+    
+    setSendingSMS(true);
+    try {
+      await contactsAPI.sendSMS({
+        phone: smsRecipient.phone,
+        message: smsMessage,
+        contact_id: smsRecipient.id,
+        contact_type: 'contact'
+      });
+      toast.success(`SMS sent to ${smsRecipient.name}`);
+      setShowSMSModal(false);
+      setSmsMessage('');
+      setSmsRecipient(null);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to send SMS');
+    } finally {
+      setSendingSMS(false);
+    }
+  };
+
+  const openSMSModal = (contact, e) => {
+    e.stopPropagation();
+    setSmsRecipient(contact);
+    setShowSMSModal(true);
+  };
+
   const handleDelete = async (id, e) => {
     e.stopPropagation();
     if (!window.confirm('Delete this contact?')) return;
