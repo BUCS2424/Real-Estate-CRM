@@ -67,69 +67,82 @@ export const Sidebar = ({ collapsed, onToggle }) => {
     location.pathname === item.path || location.pathname.startsWith(item.path)
   );
   
+  // Check if current path is a tools item to auto-expand
+  const isToolsPath = toolsItems.some(item => 
+    location.pathname === item.path || location.pathname.startsWith(item.path)
+  );
+  
   const [salesOpen, setSalesOpen] = useState(isSalesPath);
+  const [toolsOpen, setToolsOpen] = useState(isToolsPath);
+
+  const renderAccordion = (item, items, isOpen, setOpen, isActivePath) => {
+    return (
+      <div key={item.type} className="space-y-1">
+        <button
+          onClick={() => !collapsed && setOpen(!isOpen)}
+          data-testid={`nav-${item.label.toLowerCase()}`}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+            "hover:bg-sidebar-accent",
+            isActivePath 
+              ? "bg-sidebar-primary/50 text-sidebar-primary-foreground" 
+              : "text-sidebar-foreground"
+          )}
+        >
+          <item.icon className={cn("w-5 h-5 flex-shrink-0", collapsed && "mx-auto")} />
+          {!collapsed && (
+            <>
+              <span className="font-medium flex-1 text-left">{item.label}</span>
+              <ChevronDown 
+                className={cn(
+                  "w-4 h-4 transition-transform duration-200",
+                  isOpen ? "rotate-180" : ""
+                )} 
+              />
+            </>
+          )}
+        </button>
+        
+        {/* Sub-items */}
+        {!collapsed && isOpen && (
+          <div className="ml-4 pl-3 border-l border-sidebar-border space-y-1">
+            {items.map((subItem) => {
+              const subIsActive = location.pathname === subItem.path || 
+                location.pathname.startsWith(subItem.path);
+              
+              return (
+                <NavLink
+                  key={subItem.path}
+                  to={subItem.path}
+                  data-testid={`nav-${subItem.label.toLowerCase().replace(' ', '-')}`}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm",
+                    "hover:bg-sidebar-accent",
+                    subIsActive 
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground" 
+                      : "text-sidebar-foreground"
+                  )}
+                >
+                  <subItem.icon className="w-4 h-4 flex-shrink-0" />
+                  <span className="font-medium">{subItem.label}</span>
+                </NavLink>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderNavItem = (item) => {
     // Sales accordion
     if (item.type === 'sales') {
-      const isActive = isSalesPath;
-      
-      return (
-        <div key="sales" className="space-y-1">
-          <button
-            onClick={() => !collapsed && setSalesOpen(!salesOpen)}
-            data-testid="nav-sales"
-            className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-              "hover:bg-sidebar-accent",
-              isActive 
-                ? "bg-sidebar-primary/50 text-sidebar-primary-foreground" 
-                : "text-sidebar-foreground"
-            )}
-          >
-            <item.icon className={cn("w-5 h-5 flex-shrink-0", collapsed && "mx-auto")} />
-            {!collapsed && (
-              <>
-                <span className="font-medium flex-1 text-left">{item.label}</span>
-                <ChevronDown 
-                  className={cn(
-                    "w-4 h-4 transition-transform duration-200",
-                    salesOpen ? "rotate-180" : ""
-                  )} 
-                />
-              </>
-            )}
-          </button>
-          
-          {/* Sales sub-items */}
-          {!collapsed && salesOpen && (
-            <div className="ml-4 pl-3 border-l border-sidebar-border space-y-1">
-              {salesItems.map((subItem) => {
-                const subIsActive = location.pathname === subItem.path || 
-                  location.pathname.startsWith(subItem.path);
-                
-                return (
-                  <NavLink
-                    key={subItem.path}
-                    to={subItem.path}
-                    data-testid={`nav-${subItem.label.toLowerCase().replace(' ', '-')}`}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm",
-                      "hover:bg-sidebar-accent",
-                      subIsActive 
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground" 
-                        : "text-sidebar-foreground"
-                    )}
-                  >
-                    <subItem.icon className="w-4 h-4 flex-shrink-0" />
-                    <span className="font-medium">{subItem.label}</span>
-                  </NavLink>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      );
+      return renderAccordion(item, salesItems, salesOpen, setSalesOpen, isSalesPath);
+    }
+    
+    // Tools accordion
+    if (item.type === 'tools') {
+      return renderAccordion(item, toolsItems, toolsOpen, setToolsOpen, isToolsPath);
     }
 
     // Regular nav item
