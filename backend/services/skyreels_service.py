@@ -233,29 +233,30 @@ class SkyReelsService:
     async def check_task_status(self, task_id: str, provider: str = "piapi") -> Dict[str, Any]:
         """Check the status of a video generation task"""
         try:
-            headers = {
-                "x-api-key": self.api_key
-            }
-            
-            if provider == "piapi":
-                url = f"https://api.piapi.ai/api/v1/task/{task_id}"
-            else:
-                url = f"https://api.skyreels.ai/v1/tasks/{task_id}"
-            
-            response = await self.client.get(url, headers=headers)
-            
-            if response.status_code == 200:
-                result = response.json()
-                data = result.get("data", result)
-                return {
-                    "success": True,
-                    "status": data.get("status"),
-                    "video_url": data.get("output", {}).get("video") if isinstance(data.get("output"), dict) else data.get("output"),
-                    "progress": data.get("progress", 0),
-                    "data": result
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                headers = {
+                    "x-api-key": self.api_key
                 }
-            else:
-                return {"success": False, "error": f"Status check failed: {response.status_code}"}
+                
+                if provider == "piapi":
+                    url = f"https://api.piapi.ai/api/v1/task/{task_id}"
+                else:
+                    url = f"https://api.skyreels.ai/v1/tasks/{task_id}"
+                
+                response = await client.get(url, headers=headers)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    data = result.get("data", result)
+                    return {
+                        "success": True,
+                        "status": data.get("status"),
+                        "video_url": data.get("output", {}).get("video") if isinstance(data.get("output"), dict) else data.get("output"),
+                        "progress": data.get("progress", 0),
+                        "data": result
+                    }
+                else:
+                    return {"success": False, "error": f"Status check failed: {response.status_code}"}
                 
         except Exception as e:
             return {"success": False, "error": str(e)}
