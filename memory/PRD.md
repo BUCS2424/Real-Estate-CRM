@@ -1161,3 +1161,44 @@ Completed the unified CSV import system that allows users to choose the destinat
 - File input and button states work correctly
 - Test report: `/app/test_reports/iteration_12.json`
 
+---
+
+## Update: February 9, 2026 - In-App Email Composer with Signatures
+
+### Feature: Email Composer Modal with User Signatures
+
+Added a comprehensive in-app email composer that intercepts email actions and provides a rich composition experience with automatic signature appending.
+
+#### Implementation Details
+
+**Signature Settings Page:** `/app/frontend/src/pages/settings/profile/SignatureSettings.jsx`
+- Located at Settings > Profile > Email Signature
+- Fields: Full Name, Title/Position, Phone, Email, Company, Website, Custom HTML
+- Save Signature and Show Preview buttons
+- Auto-generated signature preview from fields
+- Optional custom HTML for advanced signatures
+
+**Backend Endpoints:** `/app/backend/routes/users.py`
+- `GET /api/users/me/signature` - Fetch current user's signature
+- `POST /api/users/me/signature` - Save/update signature
+
+**Email Composer Integration:**
+- **ContactsPage:** Blue email icon on contact cards, opens modal with recipient info
+- **PropertyLeadsPage:** Email icon appears when lead has owner_email
+- **SellerLeadsPage:** Email icon on leads with email addresses
+- Modal displays: recipient info, subject field, message textarea, signature preview
+- "Open in Email Client" button constructs mailto: URL with subject, body, and signature
+
+#### Files Modified
+- `/app/frontend/src/pages/ContactsPage.jsx` - Fixed api import, added email modal
+- `/app/frontend/src/pages/PropertyLeadsPage.jsx` - Added email composer functionality
+- `/app/frontend/src/pages/SellerLeadsPage.jsx` - Added email composer functionality
+
+#### Tests & Verification
+- All 19 frontend tests passed ✅
+- Email icon visible on contacts and leads with emails
+- Modal opens correctly on all three pages
+- Signature fetched and displayed in preview
+- Signature settings page fully functional
+- Test report: `/app/test_reports/iteration_13.json`
+
