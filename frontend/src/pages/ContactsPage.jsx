@@ -584,6 +584,30 @@ export const ContactsPage = () => {
     }
   };
 
+  const handleImport = async () => {
+    if (!importFile) return;
+    
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', importFile);
+      
+      const res = await contactsAPI.importVCard(formData);
+      setImportResult(res.data);
+      
+      if (res.data.imported > 0) {
+        toast.success(`Imported ${res.data.imported} contacts`);
+        fetchContacts();
+      }
+    } catch (error) {
+      toast.error('Import failed');
+      setImportResult({ imported: 0, skipped: 0, errors: [error.message] });
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const handleDelete = async (id, e) => {
     e.stopPropagation();
     if (!window.confirm('Delete this contact?')) return;
