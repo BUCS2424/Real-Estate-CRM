@@ -68,6 +68,7 @@ import PropertyLeadDetailPage from './pages/PropertyLeadDetailPage';
 import ListingDetailPage from './pages/ListingDetailPage';
 import SellerLeadsPage from './pages/SellerLeadsPage';
 import SellerLeadDetailPage from './pages/SellerLeadDetailPage';
+import VideoGeneratorPage from './pages/VideoGeneratorPage';
 
 import './App.css';
 
