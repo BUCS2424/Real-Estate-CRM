@@ -19,7 +19,8 @@ import {
   FolderOpen,
   Search,
   Star,
-  MapPinHouse
+  MapPinHouse,
+  UserCheck
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
