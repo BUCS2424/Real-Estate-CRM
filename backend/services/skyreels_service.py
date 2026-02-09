@@ -22,10 +22,6 @@ class SkyReelsService:
     
     def __init__(self, api_key: str = None):
         self.api_key = api_key or SKYREELS_API_KEY
-        self.client = httpx.AsyncClient(timeout=120.0)
-    
-    async def close(self):
-        await self.client.aclose()
     
     async def generate_avatar_video(
         self,
