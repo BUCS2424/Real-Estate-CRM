@@ -28,11 +28,11 @@ import {
   Clock,
   UserCheck,
   MessageSquare,
-  Send,
-  Mail as MailIcon
+  Send
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api, { contactsAPI } from '../lib/api';
+import EmailComposerModal from '../components/EmailComposerModal';
 
 const STATUS_OPTIONS = [
   { value: 'new', label: 'New', color: 'bg-blue-500/20 text-blue-600 border-blue-500/50' },
