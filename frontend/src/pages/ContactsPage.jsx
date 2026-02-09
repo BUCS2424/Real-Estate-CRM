@@ -598,6 +598,17 @@ export const ContactsPage = () => {
   const getStatusColor = (status) => STATUS_OPTIONS.find(s => s.value === status)?.color || 'bg-gray-500/20 text-gray-600';
   const getCategoryColor = (cat) => CATEGORY_OPTIONS.find(c => c.value === cat)?.color || 'bg-gray-500/20 text-gray-600';
 
+  const getFirstName = (name) => {
+    if (!name) return '';
+    return name.split(' ')[0] || '';
+  };
+
+  const getLastName = (name) => {
+    if (!name) return '';
+    const parts = name.split(' ');
+    return parts.length > 1 ? parts[parts.length - 1] : parts[0];
+  };
+
   const filteredContacts = contacts.filter(contact => {
     const matchesSearch = !searchQuery || 
       contact.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -605,7 +616,14 @@ export const ContactsPage = () => {
       contact.company?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = filterStatus === 'all' || contact.status === filterStatus;
     const matchesCategory = filterCategory === 'all' || contact.category === filterCategory;
-    return matchesSearch && matchesStatus && matchesCategory;
+    
+    let matchesLetter = true;
+    if (selectedLetter) {
+      const nameToCheck = nameFilter === 'first' ? getFirstName(contact.name) : getLastName(contact.name);
+      matchesLetter = nameToCheck.toUpperCase().startsWith(selectedLetter);
+    }
+    
+    return matchesSearch && matchesStatus && matchesCategory && matchesLetter;
   });
 
   // Show detail view if contact is selected
