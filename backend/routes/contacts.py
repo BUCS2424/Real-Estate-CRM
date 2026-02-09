@@ -27,11 +27,19 @@ async def send_sms(request: SendSMSRequest, current_user: dict = Depends(get_cur
     """Send SMS via Telnyx"""
     import telnyx
     
-    telnyx_api_key = os.environ.get("TELNYX_API_KEY")
-    telnyx_phone = os.environ.get("TELNYX_PHONE_NUMBER")
+    # Get settings from DB first, then fall back to env
+    telnyx_settings = await db.telnyx_settings.find_one({}, {"_id": 0})
+    telnyx_api_key = telnyx_settings.get("apiKey") if telnyx_settings else None
+    telnyx_phone = telnyx_settings.get("phoneNumber") if telnyx_settings else None
+    
+    # Fall back to environment variables
+    if not telnyx_api_key:
+        telnyx_api_key = os.environ.get("TELNYX_API_KEY")
+    if not telnyx_phone:
+        telnyx_phone = os.environ.get("TELNYX_PHONE_NUMBER")
     
     if not telnyx_api_key or not telnyx_phone:
-        raise HTTPException(status_code=500, detail="Telnyx not configured. Add TELNYX_API_KEY and TELNYX_PHONE_NUMBER to environment.")
+        raise HTTPException(status_code=500, detail="Telnyx not configured. Go to Settings → Developer → Telnyx SMS to add your credentials.")
     
     telnyx.api_key = telnyx_api_key
     
