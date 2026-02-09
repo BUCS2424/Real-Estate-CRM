@@ -198,11 +198,18 @@ def generate_foldable_brochure_page1(
     tagline = generate_tagline()
     
     # Branding info
-    company_name = branding.get('company_name', 'Hidden Haven Realty') if branding else 'Hidden Haven Realty'
-    company_phone = branding.get('phone', agent_info.get('phone', '(555) 123-4567'))
-    company_website = branding.get('website', 'www.hiddenhaven.com')
-    company_address = branding.get('address', 'Tampa, FL')
-    logo_url = branding.get('logo_url') if branding else None
+    if branding:
+        company_name = branding.get('company_name', 'Hidden Haven Realty')
+        company_phone = branding.get('phone', agent_info.get('phone', '(555) 123-4567'))
+        company_website = branding.get('website', 'www.hiddenhaven.com')
+        company_address = branding.get('address', 'Tampa, FL')
+        logo_url = branding.get('logo_url')
+    else:
+        company_name = 'Hidden Haven Realty'
+        company_phone = agent_info.get('phone', '(555) 123-4567')
+        company_website = 'www.hiddenhaven.com'
+        company_address = 'Tampa, FL'
+        logo_url = None
     
     # ============================================
     # LEFT SIDE - BACK COVER (Dark Navy Background)
