@@ -76,17 +76,13 @@ const PropertyLeadsPage = () => {
   const [smsMessage, setSmsMessage] = useState('');
   const [sendingSMS, setSendingSMS] = useState(false);
   
-  // Email modal
+  // Email modal (using EmailComposerModal component)
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailRecipient, setEmailRecipient] = useState(null);
-  const [emailSubject, setEmailSubject] = useState('');
-  const [emailBody, setEmailBody] = useState('');
-  const [userSignature, setUserSignature] = useState(null);
 
   useEffect(() => {
     fetchLeads();
     fetchStats();
-    fetchSignature();
   }, [filterStatus, filterPriority]);
 
   const fetchLeads = async () => {
@@ -111,15 +107,6 @@ const PropertyLeadsPage = () => {
       setStats(res.data);
     } catch (error) {
       console.error('Failed to load stats');
-    }
-  };
-
-  const fetchSignature = async () => {
-    try {
-      const res = await api.get('/users/me/signature');
-      setUserSignature(res.data);
-    } catch (error) {
-      // No signature set
     }
   };
 
