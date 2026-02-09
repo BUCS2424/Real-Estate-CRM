@@ -183,6 +183,23 @@ const PropertyLeadDetailPage = () => {
     }
   };
 
+  const handleConvertToShowcase = async () => {
+    if (!window.confirm(`Convert "${lead.address}" to Showcase Listing?`)) {
+      return;
+    }
+    
+    setConvertingToShowcase(true);
+    try {
+      const res = await propertyLeadsAPI.convertToShowcase(id);
+      toast.success('Converted to Showcase Listing');
+      navigate(`/listings/${res.data.listing_id}`);
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Failed to convert';
+      toast.error(message);
+      setConvertingToShowcase(false);
+    }
+  };
+
   // Marketing functions
   const fetchLeadScore = async () => {
     try {
