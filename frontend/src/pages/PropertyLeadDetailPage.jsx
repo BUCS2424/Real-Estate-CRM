@@ -57,6 +57,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { propertyLeadsAPI } from '../lib/api';
+import BrochureGeneratorModal from '../components/BrochureGeneratorModal';
 
 const PropertyLeadDetailPage = () => {
   const { id } = useParams();
