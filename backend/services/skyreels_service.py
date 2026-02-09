@@ -134,46 +134,47 @@ class SkyReelsService:
     ) -> Dict[str, Any]:
         """Try generating video via PiAPI - Primary provider"""
         try:
-            headers = {
-                "x-api-key": self.api_key,
-                "Content-Type": "application/json"
-            }
-            
-            payload = {
-                "model": "Qubico/skyreels",
-                "task_type": "img2video",
-                "input": {
-                    "prompt": f"FPS-24, {prompt}",
-                    "negative_prompt": "chaotic, distortion, morphing, blurry, low quality",
-                    "image": image_url,
-                    "aspect_ratio": aspect_ratio,
-                    "guidance_scale": 3.5
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                headers = {
+                    "x-api-key": self.api_key,
+                    "Content-Type": "application/json"
                 }
-            }
-            
-            response = await self.client.post(
-                PIAPI_URL,
-                headers=headers,
-                json=payload
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                data = result.get("data", result)
-                return {
-                    "success": True,
-                    "video_url": data.get("output", {}).get("video") if isinstance(data.get("output"), dict) else data.get("output"),
-                    "task_id": data.get("task_id") or result.get("task_id"),
-                    "status": data.get("status"),
-                    "provider": "piapi",
-                    "data": result
+                
+                payload = {
+                    "model": "Qubico/skyreels",
+                    "task_type": "img2video",
+                    "input": {
+                        "prompt": f"FPS-24, {prompt}",
+                        "negative_prompt": "chaotic, distortion, morphing, blurry, low quality",
+                        "image": image_url,
+                        "aspect_ratio": aspect_ratio,
+                        "guidance_scale": 3.5
+                    }
                 }
-            else:
-                return {
-                    "success": False,
-                    "error": f"PiAPI error: {response.status_code}",
-                    "details": response.text
-                }
+                
+                response = await client.post(
+                    PIAPI_URL,
+                    headers=headers,
+                    json=payload
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    data = result.get("data", result)
+                    return {
+                        "success": True,
+                        "video_url": data.get("output", {}).get("video") if isinstance(data.get("output"), dict) else data.get("output"),
+                        "task_id": data.get("task_id") or result.get("task_id"),
+                        "status": data.get("status"),
+                        "provider": "piapi",
+                        "data": result
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "error": f"PiAPI error: {response.status_code}",
+                        "details": response.text
+                    }
                 
         except Exception as e:
             return {"success": False, "error": f"PiAPI exception: {str(e)}"}
