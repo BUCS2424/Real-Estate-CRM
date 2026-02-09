@@ -13,7 +13,7 @@ SKYREELS_API_KEY = os.environ.get('SKYREELS_API_KEY')
 
 # API Endpoints - try multiple providers
 VYRO_API_URL = "https://api.vyro.ai/v2/video/image-to-video"
-PIAPI_URL = "https://api.piapi.ai/v1/skyreels"
+PIAPI_URL = "https://api.piapi.ai/api/v1/task"
 SKYREELS_DIRECT_URL = "https://api.skyreels.ai/v1/generate"
 
 
