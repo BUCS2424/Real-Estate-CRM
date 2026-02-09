@@ -1303,3 +1303,54 @@ Integrated SkyReels V3 API via PiAPI for AI video generation from images.
 - `success` - Complete, video ready
 - `error` - Generation failed
 
+
+---
+
+## Update: February 9, 2026 - Property Images Gallery
+
+### Feature: Property Lead Image Gallery
+
+Added a dedicated image gallery for each property lead that persists permanently with the property.
+
+#### Implementation Details
+
+**Backend Routes:** `/app/backend/routes/property_leads.py`
+- `GET /api/property-leads/{lead_id}/images` - Get all images for a property
+- `POST /api/property-leads/{lead_id}/images/upload` - Upload single image
+- `POST /api/property-leads/{lead_id}/images/upload-multiple` - Upload multiple images
+- `GET /api/property-leads/{lead_id}/images/file/{filename}` - Serve image file
+- `DELETE /api/property-leads/{lead_id}/images/{image_id}` - Delete an image
+- `PUT /api/property-leads/{lead_id}/images/reorder` - Reorder images
+
+**Storage:** Images stored locally at `/app/backend/static/property-images/{lead_id}/`
+
+**Frontend Component:** `/app/frontend/src/components/PropertyImagesGallery.jsx`
+- Drag & drop upload support
+- Multi-file upload
+- Image preview with zoom
+- Delete functionality
+- Grid layout with thumbnails
+
+**Integration:** Added to Marketing tab on Property Lead Detail page
+
+#### Database Schema
+Images stored in `property_leads.gallery_images[]` array:
+```json
+{
+  "id": "uuid",
+  "filename": "unique_filename.jpg",
+  "original_name": "user_uploaded_name.jpg",
+  "url": "/api/property-leads/{lead_id}/images/file/{filename}",
+  "size": 12345,
+  "content_type": "image/jpeg",
+  "uploaded_by": "User Name",
+  "uploaded_at": "ISO timestamp"
+}
+```
+
+#### Files Created/Modified
+- `/app/backend/routes/property_leads.py` - Added image endpoints
+- `/app/frontend/src/components/PropertyImagesGallery.jsx` - **NEW** Gallery component
+- `/app/frontend/src/lib/api.js` - Added image API methods
+- `/app/frontend/src/pages/PropertyLeadDetailPage.jsx` - Added gallery to Marketing tab
+
