@@ -18,14 +18,16 @@ from database import db
 from utils.auth import get_current_user
 from models.user import UserRole
 from services.brochure_generator import generate_brochure, calculate_lead_score
+from services.foldable_brochure import generate_foldable_brochure, generate_foldable_brochure_page1
 from services.property_scraper import scrape_property_data
 
 router = APIRouter()
 
 
 class BrochureRequest(BaseModel):
-    template: str = 'flyer'  # flyer, postcard, trifold
+    template: str = 'flyer'  # flyer, postcard, trifold, foldable
     include_qr: bool = True
+    property_images: Optional[List[str]] = None
 
 
 class EmailBrochureRequest(BaseModel):
