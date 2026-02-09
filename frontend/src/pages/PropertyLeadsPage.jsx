@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api, { propertyLeadsAPI, listingsAPI, contactsAPI } from '../lib/api';
+import EmailComposerModal from '../components/EmailComposerModal';
 
 const PropertyLeadsPage = () => {
   const navigate = useNavigate();
