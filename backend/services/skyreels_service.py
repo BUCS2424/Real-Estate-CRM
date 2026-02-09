@@ -3,7 +3,6 @@ SkyReels V3 Video Generation Service
 Generates AI avatar videos using SkyReels API via APIFree.ai
 """
 import os
-import io
 import httpx
 import asyncio
 from typing import Optional, Dict, Any
@@ -11,10 +10,9 @@ from datetime import datetime
 
 SKYREELS_API_KEY = os.environ.get('SKYREELS_API_KEY')
 
-# API Endpoints
-APIFREE_URL = "https://api.apifree.ai/v1/chat/completions"
-VYRO_API_URL = "https://api.vyro.ai/v2/video/image-to-video"
-PIAPI_URL = "https://api.piapi.ai/api/v1/task"
+# APIFree.ai endpoints
+APIFREE_BASE_URL = "https://api.apifree.ai"
+APIFREE_SUBMIT_URL = f"{APIFREE_BASE_URL}/v1/video/submit"
 
 
 class SkyReelsService:
@@ -27,7 +25,7 @@ class SkyReelsService:
         self,
         image_url: str = None,
         image_bytes: bytes = None,
-        prompt: str = "Professional real estate agent speaking confidently",
+        prompt: str = "Professional real estate agent speaking confidently to the camera",
         audio_url: str = None,
         audio_bytes: bytes = None,
         style: str = "skyreels-i2v",
@@ -35,290 +33,160 @@ class SkyReelsService:
         duration: int = 5
     ) -> Dict[str, Any]:
         """
-        Generate an avatar video from an image
+        Generate an avatar video from an image using APIFree.ai SkyReels V3
         
         Args:
-            image_url: URL to the avatar image
-            image_bytes: Raw image bytes (alternative to URL)
+            image_url: URL to the avatar image (first frame)
             prompt: Description of the video to generate
-            audio_url: URL to audio file for lip-sync
-            audio_bytes: Raw audio bytes for lip-sync
-            style: Video generation style
+            audio_url: URL to audio file for lip-sync (optional)
             aspect_ratio: Output aspect ratio (9:16, 16:9, 1:1)
-            duration: Video duration in seconds
         
         Returns:
-            Dict with video URL or error
+            Dict with request_id for status polling or error
         """
         if not self.api_key:
             return {"success": False, "error": "SkyReels API key not configured"}
         
-        # Try APIFree.ai first (user's key is from apifree.ai)
-        result = await self._try_apifree(image_url, prompt, aspect_ratio)
-        if result.get("success"):
-            return result
+        if not image_url:
+            return {"success": False, "error": "Image URL is required for video generation"}
         
-        # Try Vyro/Imagine API as fallback
-        result = await self._try_vyro_api(image_url, image_bytes, prompt, style, aspect_ratio)
-        if result.get("success"):
-            return result
-        
-        # Return the APIFree error (most relevant for user's key)
-        return result
+        return await self._submit_apifree_video(image_url, prompt, audio_url)
     
-    async def _try_apifree(
+    async def _submit_apifree_video(
         self,
         image_url: str,
         prompt: str,
-        aspect_ratio: str
+        audio_url: str = None
     ) -> Dict[str, Any]:
-        """Try generating video via APIFree.ai unified gateway"""
+        """Submit video generation request to APIFree.ai"""
         try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            async with httpx.AsyncClient(timeout=60.0) as client:
                 headers = {
                     "Authorization": f"Bearer {self.api_key}",
                     "Content-Type": "application/json"
                 }
                 
-                # Build the message content for img2video
-                content = f"Generate video: FPS-24, {prompt}. Aspect ratio: {aspect_ratio}."
-                if image_url:
-                    content += f" Image: {image_url}"
+                # Use default audio if none provided
+                if not audio_url:
+                    audio_url = "https://static.apifree.ai/static/a/20260128/skyreels-v3-standard-single-avatar-audio.mp3"
                 
                 payload = {
-                    "model": "Qubico/skyreels",
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": content
-                        }
-                    ],
-                    "aspect_ratio": aspect_ratio
+                    "model": "skywork-ai/skyreels-v3/pro/single-avatar",
+                    "first_frame_image": image_url,
+                    "audios": [audio_url],
+                    "prompt": prompt
                 }
                 
                 response = await client.post(
-                    APIFREE_URL,
+                    APIFREE_SUBMIT_URL,
                     headers=headers,
                     json=payload
                 )
                 
-                if response.status_code == 200:
-                    result = response.json()
-                    # APIFree returns in OpenAI-compatible format
-                    choices = result.get("choices", [])
-                    if choices:
-                        message = choices[0].get("message", {})
-                        video_url = message.get("content") or result.get("video_url") or result.get("output")
-                        return {
-                            "success": True,
-                            "video_url": video_url,
-                            "task_id": result.get("id"),
-                            "provider": "apifree",
-                            "data": result
-                        }
+                result = response.json()
+                
+                if response.status_code == 200 and result.get("code") == 200:
+                    request_id = result.get("resp_data", {}).get("request_id")
                     return {
                         "success": True,
-                        "video_url": result.get("video_url") or result.get("output"),
-                        "task_id": result.get("id"),
+                        "request_id": request_id,
+                        "task_id": request_id,  # Alias for frontend compatibility
+                        "status": "processing",
                         "provider": "apifree",
+                        "message": "Video generation started. Poll status endpoint for progress.",
                         "data": result
                     }
                 else:
+                    error_msg = result.get("code_msg") or result.get("error", {}).get("message", "Unknown error")
                     return {
                         "success": False,
-                        "error": f"APIFree error: {response.status_code}",
-                        "details": response.text
+                        "error": f"APIFree error: {error_msg}",
+                        "details": result
                     }
                 
         except Exception as e:
             return {"success": False, "error": f"APIFree exception: {str(e)}"}
-    ) -> Dict[str, Any]:
-        """Try generating video via Vyro/Imagine API"""
-        try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
-                headers = {
-                    "Authorization": f"Bearer {self.api_key}"
-                }
-                
-                # Build form data
-                data = {
-                    "prompt": prompt,
-                    "style": style,
-                    "aspect_ratio": aspect_ratio
-                }
-                
-                files = None
-                if image_bytes:
-                    files = {"image": ("avatar.jpg", image_bytes, "image/jpeg")}
-                elif image_url:
-                    # Download image first
-                    img_response = await client.get(image_url)
-                    if img_response.status_code == 200:
-                        files = {"image": ("avatar.jpg", img_response.content, "image/jpeg")}
-                
-                if not files:
-                    return {"success": False, "error": "No image provided"}
-                
-                response = await client.post(
-                    VYRO_API_URL,
-                    headers=headers,
-                    data=data,
-                    files=files
-                )
-                
-                if response.status_code == 200:
-                    result = response.json()
-                    return {
-                        "success": True,
-                        "video_url": result.get("video_url") or result.get("output"),
-                        "provider": "vyro",
-                        "data": result
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"Vyro API error: {response.status_code}",
-                        "details": response.text
-                    }
-                
-        except Exception as e:
-            return {"success": False, "error": f"Vyro API exception: {str(e)}"}
     
-    async def _try_piapi(
-        self,
-        image_url: str,
-        prompt: str,
-        aspect_ratio: str,
-        duration: int
-    ) -> Dict[str, Any]:
-        """Try generating video via PiAPI - Primary provider"""
-        try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
-                headers = {
-                    "x-api-key": self.api_key,
-                    "Content-Type": "application/json"
-                }
-                
-                payload = {
-                    "model": "Qubico/skyreels",
-                    "task_type": "img2video",
-                    "input": {
-                        "prompt": f"FPS-24, {prompt}",
-                        "negative_prompt": "chaotic, distortion, morphing, blurry, low quality",
-                        "image": image_url,
-                        "aspect_ratio": aspect_ratio,
-                        "guidance_scale": 3.5
-                    }
-                }
-                
-                response = await client.post(
-                    PIAPI_URL,
-                    headers=headers,
-                    json=payload
-                )
-                
-                if response.status_code == 200:
-                    result = response.json()
-                    data = result.get("data", result)
-                    return {
-                        "success": True,
-                        "video_url": data.get("output", {}).get("video") if isinstance(data.get("output"), dict) else data.get("output"),
-                        "task_id": data.get("task_id") or result.get("task_id"),
-                        "status": data.get("status"),
-                        "provider": "piapi",
-                        "data": result
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"PiAPI error: {response.status_code}",
-                        "details": response.text
-                    }
-                
-        except Exception as e:
-            return {"success": False, "error": f"PiAPI exception: {str(e)}"}
-    
-    async def _try_skyreels_direct(
-        self,
-        image_url: str,
-        prompt: str,
-        audio_url: str,
-        aspect_ratio: str
-    ) -> Dict[str, Any]:
-        """Try generating video via direct SkyReels API"""
-        try:
-            headers = {
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
-            }
-            
-            payload = {
-                "model": "skyreels-v3-standard",
-                "mode": "single_avatar",
-                "prompt": prompt,
-                "reference_image": image_url,
-                "aspect_ratio": aspect_ratio
-            }
-            
-            if audio_url:
-                payload["audio_url"] = audio_url
-                payload["lip_sync"] = True
-            
-            response = await self.client.post(
-                SKYREELS_DIRECT_URL,
-                headers=headers,
-                json=payload
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                return {
-                    "success": True,
-                    "video_url": result.get("video_url") or result.get("output"),
-                    "task_id": result.get("task_id"),
-                    "provider": "skyreels",
-                    "data": result
-                }
-            else:
-                return {
-                    "success": False,
-                    "error": f"SkyReels API error: {response.status_code}",
-                    "details": response.text
-                }
-                
-        except Exception as e:
-            return {"success": False, "error": f"SkyReels exception: {str(e)}"}
-    
-    async def check_task_status(self, task_id: str, provider: str = "piapi") -> Dict[str, Any]:
+    async def check_task_status(self, request_id: str, provider: str = "apifree") -> Dict[str, Any]:
         """Check the status of a video generation task"""
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 headers = {
-                    "x-api-key": self.api_key
+                    "Authorization": f"Bearer {self.api_key}"
                 }
                 
-                if provider == "piapi":
-                    url = f"https://api.piapi.ai/api/v1/task/{task_id}"
-                else:
-                    url = f"https://api.skyreels.ai/v1/tasks/{task_id}"
+                status_url = f"{APIFREE_BASE_URL}/v1/video/{request_id}/status"
                 
-                response = await client.get(url, headers=headers)
+                response = await client.get(status_url, headers=headers)
+                result = response.json()
                 
-                if response.status_code == 200:
-                    result = response.json()
-                    data = result.get("data", result)
+                if response.status_code == 200 and result.get("code") == 200:
+                    resp_data = result.get("resp_data", {})
+                    status = resp_data.get("status")
+                    
+                    # If success, get the video result
+                    video_url = None
+                    if status == "success":
+                        video_result = await self._get_video_result(request_id)
+                        if video_result.get("success"):
+                            video_url = video_result.get("video_url")
+                    
                     return {
                         "success": True,
-                        "status": data.get("status"),
-                        "video_url": data.get("output", {}).get("video") if isinstance(data.get("output"), dict) else data.get("output"),
-                        "progress": data.get("progress", 0),
+                        "request_id": request_id,
+                        "status": status,
+                        "video_url": video_url,
+                        "time_info": resp_data.get("time"),
                         "data": result
                     }
                 else:
-                    return {"success": False, "error": f"Status check failed: {response.status_code}"}
+                    error_msg = result.get("code_msg", "Status check failed")
+                    return {
+                        "success": False,
+                        "error": error_msg,
+                        "details": result
+                    }
                 
         except Exception as e:
             return {"success": False, "error": str(e)}
+    
+    async def _get_video_result(self, request_id: str) -> Dict[str, Any]:
+        """Get the video result after generation is complete"""
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                headers = {
+                    "Authorization": f"Bearer {self.api_key}"
+                }
+                
+                result_url = f"{APIFREE_BASE_URL}/v1/video/{request_id}/result"
+                
+                response = await client.get(result_url, headers=headers)
+                result = response.json()
+                
+                if response.status_code == 200 and result.get("code") == 200:
+                    resp_data = result.get("resp_data", {})
+                    video_list = resp_data.get("video_list", [])
+                    video_url = video_list[0] if video_list else None
+                    
+                    return {
+                        "success": True,
+                        "video_url": video_url,
+                        "video_list": video_list,
+                        "usage": resp_data.get("usage"),
+                        "data": result
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "error": result.get("code_msg", "Failed to get result")
+                    }
+                
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    
+    async def get_video_result(self, request_id: str) -> Dict[str, Any]:
+        """Public method to get video result"""
+        return await self._get_video_result(request_id)
 
 
 # Singleton instance
@@ -347,7 +215,7 @@ async def generate_property_video(
         custom_script: Custom script for the video (optional)
     
     Returns:
-        Dict with video URL or error
+        Dict with request_id or error
     """
     service = get_skyreels_service()
     
@@ -355,18 +223,12 @@ async def generate_property_video(
     if not custom_script:
         prompt = f"""Professional real estate agent {agent_name} presenting a property. 
         The agent is speaking confidently and warmly, making eye contact with the camera.
-        Natural hand gestures, professional attire, friendly smile.
-        High quality, professional lighting, corporate video style."""
+        Natural hand gestures, professional attire, friendly smile."""
     else:
         prompt = custom_script
     
-    try:
-        result = await service.generate_avatar_video(
-            image_url=agent_image_url,
-            prompt=prompt,
-            aspect_ratio="9:16",
-            duration=10
-        )
-        return result
-    finally:
-        await service.close()
+    result = await service.generate_avatar_video(
+        image_url=agent_image_url,
+        prompt=prompt
+    )
+    return result
