@@ -3,6 +3,11 @@ Fusion Builder CRM API - Main Server
 Refactored modular architecture
 """
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+
 import uuid
 from datetime import datetime, timezone
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Request
