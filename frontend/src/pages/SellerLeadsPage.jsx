@@ -122,6 +122,15 @@ const SellerLeadsPage = () => {
     }
   };
 
+  const fetchSignature = async () => {
+    try {
+      const res = await api.get('/users/me/signature');
+      setUserSignature(res.data);
+    } catch (error) {
+      // No signature set
+    }
+  };
+
   const handleAddLead = async () => {
     if (!newLead.name) {
       toast.error('Name is required');
