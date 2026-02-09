@@ -40,6 +40,7 @@ const salesItems = [
 // Tools sub-items
 const toolsItems = [
   { path: '/media', icon: FolderOpen, label: 'Media Library' },
+  { path: '/video-generator', icon: Video, label: 'Video Generator' },
   { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
   { path: '/bookings', icon: CalendarCheck, label: 'Bookings' },
   { path: '/newsletter', icon: Mail, label: 'Newsletter' },
