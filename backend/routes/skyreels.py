@@ -122,7 +122,7 @@ async def generate_property_video_endpoint(
 @router.get("/status/{task_id}")
 async def check_video_status(
     task_id: str,
-    provider: str = "skyreels",
+    provider: str = "piapi",
     current_user: dict = Depends(get_current_user)
 ):
     """Check the status of a video generation task"""
@@ -133,8 +133,6 @@ async def check_video_status(
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        await service.close()
 
 
 @router.get("/history")
