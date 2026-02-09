@@ -238,30 +238,19 @@ const PropertyLeadsPage = () => {
   const handleConvertToShowcase = async (lead, e) => {
     e.stopPropagation();
     
-    if (!window.confirm(`Convert "${lead.address}" to a Showcase Listing?\n\nThis will create a public listing from this property lead.`)) {
+    if (!window.confirm(`Convert "${lead.address}" to Showcase Listing?`)) {
       return;
     }
     
     setConvertingId(lead.id);
     try {
       const res = await propertyLeadsAPI.convertToShowcase(lead.id);
-      if (res.data.listing_id) {
-        toast.success('Property converted to Showcase Listing!', {
-          action: {
-            label: 'View Listing',
-            onClick: () => navigate(`/listings/${res.data.listing_id}`)
-          }
-        });
-        fetchLeads();
-        fetchStats();
-      } else {
-        toast.success('Property converted successfully');
-        fetchLeads();
-      }
+      toast.success('Converted to Showcase Listing');
+      // Navigate to the new listing
+      navigate(`/listings/${res.data.listing_id}`);
     } catch (error) {
-      const message = error.response?.data?.detail || 'Failed to convert to showcase';
+      const message = error.response?.data?.detail || 'Failed to convert';
       toast.error(message);
-    } finally {
       setConvertingId(null);
     }
   };
