@@ -2,16 +2,78 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
 from fastapi.responses import StreamingResponse
 from typing import List, Optional
 from datetime import datetime, timezone
+from pydantic import BaseModel
 import uuid
 import csv
 import io
 import re
+import os
 from database import db
 from models.contact import ContactCreate, ContactResponse, LeadScoreUpdate
 from models.user import UserRole
 from utils.auth import get_current_user, require_role
 
 router = APIRouter()
+
+# SMS via Telnyx
+class SendSMSRequest(BaseModel):
+    phone: str
+    message: str
+    contact_id: Optional[str] = None
+    contact_type: Optional[str] = None  # contact, lead, property_lead, seller_lead
+
+@router.post("/send-sms")
+async def send_sms(request: SendSMSRequest, current_user: dict = Depends(get_current_user)):
+    """Send SMS via Telnyx"""
+    import telnyx
+    
+    telnyx_api_key = os.environ.get("TELNYX_API_KEY")
+    telnyx_phone = os.environ.get("TELNYX_PHONE_NUMBER")
+    
+    if not telnyx_api_key or not telnyx_phone:
+        raise HTTPException(status_code=500, detail="Telnyx not configured. Add TELNYX_API_KEY and TELNYX_PHONE_NUMBER to environment.")
+    
+    telnyx.api_key = telnyx_api_key
+    
+    # Clean phone number to E.164 format
+    phone = re.sub(r'[^\d+]', '', request.phone)
+    if not phone.startswith('+'):
+        phone = '+1' + phone  # Assume US if no country code
+    
+    try:
+        message = telnyx.Message.create(
+            from_=telnyx_phone,
+            to=phone,
+            text=request.message
+        )
+        
+        # Store SMS record
+        sms_doc = {
+            "id": str(uuid.uuid4()),
+            "contact_id": request.contact_id,
+            "contact_type": request.contact_type,
+            "phone": phone,
+            "message": request.message,
+            "telnyx_id": message.data.id if hasattr(message, 'data') else None,
+            "status": "sent",
+            "sent_by": str(current_user.get("id", current_user.get("_id", ""))),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.sms_messages.insert_one(sms_doc)
+        
+        return {"success": True, "message_id": sms_doc["id"], "status": "sent"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to send SMS: {str(e)}")
+
+@router.get("/sms-history/{contact_id}")
+async def get_sms_history(contact_id: str, current_user: dict = Depends(get_current_user)):
+    """Get SMS history for a contact"""
+    messages = await db.sms_messages.find(
+        {"contact_id": contact_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    return messages
 
 # ============ VCARD PARSING UTILITIES ============
 
