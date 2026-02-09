@@ -59,8 +59,6 @@ async def generate_video(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        await service.close()
 
 
 @router.post("/generate-with-image")
