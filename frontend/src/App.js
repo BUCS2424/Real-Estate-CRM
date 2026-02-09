@@ -154,6 +154,9 @@ function App() {
                 <Route path="developer/custom-code" element={<CustomCode />} />
                 <Route path="developer/system-messages" element={<SystemMessages />} />
                 <Route path="developer/pwa" element={<PWASettings />} />
+                
+                {/* Profile Settings */}
+                <Route path="profile/signature" element={<SignatureSettings />} />
               </Route>
             </Route>
 
