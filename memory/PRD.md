@@ -1183,22 +1183,29 @@ Added a comprehensive in-app email composer that intercepts email actions and pr
 - `POST /api/users/me/signature` - Save/update signature
 
 **Email Composer Integration:**
-- **ContactsPage:** Blue email icon on contact cards, opens modal with recipient info
+- **ContactsPage:** Blue email icon on contact cards, opens WYSIWYG email composer
 - **PropertyLeadsPage:** Email icon appears when lead has owner_email
 - **SellerLeadsPage:** Email icon on leads with email addresses
-- Modal displays: recipient info, subject field, message textarea, signature preview
-- "Open in Email Client" button constructs mailto: URL with subject, body, and signature
+- Modal displays: recipient info, subject field, WYSIWYG rich text editor, signature preview
+- **USES SYSTEM SMTP** - Emails are sent directly from the CRM via configured SMTP
 
 #### Files Modified
-- `/app/frontend/src/pages/ContactsPage.jsx` - Fixed api import, added email modal
-- `/app/frontend/src/pages/PropertyLeadsPage.jsx` - Added email composer functionality
-- `/app/frontend/src/pages/SellerLeadsPage.jsx` - Added email composer functionality
+- `/app/frontend/src/pages/ContactsPage.jsx` - Uses EmailComposerModal component
+- `/app/frontend/src/pages/PropertyLeadsPage.jsx` - Uses EmailComposerModal component
+- `/app/frontend/src/pages/SellerLeadsPage.jsx` - Uses EmailComposerModal component
+- `/app/frontend/src/components/EmailComposerModal.jsx` - **NEW** Reusable WYSIWYG email composer using Tiptap
+- `/app/frontend/src/pages/settings/developer/EmailSettings.jsx` - **UPDATED** Full SMTP configuration page
+- `/app/backend/routes/email.py` - **NEW** SMTP settings and email sending endpoints
+
+#### Backend Endpoints Added
+- `GET /api/email/smtp-settings` - Get SMTP configuration
+- `POST /api/email/smtp-settings` - Save SMTP configuration
+- `POST /api/email/smtp-settings/test` - Send test email
+- `POST /api/email/send` - Send email via SMTP with automatic signature appending
 
 #### Tests & Verification
-- All 19 frontend tests passed ✅
-- Email icon visible on contacts and leads with emails
-- Modal opens correctly on all three pages
-- Signature fetched and displayed in preview
-- Signature settings page fully functional
-- Test report: `/app/test_reports/iteration_13.json`
-
+- SMTP settings page loads and saves correctly ✅
+- Email composer modal opens with WYSIWYG editor (Tiptap) ✅
+- Shows "SMTP Not Configured" warning when SMTP is not set up ✅
+- Signature is fetched and displayed in preview ✅
+- Email icon visible on Contacts, Property Leads, Seller Leads pages ✅
