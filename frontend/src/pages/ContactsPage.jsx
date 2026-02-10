@@ -635,6 +635,7 @@ export const ContactsPage = () => {
       setNewContact({ name: '', email: '', phone: '', company: '', category: '', status: 'new', budget: '', property_interest: '', notes: '' });
       setPage(0);
       fetchStats();
+      fetchStats();
       fetchContacts();
     } catch (error) {
       toast.error('Failed to add contact');
@@ -657,6 +658,8 @@ export const ContactsPage = () => {
       
       if (res.data.imported > 0) {
         toast.success(`Imported ${res.data.imported} contacts`);
+        setPage(0);
+        fetchStats();
         fetchContacts();
       }
     } catch (error) {
