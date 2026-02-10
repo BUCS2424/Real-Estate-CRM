@@ -74,10 +74,34 @@ const ContactDetail = ({ contactId, onBack }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [newNote, setNewNote] = useState('');
   const [addingNote, setAddingNote] = useState(false);
+  const [newTag, setNewTag] = useState('');
 
   useEffect(() => {
     if (contactId) fetchContact();
   }, [contactId]);
+
+  // Initialize tags array from editData
+  const tags = editData.tags || [];
+
+  const addTag = () => {
+    if (!newTag.trim()) return;
+    const tag = newTag.trim();
+    if (!tags.includes(tag)) {
+      setEditData({ ...editData, tags: [...tags, tag] });
+    }
+    setNewTag('');
+  };
+
+  const removeTag = (tagToRemove) => {
+    setEditData({ ...editData, tags: tags.filter(t => t !== tagToRemove) });
+  };
+
+  const handleTagKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTag();
+    }
+  };
 
   const fetchContact = async () => {
     setLoading(true);
