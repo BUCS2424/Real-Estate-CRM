@@ -210,31 +210,49 @@ async def get_contacts(
 ):
     """Get contacts with pagination and filters"""
     query = {}
+    conditions = []
     
-    # Search filter
+    # Search filter - search across multiple fields
     if search:
-        query["$or"] = [
+        search_conditions = [
             {"first_name": {"$regex": search, "$options": "i"}},
             {"last_name": {"$regex": search, "$options": "i"}},
             {"display_name": {"$regex": search, "$options": "i"}},
+            {"name": {"$regex": search, "$options": "i"}},
             {"email": {"$regex": search, "$options": "i"}},
+            {"email_2": {"$regex": search, "$options": "i"}},
             {"organization": {"$regex": search, "$options": "i"}},
+            {"company": {"$regex": search, "$options": "i"}},
             {"mobile_phone": {"$regex": search, "$options": "i"}},
+            {"home_phone": {"$regex": search, "$options": "i"}},
+            {"business_phone": {"$regex": search, "$options": "i"}},
+            {"tags": {"$regex": search, "$options": "i"}},
         ]
+        conditions.append({"$or": search_conditions})
     
     # Letter filter (for alphabetical navigation)
     if letter and letter.upper() in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
-        query["$or"] = [
+        letter_conditions = [
             {"first_name": {"$regex": f"^{letter}", "$options": "i"}},
             {"last_name": {"$regex": f"^{letter}", "$options": "i"}},
+            {"display_name": {"$regex": f"^{letter}", "$options": "i"}},
+            {"name": {"$regex": f"^{letter}", "$options": "i"}},
+            {"organization": {"$regex": f"^{letter}", "$options": "i"}},
         ]
+        conditions.append({"$or": letter_conditions})
     
     # Category filter
     if category:
-        query["category"] = category
+        conditions.append({"category": category})
+    
+    # Combine all conditions with $and if there are multiple
+    if len(conditions) > 1:
+        query["$and"] = conditions
+    elif len(conditions) == 1:
+        query = conditions[0]
     
     contacts = await db.contacts.find(query, {"_id": 0}).sort([
-        ("first_name", 1), ("last_name", 1)
+        ("display_name", 1), ("first_name", 1), ("last_name", 1)
     ]).skip(skip).limit(limit).to_list(limit)
     
     return [ContactResponse(**c) for c in contacts]
