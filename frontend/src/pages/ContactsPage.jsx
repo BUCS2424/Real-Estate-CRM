@@ -317,30 +317,104 @@ const ContactDetail = ({ contactId, onBack }) => {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="col-span-2 space-y-1">
                         <Label className="text-xs text-muted-foreground">Full Name</Label>
-                        <p className="font-medium">{contact.name}</p>
+                        <p className="font-medium">{displayName}</p>
                       </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Email</Label>
-                        <p className="font-medium flex items-center gap-1">
-                          {contact.email || '-'}
-                          {contact.email && <button onClick={() => copyToClipboard(contact.email)}><Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>}
-                        </p>
+                      
+                      {/* Emails Section */}
+                      <div className="col-span-2 space-y-2">
+                        <Label className="text-xs text-muted-foreground">Email Addresses</Label>
+                        {(contact.email || contact.email_2 || contact.email_3) ? (
+                          <div className="space-y-1">
+                            {contact.email && (
+                              <p className="font-medium flex items-center gap-1 text-sm">
+                                <Mail className="w-3 h-3 text-muted-foreground" />
+                                {contact.email}
+                                <button onClick={() => copyToClipboard(contact.email)}><Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>
+                              </p>
+                            )}
+                            {contact.email_2 && (
+                              <p className="font-medium flex items-center gap-1 text-sm">
+                                <Mail className="w-3 h-3 text-muted-foreground" />
+                                {contact.email_2}
+                                <button onClick={() => copyToClipboard(contact.email_2)}><Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>
+                              </p>
+                            )}
+                            {contact.email_3 && (
+                              <p className="font-medium flex items-center gap-1 text-sm">
+                                <Mail className="w-3 h-3 text-muted-foreground" />
+                                {contact.email_3}
+                                <button onClick={() => copyToClipboard(contact.email_3)}><Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">-</p>
+                        )}
                       </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Phone</Label>
-                        <p className="font-medium flex items-center gap-1">
-                          {contact.phone || '-'}
-                          {contact.phone && <button onClick={() => copyToClipboard(contact.phone)}><Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>}
-                        </p>
+                      
+                      {/* Phone Numbers Section */}
+                      <div className="col-span-2 space-y-2">
+                        <Label className="text-xs text-muted-foreground">Phone Numbers</Label>
+                        {(contact.phone || contact.mobile_phone || contact.home_phone || contact.business_phone) ? (
+                          <div className="space-y-1">
+                            {contact.mobile_phone && (
+                              <p className="font-medium flex items-center gap-1 text-sm">
+                                <Smartphone className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground w-16">Mobile:</span>
+                                {contact.mobile_phone}
+                                <button onClick={() => copyToClipboard(contact.mobile_phone)}><Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>
+                              </p>
+                            )}
+                            {contact.home_phone && (
+                              <p className="font-medium flex items-center gap-1 text-sm">
+                                <Home className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground w-16">Home:</span>
+                                {contact.home_phone}
+                                <button onClick={() => copyToClipboard(contact.home_phone)}><Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>
+                              </p>
+                            )}
+                            {contact.business_phone && (
+                              <p className="font-medium flex items-center gap-1 text-sm">
+                                <Briefcase className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground w-16">Work:</span>
+                                {contact.business_phone}
+                                <button onClick={() => copyToClipboard(contact.business_phone)}><Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>
+                              </p>
+                            )}
+                            {contact.phone && !contact.mobile_phone && !contact.home_phone && !contact.business_phone && (
+                              <p className="font-medium flex items-center gap-1 text-sm">
+                                <Phone className="w-3 h-3 text-muted-foreground" />
+                                {contact.phone}
+                                <button onClick={() => copyToClipboard(contact.phone)}><Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">-</p>
+                        )}
                       </div>
+                      
+                      {/* Company/Organization */}
                       <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Company</Label>
-                        <p className="font-medium">{contact.company || '-'}</p>
+                        <p className="font-medium">{company || '-'}</p>
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Property Interest</Label>
-                        <p className="font-medium">{contact.property_interest || '-'}</p>
+                        <Label className="text-xs text-muted-foreground">Job Title</Label>
+                        <p className="font-medium">{jobTitle || '-'}</p>
                       </div>
+                      {contact.department && (
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Department</Label>
+                          <p className="font-medium">{contact.department}</p>
+                        </div>
+                      )}
+                      {contact.property_interest && (
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Property Interest</Label>
+                          <p className="font-medium">{contact.property_interest}</p>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
