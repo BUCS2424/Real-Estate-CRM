@@ -123,11 +123,11 @@ const ContactDetail = ({ contactId, onBack }) => {
       await contactsAPI.addProperty(contactId, {
         property_id: property.id,
         address: property.address,
-        city: property.city,
-        state: property.state,
+        city: property.city || null,
+        state: property.state || null,
         type: propertyType,
-        status: property.status,
-        price: property.price,
+        status: property.status || null,
+        price: property.price ? String(property.price) : null,
       });
       toast.success('Property linked to contact');
       setShowAddProperty(false);
