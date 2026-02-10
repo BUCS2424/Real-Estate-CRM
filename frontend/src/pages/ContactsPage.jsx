@@ -163,6 +163,18 @@ const ContactDetail = ({ contactId, onBack }) => {
 
   if (!contact) return null;
 
+  // Build display values for iPhone contact fields
+  const displayName = contact.display_name || 
+    contact.name || 
+    `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 
+    contact.organization ||
+    'Unknown';
+  
+  const primaryEmail = contact.email || contact.email_2 || contact.email_3;
+  const primaryPhone = contact.phone || contact.mobile_phone || contact.home_phone || contact.business_phone;
+  const company = contact.company || contact.organization;
+  const jobTitle = contact.position || contact.job_title;
+
   return (
     <div className="flex gap-6 min-h-[calc(100vh-6rem)]" data-testid="contact-detail">
       {/* Left Sidebar */}
@@ -173,11 +185,12 @@ const ContactDetail = ({ contactId, onBack }) => {
               <User className="w-10 h-10 text-amber-500" />
             </div>
             
-            <h2 className="text-xl font-semibold text-center text-foreground mb-1">{contact.name}</h2>
+            <h2 className="text-xl font-semibold text-center text-foreground mb-1">{displayName}</h2>
+            {jobTitle && <p className="text-center text-muted-foreground text-sm mb-2">{jobTitle}</p>}
             
-            {(contact.email || contact.phone) && (
+            {(primaryEmail || primaryPhone) && (
               <div className="text-center text-muted-foreground text-sm mb-4 space-y-1">
-                {contact.email && (
+                {primaryEmail && (
                   <p className="flex items-center justify-center gap-1">
                     <Mail className="w-3 h-3" />{contact.email}
                   </p>
