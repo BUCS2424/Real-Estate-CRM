@@ -44,7 +44,8 @@ import {
   Smartphone,
   Apple,
   AlertCircle,
-  MessageSquare
+  MessageSquare,
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api, { contactsAPI } from '../lib/api';
