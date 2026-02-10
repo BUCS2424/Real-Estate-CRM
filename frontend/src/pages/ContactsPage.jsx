@@ -887,9 +887,14 @@ const ContactDetail = ({ contactId, onBack }) => {
                             : 'Properties linked to this contact'}
                       </CardDescription>
                     </div>
-                    <Button onClick={() => { setShowAddProperty(true); searchAvailableProperties(''); }} className="bg-amber-500 hover:bg-amber-600 text-black">
-                      <Plus className="w-4 h-4 mr-2" />Link Property
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button onClick={() => setShowNewPropertyForm(true)} variant="outline" className="border-amber-500/50 text-amber-600 hover:bg-amber-500/10">
+                        <Plus className="w-4 h-4 mr-2" />Add Property
+                      </Button>
+                      <Button onClick={() => { setShowAddProperty(true); searchAvailableProperties(''); }} className="bg-amber-500 hover:bg-amber-600 text-black">
+                        <Link className="w-4 h-4 mr-2" />Link Existing
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
