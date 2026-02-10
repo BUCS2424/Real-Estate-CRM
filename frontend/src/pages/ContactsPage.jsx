@@ -655,12 +655,26 @@ const ContactDetail = ({ contactId, onBack }) => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {/* Imported Notes from iPhone */}
+                  {contact.notes && (
+                    <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                      <p className="text-xs text-amber-600 font-medium mb-2 flex items-center gap-1">
+                        <Apple className="w-3 h-3" />
+                        Imported Notes
+                      </p>
+                      <p className="text-sm whitespace-pre-wrap">{contact.notes}</p>
+                    </div>
+                  )}
+                  
+                  {/* Add New Note */}
                   <div className="flex gap-2 mb-4">
                     <Textarea placeholder="Add a note..." value={newNote} onChange={(e) => setNewNote(e.target.value)} rows={2} className="flex-1" />
                     <Button onClick={handleAddNote} disabled={!newNote.trim() || addingNote} className="bg-amber-500 hover:bg-amber-600 text-black">
                       {addingNote ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                     </Button>
                   </div>
+                  
+                  {/* CRM Notes List */}
                   <div className="space-y-3">
                     {contact.notes_list?.length > 0 ? (
                       [...contact.notes_list].reverse().map((note, idx) => (
@@ -670,7 +684,7 @@ const ContactDetail = ({ contactId, onBack }) => {
                         </div>
                       ))
                     ) : (
-                      <p className="text-center text-muted-foreground py-8">No notes yet</p>
+                      !contact.notes && <p className="text-center text-muted-foreground py-8">No notes yet</p>
                     )}
                   </div>
                 </CardContent>
