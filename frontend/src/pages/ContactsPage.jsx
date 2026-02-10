@@ -590,8 +590,8 @@ export const ContactsPage = () => {
       if (selectedLetter) {
         params.letter = selectedLetter;
       }
-      if (searchTerm) {
-        params.search = searchTerm;
+      if (searchQuery) {
+        params.search = searchQuery;
       }
       
       const res = await contactsAPI.list(params);
