@@ -759,6 +759,160 @@ const ContactDetail = ({ contactId, onBack }) => {
               </div>
             </TabsContent>
 
+            {/* PROPERTIES TAB */}
+            <TabsContent value="properties" className="mt-0">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Building2 className="w-5 h-5 text-amber-500" />
+                        {contact.category === 'seller' ? 'Properties Being Sold' : contact.category === 'buyer' ? 'Properties Bought/Interested' : 'Linked Properties'}
+                      </CardTitle>
+                      <CardDescription>
+                        {contact.category === 'seller' 
+                          ? 'Properties this seller is listing or has sold' 
+                          : contact.category === 'buyer' 
+                            ? 'Properties this buyer has purchased or is interested in'
+                            : 'Properties linked to this contact'}
+                      </CardDescription>
+                    </div>
+                    <Button onClick={() => { setShowAddProperty(true); searchAvailableProperties(''); }} className="bg-amber-500 hover:bg-amber-600 text-black">
+                      <Plus className="w-4 h-4 mr-2" />Link Property
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {loadingProperties ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+                    </div>
+                  ) : properties.length > 0 ? (
+                    <div className="space-y-4">
+                      {properties.map((prop) => (
+                        <div key={prop.id} className="p-4 bg-muted/30 rounded-lg border border-muted hover:border-amber-500/30 transition-colors">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h4 className="font-semibold">{prop.address}</h4>
+                                <Badge className={prop.type === 'selling' ? 'bg-orange-500/20 text-orange-600' : 'bg-emerald-500/20 text-emerald-600'}>
+                                  {prop.type === 'selling' ? 'Selling' : 'Buying'}
+                                </Badge>
+                                {prop.status && (
+                                  <Badge variant="outline">{prop.status}</Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {[prop.city, prop.state].filter(Boolean).join(', ')}
+                              </p>
+                              <div className="flex items-center gap-4 mt-2 text-sm">
+                                {prop.price && (
+                                  <span className="flex items-center gap-1">
+                                    <DollarSign className="w-3 h-3" />
+                                    {typeof prop.price === 'number' ? `$${prop.price.toLocaleString()}` : prop.price}
+                                  </span>
+                                )}
+                                {prop.bedrooms && (
+                                  <span>{prop.bedrooms} bed</span>
+                                )}
+                                {prop.bathrooms && (
+                                  <span>{prop.bathrooms} bath</span>
+                                )}
+                                {prop.sqft && (
+                                  <span>{prop.sqft.toLocaleString()} sqft</span>
+                                )}
+                              </div>
+                              {prop.added_at && (
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  Linked {formatDate(prop.added_at)}
+                                </p>
+                              )}
+                            </div>
+                            <Button variant="ghost" size="icon" onClick={() => handleRemoveProperty(prop.id)} className="text-muted-foreground hover:text-red-500">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="font-semibold mb-2">No Properties Linked</h3>
+                      <p className="text-muted-foreground mb-4">
+                        {contact.category === 'seller' 
+                          ? 'Link properties that this seller is listing or has sold.' 
+                          : contact.category === 'buyer' 
+                            ? 'Link properties that this buyer has purchased or is interested in.'
+                            : 'Link properties to track this contact\'s real estate activity.'}
+                      </p>
+                      <Button onClick={() => { setShowAddProperty(true); searchAvailableProperties(''); }} variant="outline">
+                        <Plus className="w-4 h-4 mr-2" />Link First Property
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Add Property Dialog */}
+              <Dialog open={showAddProperty} onOpenChange={setShowAddProperty}>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Link Property to Contact</DialogTitle>
+                    <DialogDescription>Search for a property to link to this contact</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input 
+                        placeholder="Search by address, city, or owner..." 
+                        value={propertySearch}
+                        onChange={(e) => {
+                          setPropertySearch(e.target.value);
+                          searchAvailableProperties(e.target.value);
+                        }}
+                        className="pl-10"
+                      />
+                    </div>
+                    <div className="max-h-[400px] overflow-y-auto space-y-2">
+                      {availableProperties.length > 0 ? (
+                        availableProperties.map((prop) => (
+                          <div 
+                            key={prop.id} 
+                            className="p-3 border rounded-lg hover:border-amber-500 cursor-pointer transition-colors"
+                            onClick={() => handleAddProperty(prop)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium">{prop.address}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {[prop.city, prop.state].filter(Boolean).join(', ')}
+                                </p>
+                                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                                  {prop.price && <span>${typeof prop.price === 'number' ? prop.price.toLocaleString() : prop.price}</span>}
+                                  {prop.bedrooms && <span>{prop.bedrooms} bed</span>}
+                                  {prop.bathrooms && <span>{prop.bathrooms} bath</span>}
+                                </div>
+                              </div>
+                              {addingProperty ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Plus className="w-4 h-4 text-amber-500" />
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-center text-muted-foreground py-8">
+                          {propertySearch ? 'No properties found' : 'Search for a property to link'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </TabsContent>
+
             {/* ALL DATA TAB - Shows every single imported field */}
             <TabsContent value="alldata" className="mt-0">
               <Card>
