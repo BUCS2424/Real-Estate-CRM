@@ -76,10 +76,82 @@ const ContactDetail = ({ contactId, onBack }) => {
   const [newNote, setNewNote] = useState('');
   const [addingNote, setAddingNote] = useState(false);
   const [newTag, setNewTag] = useState('');
+  
+  // Properties state
+  const [properties, setProperties] = useState([]);
+  const [loadingProperties, setLoadingProperties] = useState(false);
+  const [availableProperties, setAvailableProperties] = useState([]);
+  const [propertySearch, setPropertySearch] = useState('');
+  const [showAddProperty, setShowAddProperty] = useState(false);
+  const [addingProperty, setAddingProperty] = useState(false);
 
   useEffect(() => {
     if (contactId) fetchContact();
   }, [contactId]);
+  
+  useEffect(() => {
+    if (activeTab === 'properties' && contactId) {
+      fetchProperties();
+    }
+  }, [activeTab, contactId]);
+
+  const fetchProperties = async () => {
+    setLoadingProperties(true);
+    try {
+      const res = await contactsAPI.getProperties(contactId);
+      setProperties(res.data || []);
+    } catch (error) {
+      console.error('Failed to load properties');
+    } finally {
+      setLoadingProperties(false);
+    }
+  };
+
+  const searchAvailableProperties = async (search) => {
+    try {
+      const res = await contactsAPI.getAvailableProperties(search);
+      setAvailableProperties(res.data || []);
+    } catch (error) {
+      console.error('Failed to search properties');
+    }
+  };
+
+  const handleAddProperty = async (property) => {
+    setAddingProperty(true);
+    try {
+      const propertyType = contact.category === 'seller' ? 'selling' : 'buying';
+      await contactsAPI.addProperty(contactId, {
+        property_id: property.id,
+        address: property.address,
+        city: property.city,
+        state: property.state,
+        type: propertyType,
+        status: property.status,
+        price: property.price,
+      });
+      toast.success('Property linked to contact');
+      setShowAddProperty(false);
+      setPropertySearch('');
+      fetchProperties();
+      fetchContact();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to add property');
+    } finally {
+      setAddingProperty(false);
+    }
+  };
+
+  const handleRemoveProperty = async (propertyLinkId) => {
+    if (!window.confirm('Remove this property from the contact?')) return;
+    try {
+      await contactsAPI.removeProperty(contactId, propertyLinkId);
+      toast.success('Property removed');
+      fetchProperties();
+      fetchContact();
+    } catch (error) {
+      toast.error('Failed to remove property');
+    }
+  };
 
   // Initialize tags array from editData
   const tags = editData.tags || [];
