@@ -315,7 +315,7 @@ const ContactDetail = ({ contactId, onBack }) => {
               <User className="w-4 h-4" />Overview
             </TabsTrigger>
             <TabsTrigger value="notes" className="flex items-center gap-2">
-              <StickyNote className="w-4 h-4" />Notes ({contact.notes_list?.length || 0})
+              <StickyNote className="w-4 h-4" />Notes {(contact.notes || contact.notes_list?.length > 0) && `(${(contact.notes ? 1 : 0) + (contact.notes_list?.length || 0)})`}
             </TabsTrigger>
             <TabsTrigger value="activity" className="flex items-center gap-2">
               <Activity className="w-4 h-4" />Activity
