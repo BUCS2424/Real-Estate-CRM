@@ -249,8 +249,14 @@ const ContactDetail = ({ contactId, onBack }) => {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Company</span>
-              <span className="text-sm font-medium">{contact.company || '-'}</span>
+              <span className="text-sm font-medium">{company || '-'}</span>
             </div>
+            {jobTitle && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Title</span>
+                <span className="text-sm font-medium">{jobTitle}</span>
+              </div>
+            )}
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Budget</span>
               <span className="text-sm font-medium">{contact.budget || '-'}</span>
@@ -259,6 +265,18 @@ const ContactDetail = ({ contactId, onBack }) => {
               <span className="text-sm text-muted-foreground">Lead Score</span>
               <span className="text-sm font-medium">{contact.lead_score || '-'}</span>
             </div>
+            {contact.birthday && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Birthday</span>
+                <span className="text-sm font-medium">{contact.birthday}</span>
+              </div>
+            )}
+            {contact.web_page && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Website</span>
+                <a href={contact.web_page} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-amber-500 hover:text-amber-600 truncate max-w-[120px]">{contact.web_page}</a>
+              </div>
+            )}
           </CardContent>
         </Card>
 
