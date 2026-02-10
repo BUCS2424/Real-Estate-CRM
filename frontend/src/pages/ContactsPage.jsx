@@ -1904,7 +1904,7 @@ export const ContactsPage = () => {
               <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                {STATUS_OPTIONS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                {getStatusOptions().map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
               </SelectContent>
             </Select>
             <Button variant="outline" onClick={fetchContacts}><RefreshCw className="w-4 h-4" /></Button>
