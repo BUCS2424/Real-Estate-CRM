@@ -2076,7 +2076,7 @@ export const ContactsPage = () => {
                 <Label>Status</Label>
                 <Select value={newContact.status} onValueChange={(v) => setNewContact({ ...newContact, status: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{STATUS_OPTIONS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+                  <SelectContent>{getStatusOptions().map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
