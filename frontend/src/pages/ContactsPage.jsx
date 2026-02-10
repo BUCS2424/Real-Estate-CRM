@@ -1143,6 +1143,16 @@ export const ContactsPage = () => {
     fetchContacts();
   }, [selectedLetter, page]);
 
+  // Live search - debounced to avoid too many API calls
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setPage(0);
+      fetchContacts();
+    }, 300); // 300ms debounce
+    
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
   useEffect(() => {
     if (id) setSelectedContact(id);
   }, [id]);
