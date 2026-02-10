@@ -229,7 +229,7 @@ const ContactDetail = ({ contactId, onBack }) => {
                   </a>
                 </Button>
               )}
-              <Button variant="outline" className="w-full" onClick={() => setEditMode(true)}>
+              <Button variant="outline" className="w-full" onClick={() => setActiveTab('edit')}>
                 <Edit2 className="w-4 h-4 mr-2" />Edit Contact
               </Button>
             </div>
