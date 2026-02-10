@@ -353,7 +353,7 @@ const ContactDetail = ({ contactId, onBack }) => {
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  const getStatusColor = (status) => STATUS_OPTIONS.find(s => s.value === status)?.color || 'bg-gray-500/20 text-gray-600';
+  const getStatusColor = (status) => getStatusOptions().find(s => s.value === status)?.color || 'bg-gray-500/20 text-gray-600';
   const getCategoryColor = (cat) => CATEGORY_OPTIONS.find(c => c.value === cat)?.color || 'bg-gray-500/20 text-gray-600';
 
   const copyToClipboard = (text) => {
@@ -1832,7 +1832,7 @@ export const ContactsPage = () => {
     navigate('/contacts');
   };
 
-  const getStatusColor = (status) => STATUS_OPTIONS.find(s => s.value === status)?.color || 'bg-gray-500/20 text-gray-600';
+  const getStatusColor = (status) => getStatusOptions().find(s => s.value === status)?.color || 'bg-gray-500/20 text-gray-600';
   const getCategoryColor = (cat) => CATEGORY_OPTIONS.find(c => c.value === cat)?.color || 'bg-gray-500/20 text-gray-600';
 
   const getFirstName = (name) => {
