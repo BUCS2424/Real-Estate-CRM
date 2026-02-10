@@ -325,6 +325,127 @@ async def delete_contact(contact_id: str, current_user: dict = Depends(require_r
         raise HTTPException(status_code=404, detail="Contact not found")
     return {"message": "Contact deleted"}
 
+# ============ CONTACT PROPERTIES ============
+
+class AddPropertyRequest(BaseModel):
+    property_id: str
+    address: str
+    city: Optional[str] = None
+    state: Optional[str] = None
+    type: str  # 'buying' or 'selling'
+    status: Optional[str] = None
+    price: Optional[str] = None
+
+@router.get("/{contact_id}/properties")
+async def get_contact_properties(contact_id: str, current_user: dict = Depends(get_current_user)):
+    """Get all properties linked to a contact"""
+    contact = await db.contacts.find_one({"id": contact_id}, {"_id": 0})
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    
+    properties = contact.get("properties", [])
+    
+    # Enrich with latest property data
+    enriched = []
+    for prop in properties:
+        # Try to get updated info from property_leads
+        lead = await db.property_leads.find_one({"id": prop.get("property_id")}, {"_id": 0})
+        if lead:
+            enriched.append({
+                **prop,
+                "address": lead.get("address", prop.get("address")),
+                "city": lead.get("city", prop.get("city")),
+                "state": lead.get("state", prop.get("state")),
+                "status": lead.get("status", prop.get("status")),
+                "price": lead.get("list_price") or lead.get("estimated_value") or prop.get("price"),
+                "bedrooms": lead.get("bedrooms"),
+                "bathrooms": lead.get("bathrooms"),
+                "sqft": lead.get("sqft"),
+            })
+        else:
+            enriched.append(prop)
+    
+    return enriched
+
+@router.post("/{contact_id}/properties")
+async def add_contact_property(contact_id: str, property_req: AddPropertyRequest, current_user: dict = Depends(get_current_user)):
+    """Add a property to a contact"""
+    contact = await db.contacts.find_one({"id": contact_id})
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    
+    properties = contact.get("properties", [])
+    
+    # Check if property already linked
+    if any(p.get("property_id") == property_req.property_id for p in properties):
+        raise HTTPException(status_code=400, detail="Property already linked to this contact")
+    
+    new_property = {
+        "id": str(uuid.uuid4()),
+        "property_id": property_req.property_id,
+        "address": property_req.address,
+        "city": property_req.city,
+        "state": property_req.state,
+        "type": property_req.type,
+        "status": property_req.status,
+        "price": property_req.price,
+        "added_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    properties.append(new_property)
+    
+    await db.contacts.update_one(
+        {"id": contact_id},
+        {"$set": {"properties": properties, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return new_property
+
+@router.delete("/{contact_id}/properties/{property_link_id}")
+async def remove_contact_property(contact_id: str, property_link_id: str, current_user: dict = Depends(get_current_user)):
+    """Remove a property from a contact"""
+    contact = await db.contacts.find_one({"id": contact_id})
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    
+    properties = contact.get("properties", [])
+    properties = [p for p in properties if p.get("id") != property_link_id]
+    
+    await db.contacts.update_one(
+        {"id": contact_id},
+        {"$set": {"properties": properties, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"message": "Property removed from contact"}
+
+@router.get("/available-properties/list")
+async def get_available_properties(
+    search: Optional[str] = Query(None),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get available properties to link to a contact"""
+    query = {}
+    if search:
+        query["$or"] = [
+            {"address": {"$regex": search, "$options": "i"}},
+            {"city": {"$regex": search, "$options": "i"}},
+            {"owner_name": {"$regex": search, "$options": "i"}},
+        ]
+    
+    properties = await db.property_leads.find(query, {"_id": 0}).sort("created_at", -1).limit(50).to_list(50)
+    
+    return [{
+        "id": p.get("id"),
+        "address": p.get("address"),
+        "city": p.get("city"),
+        "state": p.get("state"),
+        "status": p.get("status"),
+        "price": p.get("list_price") or p.get("estimated_value"),
+        "bedrooms": p.get("bedrooms"),
+        "bathrooms": p.get("bathrooms"),
+        "sqft": p.get("sqft"),
+    } for p in properties]
+
 # ============ IMPORT / EXPORT ============
 
 @router.post("/import")
