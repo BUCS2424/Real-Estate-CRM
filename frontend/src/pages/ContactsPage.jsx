@@ -92,6 +92,28 @@ const ContactDetail = ({ contactId, onBack }) => {
   const [propertySearch, setPropertySearch] = useState('');
   const [showAddProperty, setShowAddProperty] = useState(false);
   const [addingProperty, setAddingProperty] = useState(false);
+  
+  // New property form state
+  const [showNewPropertyForm, setShowNewPropertyForm] = useState(false);
+  const [newPropertyData, setNewPropertyData] = useState({
+    address: '',
+    city: '',
+    state: '',
+    zip_code: '',
+    price: '',
+    bedrooms: '',
+    bathrooms: '',
+    sqft: '',
+    property_type: 'Single Family',
+    purchase_date: '',
+    anniversary_date: '',
+  });
+  const [savingNewProperty, setSavingNewProperty] = useState(false);
+  
+  // Custom status state
+  const [statusOptions, setStatusOptions] = useState(getStatusOptions());
+  const [showAddStatus, setShowAddStatus] = useState(false);
+  const [newStatusName, setNewStatusName] = useState('');
 
   useEffect(() => {
     if (contactId) fetchContact();
@@ -158,6 +180,86 @@ const ContactDetail = ({ contactId, onBack }) => {
       fetchContact();
     } catch (error) {
       toast.error('Failed to remove property');
+    }
+  };
+  
+  // Add new custom status
+  const handleAddCustomStatus = () => {
+    if (!newStatusName.trim()) return;
+    const statusValue = newStatusName.toLowerCase().replace(/\s+/g, '_');
+    const newStatus = {
+      value: statusValue,
+      label: newStatusName.trim(),
+      color: 'bg-cyan-500/20 text-cyan-600 border-cyan-500/50',
+      custom: true
+    };
+    const customStatuses = JSON.parse(localStorage.getItem('customContactStatuses') || '[]');
+    customStatuses.push(newStatus);
+    localStorage.setItem('customContactStatuses', JSON.stringify(customStatuses));
+    setStatusOptions(getStatusOptions());
+    setEditData({ ...editData, status: statusValue });
+    setNewStatusName('');
+    setShowAddStatus(false);
+    toast.success(`Status "${newStatusName}" added`);
+  };
+  
+  // Create new property for this contact
+  const handleCreateNewProperty = async () => {
+    if (!newPropertyData.address.trim()) {
+      toast.error('Address is required');
+      return;
+    }
+    setSavingNewProperty(true);
+    try {
+      // Create property lead first
+      const propertyType = contact.category === 'seller' ? 'selling' : 'buying';
+      const propertyPayload = {
+        address: newPropertyData.address,
+        city: newPropertyData.city || null,
+        state: newPropertyData.state || null,
+        zip_code: newPropertyData.zip_code || null,
+        list_price: newPropertyData.price ? parseFloat(newPropertyData.price.replace(/[^0-9.]/g, '')) : null,
+        bedrooms: newPropertyData.bedrooms ? parseInt(newPropertyData.bedrooms) : null,
+        bathrooms: newPropertyData.bathrooms ? parseFloat(newPropertyData.bathrooms) : null,
+        sqft: newPropertyData.sqft ? parseInt(newPropertyData.sqft.replace(/[^0-9]/g, '')) : null,
+        property_type: newPropertyData.property_type,
+        owner_name: contact.display_name || contact.first_name + ' ' + contact.last_name,
+        owner_phone: contact.mobile_phone || contact.home_phone || contact.phone,
+        owner_email: contact.email,
+        status: 'new',
+        source: 'contact_added',
+      };
+      
+      // Create property lead via API
+      const res = await api.post('/property-leads', propertyPayload);
+      const newProperty = res.data;
+      
+      // Link it to the contact
+      await contactsAPI.addProperty(contactId, {
+        property_id: newProperty.id,
+        address: newProperty.address,
+        city: newProperty.city || null,
+        state: newProperty.state || null,
+        type: propertyType,
+        status: 'new',
+        price: newPropertyData.price || null,
+        purchase_date: newPropertyData.purchase_date || null,
+        anniversary_date: newPropertyData.anniversary_date || null,
+      });
+      
+      toast.success('Property created and linked to contact');
+      setShowNewPropertyForm(false);
+      setNewPropertyData({
+        address: '', city: '', state: '', zip_code: '', price: '',
+        bedrooms: '', bathrooms: '', sqft: '', property_type: 'Single Family',
+        purchase_date: '', anniversary_date: '',
+      });
+      fetchProperties();
+      fetchContact();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to create property');
+    } finally {
+      setSavingNewProperty(false);
     }
   };
 
