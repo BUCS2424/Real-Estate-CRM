@@ -192,12 +192,12 @@ const ContactDetail = ({ contactId, onBack }) => {
               <div className="text-center text-muted-foreground text-sm mb-4 space-y-1">
                 {primaryEmail && (
                   <p className="flex items-center justify-center gap-1">
-                    <Mail className="w-3 h-3" />{contact.email}
+                    <Mail className="w-3 h-3" />{primaryEmail}
                   </p>
                 )}
-                {contact.phone && (
+                {primaryPhone && (
                   <p className="flex items-center justify-center gap-1">
-                    <Phone className="w-3 h-3" />{contact.phone}
+                    <Phone className="w-3 h-3" />{primaryPhone}
                   </p>
                 )}
               </div>
@@ -215,16 +215,16 @@ const ContactDetail = ({ contactId, onBack }) => {
             </div>
             
             <div className="space-y-2">
-              {contact.phone && (
+              {primaryPhone && (
                 <Button asChild className="w-full bg-amber-500 hover:bg-amber-600 text-black">
-                  <a href={`tel:${contact.phone}`}>
+                  <a href={`tel:${primaryPhone}`}>
                     <Phone className="w-4 h-4 mr-2" />Call
                   </a>
                 </Button>
               )}
-              {contact.email && (
+              {primaryEmail && (
                 <Button asChild variant="outline" className="w-full">
-                  <a href={`mailto:${contact.email}`}>
+                  <a href={`mailto:${primaryEmail}`}>
                     <Mail className="w-4 h-4 mr-2" />Email
                   </a>
                 </Button>
