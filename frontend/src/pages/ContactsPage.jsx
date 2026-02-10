@@ -650,6 +650,132 @@ const ContactDetail = ({ contactId, onBack }) => {
               </div>
             </TabsContent>
 
+            {/* ALL DATA TAB - Shows every single imported field */}
+            <TabsContent value="alldata" className="mt-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileSpreadsheet className="w-5 h-5 text-amber-500" />All Imported Data
+                  </CardTitle>
+                  <CardDescription>Complete data from the imported contact file</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Name Fields */}
+                    <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                      <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Name Information</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between"><span className="text-muted-foreground">Display Name:</span><span className="font-medium">{contact.display_name || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">First Name:</span><span className="font-medium">{contact.first_name || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Last Name:</span><span className="font-medium">{contact.last_name || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Nickname:</span><span className="font-medium">{contact.nickname || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Gender:</span><span className="font-medium">{contact.gender || '-'}</span></div>
+                      </div>
+                    </div>
+
+                    {/* Email Fields */}
+                    <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                      <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Email Addresses</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between"><span className="text-muted-foreground">Email 1:</span><span className="font-medium break-all">{contact.email || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Email 2:</span><span className="font-medium break-all">{contact.email_2 || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Email 3:</span><span className="font-medium break-all">{contact.email_3 || '-'}</span></div>
+                      </div>
+                    </div>
+
+                    {/* Phone Fields */}
+                    <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                      <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Phone Numbers</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between"><span className="text-muted-foreground">Mobile Phone:</span><span className="font-medium">{contact.mobile_phone || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Home Phone:</span><span className="font-medium">{contact.home_phone || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Business Phone:</span><span className="font-medium">{contact.business_phone || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Home Fax:</span><span className="font-medium">{contact.home_fax || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Business Fax:</span><span className="font-medium">{contact.business_fax || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Pager:</span><span className="font-medium">{contact.pager || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Country Code:</span><span className="font-medium">{contact.country_code || '-'}</span></div>
+                      </div>
+                    </div>
+
+                    {/* Work/Organization Fields */}
+                    <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                      <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Work Information</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between"><span className="text-muted-foreground">Organization:</span><span className="font-medium">{contact.organization || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Job Title:</span><span className="font-medium">{contact.job_title || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Department:</span><span className="font-medium">{contact.department || '-'}</span></div>
+                      </div>
+                    </div>
+
+                    {/* Home Address Fields */}
+                    <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                      <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Home Address</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between"><span className="text-muted-foreground">Street:</span><span className="font-medium">{contact.home_street || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Address 2:</span><span className="font-medium">{contact.home_address_2 || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">City:</span><span className="font-medium">{contact.home_city || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">State:</span><span className="font-medium">{contact.home_state || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Postal Code:</span><span className="font-medium">{contact.home_postal_code || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Country:</span><span className="font-medium">{contact.home_country || '-'}</span></div>
+                      </div>
+                    </div>
+
+                    {/* Business Address Fields */}
+                    <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                      <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Business Address</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between"><span className="text-muted-foreground">Address:</span><span className="font-medium">{contact.business_address || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Address 2:</span><span className="font-medium">{contact.business_address_2 || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">City:</span><span className="font-medium">{contact.business_city || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">State:</span><span className="font-medium">{contact.business_state || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Postal Code:</span><span className="font-medium">{contact.business_postal_code || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Country:</span><span className="font-medium">{contact.business_country || '-'}</span></div>
+                      </div>
+                    </div>
+
+                    {/* Web & Online Fields */}
+                    <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                      <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Web & Online</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between"><span className="text-muted-foreground">Web Page:</span><span className="font-medium break-all">{contact.web_page || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Web Page 2:</span><span className="font-medium break-all">{contact.web_page_2 || '-'}</span></div>
+                      </div>
+                    </div>
+
+                    {/* Personal Fields */}
+                    <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                      <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Personal Information</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between"><span className="text-muted-foreground">Birthday:</span><span className="font-medium">{contact.birthday || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Anniversary:</span><span className="font-medium">{contact.anniversary || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Related Name:</span><span className="font-medium">{contact.related_name || '-'}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Categories:</span><span className="font-medium">{contact.categories || '-'}</span></div>
+                      </div>
+                    </div>
+
+                    {/* Notes Field */}
+                    <div className="space-y-3 p-4 bg-muted/30 rounded-lg md:col-span-2 lg:col-span-3">
+                      <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Notes (Imported)</h4>
+                      <div className="text-sm">
+                        <p className="whitespace-pre-wrap">{contact.notes || '-'}</p>
+                      </div>
+                    </div>
+
+                    {/* System Fields */}
+                    <div className="space-y-3 p-4 bg-muted/30 rounded-lg md:col-span-2 lg:col-span-3">
+                      <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">System Information</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div><span className="text-muted-foreground">ID:</span><span className="font-medium ml-2 break-all">{contact.id || '-'}</span></div>
+                        <div><span className="text-muted-foreground">Source:</span><span className="font-medium ml-2">{contact.source || '-'}</span></div>
+                        <div><span className="text-muted-foreground">Created:</span><span className="font-medium ml-2">{formatDate(contact.created_at)}</span></div>
+                        <div><span className="text-muted-foreground">Updated:</span><span className="font-medium ml-2">{formatDate(contact.updated_at)}</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
             <TabsContent value="notes" className="mt-0">
               <Card>
                 <CardHeader>
