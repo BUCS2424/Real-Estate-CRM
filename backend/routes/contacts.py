@@ -200,9 +200,76 @@ async def create_contact(contact: ContactCreate, current_user: dict = Depends(ge
     return ContactResponse(**contact_doc)
 
 @router.get("", response_model=List[ContactResponse])
-async def get_contacts(current_user: dict = Depends(get_current_user)):
-    contacts = await db.contacts.find({}, {"_id": 0}).to_list(1000)
+async def get_contacts(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+    search: Optional[str] = Query(None),
+    letter: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get contacts with pagination and filters"""
+    query = {}
+    
+    # Search filter
+    if search:
+        query["$or"] = [
+            {"first_name": {"$regex": search, "$options": "i"}},
+            {"last_name": {"$regex": search, "$options": "i"}},
+            {"display_name": {"$regex": search, "$options": "i"}},
+            {"email": {"$regex": search, "$options": "i"}},
+            {"organization": {"$regex": search, "$options": "i"}},
+            {"mobile_phone": {"$regex": search, "$options": "i"}},
+        ]
+    
+    # Letter filter (for alphabetical navigation)
+    if letter and letter.upper() in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+        query["$or"] = [
+            {"first_name": {"$regex": f"^{letter}", "$options": "i"}},
+            {"last_name": {"$regex": f"^{letter}", "$options": "i"}},
+        ]
+    
+    # Category filter
+    if category:
+        query["category"] = category
+    
+    contacts = await db.contacts.find(query, {"_id": 0}).sort([
+        ("first_name", 1), ("last_name", 1)
+    ]).skip(skip).limit(limit).to_list(limit)
+    
     return [ContactResponse(**c) for c in contacts]
+
+
+@router.get("/stats/summary")
+async def get_contacts_stats(current_user: dict = Depends(get_current_user)):
+    """Get contact statistics"""
+    total = await db.contacts.count_documents({})
+    buyers = await db.contacts.count_documents({"category": "buyer"})
+    sellers = await db.contacts.count_documents({"category": "seller"})
+    new_count = await db.contacts.count_documents({"status": "new"})
+    qualified = await db.contacts.count_documents({"status": "qualified"})
+    
+    # Count by first letter
+    letter_counts = {}
+    pipeline = [
+        {"$project": {
+            "letter": {"$toUpper": {"$substr": [{"$ifNull": ["$first_name", ""]}, 0, 1]}}
+        }},
+        {"$group": {"_id": "$letter", "count": {"$sum": 1}}},
+        {"$sort": {"_id": 1}}
+    ]
+    async for doc in db.contacts.aggregate(pipeline):
+        if doc["_id"] and doc["_id"].isalpha():
+            letter_counts[doc["_id"]] = doc["count"]
+    
+    return {
+        "total": total,
+        "buyers": buyers,
+        "sellers": sellers,
+        "new": new_count,
+        "qualified": qualified,
+        "by_letter": letter_counts
+    }
 
 @router.get("/{contact_id}", response_model=ContactResponse)
 async def get_contact(contact_id: str, current_user: dict = Depends(get_current_user)):
