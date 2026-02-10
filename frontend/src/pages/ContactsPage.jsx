@@ -313,7 +313,14 @@ const ContactDetail = ({ contactId, onBack }) => {
           <CardContent>
             <div className="flex flex-wrap gap-2">
               {contact.tags?.length > 0 ? (
-                contact.tags.map((tag, idx) => <Badge key={idx} variant="outline">{tag}</Badge>)
+                contact.tags.map((tag, idx) => (
+                  <span 
+                    key={idx} 
+                    className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 text-amber-600 rounded-full text-xs font-medium border border-amber-500/30"
+                  >
+                    {tag}
+                  </span>
+                ))
               ) : (
                 <p className="text-sm text-muted-foreground">No tags</p>
               )}
