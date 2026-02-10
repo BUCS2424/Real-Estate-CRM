@@ -917,6 +917,25 @@ export const ContactsPage = () => {
                   </div>
                 </div>
               ))}
+              
+              {/* Load More Button */}
+              {hasMore && !loading && (
+                <div className="flex justify-center pt-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={loadMore}
+                    className="w-full max-w-xs"
+                  >
+                    Load More Contacts
+                  </Button>
+                </div>
+              )}
+              
+              {loading && page > 0 && (
+                <div className="flex justify-center pt-4">
+                  <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+                </div>
+              )}
             </div>
           )}
         </CardContent>
