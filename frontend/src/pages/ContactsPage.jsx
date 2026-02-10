@@ -69,7 +69,6 @@ const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const ContactDetail = ({ contactId, onBack }) => {
   const [contact, setContact] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState({});
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
