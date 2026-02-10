@@ -325,6 +325,7 @@ const ContactDetail = ({ contactId, onBack }) => {
           <div className="flex-1 mt-4 pb-8 overflow-y-auto">
             <TabsContent value="overview" className="mt-0 space-y-4">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Basic Contact Information */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -337,6 +338,12 @@ const ContactDetail = ({ contactId, onBack }) => {
                         <Label className="text-xs text-muted-foreground">Full Name</Label>
                         <p className="font-medium">{displayName}</p>
                       </div>
+                      {contact.nickname && (
+                        <div className="col-span-2 space-y-1">
+                          <Label className="text-xs text-muted-foreground">Nickname</Label>
+                          <p className="font-medium">{contact.nickname}</p>
+                        </div>
+                      )}
                       
                       {/* Emails Section */}
                       <div className="col-span-2 space-y-2">
@@ -370,15 +377,15 @@ const ContactDetail = ({ contactId, onBack }) => {
                         )}
                       </div>
                       
-                      {/* Phone Numbers Section */}
+                      {/* Phone Numbers Section - ALL types */}
                       <div className="col-span-2 space-y-2">
                         <Label className="text-xs text-muted-foreground">Phone Numbers</Label>
-                        {(contact.phone || contact.mobile_phone || contact.home_phone || contact.business_phone) ? (
+                        {(contact.phone || contact.mobile_phone || contact.home_phone || contact.business_phone || contact.pager || contact.home_fax || contact.business_fax) ? (
                           <div className="space-y-1">
                             {contact.mobile_phone && (
                               <p className="font-medium flex items-center gap-1 text-sm">
                                 <Smartphone className="w-3 h-3 text-muted-foreground" />
-                                <span className="text-xs text-muted-foreground w-16">Mobile:</span>
+                                <span className="text-xs text-muted-foreground w-20">Mobile:</span>
                                 {contact.mobile_phone}
                                 <button onClick={() => copyToClipboard(contact.mobile_phone)}><Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>
                               </p>
@@ -386,7 +393,7 @@ const ContactDetail = ({ contactId, onBack }) => {
                             {contact.home_phone && (
                               <p className="font-medium flex items-center gap-1 text-sm">
                                 <Home className="w-3 h-3 text-muted-foreground" />
-                                <span className="text-xs text-muted-foreground w-16">Home:</span>
+                                <span className="text-xs text-muted-foreground w-20">Home:</span>
                                 {contact.home_phone}
                                 <button onClick={() => copyToClipboard(contact.home_phone)}><Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>
                               </p>
@@ -394,14 +401,39 @@ const ContactDetail = ({ contactId, onBack }) => {
                             {contact.business_phone && (
                               <p className="font-medium flex items-center gap-1 text-sm">
                                 <Briefcase className="w-3 h-3 text-muted-foreground" />
-                                <span className="text-xs text-muted-foreground w-16">Work:</span>
+                                <span className="text-xs text-muted-foreground w-20">Work:</span>
                                 {contact.business_phone}
                                 <button onClick={() => copyToClipboard(contact.business_phone)}><Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>
+                              </p>
+                            )}
+                            {contact.pager && (
+                              <p className="font-medium flex items-center gap-1 text-sm">
+                                <Phone className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground w-20">Pager:</span>
+                                {contact.pager}
+                                <button onClick={() => copyToClipboard(contact.pager)}><Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>
+                              </p>
+                            )}
+                            {contact.home_fax && (
+                              <p className="font-medium flex items-center gap-1 text-sm">
+                                <Phone className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground w-20">Home Fax:</span>
+                                {contact.home_fax}
+                                <button onClick={() => copyToClipboard(contact.home_fax)}><Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>
+                              </p>
+                            )}
+                            {contact.business_fax && (
+                              <p className="font-medium flex items-center gap-1 text-sm">
+                                <Phone className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground w-20">Work Fax:</span>
+                                {contact.business_fax}
+                                <button onClick={() => copyToClipboard(contact.business_fax)}><Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>
                               </p>
                             )}
                             {contact.phone && !contact.mobile_phone && !contact.home_phone && !contact.business_phone && (
                               <p className="font-medium flex items-center gap-1 text-sm">
                                 <Phone className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground w-20">Phone:</span>
                                 {contact.phone}
                                 <button onClick={() => copyToClipboard(contact.phone)}><Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" /></button>
                               </p>
@@ -413,22 +445,82 @@ const ContactDetail = ({ contactId, onBack }) => {
                       </div>
                       
                       {/* Company/Organization */}
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Company</Label>
-                        <p className="font-medium">{company || '-'}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Job Title</Label>
-                        <p className="font-medium">{jobTitle || '-'}</p>
-                      </div>
-                      {contact.department && (
-                        <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Department</Label>
-                          <p className="font-medium">{contact.department}</p>
+                      {(company || jobTitle || contact.department) && (
+                        <>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Company/Organization</Label>
+                            <p className="font-medium">{company || '-'}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Job Title</Label>
+                            <p className="font-medium">{jobTitle || '-'}</p>
+                          </div>
+                          {contact.department && (
+                            <div className="col-span-2 space-y-1">
+                              <Label className="text-xs text-muted-foreground">Department</Label>
+                              <p className="font-medium">{contact.department}</p>
+                            </div>
+                          )}
+                        </>
+                      )}
+                      
+                      {/* Website */}
+                      {(contact.web_page || contact.web_page_2) && (
+                        <div className="col-span-2 space-y-1">
+                          <Label className="text-xs text-muted-foreground">Website</Label>
+                          {contact.web_page && (
+                            <p className="font-medium text-sm">
+                              <a href={contact.web_page} target="_blank" rel="noopener noreferrer" className="text-amber-500 hover:text-amber-600 break-all">
+                                {contact.web_page}
+                              </a>
+                            </p>
+                          )}
+                          {contact.web_page_2 && (
+                            <p className="font-medium text-sm">
+                              <a href={contact.web_page_2} target="_blank" rel="noopener noreferrer" className="text-amber-500 hover:text-amber-600 break-all">
+                                {contact.web_page_2}
+                              </a>
+                            </p>
+                          )}
                         </div>
                       )}
+                      
+                      {/* Important Dates */}
+                      {(contact.birthday || contact.anniversary) && (
+                        <>
+                          {contact.birthday && (
+                            <div className="space-y-1">
+                              <Label className="text-xs text-muted-foreground">Birthday</Label>
+                              <p className="font-medium">{contact.birthday}</p>
+                            </div>
+                          )}
+                          {contact.anniversary && (
+                            <div className="space-y-1">
+                              <Label className="text-xs text-muted-foreground">Anniversary</Label>
+                              <p className="font-medium">{contact.anniversary}</p>
+                            </div>
+                          )}
+                        </>
+                      )}
+                      
+                      {/* Related Person */}
+                      {contact.related_name && (
+                        <div className="col-span-2 space-y-1">
+                          <Label className="text-xs text-muted-foreground">Related Person</Label>
+                          <p className="font-medium">{contact.related_name}</p>
+                        </div>
+                      )}
+                      
+                      {/* Categories */}
+                      {contact.categories && (
+                        <div className="col-span-2 space-y-1">
+                          <Label className="text-xs text-muted-foreground">Categories</Label>
+                          <p className="font-medium">{contact.categories}</p>
+                        </div>
+                      )}
+                      
                       {contact.property_interest && (
-                        <div className="space-y-1">
+                        <div className="col-span-2 space-y-1">
                           <Label className="text-xs text-muted-foreground">Property Interest</Label>
                           <p className="font-medium">{contact.property_interest}</p>
                         </div>
