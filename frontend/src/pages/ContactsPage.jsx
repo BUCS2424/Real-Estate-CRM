@@ -864,25 +864,42 @@ export const ContactsPage = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {filteredContacts.map(contact => (
-                <div key={contact.id} onClick={() => handleSelectContact(contact.id)} className="p-4 rounded-lg border bg-card hover:shadow-md hover:border-amber-500/50 transition-all cursor-pointer">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-                        <User className="w-6 h-6 text-amber-500" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground">{contact.name}</h3>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                          {contact.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{contact.email}</span>}
-                          {contact.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{contact.phone}</span>}
+              {filteredContacts.map(contact => {
+                // Build display name from available fields
+                const displayName = contact.display_name || 
+                  contact.name || 
+                  `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 
+                  contact.organization ||
+                  'Unknown';
+                
+                // Get best email
+                const email = contact.email || contact.email_2 || contact.email_3;
+                
+                // Get best phone
+                const phone = contact.phone || contact.mobile_phone || contact.home_phone || contact.business_phone;
+                
+                // Get company/organization
+                const company = contact.company || contact.organization;
+                
+                return (
+                  <div key={contact.id} onClick={() => handleSelectContact(contact.id)} className="p-4 rounded-lg border bg-card hover:shadow-md hover:border-amber-500/50 transition-all cursor-pointer">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                          <User className="w-6 h-6 text-amber-500" />
                         </div>
-                        {contact.company && <p className="text-sm text-muted-foreground mt-1"><Building2 className="w-3 h-3 inline mr-1" />{contact.company}</p>}
+                        <div>
+                          <h3 className="font-semibold text-foreground">{displayName}</h3>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                            {email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{email}</span>}
+                            {phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{phone}</span>}
+                          </div>
+                          {company && <p className="text-sm text-muted-foreground mt-1"><Building2 className="w-3 h-3 inline mr-1" />{company}</p>}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <div className="flex flex-col items-end gap-2">
-                        <Badge className={getStatusColor(contact.status)}>{contact.status?.toUpperCase()}</Badge>
+                      <div className="flex items-start gap-2">
+                        <div className="flex flex-col items-end gap-2">
+                          <Badge className={getStatusColor(contact.status)}>{contact.status?.toUpperCase() || 'ACTIVE'}</Badge>
                         {contact.category && <Badge className={getCategoryColor(contact.category)}>{contact.category?.toUpperCase()}</Badge>}
                       </div>
                       <div className="flex gap-1">
