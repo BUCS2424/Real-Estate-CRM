@@ -1332,12 +1332,43 @@ const ContactDetail = ({ contactId, onBack }) => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label className="text-sm font-semibold mb-2 block">Status</Label>
-                      <Select value={editData.status || ''} onValueChange={(v) => setEditData({ ...editData, status: v })}>
-                        <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
-                        <SelectContent>
-                          {STATUS_OPTIONS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex gap-2">
+                        <Select value={editData.status || ''} onValueChange={(v) => setEditData({ ...editData, status: v })}>
+                          <SelectTrigger className="flex-1"><SelectValue placeholder="Select status" /></SelectTrigger>
+                          <SelectContent>
+                            {statusOptions.map(s => (
+                              <SelectItem key={s.value} value={s.value}>
+                                <span className="flex items-center gap-2">
+                                  {s.label}
+                                  {s.custom && <span className="text-xs text-muted-foreground">(custom)</span>}
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button type="button" onClick={() => setShowAddStatus(true)} variant="outline" size="icon" title="Add custom status">
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      {/* Add Custom Status Inline */}
+                      {showAddStatus && (
+                        <div className="mt-2 p-3 bg-muted/50 rounded-lg border">
+                          <Label className="text-xs text-muted-foreground mb-1 block">New Status Name</Label>
+                          <div className="flex gap-2">
+                            <Input 
+                              value={newStatusName}
+                              onChange={(e) => setNewStatusName(e.target.value)}
+                              placeholder="e.g., On Hold, VIP"
+                              className="flex-1"
+                              onKeyDown={(e) => e.key === 'Enter' && handleAddCustomStatus()}
+                            />
+                            <Button type="button" size="sm" onClick={handleAddCustomStatus} className="bg-amber-500 hover:bg-amber-600 text-black">Add</Button>
+                            <Button type="button" size="sm" variant="ghost" onClick={() => { setShowAddStatus(false); setNewStatusName(''); }}>
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div>
                       <Label className="text-sm font-semibold mb-2 block">Tags</Label>
