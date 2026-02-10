@@ -710,6 +710,8 @@ export const ContactsPage = () => {
     try {
       await contactsAPI.delete(id);
       toast.success('Contact deleted');
+      setPage(0);
+      fetchStats();
       fetchContacts();
     } catch (error) {
       toast.error('Failed to delete');
