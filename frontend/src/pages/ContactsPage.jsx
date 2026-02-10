@@ -493,6 +493,53 @@ const ContactDetail = ({ contactId, onBack }) => {
                   </CardContent>
                 </Card>
 
+                {/* Address Section - only show if there's address data */}
+                {(contact.home_street || contact.home_city || contact.business_address || contact.business_city) && (
+                  <Card className="lg:col-span-2">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <MapPin className="w-5 h-5 text-amber-500" />Addresses
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {(contact.home_street || contact.home_city) && (
+                          <div className="p-3 bg-muted/50 rounded-lg">
+                            <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                              <Home className="w-3 h-3" />Home Address
+                            </p>
+                            <div className="text-sm space-y-0.5">
+                              {contact.home_street && <p>{contact.home_street}</p>}
+                              {(contact.home_city || contact.home_state || contact.home_postal_code) && (
+                                <p>
+                                  {[contact.home_city, contact.home_state, contact.home_postal_code].filter(Boolean).join(', ')}
+                                </p>
+                              )}
+                              {contact.home_country && <p>{contact.home_country}</p>}
+                            </div>
+                          </div>
+                        )}
+                        {(contact.business_address || contact.business_city) && (
+                          <div className="p-3 bg-muted/50 rounded-lg">
+                            <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                              <Building2 className="w-3 h-3" />Business Address
+                            </p>
+                            <div className="text-sm space-y-0.5">
+                              {contact.business_address && <p>{contact.business_address}</p>}
+                              {(contact.business_city || contact.business_state || contact.business_postal_code) && (
+                                <p>
+                                  {[contact.business_city, contact.business_state, contact.business_postal_code].filter(Boolean).join(', ')}
+                                </p>
+                              )}
+                              {contact.business_country && <p>{contact.business_country}</p>}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {contact.notes && (
                   <Card className="lg:col-span-2">
                     <CardHeader>
