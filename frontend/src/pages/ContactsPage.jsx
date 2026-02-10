@@ -1154,7 +1154,8 @@ export const ContactsPage = () => {
   }, [searchQuery]);
 
   useEffect(() => {
-    if (id) setSelectedContact(id);
+    // If URL has id, show that contact. If no id, show list view.
+    setSelectedContact(id || null);
   }, [id]);
 
   const fetchStats = async () => {
