@@ -835,8 +835,8 @@ const ContactDetail = ({ contactId, onBack }) => {
                     </div>
                   </div>
 
-                  {/* Status Selection */}
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* Status and Tags */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label className="text-sm font-semibold mb-2 block">Status</Label>
                       <Select value={editData.status || ''} onValueChange={(v) => setEditData({ ...editData, status: v })}>
@@ -847,14 +847,43 @@ const ContactDetail = ({ contactId, onBack }) => {
                       </Select>
                     </div>
                     <div>
-                      <Label className="text-sm font-semibold mb-2 block">Categories</Label>
-                      <Input 
-                        value={editData.categories || ''} 
-                        onChange={(e) => setEditData({ ...editData, categories: e.target.value })} 
-                        placeholder="e.g., VIP, Hot Lead, Referral"
-                      />
+                      <Label className="text-sm font-semibold mb-2 block">Tags</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          value={newTag} 
+                          onChange={(e) => setNewTag(e.target.value)} 
+                          onKeyDown={handleTagKeyDown}
+                          placeholder="Type tag and press Enter"
+                          className="flex-1"
+                        />
+                        <Button type="button" onClick={addTag} variant="outline" size="icon">
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Tags Display */}
+                  {tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((tag, idx) => (
+                        <span 
+                          key={idx} 
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-amber-500/20 text-amber-600 rounded-full text-sm font-medium border border-amber-500/30 hover:bg-amber-500/30 transition-colors"
+                        >
+                          <Tag className="w-3 h-3" />
+                          {tag}
+                          <button 
+                            type="button"
+                            onClick={() => removeTag(tag)} 
+                            className="ml-1 hover:text-red-500 transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Name Information */}
                   <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
