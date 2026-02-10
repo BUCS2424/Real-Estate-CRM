@@ -850,7 +850,7 @@ export const ContactsPage = () => {
       {/* Contacts List */}
       <Card>
         <CardHeader>
-          <CardTitle>Contacts ({filteredContacts.length})</CardTitle>
+          <CardTitle>Contacts ({stats.total || contacts.length})</CardTitle>
           <CardDescription>Click on a contact to view details</CardDescription>
         </CardHeader>
         <CardContent>
