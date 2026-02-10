@@ -249,18 +249,24 @@ async def get_contacts_stats(current_user: dict = Depends(get_current_user)):
     new_count = await db.contacts.count_documents({"status": "new"})
     qualified = await db.contacts.count_documents({"status": "qualified"})
     
-    # Count by first letter
+    # Count by first letter - use a simpler approach
     letter_counts = {}
-    pipeline = [
-        {"$project": {
-            "letter": {"$toUpper": {"$substr": [{"$ifNull": ["$first_name", ""]}, 0, 1]}}
-        }},
-        {"$group": {"_id": "$letter", "count": {"$sum": 1}}},
-        {"$sort": {"_id": 1}}
-    ]
-    async for doc in db.contacts.aggregate(pipeline):
-        if doc["_id"] and doc["_id"].isalpha():
-            letter_counts[doc["_id"]] = doc["count"]
+    try:
+        pipeline = [
+            {"$match": {"first_name": {"$type": "string", "$ne": ""}}},
+            {"$project": {
+                "letter": {"$toUpper": {"$substrCP": ["$first_name", 0, 1]}}
+            }},
+            {"$match": {"letter": {"$regex": "^[A-Z]$"}}},
+            {"$group": {"_id": "$letter", "count": {"$sum": 1}}},
+            {"$sort": {"_id": 1}}
+        ]
+        async for doc in db.contacts.aggregate(pipeline):
+            if doc["_id"]:
+                letter_counts[doc["_id"]] = doc["count"]
+    except Exception as e:
+        # If aggregation fails, just skip letter counts
+        print(f"Letter count aggregation failed: {e}")
     
     return {
         "total": total,
