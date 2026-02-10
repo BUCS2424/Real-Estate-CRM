@@ -54,6 +54,11 @@ export const contactsAPI = {
   update: (id, data) => api.put(`/contacts/${id}`, data),
   updateScore: (id, score) => api.patch(`/contacts/${id}/score`, { lead_score: score }),
   delete: (id) => api.delete(`/contacts/${id}`),
+  // Properties
+  getProperties: (id) => api.get(`/contacts/${id}/properties`),
+  addProperty: (id, data) => api.post(`/contacts/${id}/properties`, data),
+  removeProperty: (contactId, propertyLinkId) => api.delete(`/contacts/${contactId}/properties/${propertyLinkId}`),
+  getAvailableProperties: (search) => api.get(`/contacts/available-properties/list${search ? `?search=${search}` : ''}`),
   // Import/Export
   importFile: (formData, category) => api.post(`/contacts/import${category ? `?category=${category}` : ''}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
