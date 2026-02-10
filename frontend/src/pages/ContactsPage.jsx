@@ -519,7 +519,7 @@ export const ContactsPage = () => {
   const { id } = useParams();
   
   const [contacts, setContacts] = useState([]);
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState({ total: 0, buyers: 0, sellers: 0, new: 0, qualified: 0, by_letter: {} });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
