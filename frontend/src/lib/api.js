@@ -39,7 +39,16 @@ export const authAPI = {
 
 // Contacts
 export const contactsAPI = {
-  list: () => api.get('/contacts'),
+  list: (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.skip) queryParams.append('skip', params.skip);
+    if (params.limit) queryParams.append('limit', params.limit);
+    if (params.search) queryParams.append('search', params.search);
+    if (params.letter) queryParams.append('letter', params.letter);
+    if (params.category) queryParams.append('category', params.category);
+    return api.get(`/contacts?${queryParams.toString()}`);
+  },
+  getStats: () => api.get('/contacts/stats/summary'),
   get: (id) => api.get(`/contacts/${id}`),
   create: (data) => api.post('/contacts', data),
   update: (id, data) => api.put(`/contacts/${id}`, data),
