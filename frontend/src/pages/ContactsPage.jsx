@@ -51,13 +51,21 @@ import { toast } from 'sonner';
 import api, { contactsAPI } from '../lib/api';
 import EmailComposerModal from '../components/EmailComposerModal';
 
-const STATUS_OPTIONS = [
+const DEFAULT_STATUS_OPTIONS = [
+  { value: 'active', label: 'Active', color: 'bg-green-500/20 text-green-600 border-green-500/50' },
+  { value: 'inactive', label: 'Inactive', color: 'bg-gray-500/20 text-gray-600 border-gray-500/50' },
   { value: 'new', label: 'New', color: 'bg-blue-500/20 text-blue-600 border-blue-500/50' },
   { value: 'contacted', label: 'Contacted', color: 'bg-yellow-500/20 text-yellow-600 border-yellow-500/50' },
-  { value: 'qualified', label: 'Qualified', color: 'bg-green-500/20 text-green-600 border-green-500/50' },
+  { value: 'qualified', label: 'Qualified', color: 'bg-emerald-500/20 text-emerald-600 border-emerald-500/50' },
   { value: 'negotiation', label: 'Negotiation', color: 'bg-purple-500/20 text-purple-600 border-purple-500/50' },
-  { value: 'closed', label: 'Closed', color: 'bg-gray-500/20 text-gray-600 border-gray-500/50' },
+  { value: 'closed', label: 'Closed', color: 'bg-slate-500/20 text-slate-600 border-slate-500/50' },
 ];
+
+// Load custom statuses from localStorage
+const getStatusOptions = () => {
+  const customStatuses = JSON.parse(localStorage.getItem('customContactStatuses') || '[]');
+  return [...DEFAULT_STATUS_OPTIONS, ...customStatuses];
+};
 
 const CATEGORY_OPTIONS = [
   { value: 'buyer', label: 'Buyer', color: 'bg-emerald-500/20 text-emerald-600', icon: ShoppingCart },
