@@ -1354,3 +1354,70 @@ Images stored in `property_leads.gallery_images[]` array:
 - `/app/frontend/src/lib/api.js` - Added image API methods
 - `/app/frontend/src/pages/PropertyLeadDetailPage.jsx` - Added gallery to Marketing tab
 
+
+---
+
+## Update: February 10, 2026 - Contact Detail Display Fix
+
+### Bug Fix: Contact Detail Panel Not Showing iPhone Import Data
+
+The contact detail view (side panel when clicking a contact) was not displaying the correct information from imported iPhone contacts CSV.
+
+#### Problem
+The `ContactDetail` component in `/app/frontend/src/pages/ContactsPage.jsx` was only displaying basic fields (`name`, `email`, `phone`, `company`) and missing the iPhone-specific fields that were imported (e.g., `display_name`, `mobile_phone`, `home_phone`, `business_phone`, `email_2`, `email_3`, `organization`, `job_title`, etc.).
+
+#### Solution
+Updated the `ContactDetail` component to:
+1. **Use fallback display name logic**: `display_name` → `name` → `first_name + last_name` → `organization`
+2. **Show multiple email addresses**: Display `email`, `email_2`, `email_3` with copy buttons
+3. **Show multiple phone numbers with labels**: Mobile, Home, Work (using `mobile_phone`, `home_phone`, `business_phone` fields)
+4. **Display organization/company**: Uses both `company` and `organization` fields
+5. **Show job title**: From `job_title` or `position` fields
+6. **Show department** when available
+7. **Display address information**: Home and Business addresses in a new Addresses card
+8. **Additional fields in Quick Info**: Birthday, website when available
+9. **Fixed sidebar buttons**: Call and Email buttons now use the correct primary phone/email
+
+#### Files Modified
+- `/app/frontend/src/pages/ContactsPage.jsx` - Updated `ContactDetail` component
+
+#### Verified Working
+- ✅ Display name shows correctly for iPhone-imported contacts
+- ✅ Multiple emails display with copy buttons
+- ✅ Multiple phone numbers display with type labels (Mobile, Home, Work)
+- ✅ Company/Organization displays correctly
+- ✅ Job title displays when available
+- ✅ Call and Email buttons use the best available contact info
+- ✅ Timeline shows source as "iphone_import"
+
+---
+
+## Current Pending Issues
+
+### P0 - Critical
+1. **Bookings Data Loss** - User's booking data was wiped. Root cause unknown. Investigation needed.
+2. **Unreliable Production Deployments** - Manual process causing data discrepancies.
+
+### P1 - High Priority
+1. **Web Scrapers Broken** - Zillow, Redfin, Realtor.com blocking requests (403/429). BLOCKED - needs paid API.
+2. **iDrive e2 Storage** - Invalid credentials. BLOCKED - awaiting user.
+
+### P2 - Medium Priority
+1. **SMTP Not Configured** - User needs to add credentials in Settings → Developer → Email Settings.
+2. **PWA "Don't Ask Again" Cookie** - Not implemented yet.
+
+---
+
+## Upcoming Tasks
+
+### P1 - Next Up
+1. Build Buyer Lead Page
+2. Complete Foldable Brochure Design (blocked on inside panel design)
+
+### P2 - Future
+1. TMS Integration
+2. Advanced Lead Management (auction/bidding system)
+3. Advanced Reporting & Analytics
+4. Contact Sync via iCloud Drive
+5. Booking Notifications (email, SMS, desktop)
+
