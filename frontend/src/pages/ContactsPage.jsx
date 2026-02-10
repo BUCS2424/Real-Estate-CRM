@@ -550,34 +550,79 @@ export const ContactsPage = () => {
   // Email modal (using EmailComposerModal component)
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailRecipient, setEmailRecipient] = useState(null);
+  
+  // Pagination
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [letterCounts, setLetterCounts] = useState({});
+  const LIMIT = 100;
 
   useEffect(() => {
+    fetchStats();
     fetchContacts();
   }, []);
+  
+  useEffect(() => {
+    fetchContacts();
+  }, [selectedLetter, page]);
 
   useEffect(() => {
     if (id) setSelectedContact(id);
   }, [id]);
 
+  const fetchStats = async () => {
+    try {
+      const res = await contactsAPI.getStats();
+      setStats(res.data);
+      setLetterCounts(res.data.by_letter || {});
+    } catch (error) {
+      console.error('Failed to load stats');
+    }
+  };
+
   const fetchContacts = async () => {
     setLoading(true);
     try {
-      const res = await contactsAPI.list();
+      const params = {
+        skip: page * LIMIT,
+        limit: LIMIT,
+      };
+      if (selectedLetter) {
+        params.letter = selectedLetter;
+      }
+      if (searchTerm) {
+        params.search = searchTerm;
+      }
+      
+      const res = await contactsAPI.list(params);
       const data = res.data || [];
-      setContacts(data);
       
-      const total = data.length;
-      const buyers = data.filter(c => c.category === 'buyer').length;
-      const sellers = data.filter(c => c.category === 'seller').length;
-      const newCount = data.filter(c => c.status === 'new').length;
-      const qualified = data.filter(c => c.status === 'qualified').length;
+      if (page === 0) {
+        setContacts(data);
+      } else {
+        setContacts(prev => [...prev, ...data]);
+      }
       
-      setStats({ total, buyers, sellers, new: newCount, qualified });
+      setHasMore(data.length === LIMIT);
     } catch (error) {
       toast.error('Failed to load contacts');
     } finally {
       setLoading(false);
     }
+  };
+  
+  const handleSearch = () => {
+    setPage(0);
+    fetchContacts();
+  };
+  
+  const handleLetterClick = (letter) => {
+    setSelectedLetter(letter === selectedLetter ? '' : letter);
+    setPage(0);
+  };
+  
+  const loadMore = () => {
+    setPage(prev => prev + 1);
   };
 
   const handleAddContact = async () => {
@@ -588,6 +633,8 @@ export const ContactsPage = () => {
       toast.success('Contact added');
       setShowAddModal(false);
       setNewContact({ name: '', email: '', phone: '', company: '', category: '', status: 'new', budget: '', property_interest: '', notes: '' });
+      setPage(0);
+      fetchStats();
       fetchContacts();
     } catch (error) {
       toast.error('Failed to add contact');
