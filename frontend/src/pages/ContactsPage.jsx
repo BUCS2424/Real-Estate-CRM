@@ -45,7 +45,9 @@ import {
   Apple,
   AlertCircle,
   MessageSquare,
-  X
+  X,
+  Link,
+  Gift
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api, { contactsAPI } from '../lib/api';
