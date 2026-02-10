@@ -835,22 +835,27 @@ export const ContactsPage = () => {
               <Button
                 variant={selectedLetter === null ? "default" : "ghost"}
                 size="sm"
-                className={`w-8 h-8 p-0 ${selectedLetter === null ? 'bg-amber-500 hover:bg-amber-600 text-black' : ''}`}
-                onClick={() => setSelectedLetter(null)}
+                className={`h-8 px-2 ${selectedLetter === null ? 'bg-amber-500 hover:bg-amber-600 text-black' : ''}`}
+                onClick={() => handleLetterClick(null)}
               >
-                All
+                All ({stats.total || 0})
               </Button>
-              {ALPHABET.map(letter => (
-                <Button
-                  key={letter}
-                  variant={selectedLetter === letter ? "default" : "ghost"}
-                  size="sm"
-                  className={`w-8 h-8 p-0 ${selectedLetter === letter ? 'bg-amber-500 hover:bg-amber-600 text-black' : ''}`}
-                  onClick={() => setSelectedLetter(letter)}
-                >
-                  {letter}
-                </Button>
-              ))}
+              {ALPHABET.map(letter => {
+                const count = letterCounts[letter] || 0;
+                return (
+                  <Button
+                    key={letter}
+                    variant={selectedLetter === letter ? "default" : "ghost"}
+                    size="sm"
+                    className={`w-8 h-8 p-0 ${selectedLetter === letter ? 'bg-amber-500 hover:bg-amber-600 text-black' : ''} ${count === 0 ? 'opacity-40' : ''}`}
+                    onClick={() => handleLetterClick(letter)}
+                    disabled={count === 0}
+                    title={`${count} contacts`}
+                  >
+                    {letter}
+                  </Button>
+                );
+              })}
             </div>
           </div>
         </CardContent>
