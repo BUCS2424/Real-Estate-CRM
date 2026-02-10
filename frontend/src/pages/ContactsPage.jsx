@@ -742,22 +742,8 @@ export const ContactsPage = () => {
     return parts.length > 1 ? parts[parts.length - 1] : parts[0];
   };
 
-  const filteredContacts = contacts.filter(contact => {
-    const matchesSearch = !searchQuery || 
-      contact.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.company?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || contact.status === filterStatus;
-    const matchesCategory = filterCategory === 'all' || contact.category === filterCategory;
-    
-    let matchesLetter = true;
-    if (selectedLetter) {
-      const nameToCheck = nameFilter === 'first' ? getFirstName(contact.name) : getLastName(contact.name);
-      matchesLetter = nameToCheck.toUpperCase().startsWith(selectedLetter);
-    }
-    
-    return matchesSearch && matchesStatus && matchesCategory && matchesLetter;
-  });
+  // Use contacts directly - filtering is done server-side
+  const filteredContacts = contacts;
 
   // Show detail view if contact is selected
   if (selectedContact) {
