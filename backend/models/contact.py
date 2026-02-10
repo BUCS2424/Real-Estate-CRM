@@ -1,5 +1,16 @@
 from pydantic import BaseModel, field_validator
-from typing import Optional, List
+from typing import Optional, List, Any
+
+class ContactProperty(BaseModel):
+    id: str
+    property_id: str
+    address: str
+    city: Optional[str] = None
+    state: Optional[str] = None
+    type: str  # 'buying' or 'selling'
+    status: Optional[str] = None
+    price: Optional[str] = None
+    added_at: Optional[str] = None
 
 class ContactCreate(BaseModel):
     first_name: Optional[str] = ""
@@ -14,6 +25,7 @@ class ContactCreate(BaseModel):
     notes: Optional[str] = None
     tags: List[str] = []
     category: Optional[str] = None
+    properties: List[Any] = []
 
 class ContactResponse(BaseModel):
     id: str
@@ -41,6 +53,7 @@ class ContactResponse(BaseModel):
     lead_score: int = 0
     category: Optional[str] = None
     categories: Optional[str] = None
+    properties: List[Any] = []
     # Address fields
     home_street: Optional[str] = None
     home_city: Optional[str] = None
@@ -64,9 +77,9 @@ class ContactResponse(BaseModel):
     def set_default_names(cls, v, info):
         return v or ""
     
-    @field_validator('tags', mode='before')
+    @field_validator('tags', 'properties', mode='before')
     @classmethod
-    def set_default_tags(cls, v, info):
+    def set_default_lists(cls, v, info):
         return v or []
 
 class LeadScoreUpdate(BaseModel):
