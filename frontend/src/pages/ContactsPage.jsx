@@ -345,6 +345,9 @@ const ContactDetail = ({ contactId, onBack }) => {
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <User className="w-4 h-4" />Overview
             </TabsTrigger>
+            <TabsTrigger value="properties" className="flex items-center gap-2">
+              <Building2 className="w-4 h-4" />Properties {contact.properties?.length > 0 && `(${contact.properties.length})`}
+            </TabsTrigger>
             <TabsTrigger value="alldata" className="flex items-center gap-2">
               <FileSpreadsheet className="w-4 h-4" />All Data
             </TabsTrigger>
