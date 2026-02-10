@@ -1028,6 +1028,145 @@ const ContactDetail = ({ contactId, onBack }) => {
                   </div>
                 </DialogContent>
               </Dialog>
+
+              {/* Add New Property Dialog */}
+              <Dialog open={showNewPropertyForm} onOpenChange={setShowNewPropertyForm}>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Add New Property for {contact.display_name || contact.first_name}</DialogTitle>
+                    <DialogDescription>Create a new property listing for this {contact.category === 'seller' ? 'seller' : 'buyer'}</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    {/* Address */}
+                    <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                      <h4 className="font-semibold text-sm text-amber-500">Property Address</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="col-span-2">
+                          <Label>Street Address *</Label>
+                          <Input 
+                            value={newPropertyData.address} 
+                            onChange={(e) => setNewPropertyData({...newPropertyData, address: e.target.value})}
+                            placeholder="123 Main Street"
+                          />
+                        </div>
+                        <div>
+                          <Label>City</Label>
+                          <Input 
+                            value={newPropertyData.city} 
+                            onChange={(e) => setNewPropertyData({...newPropertyData, city: e.target.value})}
+                            placeholder="Tampa"
+                          />
+                        </div>
+                        <div>
+                          <Label>State</Label>
+                          <Input 
+                            value={newPropertyData.state} 
+                            onChange={(e) => setNewPropertyData({...newPropertyData, state: e.target.value})}
+                            placeholder="FL"
+                          />
+                        </div>
+                        <div>
+                          <Label>ZIP Code</Label>
+                          <Input 
+                            value={newPropertyData.zip_code} 
+                            onChange={(e) => setNewPropertyData({...newPropertyData, zip_code: e.target.value})}
+                            placeholder="33601"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Property Details */}
+                    <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                      <h4 className="font-semibold text-sm text-amber-500">Property Details</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>
+                          <Label>Price</Label>
+                          <Input 
+                            value={newPropertyData.price} 
+                            onChange={(e) => setNewPropertyData({...newPropertyData, price: e.target.value})}
+                            placeholder="$500,000"
+                          />
+                        </div>
+                        <div>
+                          <Label>Bedrooms</Label>
+                          <Input 
+                            type="number"
+                            value={newPropertyData.bedrooms} 
+                            onChange={(e) => setNewPropertyData({...newPropertyData, bedrooms: e.target.value})}
+                            placeholder="3"
+                          />
+                        </div>
+                        <div>
+                          <Label>Bathrooms</Label>
+                          <Input 
+                            value={newPropertyData.bathrooms} 
+                            onChange={(e) => setNewPropertyData({...newPropertyData, bathrooms: e.target.value})}
+                            placeholder="2.5"
+                          />
+                        </div>
+                        <div>
+                          <Label>Sqft</Label>
+                          <Input 
+                            value={newPropertyData.sqft} 
+                            onChange={(e) => setNewPropertyData({...newPropertyData, sqft: e.target.value})}
+                            placeholder="2,500"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <Label>Property Type</Label>
+                          <Select value={newPropertyData.property_type} onValueChange={(v) => setNewPropertyData({...newPropertyData, property_type: v})}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Single Family">Single Family</SelectItem>
+                              <SelectItem value="Condo">Condo</SelectItem>
+                              <SelectItem value="Townhouse">Townhouse</SelectItem>
+                              <SelectItem value="Multi-Family">Multi-Family</SelectItem>
+                              <SelectItem value="Land">Land</SelectItem>
+                              <SelectItem value="Commercial">Commercial</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Purchase/Anniversary Dates (for buyers) */}
+                    {contact.category === 'buyer' && (
+                      <div className="space-y-3 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                        <h4 className="font-semibold text-sm text-emerald-600 flex items-center gap-2">
+                          <Gift className="w-4 h-4" />Purchase Information
+                        </h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label>Purchase Date</Label>
+                            <Input 
+                              type="date"
+                              value={newPropertyData.purchase_date} 
+                              onChange={(e) => setNewPropertyData({...newPropertyData, purchase_date: e.target.value})}
+                            />
+                          </div>
+                          <div>
+                            <Label>Anniversary Date</Label>
+                            <Input 
+                              type="date"
+                              value={newPropertyData.anniversary_date} 
+                              onChange={(e) => setNewPropertyData({...newPropertyData, anniversary_date: e.target.value})}
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">For annual follow-ups</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowNewPropertyForm(false)}>Cancel</Button>
+                    <Button onClick={handleCreateNewProperty} disabled={savingNewProperty} className="bg-amber-500 hover:bg-amber-600 text-black">
+                      {savingNewProperty && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                      Create Property
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </TabsContent>
 
             {/* ALL DATA TAB - Shows every single imported field */}
