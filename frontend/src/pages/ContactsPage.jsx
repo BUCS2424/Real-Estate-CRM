@@ -779,6 +779,184 @@ const ContactDetail = ({ contactId, onBack }) => {
               </Card>
             </TabsContent>
 
+            {/* EDIT TAB - Full inline editing of all fields */}
+            <TabsContent value="edit" className="mt-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Edit2 className="w-5 h-5 text-amber-500" />Edit Contact
+                  </CardTitle>
+                  <CardDescription>Update all contact information</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Contact Type - Buyer/Seller Selection */}
+                  <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                    <Label className="text-sm font-semibold text-amber-600 mb-3 block">Contact Type</Label>
+                    <div className="flex gap-4">
+                      <Button 
+                        type="button"
+                        variant={editData.category === 'buyer' ? 'default' : 'outline'}
+                        className={editData.category === 'buyer' ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : ''}
+                        onClick={() => setEditData({ ...editData, category: 'buyer' })}
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-2" />Buyer
+                      </Button>
+                      <Button 
+                        type="button"
+                        variant={editData.category === 'seller' ? 'default' : 'outline'}
+                        className={editData.category === 'seller' ? 'bg-orange-500 hover:bg-orange-600 text-white' : ''}
+                        onClick={() => setEditData({ ...editData, category: 'seller' })}
+                      >
+                        <Home className="w-4 h-4 mr-2" />Seller
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Status Selection */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-semibold mb-2 block">Status</Label>
+                      <Select value={editData.status || ''} onValueChange={(v) => setEditData({ ...editData, status: v })}>
+                        <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                        <SelectContent>
+                          {STATUS_OPTIONS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-semibold mb-2 block">Categories</Label>
+                      <Input 
+                        value={editData.categories || ''} 
+                        onChange={(e) => setEditData({ ...editData, categories: e.target.value })} 
+                        placeholder="e.g., VIP, Hot Lead, Referral"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Name Information */}
+                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                    <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Name Information</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div><Label>Display Name</Label><Input value={editData.display_name || ''} onChange={(e) => setEditData({ ...editData, display_name: e.target.value })} /></div>
+                      <div><Label>First Name</Label><Input value={editData.first_name || ''} onChange={(e) => setEditData({ ...editData, first_name: e.target.value })} /></div>
+                      <div><Label>Last Name</Label><Input value={editData.last_name || ''} onChange={(e) => setEditData({ ...editData, last_name: e.target.value })} /></div>
+                      <div><Label>Nickname</Label><Input value={editData.nickname || ''} onChange={(e) => setEditData({ ...editData, nickname: e.target.value })} /></div>
+                      <div><Label>Gender</Label><Input value={editData.gender || ''} onChange={(e) => setEditData({ ...editData, gender: e.target.value })} /></div>
+                    </div>
+                  </div>
+
+                  {/* Email Addresses */}
+                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                    <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Email Addresses</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div><Label>Email 1</Label><Input type="email" value={editData.email || ''} onChange={(e) => setEditData({ ...editData, email: e.target.value })} /></div>
+                      <div><Label>Email 2</Label><Input type="email" value={editData.email_2 || ''} onChange={(e) => setEditData({ ...editData, email_2: e.target.value })} /></div>
+                      <div><Label>Email 3</Label><Input type="email" value={editData.email_3 || ''} onChange={(e) => setEditData({ ...editData, email_3: e.target.value })} /></div>
+                    </div>
+                  </div>
+
+                  {/* Phone Numbers */}
+                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                    <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Phone Numbers</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div><Label>Mobile Phone</Label><Input value={editData.mobile_phone || ''} onChange={(e) => setEditData({ ...editData, mobile_phone: e.target.value })} /></div>
+                      <div><Label>Home Phone</Label><Input value={editData.home_phone || ''} onChange={(e) => setEditData({ ...editData, home_phone: e.target.value })} /></div>
+                      <div><Label>Business Phone</Label><Input value={editData.business_phone || ''} onChange={(e) => setEditData({ ...editData, business_phone: e.target.value })} /></div>
+                      <div><Label>Home Fax</Label><Input value={editData.home_fax || ''} onChange={(e) => setEditData({ ...editData, home_fax: e.target.value })} /></div>
+                      <div><Label>Business Fax</Label><Input value={editData.business_fax || ''} onChange={(e) => setEditData({ ...editData, business_fax: e.target.value })} /></div>
+                      <div><Label>Pager</Label><Input value={editData.pager || ''} onChange={(e) => setEditData({ ...editData, pager: e.target.value })} /></div>
+                    </div>
+                  </div>
+
+                  {/* Work Information */}
+                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                    <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Work Information</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div><Label>Organization</Label><Input value={editData.organization || ''} onChange={(e) => setEditData({ ...editData, organization: e.target.value })} /></div>
+                      <div><Label>Job Title</Label><Input value={editData.job_title || ''} onChange={(e) => setEditData({ ...editData, job_title: e.target.value })} /></div>
+                      <div><Label>Department</Label><Input value={editData.department || ''} onChange={(e) => setEditData({ ...editData, department: e.target.value })} /></div>
+                    </div>
+                  </div>
+
+                  {/* Home Address */}
+                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                    <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Home Address</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="md:col-span-2"><Label>Street</Label><Input value={editData.home_street || ''} onChange={(e) => setEditData({ ...editData, home_street: e.target.value })} /></div>
+                      <div><Label>Address 2</Label><Input value={editData.home_address_2 || ''} onChange={(e) => setEditData({ ...editData, home_address_2: e.target.value })} /></div>
+                      <div><Label>City</Label><Input value={editData.home_city || ''} onChange={(e) => setEditData({ ...editData, home_city: e.target.value })} /></div>
+                      <div><Label>State</Label><Input value={editData.home_state || ''} onChange={(e) => setEditData({ ...editData, home_state: e.target.value })} /></div>
+                      <div><Label>Postal Code</Label><Input value={editData.home_postal_code || ''} onChange={(e) => setEditData({ ...editData, home_postal_code: e.target.value })} /></div>
+                      <div><Label>Country</Label><Input value={editData.home_country || ''} onChange={(e) => setEditData({ ...editData, home_country: e.target.value })} /></div>
+                    </div>
+                  </div>
+
+                  {/* Business Address */}
+                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                    <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Business Address</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="md:col-span-2"><Label>Address</Label><Input value={editData.business_address || ''} onChange={(e) => setEditData({ ...editData, business_address: e.target.value })} /></div>
+                      <div><Label>Address 2</Label><Input value={editData.business_address_2 || ''} onChange={(e) => setEditData({ ...editData, business_address_2: e.target.value })} /></div>
+                      <div><Label>City</Label><Input value={editData.business_city || ''} onChange={(e) => setEditData({ ...editData, business_city: e.target.value })} /></div>
+                      <div><Label>State</Label><Input value={editData.business_state || ''} onChange={(e) => setEditData({ ...editData, business_state: e.target.value })} /></div>
+                      <div><Label>Postal Code</Label><Input value={editData.business_postal_code || ''} onChange={(e) => setEditData({ ...editData, business_postal_code: e.target.value })} /></div>
+                      <div><Label>Country</Label><Input value={editData.business_country || ''} onChange={(e) => setEditData({ ...editData, business_country: e.target.value })} /></div>
+                    </div>
+                  </div>
+
+                  {/* Web & Online */}
+                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                    <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Web & Online</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div><Label>Web Page</Label><Input value={editData.web_page || ''} onChange={(e) => setEditData({ ...editData, web_page: e.target.value })} /></div>
+                      <div><Label>Web Page 2</Label><Input value={editData.web_page_2 || ''} onChange={(e) => setEditData({ ...editData, web_page_2: e.target.value })} /></div>
+                    </div>
+                  </div>
+
+                  {/* Personal Information */}
+                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                    <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Personal Information</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div><Label>Birthday</Label><Input value={editData.birthday || ''} onChange={(e) => setEditData({ ...editData, birthday: e.target.value })} placeholder="MM/DD/YYYY" /></div>
+                      <div><Label>Anniversary</Label><Input value={editData.anniversary || ''} onChange={(e) => setEditData({ ...editData, anniversary: e.target.value })} placeholder="MM/DD/YYYY" /></div>
+                      <div><Label>Related Name</Label><Input value={editData.related_name || ''} onChange={(e) => setEditData({ ...editData, related_name: e.target.value })} /></div>
+                    </div>
+                  </div>
+
+                  {/* Real Estate Specific */}
+                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                    <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Real Estate Information</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div><Label>Budget</Label><Input value={editData.budget || ''} onChange={(e) => setEditData({ ...editData, budget: e.target.value })} placeholder="$300K-$500K" /></div>
+                      <div><Label>Property Interest</Label><Input value={editData.property_interest || ''} onChange={(e) => setEditData({ ...editData, property_interest: e.target.value })} placeholder="3BR/2BA in Tampa" /></div>
+                    </div>
+                  </div>
+
+                  {/* Notes */}
+                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                    <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Notes</h4>
+                    <Textarea 
+                      rows={4} 
+                      value={editData.notes || ''} 
+                      onChange={(e) => setEditData({ ...editData, notes: e.target.value })} 
+                      placeholder="Add notes about this contact..."
+                    />
+                  </div>
+
+                  {/* Save/Cancel Buttons */}
+                  <div className="flex justify-end gap-3 pt-4 border-t">
+                    <Button variant="outline" onClick={() => { setEditData(contact); setActiveTab('overview'); }}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleSave} disabled={saving} className="bg-amber-500 hover:bg-amber-600 text-black">
+                      {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                      Save Changes
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
             <TabsContent value="notes" className="mt-0">
               <Card>
                 <CardHeader>
