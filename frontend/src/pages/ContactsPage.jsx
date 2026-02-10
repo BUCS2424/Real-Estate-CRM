@@ -98,7 +98,7 @@ const ContactDetail = ({ contactId, onBack }) => {
     try {
       await contactsAPI.update(contactId, editData);
       toast.success('Contact updated');
-      setEditMode(false);
+      setActiveTab('overview');
       fetchContact();
     } catch (error) {
       toast.error('Failed to update');
