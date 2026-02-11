@@ -109,7 +109,15 @@ const PropertyLeadsPage = () => {
   useEffect(() => {
     fetchLeads();
     fetchStats();
+    fetchModerationStats();
+    fetchMLSStatus();
   }, [filterStatus, filterPriority]);
+  
+  useEffect(() => {
+    if (activeTab === 'moderation') {
+      fetchPendingLeads();
+    }
+  }, [activeTab]);
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -119,7 +127,9 @@ const PropertyLeadsPage = () => {
       if (filterPriority !== 'all') params.priority = filterPriority;
       
       const res = await propertyLeadsAPI.getAll(params);
-      setLeads(res.data.leads || []);
+      // Filter out pending_review leads for main list
+      const approvedLeads = (res.data.leads || []).filter(l => l.moderation_status !== 'pending_review');
+      setLeads(approvedLeads);
     } catch (error) {
       toast.error('Failed to load property leads');
     } finally {
@@ -133,6 +143,95 @@ const PropertyLeadsPage = () => {
       setStats(res.data);
     } catch (error) {
       console.error('Failed to load stats');
+    }
+  };
+  
+  // Moderation functions
+  const fetchModerationStats = async () => {
+    try {
+      const res = await moderationAPI.getStats();
+      setModerationStats(res.data);
+    } catch (error) {
+      console.error('Failed to load moderation stats');
+    }
+  };
+  
+  const fetchPendingLeads = async () => {
+    setLoadingModeration(true);
+    try {
+      const res = await moderationAPI.getPending();
+      setPendingLeads(res.data.leads || []);
+    } catch (error) {
+      toast.error('Failed to load pending leads');
+    } finally {
+      setLoadingModeration(false);
+    }
+  };
+  
+  const handleApprove = async (leadId) => {
+    try {
+      await moderationAPI.approve(leadId);
+      toast.success('Lead approved');
+      fetchPendingLeads();
+      fetchModerationStats();
+      fetchLeads();
+    } catch (error) {
+      toast.error('Failed to approve lead');
+    }
+  };
+  
+  const handleReject = async () => {
+    if (!selectedForReject) return;
+    try {
+      await moderationAPI.reject(selectedForReject, rejectReason);
+      toast.success('Lead rejected');
+      setShowRejectDialog(false);
+      setSelectedForReject(null);
+      setRejectReason('');
+      fetchPendingLeads();
+      fetchModerationStats();
+    } catch (error) {
+      toast.error('Failed to reject lead');
+    }
+  };
+  
+  // MLS functions
+  const fetchMLSStatus = async () => {
+    try {
+      const res = await mlsAPI.getStatus();
+      setMlsStatus(res.data);
+    } catch (error) {
+      console.error('Failed to check MLS status');
+    }
+  };
+  
+  const handleMLSSearch = async () => {
+    setMlsSearching(true);
+    try {
+      const res = await mlsAPI.search(mlsSearchQuery);
+      setMlsSearchResults(res.data.properties || []);
+    } catch (error) {
+      toast.error('Failed to search MLS');
+    } finally {
+      setMlsSearching(false);
+    }
+  };
+  
+  const handleImportFromMLS = async (property) => {
+    setImportingMLS(property.mls_id);
+    try {
+      // Create lead from MLS data
+      await api.post('/property-leads/from-mls', {
+        mls_id: property.mls_id,
+        mls_data: property
+      });
+      toast.success(`Imported: ${property.address}`);
+      fetchLeads();
+      fetchStats();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to import from MLS');
+    } finally {
+      setImportingMLS(null);
     }
   };
 
