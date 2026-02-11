@@ -4,23 +4,134 @@ MLS API Routes - Bridge API Integration for Stellar MLS
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional
 from datetime import datetime, timezone
+from pydantic import BaseModel
 import uuid
 from utils.auth import get_current_user
+from models.user import UserRole
 from database import db
 from services.mls_service import mls_service
 
 router = APIRouter(prefix="/mls", tags=["MLS Integration"])
 
 
+class MLSConfig(BaseModel):
+    provider: str = "bridge"
+    api_key: str = ""
+    api_secret: str = ""
+    server_token: str = ""
+    dataset_id: str = ""
+    mls_name: str = "Stellar MLS"
+    enabled: bool = False
+    auto_sync: bool = False
+    sync_interval_hours: int = 24
+
+
 @router.get("/status")
 async def get_mls_status(current_user: dict = Depends(get_current_user)):
     """Check if MLS API is configured and working"""
+    # Get config from database
+    config = await db.settings.find_one({"type": "mls_config"})
+    last_sync = config.get("last_sync") if config else None
+    
     return {
         "configured": mls_service.is_configured(),
         "provider": "Bridge API",
-        "dataset": "Stellar MLS",
+        "dataset": config.get("mls_name", "Stellar MLS") if config else "Stellar MLS",
+        "last_sync": last_sync,
         "message": "Ready for credentials" if not mls_service.is_configured() else "Connected"
     }
+
+
+@router.get("/config")
+async def get_mls_config(current_user: dict = Depends(get_current_user)):
+    """Get MLS configuration (API keys masked)"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    config = await db.settings.find_one({"type": "mls_config"}, {"_id": 0})
+    
+    if not config:
+        return {
+            "provider": "bridge",
+            "api_key": "",
+            "api_secret": "",
+            "server_token": "",
+            "dataset_id": "",
+            "mls_name": "Stellar MLS",
+            "enabled": False,
+            "auto_sync": False,
+            "sync_interval_hours": 24
+        }
+    
+    # Return config but mask sensitive fields for display
+    return {
+        "provider": config.get("provider", "bridge"),
+        "api_key": config.get("api_key", ""),
+        "api_secret": config.get("api_secret", ""),
+        "server_token": config.get("server_token", ""),
+        "dataset_id": config.get("dataset_id", ""),
+        "mls_name": config.get("mls_name", "Stellar MLS"),
+        "enabled": config.get("enabled", False),
+        "auto_sync": config.get("auto_sync", False),
+        "sync_interval_hours": config.get("sync_interval_hours", 24)
+    }
+
+
+@router.post("/config")
+async def save_mls_config(config: MLSConfig, current_user: dict = Depends(get_current_user)):
+    """Save MLS API configuration"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    config_doc = {
+        "type": "mls_config",
+        **config.dict(),
+        "updated_by": current_user["id"],
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.settings.update_one(
+        {"type": "mls_config"},
+        {"$set": config_doc},
+        upsert=True
+    )
+    
+    # Update the service with new credentials
+    if config.api_key and config.api_secret:
+        mls_service.configure(
+            api_key=config.api_key,
+            api_secret=config.api_secret,
+            server_token=config.server_token,
+            dataset_id=config.dataset_id
+        )
+    
+    return {"message": "MLS configuration saved"}
+
+
+@router.post("/test")
+async def test_mls_connection(current_user: dict = Depends(get_current_user)):
+    """Test MLS API connection"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get config from database
+    config = await db.settings.find_one({"type": "mls_config"})
+    
+    if not config or not config.get("api_key"):
+        return {
+            "success": False,
+            "error": "MLS API credentials not configured"
+        }
+    
+    # Try to make a test request
+    try:
+        result = await mls_service.test_connection()
+        return result
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
 
 
 @router.get("/search")
