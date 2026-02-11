@@ -18,8 +18,228 @@ router = APIRouter(prefix="/property-leads", tags=["Property Leads"])
 
 # Status and priority options
 STATUSES = ["new", "contacted", "qualified", "nurturing", "not_interested", "converted"]
+MODERATION_STATUSES = ["pending_review", "approved", "rejected"]
+LEAD_SOURCES = ["mls_import", "manual", "website_form", "scraper"]
 PRIORITIES = ["low", "medium", "high", "urgent"]
 PROPERTY_TYPES = ["single_family", "condo", "townhouse", "multi_family", "land", "commercial"]
+
+
+# ============ PUBLIC SUBMISSION (No Auth Required) ============
+
+@router.post("/submit", include_in_schema=True)
+async def submit_property_lead_public(
+    address: str,
+    city: Optional[str] = None,
+    state: Optional[str] = None,
+    zip_code: Optional[str] = None,
+    owner_name: Optional[str] = None,
+    owner_phone: Optional[str] = None,
+    owner_email: Optional[str] = None,
+    property_type: Optional[str] = None,
+    message: Optional[str] = None,
+):
+    """Public endpoint for website form submissions - goes to moderation queue"""
+    lead_doc = {
+        "id": str(uuid.uuid4()),
+        "address": address,
+        "city": city,
+        "state": state or "FL",
+        "zip_code": zip_code,
+        "owner_name": owner_name,
+        "owner_phone": owner_phone,
+        "owner_email": owner_email,
+        "property_type": property_type,
+        "status": "new",
+        "moderation_status": "pending_review",
+        "source": "website_form",
+        "priority": "medium",
+        "submission_message": message,
+        "notes": [],
+        "activity": [{
+            "type": "submitted",
+            "description": "Property lead submitted via website form",
+            "user": "Website Visitor",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.property_leads.insert_one(lead_doc)
+    return {"message": "Property submitted for review", "id": lead_doc["id"]}
+
+
+# ============ MODERATION QUEUE ============
+
+@router.get("/moderation/pending")
+async def get_pending_leads(
+    skip: int = 0,
+    limit: int = 50,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all leads pending moderation"""
+    query = {"moderation_status": "pending_review"}
+    total = await db.property_leads.count_documents(query)
+    leads = await db.property_leads.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    return {
+        "leads": leads,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
+
+
+@router.get("/moderation/stats")
+async def get_moderation_stats(current_user: dict = Depends(get_current_user)):
+    """Get moderation queue statistics"""
+    pending = await db.property_leads.count_documents({"moderation_status": "pending_review"})
+    approved_today = await db.property_leads.count_documents({
+        "moderation_status": "approved",
+        "moderated_at": {"$gte": datetime.now(timezone.utc).replace(hour=0, minute=0, second=0).isoformat()}
+    })
+    rejected_today = await db.property_leads.count_documents({
+        "moderation_status": "rejected",
+        "moderated_at": {"$gte": datetime.now(timezone.utc).replace(hour=0, minute=0, second=0).isoformat()}
+    })
+    
+    # By source
+    by_source = {}
+    for source in LEAD_SOURCES:
+        by_source[source] = await db.property_leads.count_documents({"source": source, "moderation_status": "pending_review"})
+    
+    return {
+        "pending": pending,
+        "approved_today": approved_today,
+        "rejected_today": rejected_today,
+        "by_source": by_source
+    }
+
+
+@router.post("/moderation/{lead_id}/approve")
+async def approve_lead(lead_id: str, current_user: dict = Depends(get_current_user)):
+    """Approve a pending lead"""
+    lead = await db.property_leads.find_one({"id": lead_id})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    activity_entry = {
+        "type": "approved",
+        "description": f"Lead approved by {current_user['name']}",
+        "user": current_user["name"],
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.property_leads.update_one(
+        {"id": lead_id},
+        {
+            "$set": {
+                "moderation_status": "approved",
+                "moderated_by": current_user["id"],
+                "moderated_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            },
+            "$push": {"activity": activity_entry}
+        }
+    )
+    
+    return {"message": "Lead approved"}
+
+
+@router.post("/moderation/{lead_id}/reject")
+async def reject_lead(
+    lead_id: str,
+    reason: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Reject a pending lead"""
+    lead = await db.property_leads.find_one({"id": lead_id})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    activity_entry = {
+        "type": "rejected",
+        "description": f"Lead rejected by {current_user['name']}" + (f": {reason}" if reason else ""),
+        "user": current_user["name"],
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "reason": reason
+    }
+    
+    await db.property_leads.update_one(
+        {"id": lead_id},
+        {
+            "$set": {
+                "moderation_status": "rejected",
+                "rejection_reason": reason,
+                "moderated_by": current_user["id"],
+                "moderated_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            },
+            "$push": {"activity": activity_entry}
+        }
+    )
+    
+    return {"message": "Lead rejected"}
+
+
+# ============ MLS IMPORT (Structure ready for Bridge API) ============
+
+@router.post("/from-mls")
+async def create_lead_from_mls(
+    mls_id: str,
+    mls_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a property lead from MLS data"""
+    # Check if already imported
+    existing = await db.property_leads.find_one({"mls_id": mls_id})
+    if existing:
+        raise HTTPException(status_code=400, detail="This MLS listing has already been imported")
+    
+    lead_doc = {
+        "id": str(uuid.uuid4()),
+        "mls_id": mls_id,
+        "address": mls_data.get("address"),
+        "city": mls_data.get("city"),
+        "state": mls_data.get("state", "FL"),
+        "zip_code": mls_data.get("zip_code"),
+        "county": mls_data.get("county"),
+        "bedrooms": mls_data.get("bedrooms"),
+        "bathrooms": mls_data.get("bathrooms"),
+        "sqft": mls_data.get("sqft"),
+        "lot_size": mls_data.get("lot_size"),
+        "year_built": mls_data.get("year_built"),
+        "property_type": mls_data.get("property_type"),
+        "list_price": mls_data.get("list_price"),
+        "estimated_value": mls_data.get("list_price"),
+        "owner_name": mls_data.get("owner_name"),
+        "owner_phone": mls_data.get("owner_phone"),
+        "owner_email": mls_data.get("owner_email"),
+        "listing_agent": mls_data.get("listing_agent"),
+        "listing_office": mls_data.get("listing_office"),
+        "mls_status": mls_data.get("status"),
+        "photos": mls_data.get("photos", []),
+        "description": mls_data.get("description"),
+        "features": mls_data.get("features", []),
+        "status": "new",
+        "moderation_status": "approved",  # MLS imports are auto-approved
+        "source": "mls_import",
+        "priority": "medium",
+        "notes": [],
+        "activity": [{
+            "type": "imported",
+            "description": f"Imported from MLS by {current_user['name']}",
+            "user": current_user["name"],
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "mls_id": mls_id
+        }],
+        "created_by": current_user["id"],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.property_leads.insert_one(lead_doc)
+    return {"message": "Property lead created from MLS", "lead": {k: v for k, v in lead_doc.items() if k != "_id"}}
 
 
 @router.get("")
