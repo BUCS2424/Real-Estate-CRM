@@ -7,7 +7,7 @@ import requests
 import os
 import io
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://realestate-command.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://fusion-crm-4.preview.emergentagent.com')
 
 # Test credentials
 TEST_EMAIL = "mel@a2gdesigns.com"
