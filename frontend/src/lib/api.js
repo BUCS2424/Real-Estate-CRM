@@ -466,6 +466,80 @@ export const smtpEmailAPI = {
   send: (data) => api.post('/email/send', data),
 };
 
+// MLS Integration (Bridge API / Stellar MLS)
+export const mlsAPI = {
+  // Status check
+  getStatus: () => api.get('/mls/status'),
+  
+  // Search properties
+  search: (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.address) query.append('address', params.address);
+    if (params.city) query.append('city', params.city);
+    if (params.zip_code) query.append('zip_code', params.zip_code);
+    if (params.min_price) query.append('min_price', params.min_price);
+    if (params.max_price) query.append('max_price', params.max_price);
+    if (params.bedrooms) query.append('bedrooms', params.bedrooms);
+    if (params.bathrooms) query.append('bathrooms', params.bathrooms);
+    if (params.property_type) query.append('property_type', params.property_type);
+    if (params.status) query.append('status', params.status);
+    if (params.limit) query.append('limit', params.limit);
+    if (params.offset) query.append('offset', params.offset);
+    return api.get(`/mls/search?${query.toString()}`);
+  },
+  
+  // Your listings
+  getMyListings: (agentId = null, status = null) => {
+    const query = new URLSearchParams();
+    if (agentId) query.append('agent_id', agentId);
+    if (status) query.append('status', status);
+    return api.get(`/mls/my-listings?${query.toString()}`);
+  },
+  
+  // Property details
+  getProperty: (mlsId) => api.get(`/mls/property/${mlsId}`),
+  
+  // Sync to showcase
+  syncToShowcase: (agentId = null) => api.post('/mls/sync-to-showcase', { agent_id: agentId }),
+  
+  // Import to lead
+  importToLead: (mlsId) => api.post(`/mls/import-to-lead/${mlsId}`),
+};
+
+// Property Lead Moderation
+export const moderationAPI = {
+  // Get pending leads
+  getPending: (skip = 0, limit = 50) => 
+    api.get(`/property-leads/moderation/pending?skip=${skip}&limit=${limit}`),
+  
+  // Get moderation stats
+  getStats: () => api.get('/property-leads/moderation/stats'),
+  
+  // Approve lead
+  approve: (leadId) => api.post(`/property-leads/moderation/${leadId}/approve`),
+  
+  // Reject lead
+  reject: (leadId, reason = null) => 
+    api.post(`/property-leads/moderation/${leadId}/reject${reason ? `?reason=${encodeURIComponent(reason)}` : ''}`),
+};
+
+// Public form submission (no auth)
+export const publicLeadsAPI = {
+  submitProperty: (data) => {
+    const params = new URLSearchParams();
+    params.append('address', data.address);
+    if (data.city) params.append('city', data.city);
+    if (data.state) params.append('state', data.state);
+    if (data.zip_code) params.append('zip_code', data.zip_code);
+    if (data.owner_name) params.append('owner_name', data.owner_name);
+    if (data.owner_phone) params.append('owner_phone', data.owner_phone);
+    if (data.owner_email) params.append('owner_email', data.owner_email);
+    if (data.property_type) params.append('property_type', data.property_type);
+    if (data.message) params.append('message', data.message);
+    return axios.post(`${API_URL}/property-leads/submit?${params.toString()}`);
+  },
+};
+
 // Seed data
 export const seedAPI = {
   seed: () => api.post('/seed'),
