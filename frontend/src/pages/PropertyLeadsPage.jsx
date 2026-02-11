@@ -86,6 +86,25 @@ const PropertyLeadsPage = () => {
   // Email modal (using EmailComposerModal component)
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailRecipient, setEmailRecipient] = useState(null);
+  
+  // Tab state
+  const [activeTab, setActiveTab] = useState('leads');
+  
+  // Moderation queue
+  const [pendingLeads, setPendingLeads] = useState([]);
+  const [moderationStats, setModerationStats] = useState(null);
+  const [loadingModeration, setLoadingModeration] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [selectedForReject, setSelectedForReject] = useState(null);
+  
+  // MLS Import
+  const [showMLSModal, setShowMLSModal] = useState(false);
+  const [mlsStatus, setMlsStatus] = useState(null);
+  const [mlsSearchResults, setMlsSearchResults] = useState([]);
+  const [mlsSearching, setMlsSearching] = useState(false);
+  const [mlsSearchQuery, setMlsSearchQuery] = useState({ city: 'Tampa', status: 'Active' });
+  const [importingMLS, setImportingMLS] = useState(null);
 
   useEffect(() => {
     fetchLeads();
