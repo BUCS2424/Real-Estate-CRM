@@ -31,6 +31,7 @@ from .lead_scoring import router as lead_scoring_router
 from .seller_leads import router as seller_leads_router
 from .email import router as email_router
 from .skyreels import router as skyreels_router
+from .mls import router as mls_router
 
 # Include all sub-routers
 api_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
@@ -59,6 +60,7 @@ api_router.include_router(lead_scoring_router, tags=["Lead Scoring"])
 api_router.include_router(seller_leads_router, tags=["Seller Leads"])
 api_router.include_router(email_router, prefix="/email", tags=["Email"])
 api_router.include_router(skyreels_router, prefix="/skyreels", tags=["SkyReels Video"])
+api_router.include_router(mls_router, tags=["MLS Integration"])
 
 @api_router.get("/")
 async def root():
