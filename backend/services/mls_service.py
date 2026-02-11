@@ -23,14 +23,63 @@ class MLSService:
         self.base_url = BRIDGE_API_URL
         self.token = BRIDGE_API_TOKEN
         self.dataset = BRIDGE_DATASET
+        self.api_key = ""
+        self.api_secret = ""
+        self.server_token = ""
+        self._update_headers()
+    
+    def _update_headers(self):
+        """Update headers with current token"""
         self.headers = {
             "Authorization": f"Bearer {self.token}",
             "Content-Type": "application/json"
         }
     
+    def configure(self, api_key: str, api_secret: str, server_token: str = "", dataset_id: str = ""):
+        """Configure the MLS service with credentials"""
+        self.api_key = api_key
+        self.api_secret = api_secret
+        self.server_token = server_token
+        if dataset_id:
+            self.dataset = dataset_id
+        # For Bridge API, the token is typically the server_token or a combination
+        self.token = server_token or api_key
+        self._update_headers()
+    
     def is_configured(self) -> bool:
         """Check if MLS credentials are configured"""
-        return bool(self.token and self.token != "")
+        return bool((self.token and self.token != "") or (self.api_key and self.api_key != ""))
+    
+    async def test_connection(self) -> Dict[str, Any]:
+        """Test the MLS API connection"""
+        if not self.is_configured():
+            return {"success": False, "error": "MLS API credentials not configured"}
+        
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                # Try a simple search to test credentials
+                params = {
+                    "access_token": self.token,
+                    "limit": 1
+                }
+                response = await client.get(
+                    f"{self.base_url}/{self.dataset}/listings/residential",
+                    params=params,
+                    headers=self.headers
+                )
+                
+                if response.status_code == 200:
+                    return {"success": True, "message": "Connection successful"}
+                elif response.status_code == 401:
+                    return {"success": False, "error": "Invalid API credentials"}
+                elif response.status_code == 403:
+                    return {"success": False, "error": "Access denied - check your API permissions"}
+                else:
+                    return {"success": False, "error": f"API returned status {response.status_code}"}
+        except httpx.TimeoutException:
+            return {"success": False, "error": "Connection timed out"}
+        except Exception as e:
+            return {"success": False, "error": f"Connection error: {str(e)}"}
     
     async def search_properties(
         self,
