@@ -490,54 +490,70 @@ const PropertyLeadsPage = () => {
         </div>
       )}
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by address, city, owner, or parcel ID..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="new">New</SelectItem>
-                <SelectItem value="contacted">Contacted</SelectItem>
-                <SelectItem value="qualified">Qualified</SelectItem>
-                <SelectItem value="nurturing">Nurturing</SelectItem>
-                <SelectItem value="not_interested">Not Interested</SelectItem>
-                <SelectItem value="converted">Converted</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterPriority} onValueChange={setFilterPriority}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Priorities</SelectItem>
-                <SelectItem value="urgent">Urgent</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" onClick={fetchLeads}>
-              <RefreshCw className="w-4 h-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Tabs for Leads / Moderation */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="bg-muted/50">
+          <TabsTrigger value="leads" className="flex items-center gap-2">
+            <Building2 className="w-4 h-4" />All Leads
+          </TabsTrigger>
+          <TabsTrigger value="moderation" className="flex items-center gap-2">
+            <ClipboardList className="w-4 h-4" />
+            Moderation Queue
+            {moderationStats?.pending > 0 && (
+              <Badge className="ml-1 bg-orange-500 text-white">{moderationStats.pending}</Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Leads List */}
-      <Card>
+        <TabsContent value="leads" className="mt-4 space-y-4">
+          {/* Filters */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by address, city, owner, or parcel ID..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="new">New</SelectItem>
+                    <SelectItem value="contacted">Contacted</SelectItem>
+                    <SelectItem value="qualified">Qualified</SelectItem>
+                    <SelectItem value="nurturing">Nurturing</SelectItem>
+                    <SelectItem value="not_interested">Not Interested</SelectItem>
+                    <SelectItem value="converted">Converted</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={filterPriority} onValueChange={setFilterPriority}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Priorities</SelectItem>
+                    <SelectItem value="urgent">Urgent</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" onClick={fetchLeads}>
+                  <RefreshCw className="w-4 h-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Leads List */}
+          <Card>
         <CardHeader>
           <CardTitle>Property Leads ({filteredLeads.length})</CardTitle>
           <CardDescription>Click on a property to view details</CardDescription>
