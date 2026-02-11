@@ -672,6 +672,242 @@ const PropertyLeadsPage = () => {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        {/* Moderation Queue Tab */}
+        <TabsContent value="moderation" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ClipboardList className="w-5 h-5 text-amber-500" />
+                Moderation Queue
+              </CardTitle>
+              <CardDescription>
+                Review and approve property leads submitted via the website form
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingModeration ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+                </div>
+              ) : pendingLeads.length === 0 ? (
+                <div className="text-center py-12">
+                  <CheckCircle2 className="w-12 h-12 mx-auto text-green-500 mb-4" />
+                  <h3 className="font-semibold mb-2">All Caught Up!</h3>
+                  <p className="text-muted-foreground">No pending leads to review</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {pendingLeads.map((lead) => (
+                    <div key={lead.id} className="p-4 bg-muted/30 rounded-lg border border-muted">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="font-semibold">{lead.address}</h4>
+                            <Badge className="bg-orange-500/20 text-orange-600">Pending Review</Badge>
+                            <Badge variant="outline" className="capitalize">{lead.source?.replace('_', ' ')}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {[lead.city, lead.state, lead.zip_code].filter(Boolean).join(', ')}
+                          </p>
+                          {lead.owner_name && (
+                            <p className="text-sm flex items-center gap-2">
+                              <User className="w-3 h-3" />
+                              {lead.owner_name}
+                              {lead.owner_email && <span className="text-muted-foreground">• {lead.owner_email}</span>}
+                              {lead.owner_phone && <span className="text-muted-foreground">• {lead.owner_phone}</span>}
+                            </p>
+                          )}
+                          {lead.submission_message && (
+                            <p className="text-sm mt-2 p-2 bg-muted rounded italic">
+                              "{lead.submission_message}"
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Submitted: {new Date(lead.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="flex gap-2 ml-4">
+                          <Button
+                            size="sm"
+                            onClick={() => handleApprove(lead.id)}
+                            className="bg-green-500 hover:bg-green-600 text-white"
+                          >
+                            <CheckCircle2 className="w-4 h-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => { setSelectedForReject(lead.id); setShowRejectDialog(true); }}
+                            className="border-red-500/50 text-red-600 hover:bg-red-500/10"
+                          >
+                            <XCircle className="w-4 h-4 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Reject Dialog */}
+      <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Lead</DialogTitle>
+            <DialogDescription>Optionally provide a reason for rejection</DialogDescription>
+          </DialogHeader>
+          <Textarea
+            placeholder="Reason for rejection (optional)..."
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            rows={3}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowRejectDialog(false); setRejectReason(''); }}>Cancel</Button>
+            <Button onClick={handleReject} className="bg-red-500 hover:bg-red-600 text-white">Reject Lead</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* MLS Import Modal */}
+      <Dialog open={showMLSModal} onOpenChange={setShowMLSModal}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Database className="w-5 h-5 text-amber-500" />
+              Import from MLS
+            </DialogTitle>
+            <DialogDescription>
+              Search Stellar MLS and import properties as leads
+              {!mlsStatus?.configured && (
+                <span className="text-orange-500 block mt-1">
+                  Note: MLS API not configured - showing mock data. Add Bridge API credentials to enable.
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* MLS Search Form */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <Label>City</Label>
+                <Input
+                  value={mlsSearchQuery.city || ''}
+                  onChange={(e) => setMlsSearchQuery({...mlsSearchQuery, city: e.target.value})}
+                  placeholder="Tampa"
+                />
+              </div>
+              <div>
+                <Label>ZIP Code</Label>
+                <Input
+                  value={mlsSearchQuery.zip_code || ''}
+                  onChange={(e) => setMlsSearchQuery({...mlsSearchQuery, zip_code: e.target.value})}
+                  placeholder="33601"
+                />
+              </div>
+              <div>
+                <Label>Min Price</Label>
+                <Input
+                  type="number"
+                  value={mlsSearchQuery.min_price || ''}
+                  onChange={(e) => setMlsSearchQuery({...mlsSearchQuery, min_price: e.target.value})}
+                  placeholder="200000"
+                />
+              </div>
+              <div>
+                <Label>Max Price</Label>
+                <Input
+                  type="number"
+                  value={mlsSearchQuery.max_price || ''}
+                  onChange={(e) => setMlsSearchQuery({...mlsSearchQuery, max_price: e.target.value})}
+                  placeholder="500000"
+                />
+              </div>
+              <div>
+                <Label>Bedrooms</Label>
+                <Input
+                  type="number"
+                  value={mlsSearchQuery.bedrooms || ''}
+                  onChange={(e) => setMlsSearchQuery({...mlsSearchQuery, bedrooms: e.target.value})}
+                  placeholder="3"
+                />
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Select value={mlsSearchQuery.status || 'Active'} onValueChange={(v) => setMlsSearchQuery({...mlsSearchQuery, status: v})}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Sold">Sold</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-2 flex items-end">
+                <Button onClick={handleMLSSearch} disabled={mlsSearching} className="w-full bg-amber-500 hover:bg-amber-600 text-black">
+                  {mlsSearching ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Search className="w-4 h-4 mr-2" />}
+                  Search MLS
+                </Button>
+              </div>
+            </div>
+
+            {/* MLS Results */}
+            {mlsSearchResults.length > 0 && (
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                <p className="text-sm text-muted-foreground">{mlsSearchResults.length} properties found</p>
+                {mlsSearchResults.map((property) => (
+                  <div key={property.mls_id} className="p-3 border rounded-lg hover:border-amber-500 transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-medium">{property.address}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {[property.city, property.state, property.zip_code].filter(Boolean).join(', ')}
+                        </p>
+                        <div className="flex items-center gap-3 mt-1 text-sm">
+                          {property.list_price && (
+                            <span className="font-semibold text-green-600">
+                              ${property.list_price.toLocaleString()}
+                            </span>
+                          )}
+                          {property.bedrooms && <span>{property.bedrooms} bed</span>}
+                          {property.bathrooms && <span>{property.bathrooms} bath</span>}
+                          {property.sqft && <span>{property.sqft.toLocaleString()} sqft</span>}
+                          <Badge variant="outline">{property.status}</Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">MLS# {property.mls_id}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => handleImportFromMLS(property)}
+                        disabled={importingMLS === property.mls_id}
+                        className="bg-amber-500 hover:bg-amber-600 text-black"
+                      >
+                        {importingMLS === property.mls_id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Plus className="w-4 h-4 mr-1" />
+                            Import
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Import CSV Modal */}
       <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
