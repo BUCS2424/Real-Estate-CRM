@@ -1421,3 +1421,96 @@ Updated the `ContactDetail` component to:
 4. Contact Sync via iCloud Drive
 5. Booking Notifications (email, SMS, desktop)
 
+
+
+---
+
+## Update: February 11, 2026 - MLS Integration & Moderation Queue Complete
+
+### Feature: Property Lead Moderation Queue
+
+Completed the Property Leads page enhancement with a tabbed interface supporting both lead management and a moderation queue for website-submitted leads.
+
+#### Implementation Details
+
+**Backend Endpoints (Already Implemented):**
+- `POST /api/property-leads/submit` - Public endpoint for website form submissions (no auth required)
+  - Creates leads with `moderation_status: "pending_review"`
+  - Captures: address, city, state, zip, owner info, message
+- `GET /api/property-leads/moderation/pending` - Get all pending leads
+- `GET /api/property-leads/moderation/stats` - Get moderation statistics (pending, approved_today, rejected_today, by_source)
+- `POST /api/property-leads/moderation/{lead_id}/approve` - Approve a pending lead
+- `POST /api/property-leads/moderation/{lead_id}/reject` - Reject a pending lead with optional reason
+
+**Frontend UI (Completed):**
+- **Tabbed Interface** on PropertyLeadsPage with:
+  - "All Leads" tab - Shows approved leads with search/filters
+  - "Moderation Queue" tab - Shows pending website submissions
+- **Moderation Queue Features:**
+  - Pending lead cards showing address, location, owner info, submission message
+  - "Pending Review" and "Website Form" badges
+  - "Approve" button (green) - Approves and moves to main leads
+  - "Reject" button (red) - Opens rejection dialog with optional reason
+  - "All Caught Up!" empty state when no pending leads
+- **Stats Cards** - Updated to show "Pending Review" count with orange highlight
+
+**MLS Integration Scaffolding:**
+- `GET /api/mls/status` - Check MLS API configuration status
+- `GET /api/mls/search` - Search MLS properties (returns mock data until configured)
+- `POST /api/property-leads/from-mls` - Create lead from MLS data
+- **MLS Import Modal** in PropertyLeadsPage with:
+  - Search filters (city, zip, price range, bedrooms, status)
+  - Property result cards with import button
+  - Note: Returns mock data until Bridge API credentials are provided
+
+#### Files Modified
+- `/app/frontend/src/pages/PropertyLeadsPage.jsx` - Complete with moderation queue UI
+- `/app/frontend/src/lib/api.js` - mlsAPI and moderationAPI functions already present
+- `/app/backend/routes/property_leads.py` - Moderation endpoints implemented
+- `/app/backend/routes/mls.py` - MLS placeholder routes
+- `/app/backend/services/mls_service.py` - MLS service with mock data
+
+#### Tests & Verification
+- Public submission endpoint works ✅
+- Moderation stats endpoint returns correct counts ✅
+- Approve endpoint changes status to "approved" ✅
+- Reject endpoint changes status to "rejected" with reason ✅
+- Moderation Queue tab displays pending leads correctly ✅
+- Approve/Reject buttons function correctly ✅
+
+#### MLS Integration Status
+- **BLOCKED**: Awaiting Bridge API credentials from user
+- Mock data is returned for search functionality
+- Once credentials are provided, the integration will use Stellar MLS via Bridge API
+
+---
+
+## Current Status (February 11, 2026)
+
+### Completed Today
+- ✅ Property Leads Moderation Queue UI fully functional
+- ✅ Public submission endpoint working
+- ✅ Approve/Reject workflow tested and verified
+- ✅ MLS Integration scaffolding complete (awaiting credentials)
+
+### Known Issues (Unchanged)
+- **P0:** Bookings data loss (not investigated)
+- **P0:** Unreliable production deployments
+- **P1:** Web scrapers blocked (awaiting user decision on paid API)
+- **P1:** iDrive e2 storage credentials invalid
+- **P2:** SMTP not configured
+- **P2:** PWA "Don't Ask Again" cookie not implemented
+
+### Upcoming Tasks
+1. **P0:** MLS Integration activation (blocked on Bridge API credentials)
+2. **P1:** Build Buyer Lead Page
+3. **P1:** Complete Foldable Brochure Design (blocked on inside panel design)
+4. **P2:** Refactor ContactsPage.jsx (2000+ lines → smaller components)
+
+### Backlog
+- TMS Integration
+- Advanced Lead Management (auction/bidding)
+- Advanced Reporting & Analytics
+- Contact Sync via iCloud Drive
+- Booking Notifications (email, SMS, desktop)
+
