@@ -8,6 +8,7 @@ import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { 
   Home, 
   Plus, 
@@ -31,10 +32,16 @@ import {
   MessageSquare,
   Phone,
   Send,
-  Mail
+  Mail,
+  ClipboardList,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Link,
+  Database
 } from 'lucide-react';
 import { toast } from 'sonner';
-import api, { propertyLeadsAPI, listingsAPI, contactsAPI } from '../lib/api';
+import api, { propertyLeadsAPI, listingsAPI, contactsAPI, mlsAPI, moderationAPI } from '../lib/api';
 import EmailComposerModal from '../components/EmailComposerModal';
 
 const PropertyLeadsPage = () => {
