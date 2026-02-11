@@ -23,7 +23,8 @@ import {
   BarChart3,
   Smartphone,
   Target,
-  Phone
+  Phone,
+  Building2
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
