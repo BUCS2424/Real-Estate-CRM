@@ -400,23 +400,27 @@ const PropertyLeadsPage = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-serif text-foreground mb-2">Property Leads</h1>
-          <p className="text-muted-foreground">Manage property-centric leads imported from CSV</p>
+          <p className="text-muted-foreground">Manage property leads from MLS, CSV imports, and website forms</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowMLSModal(true)} data-testid="import-mls-btn">
+            <Database className="w-4 h-4 mr-2" />
+            Import from MLS
+          </Button>
           <Button variant="outline" onClick={() => setShowImportModal(true)} data-testid="import-csv-btn">
             <FileSpreadsheet className="w-4 h-4 mr-2" />
             Import CSV
           </Button>
           <Button onClick={() => setShowAddModal(true)} className="bg-amber-500 hover:bg-amber-600 text-black" data-testid="add-property-btn">
             <Plus className="w-4 h-4 mr-2" />
-            Add Property
+            Add Manual
           </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -425,6 +429,17 @@ const PropertyLeadsPage = () => {
                   <p className="text-2xl font-bold">{stats.total}</p>
                 </div>
                 <Building2 className="w-8 h-8 text-amber-500" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className={moderationStats?.pending > 0 ? 'border-orange-500/50 bg-orange-500/5' : ''}>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Pending Review</p>
+                  <p className="text-2xl font-bold text-orange-600">{moderationStats?.pending || 0}</p>
+                </div>
+                <Clock className="w-8 h-8 text-orange-500" />
               </div>
             </CardContent>
           </Card>
