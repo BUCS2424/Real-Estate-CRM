@@ -1492,6 +1492,13 @@ Completed the Property Leads page enhancement with a tabbed interface supporting
 - ✅ Public submission endpoint working
 - ✅ Approve/Reject workflow tested and verified
 - ✅ MLS Integration scaffolding complete (awaiting credentials)
+- ✅ **MLS Settings Page** added to Developer Settings menu (`/settings/developer/mls`)
+  - Connection status display
+  - API Configuration form (MLS Name, Dataset ID, API Key, API Secret, Server Token)
+  - Enable/Disable toggle
+  - Auto-sync option with interval configuration
+  - Test Connection button
+  - Setup instructions
 
 ### Known Issues (Unchanged)
 - **P0:** Bookings data loss (not investigated)
