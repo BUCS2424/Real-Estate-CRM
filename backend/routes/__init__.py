@@ -32,6 +32,7 @@ from .seller_leads import router as seller_leads_router
 from .email import router as email_router
 from .skyreels import router as skyreels_router
 from .mls import router as mls_router
+from .jacquie_lawson import router as jacquie_lawson_router
 
 # Include all sub-routers
 api_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
