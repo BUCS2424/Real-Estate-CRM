@@ -1954,7 +1954,8 @@ export const ContactsPage = () => {
       const formData = new FormData();
       formData.append('file', importFile);
       
-      const res = await contactsAPI.importVCard(formData);
+      // Use the unified import endpoint that handles both CSV and VCF
+      const res = await contactsAPI.importFile(formData);
       setImportResult(res.data);
       
       if (res.data.imported > 0) {
@@ -1964,8 +1965,10 @@ export const ContactsPage = () => {
         fetchContacts();
       }
     } catch (error) {
-      toast.error('Import failed');
-      setImportResult({ imported: 0, skipped: 0, errors: [error.message] });
+      console.error('Import error:', error);
+      const errorMsg = error.response?.data?.detail || error.message || 'Import failed';
+      toast.error(errorMsg);
+      setImportResult({ imported: 0, skipped: 0, errors: [errorMsg] });
     } finally {
       setImporting(false);
     }
