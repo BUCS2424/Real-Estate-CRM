@@ -2000,6 +2000,28 @@ export const ContactsPage = () => {
     }
   };
 
+  // Delete All Contacts
+  const handleDeleteAllContacts = async () => {
+    if (deleteConfirmText !== 'DELETE ALL') {
+      toast.error('Please type "DELETE ALL" to confirm');
+      return;
+    }
+    
+    setDeletingAll(true);
+    try {
+      const response = await api.delete('/contacts?confirm=DELETE_ALL_CONTACTS');
+      toast.success(`Deleted ${response.data.deleted_count} contacts`);
+      setShowDeleteAllModal(false);
+      setDeleteConfirmText('');
+      fetchStats();
+      fetchContacts();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to delete contacts');
+    } finally {
+      setDeletingAll(false);
+    }
+  };
+
   // iPhone Sync handlers
   const handleSyncPreview = async () => {
     if (!syncFile) return;
