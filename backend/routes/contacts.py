@@ -295,6 +295,66 @@ async def get_contacts_stats(current_user: dict = Depends(get_current_user)):
         "by_letter": letter_counts
     }
 
+@router.get("/export")
+async def export_contacts(
+    category: Optional[str] = Query(None, description="Filter by category: buyer, seller"),
+    status: Optional[str] = Query(None, description="Filter by status"),
+    current_user: dict = Depends(get_current_user)
+):
+    """Export all contacts to CSV file"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Build query
+    query = {}
+    if category:
+        query["category"] = category
+    if status:
+        query["status"] = status
+    
+    # Get all contacts
+    contacts = await db.contacts.find(query, {"_id": 0}).to_list(100000)
+    
+    if not contacts:
+        raise HTTPException(status_code=404, detail="No contacts found")
+    
+    # Define CSV columns - comprehensive list matching import fields
+    columns = [
+        "id", "first_name", "last_name", "name", "display_name", "nickname",
+        "email", "email_2", "email_3",
+        "phone", "mobile_phone", "home_phone", "business_phone", "pager", "home_fax", "business_fax",
+        "company", "organization", "position", "job_title", "department",
+        "home_street", "home_address_2", "home_city", "home_state", "home_postal_code", "home_country",
+        "business_address", "business_address_2", "business_city", "business_state", "business_postal_code", "business_country",
+        "birthday", "anniversary", "home_purchase_anniversary",
+        "web_page", "web_page_2",
+        "related_name", "categories", "notes",
+        "status", "category", "contact_type", "source", "lead_score", "budget", "property_interest",
+        "tags", "created_at", "updated_at"
+    ]
+    
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=columns, extrasaction='ignore')
+    writer.writeheader()
+    
+    for contact in contacts:
+        # Convert tags list to comma-separated string
+        if isinstance(contact.get("tags"), list):
+            contact["tags"] = ", ".join(contact["tags"])
+        writer.writerow(contact)
+    
+    # Prepare response
+    output.seek(0)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"contacts_export_{timestamp}.csv"
+    
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
 @router.get("/{contact_id}", response_model=ContactResponse)
 async def get_contact(contact_id: str, current_user: dict = Depends(get_current_user)):
     contact = await db.contacts.find_one({"id": contact_id}, {"_id": 0})
