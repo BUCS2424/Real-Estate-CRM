@@ -1962,6 +1962,27 @@ export const ContactsPage = () => {
     }
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const response = await api.get('/contacts/export', { responseType: 'blob' });
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `contacts_export_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Contacts exported successfully!');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to export contacts');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const handleSendSMS = async () => {
     if (!smsRecipient || !smsMessage.trim()) return;
     
