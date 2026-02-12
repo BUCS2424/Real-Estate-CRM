@@ -823,6 +823,58 @@ const ContactDetail = ({ contactId, onBack }) => {
                   </CardContent>
                 </Card>
 
+                {/* Quick Actions */}
+                <Card className="border-pink-500/30">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Heart className="w-5 h-5 text-pink-500" />Quick Actions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button 
+                      onClick={() => setShowSendCardModal(true)}
+                      className="w-full bg-pink-500 hover:bg-pink-600 text-white"
+                      disabled={!contact.email && !contact.email_2 && !contact.email_3}
+                    >
+                      <Gift className="w-4 h-4 mr-2" />
+                      Send Greeting Card
+                    </Button>
+                    {(!contact.email && !contact.email_2 && !contact.email_3) && (
+                      <p className="text-xs text-muted-foreground text-center">No email address - cannot send cards</p>
+                    )}
+                    
+                    {/* Important Dates Summary */}
+                    {(contact.birthday || contact.anniversary || contact.home_purchase_anniversary) && (
+                      <div className="pt-2 border-t mt-3">
+                        <p className="text-xs text-muted-foreground mb-2">Important Dates:</p>
+                        <div className="space-y-1 text-sm">
+                          {contact.birthday && (
+                            <div className="flex items-center gap-2">
+                              <Cake className="w-3 h-3 text-pink-500" />
+                              <span className="text-muted-foreground">Birthday:</span>
+                              <span className="font-medium">{contact.birthday}</span>
+                            </div>
+                          )}
+                          {contact.anniversary && (
+                            <div className="flex items-center gap-2">
+                              <Heart className="w-3 h-3 text-red-500" />
+                              <span className="text-muted-foreground">Anniversary:</span>
+                              <span className="font-medium">{contact.anniversary}</span>
+                            </div>
+                          )}
+                          {contact.home_purchase_anniversary && (
+                            <div className="flex items-center gap-2">
+                              <Home className="w-3 h-3 text-amber-500" />
+                              <span className="text-muted-foreground">Home Purchase:</span>
+                              <span className="font-medium">{contact.home_purchase_anniversary}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
                 <Card className="lg:col-span-2">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
