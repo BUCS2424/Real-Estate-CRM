@@ -116,6 +116,16 @@ const ContactDetail = ({ contactId, onBack }) => {
   const [statusOptions, setStatusOptions] = useState(getStatusOptions());
   const [showAddStatus, setShowAddStatus] = useState(false);
   const [newStatusName, setNewStatusName] = useState('');
+  
+  // Send Card modal state
+  const [showSendCardModal, setShowSendCardModal] = useState(false);
+  const [sendingCard, setSendingCard] = useState(false);
+  const [cardData, setCardData] = useState({
+    card_url: '',
+    occasion: 'birthday',
+    message: '',
+    schedule_date: ''
+  });
 
   useEffect(() => {
     if (contactId) fetchContact();
