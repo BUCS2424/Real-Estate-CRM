@@ -60,6 +60,7 @@ import { SystemMessages } from './pages/settings/developer/SystemMessages';
 import { PWASettings } from './pages/settings/developer/PWASettings';
 import { LeadScoringSettings } from './pages/settings/developer/LeadScoringSettings';
 import { MLSSettings } from './pages/settings/developer/MLSSettings';
+import { JacquieLawsonSettings } from './pages/settings/developer/JacquieLawsonSettings';
 import { SignatureSettings } from './pages/settings/profile/SignatureSettings';
 import { MailingListsPage } from './pages/MailingListsPage';
 import ReviewsManagementPage from './pages/ReviewsManagementPage';
