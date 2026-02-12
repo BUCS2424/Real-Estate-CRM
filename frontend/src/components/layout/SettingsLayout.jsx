@@ -25,7 +25,8 @@ import {
   Target,
   Phone,
   Building2,
-  Heart
+  Heart,
+  Mic
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
