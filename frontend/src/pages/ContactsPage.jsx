@@ -1992,6 +1992,108 @@ export const ContactsPage = () => {
     }
   };
 
+  // iPhone Sync handlers
+  const handleSyncPreview = async () => {
+    if (!syncFile) return;
+    
+    setSyncLoading(true);
+    setSyncPreview(null);
+    setSyncResult(null);
+    setSelectedSyncContacts(new Set());
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', syncFile);
+      
+      const response = await api.post('/contacts/sync/preview', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      setSyncPreview(response.data);
+      
+      // Auto-select all new (non-duplicate) contacts
+      const newContacts = response.data.contacts
+        .filter(c => !c.is_duplicate)
+        .map(c => c.temp_id);
+      setSelectedSyncContacts(new Set(newContacts));
+      
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to parse contacts file');
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
+  const handleSyncImport = async () => {
+    if (selectedSyncContacts.size === 0) {
+      toast.error('No contacts selected');
+      return;
+    }
+    
+    setSyncImporting(true);
+    try {
+      const contactsToImport = syncPreview.contacts
+        .filter(c => selectedSyncContacts.has(c.temp_id))
+        .map(c => ({
+          temp_id: c.temp_id,
+          first_name: c.first_name,
+          last_name: c.last_name,
+          email: c.email,
+          phone: c.phone,
+          company: c.company,
+          notes: c.notes
+        }));
+      
+      const response = await api.post('/contacts/sync/import', {
+        contacts: contactsToImport,
+        category: null
+      });
+      
+      setSyncResult(response.data);
+      toast.success(`${response.data.imported} contacts imported!`);
+      fetchContacts();
+      fetchStats();
+      
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to import contacts');
+    } finally {
+      setSyncImporting(false);
+    }
+  };
+
+  const toggleSyncContact = (tempId) => {
+    setSelectedSyncContacts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(tempId)) {
+        newSet.delete(tempId);
+      } else {
+        newSet.add(tempId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleAllNewContacts = () => {
+    if (!syncPreview) return;
+    
+    const newContacts = syncPreview.contacts.filter(c => !c.is_duplicate);
+    const allSelected = newContacts.every(c => selectedSyncContacts.has(c.temp_id));
+    
+    if (allSelected) {
+      setSelectedSyncContacts(new Set());
+    } else {
+      setSelectedSyncContacts(new Set(newContacts.map(c => c.temp_id)));
+    }
+  };
+
+  const resetSyncModal = () => {
+    setShowSyncModal(false);
+    setSyncFile(null);
+    setSyncPreview(null);
+    setSelectedSyncContacts(new Set());
+    setSyncResult(null);
+  };
+
   const handleSendSMS = async () => {
     if (!smsRecipient || !smsMessage.trim()) return;
     
