@@ -41,6 +41,7 @@ import {
   Briefcase,
   Upload,
   FileSpreadsheet,
+  Download,
   Smartphone,
   Apple,
   AlertCircle,
