@@ -2187,6 +2187,10 @@ export const ContactsPage = () => {
             {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
             Export
           </Button>
+          <Button variant="outline" onClick={() => setShowSyncModal(true)} data-testid="sync-iphone-btn">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Sync iPhone
+          </Button>
           <Button variant="outline" onClick={() => setShowImportModal(true)} data-testid="import-contacts-btn">
             <Upload className="w-4 h-4 mr-2" />
             Import
