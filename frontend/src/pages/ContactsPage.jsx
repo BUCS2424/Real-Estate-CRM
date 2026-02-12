@@ -1587,8 +1587,9 @@ const ContactDetail = ({ contactId, onBack }) => {
                   <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
                     <h4 className="font-semibold text-sm text-amber-500 border-b border-amber-500/30 pb-2">Personal Information</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div><Label>Birthday</Label><Input value={editData.birthday || ''} onChange={(e) => setEditData({ ...editData, birthday: e.target.value })} placeholder="MM/DD/YYYY" /></div>
-                      <div><Label>Anniversary</Label><Input value={editData.anniversary || ''} onChange={(e) => setEditData({ ...editData, anniversary: e.target.value })} placeholder="MM/DD/YYYY" /></div>
+                      <div><Label>Birthday</Label><Input type="date" value={editData.birthday || ''} onChange={(e) => setEditData({ ...editData, birthday: e.target.value })} /></div>
+                      <div><Label>Anniversary</Label><Input type="date" value={editData.anniversary || ''} onChange={(e) => setEditData({ ...editData, anniversary: e.target.value })} /></div>
+                      <div><Label>Home Purchase Anniversary</Label><Input type="date" value={editData.home_purchase_anniversary || ''} onChange={(e) => setEditData({ ...editData, home_purchase_anniversary: e.target.value })} /></div>
                       <div><Label>Related Name</Label><Input value={editData.related_name || ''} onChange={(e) => setEditData({ ...editData, related_name: e.target.value })} /></div>
                     </div>
                   </div>
