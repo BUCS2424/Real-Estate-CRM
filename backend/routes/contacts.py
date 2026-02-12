@@ -610,54 +610,71 @@ async def import_contacts(
                 else:
                     skipped_no_data += 1
         
-        # Import contacts
+        # STEP 1: Get ALL existing contacts from DB for duplicate checking
+        # This is more reliable than checking one-by-one
+        existing_emails = set()
+        existing_names = set()
+        
+        async for doc in db.contacts.find({}, {"email": 1, "first_name": 1, "last_name": 1}):
+            if doc.get("email"):
+                existing_emails.add(doc["email"].lower().strip())
+            if doc.get("first_name") and doc.get("last_name"):
+                # Create a normalized name key
+                name_key = f"{doc['first_name'].lower().strip()}|{doc['last_name'].lower().strip()}"
+                existing_names.add(name_key)
+        
+        print(f"[IMPORT] Found {len(existing_emails)} existing emails, {len(existing_names)} existing names in DB")
+        
+        # STEP 2: Process imports, checking against our sets
         imported = 0
         duplicates = 0
         errors = 0
         error_details = []
         now = datetime.now(timezone.utc).isoformat()
         
+        # Track what we're importing in this batch to avoid duplicates within the file
+        batch_emails = set()
+        batch_names = set()
+        
         for contact in contacts_to_import:
             try:
                 email = contact.get('email', '').lower().strip() if contact.get('email') else ''
                 first_name = contact.get('first_name', '').strip() if contact.get('first_name') else ''
                 last_name = contact.get('last_name', '').strip() if contact.get('last_name') else ''
-                phone = contact.get('phone', '').strip() if contact.get('phone') else ''
+                name_key = f"{first_name.lower()}|{last_name.lower()}" if first_name and last_name else ''
                 
-                # Check for duplicate - by email first, then by name+phone
-                existing = None
+                # Check for duplicate
+                is_duplicate = False
+                
+                # Check email against DB and current batch
                 if email:
-                    existing = await db.contacts.find_one({"email": email})
+                    if email in existing_emails or email in batch_emails:
+                        is_duplicate = True
                 
-                if not existing and first_name and last_name:
-                    # Check by exact name match
-                    name_query = {"first_name": {"$regex": f"^{re.escape(first_name)}$", "$options": "i"}, 
-                                  "last_name": {"$regex": f"^{re.escape(last_name)}$", "$options": "i"}}
-                    if phone:
-                        # If we have phone, use it for more precise matching
-                        phone_digits = re.sub(r'\D', '', phone)
-                        if len(phone_digits) >= 7:
-                            name_query["$or"] = [
-                                {"phone": {"$regex": phone_digits[-7:]}},
-                                {"mobile_phone": {"$regex": phone_digits[-7:]}},
-                                {"home_phone": {"$regex": phone_digits[-7:]}},
-                                {"business_phone": {"$regex": phone_digits[-7:]}}
-                            ]
-                    existing = await db.contacts.find_one(name_query)
+                # Check name against DB and current batch (only if no email or email didn't match)
+                if not is_duplicate and name_key:
+                    if name_key in existing_names or name_key in batch_names:
+                        is_duplicate = True
                 
-                if existing:
+                if is_duplicate:
                     duplicates += 1
                     continue
                 
+                # Track this contact for batch duplicate checking
+                if email:
+                    batch_emails.add(email)
+                if name_key:
+                    batch_names.add(name_key)
+                
                 # Create contact document with all imported fields
                 contact_doc = {
-                    "id": contact.get('id') or str(uuid.uuid4()),
+                    "id": str(uuid.uuid4()),  # Always generate new ID
                     "first_name": first_name,
                     "last_name": last_name,
                     "name": contact.get('name'),
                     "display_name": contact.get('display_name'),
                     "nickname": contact.get('nickname'),
-                    "email": email,
+                    "email": email if email else None,
                     "email_2": contact.get('email_2'),
                     "email_3": contact.get('email_3'),
                     "phone": contact.get('phone'),
@@ -713,6 +730,8 @@ async def import_contacts(
             except Exception as e:
                 errors += 1
                 error_details.append(str(e))
+        
+        print(f"[IMPORT] Result: {imported} imported, {duplicates} duplicates, {errors} errors, {skipped_no_data} skipped (no data)")
         
         return {
             "total_in_file": len(contacts_to_import) + skipped_no_data,
