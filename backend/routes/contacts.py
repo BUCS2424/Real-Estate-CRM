@@ -604,7 +604,7 @@ async def import_contacts(
         
         for contact in contacts_to_import:
             try:
-                email = contact.get('email', '').lower()
+                email = contact.get('email', '').lower() if contact.get('email') else ''
                 
                 # Check for duplicate by email if email exists
                 if email:
@@ -613,23 +613,63 @@ async def import_contacts(
                         duplicates += 1
                         continue
                 
-                # Create contact document
+                # Create contact document with all imported fields
                 contact_doc = {
-                    "id": str(uuid.uuid4()),
+                    "id": contact.get('id') or str(uuid.uuid4()),
                     "first_name": contact.get('first_name', ''),
                     "last_name": contact.get('last_name', ''),
+                    "name": contact.get('name'),
+                    "display_name": contact.get('display_name'),
+                    "nickname": contact.get('nickname'),
                     "email": email,
+                    "email_2": contact.get('email_2'),
+                    "email_3": contact.get('email_3'),
                     "phone": contact.get('phone'),
+                    "mobile_phone": contact.get('mobile_phone'),
+                    "home_phone": contact.get('home_phone'),
+                    "business_phone": contact.get('business_phone'),
+                    "pager": contact.get('pager'),
+                    "home_fax": contact.get('home_fax'),
+                    "business_fax": contact.get('business_fax'),
                     "company": contact.get('company'),
+                    "organization": contact.get('organization'),
                     "position": contact.get('position'),
-                    "source": "import",
+                    "job_title": contact.get('job_title'),
+                    "department": contact.get('department'),
+                    "home_street": contact.get('home_street'),
+                    "home_address_2": contact.get('home_address_2'),
+                    "home_city": contact.get('home_city'),
+                    "home_state": contact.get('home_state'),
+                    "home_postal_code": contact.get('home_postal_code'),
+                    "home_country": contact.get('home_country'),
+                    "business_address": contact.get('business_address'),
+                    "business_address_2": contact.get('business_address_2'),
+                    "business_city": contact.get('business_city'),
+                    "business_state": contact.get('business_state'),
+                    "business_postal_code": contact.get('business_postal_code'),
+                    "business_country": contact.get('business_country'),
+                    "birthday": contact.get('birthday'),
+                    "anniversary": contact.get('anniversary'),
+                    "home_purchase_anniversary": contact.get('home_purchase_anniversary'),
+                    "web_page": contact.get('web_page'),
+                    "web_page_2": contact.get('web_page_2'),
+                    "related_name": contact.get('related_name'),
+                    "categories": contact.get('categories'),
                     "notes": contact.get('notes'),
-                    "tags": contact.get('tags', []),
-                    "category": category or contact.get('category', 'buyer'),
-                    "status": "active",
-                    "lead_score": 0,
-                    "created_at": now
+                    "status": contact.get('status') or "active",
+                    "category": category or contact.get('category') or 'buyer',
+                    "contact_type": contact.get('contact_type'),
+                    "source": contact.get('source') or "csv_import",
+                    "lead_score": int(contact.get('lead_score', 0)) if contact.get('lead_score') else 0,
+                    "budget": contact.get('budget'),
+                    "property_interest": contact.get('property_interest'),
+                    "tags": contact.get('tags') if isinstance(contact.get('tags'), list) else [],
+                    "created_at": contact.get('created_at') or now,
+                    "updated_at": now
                 }
+                
+                # Remove None values to keep document clean
+                contact_doc = {k: v for k, v in contact_doc.items() if v is not None and v != ''}
                 
                 await db.contacts.insert_one(contact_doc)
                 imported += 1
