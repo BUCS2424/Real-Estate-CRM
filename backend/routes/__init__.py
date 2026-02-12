@@ -34,6 +34,7 @@ from .skyreels import router as skyreels_router
 from .mls import router as mls_router
 from .jacquie_lawson import router as jacquie_lawson_router
 from .social_media import router as social_media_router
+from .elevenlabs import router as elevenlabs_router
 
 # Include all sub-routers
 api_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
