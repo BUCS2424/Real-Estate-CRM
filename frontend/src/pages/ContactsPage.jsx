@@ -2500,15 +2500,26 @@ export const ContactsPage = () => {
                   )}
                   <span className="font-medium">Import Complete</span>
                 </div>
-                <p className="text-sm">
-                  <span className="text-green-600">{importResult.imported} imported</span>
-                  {importResult.skipped > 0 && (
-                    <span className="text-yellow-600 ml-2">{importResult.skipped} skipped</span>
+                <div className="text-sm space-y-1">
+                  <p><span className="text-green-600 font-medium">{importResult.imported}</span> contacts imported</p>
+                  {importResult.duplicates > 0 && (
+                    <p><span className="text-yellow-600">{importResult.duplicates}</span> duplicates skipped (same email)</p>
                   )}
-                </p>
-                {importResult.errors?.length > 0 && (
-                  <p className="text-xs text-red-500 mt-1">
-                    Errors: {importResult.errors.join(', ')}
+                  {importResult.skipped_no_data > 0 && (
+                    <p><span className="text-orange-500">{importResult.skipped_no_data}</span> rows skipped (missing email & name)</p>
+                  )}
+                  {importResult.errors > 0 && (
+                    <p><span className="text-red-500">{importResult.errors}</span> errors</p>
+                  )}
+                  {importResult.total_in_file && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Total rows in file: {importResult.total_in_file} | Valid: {importResult.valid_rows}
+                    </p>
+                  )}
+                </div>
+                {importResult.error_details?.length > 0 && (
+                  <p className="text-xs text-red-500 mt-2">
+                    Error details: {importResult.error_details.join(', ')}
                   </p>
                 )}
               </div>
