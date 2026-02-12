@@ -24,7 +24,8 @@ import {
   Smartphone,
   Target,
   Phone,
-  Building2
+  Building2,
+  Heart
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
