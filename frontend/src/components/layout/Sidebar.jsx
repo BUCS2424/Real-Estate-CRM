@@ -23,7 +23,8 @@ import {
   MapPinHouse,
   DollarSign,
   Wrench,
-  Video
+  Video,
+  Share2
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
@@ -54,6 +55,7 @@ const navItems = [
   { path: '/contacts', icon: Users, label: 'Contacts' },
   { type: 'sales', icon: DollarSign, label: 'Sales' },
   { path: '/listings', icon: Home, label: 'Showcase Listings' },
+  { path: '/social-media', icon: Share2, label: 'Social Media' },
   { path: '/property-lookup', icon: Search, label: 'Property Lookup' },
   { path: '/reviews', icon: Star, label: 'Reviews' },
   { path: '/landing-pages', icon: Layout, label: 'Landing Pages' },
