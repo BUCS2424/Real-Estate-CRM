@@ -779,6 +779,172 @@ async def import_contacts_vcard(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to parse vCard: {str(e)}")
 
+
+# ============ IPHONE SYNC ============
+
+class SyncContact(BaseModel):
+    temp_id: str
+    first_name: str = ""
+    last_name: str = ""
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    company: Optional[str] = None
+    notes: Optional[str] = None
+
+class SyncImportRequest(BaseModel):
+    contacts: List[SyncContact]
+    category: Optional[str] = None
+
+@router.post("/sync/preview")
+async def sync_preview(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Parse iPhone vCard and return contacts with duplicate status"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    if not file.filename.lower().endswith(('.vcf', '.vcard')):
+        raise HTTPException(status_code=400, detail="File must be a .vcf or .vcard file")
+    
+    try:
+        content = await file.read()
+        content_str = content.decode('utf-8', errors='ignore')
+        
+        # Parse vCard content
+        vcard_contacts = parse_vcard(content_str)
+        
+        if not vcard_contacts:
+            return {"contacts": [], "total": 0, "new_count": 0, "duplicate_count": 0}
+        
+        result_contacts = []
+        new_count = 0
+        duplicate_count = 0
+        
+        for idx, vc in enumerate(vcard_contacts):
+            first_name = vc.get('first_name', '')
+            last_name = vc.get('last_name', '')
+            full_name = vc.get('full_name', '')
+            
+            # If no first/last but have full name, split it
+            if not first_name and not last_name and full_name:
+                parts = full_name.strip().split(' ', 1)
+                first_name = parts[0]
+                last_name = parts[1] if len(parts) > 1 else ''
+            
+            name = f"{first_name} {last_name}".strip()
+            if not name:
+                continue
+            
+            email = vc.get('email', '').lower() if vc.get('email') else None
+            phone = vc.get('phone')
+            
+            # Check for duplicate by email or phone
+            is_duplicate = False
+            match_reason = None
+            
+            if email:
+                existing = await db.contacts.find_one({"email": email})
+                if existing:
+                    is_duplicate = True
+                    match_reason = f"Email match: {email}"
+            
+            if not is_duplicate and phone:
+                # Normalize phone for comparison
+                phone_digits = re.sub(r'\D', '', phone)
+                if len(phone_digits) >= 10:
+                    existing = await db.contacts.find_one({
+                        "$or": [
+                            {"phone": {"$regex": phone_digits[-10:]}},
+                            {"mobile_phone": {"$regex": phone_digits[-10:]}},
+                            {"home_phone": {"$regex": phone_digits[-10:]}}
+                        ]
+                    })
+                    if existing:
+                        is_duplicate = True
+                        match_reason = f"Phone match: {phone}"
+            
+            if is_duplicate:
+                duplicate_count += 1
+            else:
+                new_count += 1
+            
+            result_contacts.append({
+                "temp_id": f"sync_{idx}_{uuid.uuid4().hex[:8]}",
+                "first_name": first_name,
+                "last_name": last_name,
+                "name": name,
+                "email": email,
+                "phone": phone,
+                "company": vc.get('company'),
+                "notes": vc.get('notes'),
+                "is_duplicate": is_duplicate,
+                "match_reason": match_reason
+            })
+        
+        return {
+            "contacts": result_contacts,
+            "total": len(result_contacts),
+            "new_count": new_count,
+            "duplicate_count": duplicate_count
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to parse vCard: {str(e)}")
+
+
+@router.post("/sync/import")
+async def sync_import(
+    request: SyncImportRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Import selected contacts from sync preview"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    if not request.contacts:
+        raise HTTPException(status_code=400, detail="No contacts to import")
+    
+    imported = 0
+    errors = []
+    now = datetime.now(timezone.utc).isoformat()
+    
+    for contact in request.contacts:
+        try:
+            contact_doc = {
+                "id": str(uuid.uuid4()),
+                "first_name": contact.first_name,
+                "last_name": contact.last_name,
+                "name": f"{contact.first_name} {contact.last_name}".strip(),
+                "email": contact.email.lower() if contact.email else None,
+                "phone": contact.phone,
+                "company": contact.company,
+                "notes": contact.notes,
+                "tags": [],
+                "category": request.category,
+                "status": "new",
+                "lead_score": 0,
+                "source": "iphone_sync",
+                "created_at": now,
+                "updated_at": now
+            }
+            
+            # Remove None values
+            contact_doc = {k: v for k, v in contact_doc.items() if v is not None}
+            
+            await db.contacts.insert_one(contact_doc)
+            imported += 1
+            
+        except Exception as e:
+            errors.append(f"{contact.first_name} {contact.last_name}: {str(e)}")
+    
+    return {
+        "imported": imported,
+        "errors": errors[:5],
+        "total_errors": len(errors)
+    }
+
+
 @router.get("/export/csv")
 async def export_contacts_csv(
     category: Optional[str] = Query(None, description="Filter by category: buyer, seller"),
