@@ -132,6 +132,19 @@ function App() {
               <Route path="/admin" element={<Navigate to="/admin/users" replace />} />
               <Route path="/profile" element={<Navigate to="/settings" replace />} />
 
+              {/* Social Media with nested layout */}
+              <Route path="/social-media" element={<SocialMediaLayout />}>
+                <Route index element={<SocialMediaDashboard />} />
+                <Route path="compose" element={<ComposePost />} />
+                <Route path="settings" element={<SocialMediaSettings />} />
+                <Route path="calendar" element={<SocialMediaDashboard />} />
+                <Route path="queue" element={<SocialMediaDashboard />} />
+                <Route path="templates" element={<SocialMediaDashboard />} />
+                <Route path="ai-content" element={<SocialMediaDashboard />} />
+                <Route path="media" element={<SocialMediaDashboard />} />
+                <Route path="analytics" element={<SocialMediaDashboard />} />
+              </Route>
+
               {/* Settings with nested layout */}
               <Route path="/settings" element={<SettingsLayout />}>
                 <Route index element={<SettingsOverview />} />
