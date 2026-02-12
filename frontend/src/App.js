@@ -156,7 +156,6 @@ function App() {
                 <Route path="developer/telnyx" element={<TelnyxSettings />} />
                 <Route path="developer/lead-scoring" element={<LeadScoringSettings />} />
                 <Route path="developer/mls" element={<MLSSettings />} />
-                <Route path="developer/jacquie-lawson" element={<JacquieLawsonSettings />} />
                 <Route path="developer/custom-code" element={<CustomCode />} />
                 <Route path="developer/system-messages" element={<SystemMessages />} />
                 <Route path="developer/pwa" element={<PWASettings />} />
