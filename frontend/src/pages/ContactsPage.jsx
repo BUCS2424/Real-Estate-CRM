@@ -1822,6 +1822,15 @@ export const ContactsPage = () => {
   // Export
   const [exporting, setExporting] = useState(false);
   
+  // iPhone Sync
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [syncFile, setSyncFile] = useState(null);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncPreview, setSyncPreview] = useState(null);
+  const [selectedSyncContacts, setSelectedSyncContacts] = useState(new Set());
+  const [syncImporting, setSyncImporting] = useState(false);
+  const [syncResult, setSyncResult] = useState(null);
+  
   // SMS modal
   const [showSMSModal, setShowSMSModal] = useState(false);
   const [smsRecipient, setSmsRecipient] = useState(null);
