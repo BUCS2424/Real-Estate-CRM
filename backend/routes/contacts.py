@@ -537,28 +537,49 @@ async def import_contacts(
             # Parse vCard format
             contacts_to_import = parse_vcard(text)
         else:
-            # Parse CSV format
+            # Parse CSV format - supports both simple and full export format
             reader = csv.DictReader(io.StringIO(text))
             for row in reader:
                 contact = {}
-                # Flexible column mapping for email
-                for key in ['email', 'Email', 'EMAIL', 'e-mail', 'E-mail', 'email_address']:
-                    if key in row and row[key]:
-                        contact['email'] = row[key].strip().lower()
-                        break
                 
-                # Name fields
-                for key in ['first_name', 'First Name', 'FirstName', 'first']:
-                    if key in row and row[key]:
-                        contact['first_name'] = row[key].strip()
-                        break
+                # Direct field mapping (matches export format)
+                direct_fields = [
+                    'id', 'first_name', 'last_name', 'name', 'display_name', 'nickname',
+                    'email', 'email_2', 'email_3',
+                    'phone', 'mobile_phone', 'home_phone', 'business_phone', 'pager', 'home_fax', 'business_fax',
+                    'company', 'organization', 'position', 'job_title', 'department',
+                    'home_street', 'home_address_2', 'home_city', 'home_state', 'home_postal_code', 'home_country',
+                    'business_address', 'business_address_2', 'business_city', 'business_state', 'business_postal_code', 'business_country',
+                    'birthday', 'anniversary', 'home_purchase_anniversary',
+                    'web_page', 'web_page_2',
+                    'related_name', 'categories', 'notes',
+                    'status', 'category', 'contact_type', 'source', 'lead_score', 'budget', 'property_interest',
+                    'tags', 'created_at', 'updated_at'
+                ]
                 
-                for key in ['last_name', 'Last Name', 'LastName', 'last']:
-                    if key in row and row[key]:
-                        contact['last_name'] = row[key].strip()
-                        break
+                for field in direct_fields:
+                    if field in row and row[field]:
+                        contact[field] = row[field].strip()
                 
-                # If we have full_name but not first/last, try to split it
+                # Flexible column mapping for common variations
+                field_variations = {
+                    'email': ['email', 'Email', 'EMAIL', 'e-mail', 'E-mail', 'email_address'],
+                    'first_name': ['first_name', 'First Name', 'FirstName', 'first'],
+                    'last_name': ['last_name', 'Last Name', 'LastName', 'last'],
+                    'phone': ['phone', 'Phone', 'PHONE', 'mobile', 'Mobile', 'phone_number'],
+                    'company': ['company', 'Company', 'COMPANY', 'organization', 'org'],
+                    'position': ['position', 'Position', 'title', 'Title', 'job_title'],
+                    'notes': ['notes', 'Notes', 'NOTE', 'note'],
+                }
+                
+                for target, variations in field_variations.items():
+                    if not contact.get(target):
+                        for key in variations:
+                            if key in row and row[key]:
+                                contact[target] = row[key].strip()
+                                break
+                
+                # If we have full name but not first/last, split it
                 if not contact.get('first_name') and not contact.get('last_name'):
                     for key in ['name', 'Name', 'NAME', 'full_name', 'Full Name']:
                         if key in row and row[key]:
@@ -567,29 +588,9 @@ async def import_contacts(
                             contact['last_name'] = parts[1] if len(parts) > 1 else ''
                             break
                 
-                # Phone
-                for key in ['phone', 'Phone', 'PHONE', 'mobile', 'Mobile', 'phone_number']:
-                    if key in row and row[key]:
-                        contact['phone'] = row[key].strip()
-                        break
-                
-                # Company
-                for key in ['company', 'Company', 'COMPANY', 'organization', 'org']:
-                    if key in row and row[key]:
-                        contact['company'] = row[key].strip()
-                        break
-                
-                # Position/Title
-                for key in ['position', 'Position', 'title', 'Title', 'job_title']:
-                    if key in row and row[key]:
-                        contact['position'] = row[key].strip()
-                        break
-                
-                # Notes
-                for key in ['notes', 'Notes', 'NOTE', 'note']:
-                    if key in row and row[key]:
-                        contact['notes'] = row[key].strip()
-                        break
+                # Convert tags from comma-separated string to list
+                if isinstance(contact.get('tags'), str):
+                    contact['tags'] = [t.strip() for t in contact['tags'].split(',') if t.strip()]
                 
                 if contact.get('email') or (contact.get('first_name') and contact.get('last_name')):
                     contacts_to_import.append(contact)
