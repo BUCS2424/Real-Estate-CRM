@@ -594,6 +594,8 @@ async def import_contacts(
                 
                 if contact.get('email') or (contact.get('first_name') and contact.get('last_name')):
                     contacts_to_import.append(contact)
+                else:
+                    skipped_no_data += 1
         
         # Import contacts
         imported = 0
