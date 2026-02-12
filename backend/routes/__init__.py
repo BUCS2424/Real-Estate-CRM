@@ -62,6 +62,7 @@ api_router.include_router(seller_leads_router, tags=["Seller Leads"])
 api_router.include_router(email_router, prefix="/email", tags=["Email"])
 api_router.include_router(skyreels_router, prefix="/skyreels", tags=["SkyReels Video"])
 api_router.include_router(mls_router, tags=["MLS Integration"])
+api_router.include_router(jacquie_lawson_router, tags=["Jacquie Lawson Cards"])
 
 @api_router.get("/")
 async def root():
