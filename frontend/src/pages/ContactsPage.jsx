@@ -2597,6 +2597,187 @@ export const ContactsPage = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Sync iPhone Modal */}
+      <Dialog open={showSyncModal} onOpenChange={(open) => { if (!open) resetSyncModal(); else setShowSyncModal(true); }}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Smartphone className="w-5 h-5 text-blue-500" />
+              Sync iPhone Contacts
+            </DialogTitle>
+            <DialogDescription>
+              Upload your iPhone contacts (.vcf) and select which new contacts to add
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto space-y-4 py-4">
+            {/* Step 1: File Upload */}
+            {!syncPreview && !syncResult && (
+              <div className="space-y-4">
+                <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/30">
+                  <h4 className="font-medium text-blue-600 mb-2">How to export iPhone contacts:</h4>
+                  <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                    <li>Open Contacts app on iPhone</li>
+                    <li>Select contacts or "All Contacts"</li>
+                    <li>Tap Share → Export vCard</li>
+                    <li>Send to yourself via email or AirDrop</li>
+                  </ol>
+                </div>
+                
+                <div>
+                  <Label>Select vCard File</Label>
+                  <input
+                    type="file"
+                    accept=".vcf,.vcard"
+                    onChange={(e) => setSyncFile(e.target.files?.[0] || null)}
+                    className="mt-2 block w-full text-sm text-muted-foreground
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-lg file:border-0
+                      file:text-sm file:font-medium
+                      file:bg-blue-500/10 file:text-blue-600
+                      hover:file:bg-blue-500/20
+                      cursor-pointer"
+                  />
+                  {syncFile && (
+                    <p className="text-sm text-green-600 mt-2">✓ Selected: {syncFile.name}</p>
+                  )}
+                </div>
+                
+                <Button 
+                  onClick={handleSyncPreview} 
+                  disabled={!syncFile || syncLoading}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  {syncLoading ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analyzing Contacts...</>
+                  ) : (
+                    <><Search className="w-4 h-4 mr-2" /> Preview & Compare</>
+                  )}
+                </Button>
+              </div>
+            )}
+            
+            {/* Step 2: Preview Results */}
+            {syncPreview && !syncResult && (
+              <div className="space-y-4">
+                {/* Stats Summary */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="p-3 bg-muted/50 rounded-lg text-center">
+                    <p className="text-2xl font-bold">{syncPreview.total}</p>
+                    <p className="text-xs text-muted-foreground">Total in File</p>
+                  </div>
+                  <div className="p-3 bg-green-500/10 rounded-lg text-center border border-green-500/30">
+                    <p className="text-2xl font-bold text-green-600">{syncPreview.new_count}</p>
+                    <p className="text-xs text-muted-foreground">New Contacts</p>
+                  </div>
+                  <div className="p-3 bg-orange-500/10 rounded-lg text-center border border-orange-500/30">
+                    <p className="text-2xl font-bold text-orange-600">{syncPreview.duplicate_count}</p>
+                    <p className="text-xs text-muted-foreground">Already Exist</p>
+                  </div>
+                </div>
+                
+                {/* Select All Toggle */}
+                {syncPreview.new_count > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <Label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={syncPreview.contacts.filter(c => !c.is_duplicate).every(c => selectedSyncContacts.has(c.temp_id))}
+                        onChange={toggleAllNewContacts}
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
+                      Select All New ({syncPreview.new_count})
+                    </Label>
+                    <Badge className="bg-green-500/20 text-green-600">
+                      {selectedSyncContacts.size} selected
+                    </Badge>
+                  </div>
+                )}
+                
+                {/* Contact List */}
+                <div className="border rounded-lg max-h-[300px] overflow-y-auto">
+                  {syncPreview.contacts.map((contact) => (
+                    <div 
+                      key={contact.temp_id}
+                      className={`flex items-center gap-3 p-3 border-b last:border-b-0 ${
+                        contact.is_duplicate ? 'bg-muted/30 opacity-60' : 'hover:bg-muted/20'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedSyncContacts.has(contact.temp_id)}
+                        onChange={() => !contact.is_duplicate && toggleSyncContact(contact.temp_id)}
+                        disabled={contact.is_duplicate}
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{contact.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {contact.email || contact.phone || 'No contact info'}
+                        </p>
+                      </div>
+                      {contact.is_duplicate ? (
+                        <Badge className="bg-orange-500/20 text-orange-600 text-xs shrink-0">EXISTS</Badge>
+                      ) : (
+                        <Badge className="bg-green-500/20 text-green-600 text-xs shrink-0">NEW</Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                
+                {syncPreview.new_count === 0 && (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <CheckCircle className="w-12 h-12 mx-auto mb-2 text-green-500" />
+                    <p>All contacts already exist in your system!</p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Step 3: Result */}
+            {syncResult && (
+              <div className="text-center py-8">
+                <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
+                <h3 className="text-xl font-bold mb-2">Sync Complete!</h3>
+                <p className="text-muted-foreground mb-4">
+                  Successfully imported {syncResult.imported} contacts
+                </p>
+                {syncResult.total_errors > 0 && (
+                  <p className="text-sm text-orange-600">
+                    {syncResult.total_errors} contacts had errors
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            {!syncResult ? (
+              <>
+                <Button variant="outline" onClick={resetSyncModal}>Cancel</Button>
+                {syncPreview && syncPreview.new_count > 0 && (
+                  <Button 
+                    onClick={handleSyncImport}
+                    disabled={selectedSyncContacts.size === 0 || syncImporting}
+                    className="bg-green-500 hover:bg-green-600 text-white"
+                  >
+                    {syncImporting ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importing...</>
+                    ) : (
+                      <><Upload className="w-4 h-4 mr-2" /> Import {selectedSyncContacts.size} Selected</>
+                    )}
+                  </Button>
+                )}
+              </>
+            ) : (
+              <Button onClick={resetSyncModal} className="bg-amber-500 hover:bg-amber-600 text-black">
+                Done
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Email Modal - WYSIWYG with SMTP */}
       <EmailComposerModal
         isOpen={showEmailModal}
