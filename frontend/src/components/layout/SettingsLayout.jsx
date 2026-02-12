@@ -40,7 +40,6 @@ const settingsMenu = [
       { path: '/settings/developer/email', label: 'Email / SMTP', icon: Mail },
       { path: '/settings/developer/telnyx', label: 'Telnyx SMS', icon: Phone },
       { path: '/settings/developer/mls', label: 'MLS Integration', icon: Building2 },
-      { path: '/settings/developer/jacquie-lawson', label: 'Jacquie Lawson Cards', icon: Heart },
       { path: '/settings/developer/lead-scoring', label: 'Lead Scoring', icon: Target },
       { path: '/settings/developer/custom-code', label: 'Custom Code', icon: Code },
       { path: '/settings/developer/system-messages', label: 'System Messages', icon: MessageSquare },
@@ -58,6 +57,7 @@ const settingsMenu = [
     category: 'Admin',
     icon: Shield,
     items: [
+      { path: '/settings/admin/jacquie-lawson', label: 'Jacquie Lawson Cards', icon: Heart },
       { path: '/settings/admin/reports', label: 'Admin Reports', icon: BarChart3 },
       { path: '/settings/admin/audit-log', label: 'Audit Log', icon: Activity },
       { path: '/settings/admin/roles', label: 'Roles & Permissions', icon: Shield },
