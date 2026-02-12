@@ -47,7 +47,9 @@ import {
   MessageSquare,
   X,
   Link,
-  Gift
+  Gift,
+  Heart,
+  Cake
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api, { contactsAPI } from '../lib/api';
