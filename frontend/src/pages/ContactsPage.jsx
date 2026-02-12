@@ -1819,6 +1819,9 @@ export const ContactsPage = () => {
   const [importFile, setImportFile] = useState(null);
   const [importResult, setImportResult] = useState(null);
   
+  // Export
+  const [exporting, setExporting] = useState(false);
+  
   // SMS modal
   const [showSMSModal, setShowSMSModal] = useState(false);
   const [smsRecipient, setSmsRecipient] = useState(null);
