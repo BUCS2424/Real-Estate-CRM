@@ -2823,6 +2823,60 @@ export const ContactsPage = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Delete All Contacts Modal */}
+      <Dialog open={showDeleteAllModal} onOpenChange={setShowDeleteAllModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-500 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              Delete All Contacts
+            </DialogTitle>
+            <DialogDescription>
+              This will permanently delete ALL {stats?.total || 0} contacts. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-sm text-red-500 font-medium">⚠️ Warning: This is irreversible!</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                All contact data, including names, emails, phones, and notes will be permanently deleted.
+              </p>
+            </div>
+            <div>
+              <Label>Type "DELETE ALL" to confirm</Label>
+              <Input
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE ALL"
+                className="mt-2"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowDeleteAllModal(false); setDeleteConfirmText(''); }}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAllContacts}
+              disabled={deleteConfirmText !== 'DELETE ALL' || deletingAll}
+            >
+              {deletingAll ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete All Contacts
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Email Modal - WYSIWYG with SMTP */}
       <EmailComposerModal
         isOpen={showEmailModal}
