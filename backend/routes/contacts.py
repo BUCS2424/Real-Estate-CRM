@@ -682,9 +682,11 @@ async def import_contacts(
                 error_details.append(str(e))
         
         return {
-            "total": len(contacts_to_import),
+            "total_in_file": len(contacts_to_import) + skipped_no_data,
+            "valid_rows": len(contacts_to_import),
             "imported": imported,
             "duplicates": duplicates,
+            "skipped_no_data": skipped_no_data,
             "errors": errors,
             "error_details": error_details[:10]
         }
