@@ -1822,6 +1822,11 @@ export const ContactsPage = () => {
   // Export
   const [exporting, setExporting] = useState(false);
   
+  // Delete All
+  const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  
   // iPhone Sync
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [syncFile, setSyncFile] = useState(null);
