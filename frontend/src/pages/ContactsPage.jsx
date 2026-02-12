@@ -2212,7 +2212,7 @@ export const ContactsPage = () => {
           <h1 className="text-3xl font-serif text-foreground mb-2">Contacts</h1>
           <p className="text-muted-foreground">Manage your buyers and sellers</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={handleExport} disabled={exporting} data-testid="export-contacts-btn">
             {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
             Export
@@ -2224,6 +2224,10 @@ export const ContactsPage = () => {
           <Button variant="outline" onClick={() => setShowImportModal(true)} data-testid="import-contacts-btn">
             <Upload className="w-4 h-4 mr-2" />
             Import
+          </Button>
+          <Button variant="outline" onClick={() => setShowDeleteAllModal(true)} className="text-red-500 hover:text-red-600 hover:bg-red-500/10" data-testid="delete-all-contacts-btn">
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete All
           </Button>
           <Button onClick={() => setShowAddModal(true)} className="bg-amber-500 hover:bg-amber-600 text-black" data-testid="add-contact-btn">
             <Plus className="w-4 h-4 mr-2" />Add Contact
