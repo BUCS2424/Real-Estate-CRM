@@ -59,6 +59,7 @@ const settingsMenu = [
     icon: Shield,
     items: [
       { path: '/settings/admin/jacquie-lawson', label: 'Jacquie Lawson Cards', icon: Heart },
+      { path: '/settings/admin/elevenlabs', label: 'ElevenLabs AI', icon: Mic },
       { path: '/settings/admin/reports', label: 'Admin Reports', icon: BarChart3 },
       { path: '/settings/admin/audit-log', label: 'Audit Log', icon: Activity },
       { path: '/settings/admin/roles', label: 'Roles & Permissions', icon: Shield },
