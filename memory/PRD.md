@@ -1431,6 +1431,48 @@ Updated the `ContactDetail` component to:
 
 Completed the Property Leads page enhancement with a tabbed interface supporting both lead management and a moderation queue for website-submitted leads.
 
+### Feature: Jacquie Lawson Card Integration
+
+**Description:** Full integration for sending animated greeting cards to CRM contacts via Jacquie Lawson's subscription service.
+
+**Backend Implementation:**
+- `POST /api/jacquie-lawson/config` - Save JL credentials and settings
+- `GET /api/jacquie-lawson/config` - Get configuration
+- `POST /api/jacquie-lawson/test` - Test login credentials
+- `GET /api/jacquie-lawson/stats` - Get card sending statistics
+- `POST /api/jacquie-lawson/send` - Send card (immediate or scheduled)
+- `GET /api/jacquie-lawson/queue` - Get scheduled cards
+- `GET /api/jacquie-lawson/history` - Get sent card history
+- `GET /api/jacquie-lawson/upcoming-occasions` - Get contacts with upcoming birthdays/anniversaries
+- Browser automation service using Playwright for card sending
+
+**Frontend Implementation:**
+- **Settings Page** (`/settings/developer/jacquie-lawson`):
+  - Account Credentials tab (email, password, sender name)
+  - Automation Settings tab (toggle auto-send for birthdays, anniversaries, home purchase anniversaries)
+  - Default Cards tab (set default card URLs per occasion)
+- **Contact Detail Page:**
+  - "Quick Actions" card with pink "Send Greeting Card" button
+  - Shows Important Dates (birthday, anniversary, home purchase anniversary)
+  - Send Card Modal with occasion selector, card URL input, personal message, scheduling
+
+**Contact Model Updated:**
+- Added `home_purchase_anniversary` date field
+- Added `contact_type` field (buyer/seller)
+- Edit tab now has date pickers for Birthday, Anniversary, Home Purchase Anniversary
+
+**Files Created:**
+- `/app/frontend/src/pages/settings/developer/JacquieLawsonSettings.jsx`
+- `/app/backend/routes/jacquie_lawson.py`
+- `/app/backend/services/jacquie_lawson_service.py`
+
+**Files Modified:**
+- `/app/frontend/src/pages/ContactsPage.jsx` - Added Quick Actions card and Send Card modal
+- `/app/backend/models/contact.py` - Added new date fields
+- `/app/backend/routes/__init__.py` - Registered JL router
+- `/app/frontend/src/App.js` - Added JL settings route
+- `/app/frontend/src/components/layout/SettingsLayout.jsx` - Added JL menu item
+
 #### Implementation Details
 
 **Backend Endpoints (Already Implemented):**
