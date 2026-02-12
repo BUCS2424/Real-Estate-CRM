@@ -385,6 +385,18 @@ async def delete_contact(contact_id: str, current_user: dict = Depends(require_r
         raise HTTPException(status_code=404, detail="Contact not found")
     return {"message": "Contact deleted"}
 
+@router.delete("")
+async def delete_all_contacts(
+    confirm: str = Query(..., description="Must be 'DELETE_ALL_CONTACTS' to confirm"),
+    current_user: dict = Depends(require_role([UserRole.SUPERUSER]))
+):
+    """Delete ALL contacts - SUPERUSER ONLY. Requires confirmation string."""
+    if confirm != "DELETE_ALL_CONTACTS":
+        raise HTTPException(status_code=400, detail="Confirmation required: pass ?confirm=DELETE_ALL_CONTACTS")
+    
+    result = await db.contacts.delete_many({})
+    return {"message": f"Deleted {result.deleted_count} contacts", "deleted_count": result.deleted_count}
+
 # ============ CONTACT PROPERTIES ============
 
 class AddPropertyRequest(BaseModel):
