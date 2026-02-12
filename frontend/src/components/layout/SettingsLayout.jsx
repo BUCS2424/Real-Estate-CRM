@@ -40,6 +40,7 @@ const settingsMenu = [
       { path: '/settings/developer/email', label: 'Email / SMTP', icon: Mail },
       { path: '/settings/developer/telnyx', label: 'Telnyx SMS', icon: Phone },
       { path: '/settings/developer/mls', label: 'MLS Integration', icon: Building2 },
+      { path: '/settings/developer/jacquie-lawson', label: 'Jacquie Lawson Cards', icon: Heart },
       { path: '/settings/developer/lead-scoring', label: 'Lead Scoring', icon: Target },
       { path: '/settings/developer/custom-code', label: 'Custom Code', icon: Code },
       { path: '/settings/developer/system-messages', label: 'System Messages', icon: MessageSquare },
