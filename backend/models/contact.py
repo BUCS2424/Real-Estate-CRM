@@ -68,6 +68,8 @@ class ContactResponse(BaseModel):
     # Other
     birthday: Optional[str] = None
     anniversary: Optional[str] = None
+    home_purchase_anniversary: Optional[str] = None
+    contact_type: Optional[str] = None  # 'buyer' or 'seller'
     web_page: Optional[str] = None
     related_name: Optional[str] = None
     created_at: Optional[str] = None
