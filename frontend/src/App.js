@@ -72,6 +72,12 @@ import SellerLeadsPage from './pages/SellerLeadsPage';
 import SellerLeadDetailPage from './pages/SellerLeadDetailPage';
 import VideoGeneratorPage from './pages/VideoGeneratorPage';
 
+// Social Media Pages
+import { SocialMediaLayout } from './components/layout/SocialMediaLayout';
+import { SocialMediaDashboard } from './pages/social-media/SocialMediaDashboard';
+import { SocialMediaSettings } from './pages/social-media/SocialMediaSettings';
+import { ComposePost } from './pages/social-media/ComposePost';
+
 import './App.css';
 
 function App() {
