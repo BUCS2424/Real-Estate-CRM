@@ -532,6 +532,7 @@ async def import_contacts(
             text = content.decode('latin-1')
         
         contacts_to_import = []
+        skipped_no_data = 0  # Track rows without required fields
         
         if is_vcard:
             # Parse vCard format
