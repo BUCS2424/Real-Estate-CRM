@@ -607,20 +607,41 @@ async def import_contacts(
         
         for contact in contacts_to_import:
             try:
-                email = contact.get('email', '').lower() if contact.get('email') else ''
+                email = contact.get('email', '').lower().strip() if contact.get('email') else ''
+                first_name = contact.get('first_name', '').strip() if contact.get('first_name') else ''
+                last_name = contact.get('last_name', '').strip() if contact.get('last_name') else ''
+                phone = contact.get('phone', '').strip() if contact.get('phone') else ''
                 
-                # Check for duplicate by email if email exists
+                # Check for duplicate - by email first, then by name+phone
+                existing = None
                 if email:
                     existing = await db.contacts.find_one({"email": email})
-                    if existing:
-                        duplicates += 1
-                        continue
+                
+                if not existing and first_name and last_name:
+                    # Check by exact name match
+                    name_query = {"first_name": {"$regex": f"^{re.escape(first_name)}$", "$options": "i"}, 
+                                  "last_name": {"$regex": f"^{re.escape(last_name)}$", "$options": "i"}}
+                    if phone:
+                        # If we have phone, use it for more precise matching
+                        phone_digits = re.sub(r'\D', '', phone)
+                        if len(phone_digits) >= 7:
+                            name_query["$or"] = [
+                                {"phone": {"$regex": phone_digits[-7:]}},
+                                {"mobile_phone": {"$regex": phone_digits[-7:]}},
+                                {"home_phone": {"$regex": phone_digits[-7:]}},
+                                {"business_phone": {"$regex": phone_digits[-7:]}}
+                            ]
+                    existing = await db.contacts.find_one(name_query)
+                
+                if existing:
+                    duplicates += 1
+                    continue
                 
                 # Create contact document with all imported fields
                 contact_doc = {
                     "id": contact.get('id') or str(uuid.uuid4()),
-                    "first_name": contact.get('first_name', ''),
-                    "last_name": contact.get('last_name', ''),
+                    "first_name": first_name,
+                    "last_name": last_name,
                     "name": contact.get('name'),
                     "display_name": contact.get('display_name'),
                     "nickname": contact.get('nickname'),
