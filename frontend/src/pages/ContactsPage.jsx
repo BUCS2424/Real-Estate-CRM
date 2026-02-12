@@ -2072,6 +2072,10 @@ export const ContactsPage = () => {
           <p className="text-muted-foreground">Manage your buyers and sellers</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExport} disabled={exporting} data-testid="export-contacts-btn">
+            {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+            Export
+          </Button>
           <Button variant="outline" onClick={() => setShowImportModal(true)} data-testid="import-contacts-btn">
             <Upload className="w-4 h-4 mr-2" />
             Import
