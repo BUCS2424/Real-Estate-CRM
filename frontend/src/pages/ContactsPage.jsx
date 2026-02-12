@@ -2317,13 +2317,18 @@ export const ContactsPage = () => {
               Import Contacts
             </DialogTitle>
             <DialogDescription>
-              Import contacts from vCard files (.vcf) exported from iPhone, Android, or other devices
+              Import contacts from CSV or vCard files (.vcf)
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
             {/* Supported Formats */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
+              <div className="p-3 rounded-lg bg-muted/50 text-center">
+                <FileSpreadsheet className="w-6 h-6 mx-auto mb-1 text-green-600" />
+                <p className="text-xs font-medium">CSV</p>
+                <p className="text-xs text-muted-foreground">.csv</p>
+              </div>
               <div className="p-3 rounded-lg bg-muted/50 text-center">
                 <Smartphone className="w-6 h-6 mx-auto mb-1 text-green-500" />
                 <p className="text-xs font-medium">Android</p>
@@ -2337,7 +2342,7 @@ export const ContactsPage = () => {
               <div className="p-3 rounded-lg bg-muted/50 text-center">
                 <FileSpreadsheet className="w-6 h-6 mx-auto mb-1 text-blue-500" />
                 <p className="text-xs font-medium">Outlook</p>
-                <p className="text-xs text-muted-foreground">.vcf</p>
+                <p className="text-xs text-muted-foreground">.vcf / .csv</p>
               </div>
             </div>
 
@@ -2347,7 +2352,7 @@ export const ContactsPage = () => {
               <div className="mt-2">
                 <input
                   type="file"
-                  accept=".vcf,.vcard"
+                  accept=".csv,.vcf,.vcard"
                   onChange={(e) => setImportFile(e.target.files?.[0] || null)}
                   className="block w-full text-sm text-muted-foreground
                     file:mr-4 file:py-2 file:px-4
