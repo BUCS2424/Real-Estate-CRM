@@ -371,6 +371,36 @@ const ContactDetail = ({ contactId, onBack }) => {
     toast.success('Copied to clipboard');
   };
 
+  const handleSendCard = async () => {
+    if (!cardData.card_url) {
+      toast.error('Please enter a card URL');
+      return;
+    }
+    const email = contact.email || contact.email_2 || contact.email_3;
+    if (!email) {
+      toast.error('Contact has no email address');
+      return;
+    }
+    setSendingCard(true);
+    try {
+      const payload = {
+        contact_id: contactId,
+        card_url: cardData.card_url,
+        occasion: cardData.occasion,
+        message: cardData.message,
+        schedule_date: cardData.schedule_date || null
+      };
+      await api.post('/jacquie-lawson/send', payload);
+      toast.success(cardData.schedule_date ? 'Card scheduled!' : 'Card is being sent!');
+      setShowSendCardModal(false);
+      setCardData({ card_url: '', occasion: 'birthday', message: '', schedule_date: '' });
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to send card');
+    } finally {
+      setSendingCard(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
