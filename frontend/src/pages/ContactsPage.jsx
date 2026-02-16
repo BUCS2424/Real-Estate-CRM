@@ -616,10 +616,10 @@ const ContactDetail = ({ contactId, onBack }) => {
                         </div>
                       )}
                       
-                      {/* Emails Section */}
-                      <div className="col-span-2 space-y-2">
-                        <Label className="text-xs text-muted-foreground">Email Addresses</Label>
-                        {(contact.email || contact.email_2 || contact.email_3) ? (
+                      {/* Emails Section - only show if there are emails */}
+                      {(contact.email || contact.email_2 || contact.email_3) && (
+                        <div className="col-span-2 space-y-2">
+                          <Label className="text-xs text-muted-foreground">Email Addresses</Label>
                           <div className="space-y-1">
                             {contact.email && (
                               <p className="font-medium flex items-center gap-1 text-sm">
@@ -643,15 +643,13 @@ const ContactDetail = ({ contactId, onBack }) => {
                               </p>
                             )}
                           </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">-</p>
-                        )}
-                      </div>
+                        </div>
+                      )}
                       
-                      {/* Phone Numbers Section - ALL types */}
-                      <div className="col-span-2 space-y-2">
-                        <Label className="text-xs text-muted-foreground">Phone Numbers</Label>
-                        {(contact.phone || contact.mobile_phone || contact.home_phone || contact.business_phone || contact.pager || contact.home_fax || contact.business_fax) ? (
+                      {/* Phone Numbers Section - only show if there are phones */}
+                      {(contact.phone || contact.mobile_phone || contact.home_phone || contact.business_phone || contact.pager || contact.home_fax || contact.business_fax) && (
+                        <div className="col-span-2 space-y-2">
+                          <Label className="text-xs text-muted-foreground">Phone Numbers</Label>
                           <div className="space-y-1">
                             {contact.mobile_phone && (
                               <p className="font-medium flex items-center gap-1 text-sm">
