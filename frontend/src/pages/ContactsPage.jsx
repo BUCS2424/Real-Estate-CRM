@@ -502,24 +502,30 @@ const ContactDetail = ({ contactId, onBack }) => {
               <span className="text-sm text-muted-foreground">Category</span>
               <span className="text-sm font-medium capitalize">{contact.category || '-'}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Company</span>
-              <span className="text-sm font-medium">{company || '-'}</span>
-            </div>
+            {company && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Company</span>
+                <span className="text-sm font-medium">{company}</span>
+              </div>
+            )}
             {jobTitle && (
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Title</span>
                 <span className="text-sm font-medium">{jobTitle}</span>
               </div>
             )}
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Budget</span>
-              <span className="text-sm font-medium">{contact.budget || '-'}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Lead Score</span>
-              <span className="text-sm font-medium">{contact.lead_score || '-'}</span>
-            </div>
+            {contact.budget && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Budget</span>
+                <span className="text-sm font-medium">{contact.budget}</span>
+              </div>
+            )}
+            {contact.lead_score > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Lead Score</span>
+                <span className="text-sm font-medium">{contact.lead_score}</span>
+              </div>
+            )}
             {contact.birthday && (
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Birthday</span>
