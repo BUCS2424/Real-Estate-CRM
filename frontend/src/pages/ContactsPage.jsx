@@ -2435,7 +2435,12 @@ export const ContactsPage = () => {
                 <Label>Category</Label>
                 <Select value={newContact.category} onValueChange={(v) => setNewContact({ ...newContact, category: v })}>
                   <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                  <SelectContent><SelectItem value="buyer">Buyer</SelectItem><SelectItem value="seller">Seller</SelectItem></SelectContent>
+                  <SelectContent>
+                    <SelectItem value="buyer">Buyer</SelectItem>
+                    <SelectItem value="seller">Seller</SelectItem>
+                    <SelectItem value="lender">Lender</SelectItem>
+                    <SelectItem value="vendor">Vendor</SelectItem>
+                  </SelectContent>
                 </Select>
               </div>
               <div>
