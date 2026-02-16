@@ -2920,6 +2920,12 @@ export const ContactsPage = () => {
         recipientEmail={emailRecipient?.email}
         recipientName={emailRecipient?.name}
       />
+
+      {/* Smart List Modal */}
+      <SmartListModal
+        isOpen={showSmartListModal}
+        onClose={() => setShowSmartListModal(false)}
+      />
     </div>
   );
 };
