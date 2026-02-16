@@ -264,6 +264,8 @@ async def get_contacts_stats(current_user: dict = Depends(get_current_user)):
     total = await db.contacts.count_documents({})
     buyers = await db.contacts.count_documents({"category": "buyer"})
     sellers = await db.contacts.count_documents({"category": "seller"})
+    lenders = await db.contacts.count_documents({"category": "lender"})
+    vendors = await db.contacts.count_documents({"category": "vendor"})
     new_count = await db.contacts.count_documents({"status": "new"})
     qualified = await db.contacts.count_documents({"status": "qualified"})
     
@@ -290,6 +292,8 @@ async def get_contacts_stats(current_user: dict = Depends(get_current_user)):
         "total": total,
         "buyers": buyers,
         "sellers": sellers,
+        "lenders": lenders,
+        "vendors": vendors,
         "new": new_count,
         "qualified": qualified,
         "by_letter": letter_counts
