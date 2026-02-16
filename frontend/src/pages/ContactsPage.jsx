@@ -2248,6 +2248,10 @@ export const ContactsPage = () => {
             <Upload className="w-4 h-4 mr-2" />
             Import
           </Button>
+          <Button variant="outline" onClick={() => setShowSmartListModal(true)} className="text-amber-500 hover:text-amber-600 hover:bg-amber-500/10" data-testid="smart-list-btn">
+            <ListFilter className="w-4 h-4 mr-2" />
+            Smart List
+          </Button>
           <Button variant="outline" onClick={() => setShowDeleteAllModal(true)} className="text-red-500 hover:text-red-600 hover:bg-red-500/10" data-testid="delete-all-contacts-btn">
             <Trash2 className="w-4 h-4 mr-2" />
             Delete All
