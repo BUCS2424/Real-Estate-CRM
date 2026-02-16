@@ -729,7 +729,7 @@ const ContactDetail = ({ contactId, onBack }) => {
                           {contact.department && (
                             <div className="col-span-2 space-y-1">
                               <Label className="text-xs text-muted-foreground">Department</Label>
-                              <p className="font-medium">{contact.department}</p></p>
+                              <p className="font-medium">{contact.department}</p>
                             </div>
                           )}
                         </>
