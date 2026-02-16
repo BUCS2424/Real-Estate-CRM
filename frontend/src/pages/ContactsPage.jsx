@@ -541,29 +541,28 @@ const ContactDetail = ({ contactId, onBack }) => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Tag className="w-4 h-4 text-amber-500" />Tags
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {contact.tags?.length > 0 ? (
-                contact.tags.map((tag, idx) => (
+        {/* Tags Card - only show if there are tags */}
+        {contact.tags?.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Tag className="w-4 h-4 text-amber-500" />Tags
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {contact.tags.map((tag, idx) => (
                   <span 
                     key={idx} 
                     className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 text-amber-600 rounded-full text-xs font-medium border border-amber-500/30"
                   >
                     {tag}
                   </span>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground">No tags</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Main Content */}
