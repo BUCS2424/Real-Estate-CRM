@@ -413,8 +413,9 @@ async def send_smart_list(
     if not request.contact_ids:
         raise HTTPException(status_code=400, detail="No contacts in the list")
     
-    # Get sender profile
-    sender = await db.users.find_one({"id": current_user["user_id"]}, {"_id": 0})
+    # Get sender profile - current_user has 'sub' as the user id
+    user_id = current_user.get("sub") or current_user.get("user_id")
+    sender = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not sender:
         raise HTTPException(status_code=404, detail="Sender profile not found")
     
