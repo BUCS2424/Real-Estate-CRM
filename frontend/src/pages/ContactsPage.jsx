@@ -2262,6 +2262,8 @@ export const ContactsPage = () => {
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="buyer">Buyers</SelectItem>
                 <SelectItem value="seller">Sellers</SelectItem>
+                <SelectItem value="lender">Lenders</SelectItem>
+                <SelectItem value="vendor">Vendors</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
