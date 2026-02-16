@@ -75,6 +75,8 @@ const getStatusOptions = () => {
 const CATEGORY_OPTIONS = [
   { value: 'buyer', label: 'Buyer', color: 'bg-emerald-500/20 text-emerald-600', icon: ShoppingCart },
   { value: 'seller', label: 'Seller', color: 'bg-orange-500/20 text-orange-600', icon: Home },
+  { value: 'lender', label: 'Lender', color: 'bg-blue-500/20 text-blue-600', icon: Building2 },
+  { value: 'vendor', label: 'Vendor', color: 'bg-purple-500/20 text-purple-600', icon: Briefcase },
 ];
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
