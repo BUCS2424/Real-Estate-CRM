@@ -661,13 +661,40 @@ async def get_contact(contact_id: str, current_user: dict = Depends(get_current_
         raise HTTPException(status_code=404, detail="Contact not found")
     return ContactResponse(**contact)
 
-@router.put("/{contact_id}", response_model=ContactResponse)
-async def update_contact(contact_id: str, contact: ContactCreate, current_user: dict = Depends(get_current_user)):
-    result = await db.contacts.update_one({"id": contact_id}, {"$set": contact.model_dump()})
-    if result.matched_count == 0:
+@router.put("/{contact_id}")
+async def update_contact(contact_id: str, contact: dict, current_user: dict = Depends(get_current_user)):
+    """Update a contact - only updates fields that are provided"""
+    # Get existing contact first
+    existing = await db.contacts.find_one({"id": contact_id})
+    if not existing:
         raise HTTPException(status_code=404, detail="Contact not found")
+    
+    # Remove None values and empty strings for optional fields (but keep empty lists)
+    update_data = {}
+    for key, value in contact.items():
+        if key == "_id":
+            continue
+        if key == "id":
+            continue  # Don't allow changing ID
+        # Keep the value if it's not None (empty string is valid for clearing a field)
+        if value is not None:
+            update_data[key] = value
+    
+    # Always update updated_at
+    from datetime import datetime, timezone
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    if update_data:
+        result = await db.contacts.update_one(
+            {"id": contact_id}, 
+            {"$set": update_data}
+        )
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Contact not found")
+    
+    # Return updated contact
     updated = await db.contacts.find_one({"id": contact_id}, {"_id": 0})
-    return ContactResponse(**updated)
+    return updated
 
 @router.patch("/{contact_id}/score", response_model=ContactResponse)
 async def update_lead_score(contact_id: str, score_update: LeadScoreUpdate, current_user: dict = Depends(get_current_user)):
