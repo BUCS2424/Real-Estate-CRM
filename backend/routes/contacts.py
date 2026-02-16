@@ -299,6 +299,301 @@ async def get_contacts_stats(current_user: dict = Depends(get_current_user)):
         "by_letter": letter_counts
     }
 
+# ============ SMART LIST ============
+
+@router.get("/filter-options")
+async def get_filter_options(current_user: dict = Depends(get_current_user)):
+    """Get available statuses and tags for filtering"""
+    # Get unique statuses
+    statuses = await db.contacts.distinct("status")
+    statuses = [s for s in statuses if s]  # Remove empty values
+    
+    # Get unique tags (flatten and dedupe)
+    tags_pipeline = [
+        {"$unwind": "$tags"},
+        {"$group": {"_id": "$tags"}},
+        {"$sort": {"_id": 1}}
+    ]
+    tags = []
+    async for doc in db.contacts.aggregate(tags_pipeline):
+        if doc["_id"]:
+            tags.append(doc["_id"])
+    
+    return {
+        "statuses": sorted(statuses),
+        "tags": tags
+    }
+
+@router.get("/smart-list")
+async def smart_list_search(
+    categories: List[str] = Query(default=[]),
+    statuses: List[str] = Query(default=[]),
+    tags: List[str] = Query(default=[]),
+    location_type: Optional[str] = Query(None),
+    location_value: Optional[str] = Query(None),
+    current_user: dict = Depends(get_current_user)
+):
+    """Search contacts for Smart List with multiple filters"""
+    if not categories:
+        return {"contacts": []}
+    
+    # Build query
+    query = {"category": {"$in": categories}}
+    
+    # Add status filter
+    if statuses:
+        query["status"] = {"$in": statuses}
+    
+    # Add tags filter (contacts that have ANY of the selected tags)
+    if tags:
+        query["tags"] = {"$in": tags}
+    
+    # Add location filter
+    if location_type and location_value:
+        location_value_clean = location_value.strip()
+        if location_type == "zip_code":
+            query["$or"] = [
+                {"home_postal_code": {"$regex": f"^{location_value_clean}", "$options": "i"}},
+                {"business_postal_code": {"$regex": f"^{location_value_clean}", "$options": "i"}}
+            ]
+        elif location_type == "city":
+            query["$or"] = [
+                {"home_city": {"$regex": f"^{location_value_clean}", "$options": "i"}},
+                {"business_city": {"$regex": f"^{location_value_clean}", "$options": "i"}}
+            ]
+        elif location_type == "county":
+            # County might be stored in different fields
+            query["$or"] = [
+                {"county": {"$regex": location_value_clean, "$options": "i"}},
+                {"home_county": {"$regex": location_value_clean, "$options": "i"}}
+            ]
+        elif location_type == "state":
+            query["$or"] = [
+                {"home_state": {"$regex": f"^{location_value_clean}", "$options": "i"}},
+                {"business_state": {"$regex": f"^{location_value_clean}", "$options": "i"}}
+            ]
+    
+    # Execute query
+    contacts = await db.contacts.find(
+        query,
+        {
+            "_id": 0,
+            "id": 1,
+            "first_name": 1,
+            "last_name": 1,
+            "email": 1,
+            "phone": 1,
+            "mobile_phone": 1,
+            "company": 1,
+            "category": 1,
+            "status": 1,
+            "tags": 1,
+            "home_city": 1,
+            "home_state": 1,
+            "home_postal_code": 1
+        }
+    ).sort("last_name", 1).to_list(1000)
+    
+    return {"contacts": contacts}
+
+class SmartListSendRequest(BaseModel):
+    recipient_ids: List[str]
+    contact_ids: List[str]
+    list_type: str  # "Vendor", "Lender", etc.
+    categories: List[str]
+
+@router.post("/smart-list/send")
+async def send_smart_list(
+    request: SmartListSendRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send Smart List via email to selected recipients"""
+    if not request.recipient_ids:
+        raise HTTPException(status_code=400, detail="No recipients selected")
+    if not request.contact_ids:
+        raise HTTPException(status_code=400, detail="No contacts in the list")
+    
+    # Get sender profile
+    sender = await db.users.find_one({"id": current_user["user_id"]}, {"_id": 0})
+    if not sender:
+        raise HTTPException(status_code=404, detail="Sender profile not found")
+    
+    sender_name = f"{sender.get('first_name', '')} {sender.get('last_name', '')}".strip() or sender.get('email', 'Hidden Haven Realty')
+    sender_signature = sender.get('signature', f"""
+Best regards,
+{sender_name}
+Hidden Haven Realty
+""")
+    
+    # Get recipient details
+    recipients = await db.contacts.find(
+        {"id": {"$in": request.recipient_ids}},
+        {"_id": 0, "id": 1, "first_name": 1, "last_name": 1, "email": 1}
+    ).to_list(100)
+    
+    # Get list contacts
+    list_contacts = await db.contacts.find(
+        {"id": {"$in": request.contact_ids}},
+        {"_id": 0, "first_name": 1, "last_name": 1, "email": 1, "phone": 1, "mobile_phone": 1, "company": 1, "category": 1}
+    ).to_list(1000)
+    
+    # Build contact list HTML
+    contact_list_html = "<table style='width:100%; border-collapse: collapse; margin: 20px 0;'>"
+    contact_list_html += "<tr style='background-color: #f8f4e8; border-bottom: 2px solid #d4a646;'>"
+    contact_list_html += "<th style='padding: 12px; text-align: left; color: #1a2744;'>Name</th>"
+    contact_list_html += "<th style='padding: 12px; text-align: left; color: #1a2744;'>Company</th>"
+    contact_list_html += "<th style='padding: 12px; text-align: left; color: #1a2744;'>Email</th>"
+    contact_list_html += "<th style='padding: 12px; text-align: left; color: #1a2744;'>Phone</th>"
+    contact_list_html += "</tr>"
+    
+    for i, contact in enumerate(list_contacts):
+        bg_color = '#ffffff' if i % 2 == 0 else '#f9f9f9'
+        name = f"{contact.get('first_name', '')} {contact.get('last_name', '')}".strip()
+        company = contact.get('company', '-')
+        email = contact.get('email', '-')
+        phone = contact.get('phone') or contact.get('mobile_phone') or '-'
+        
+        contact_list_html += f"<tr style='background-color: {bg_color}; border-bottom: 1px solid #eee;'>"
+        contact_list_html += f"<td style='padding: 10px;'>{name}</td>"
+        contact_list_html += f"<td style='padding: 10px;'>{company}</td>"
+        contact_list_html += f"<td style='padding: 10px;'><a href='mailto:{email}' style='color: #d4a646;'>{email}</a></td>"
+        contact_list_html += f"<td style='padding: 10px;'>{phone}</td>"
+        contact_list_html += "</tr>"
+    
+    contact_list_html += "</table>"
+    
+    # Send emails
+    sent_count = 0
+    errors = []
+    
+    # Get SMTP settings
+    smtp_settings = await db.settings.find_one({"type": "smtp"}, {"_id": 0})
+    
+    if not smtp_settings or not smtp_settings.get('host'):
+        # Log the attempt but don't fail - store in activity log
+        for recipient in recipients:
+            if recipient.get('email'):
+                # Log the email that would be sent
+                await db.email_logs.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "to": recipient['email'],
+                    "to_name": f"{recipient.get('first_name', '')} {recipient.get('last_name', '')}".strip(),
+                    "subject": f"Here's Your {request.list_type} List",
+                    "list_type": request.list_type,
+                    "contacts_count": len(list_contacts),
+                    "sender_id": current_user["user_id"],
+                    "status": "queued_no_smtp",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                })
+                sent_count += 1
+        
+        return {
+            "message": f"List queued for {sent_count} recipient(s). Note: SMTP not configured - emails will be sent when SMTP is set up.",
+            "sent": sent_count,
+            "smtp_configured": False
+        }
+    
+    # Send via SMTP
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+    
+    try:
+        if smtp_settings.get('use_ssl'):
+            server = smtplib.SMTP_SSL(smtp_settings['host'], smtp_settings.get('port', 465))
+        else:
+            server = smtplib.SMTP(smtp_settings['host'], smtp_settings.get('port', 587))
+            if smtp_settings.get('use_tls', True):
+                server.starttls()
+        
+        server.login(smtp_settings['username'], smtp_settings['password'])
+        
+        for recipient in recipients:
+            if not recipient.get('email'):
+                continue
+            
+            recipient_name = f"{recipient.get('first_name', '')} {recipient.get('last_name', '')}".strip() or "Valued Client"
+            
+            # Build personalized email
+            email_html = f"""
+            <html>
+            <body style="font-family: Georgia, 'Times New Roman', serif; color: #1a2744; max-width: 800px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #1a2744 0%, #2a3a5c 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                    <h1 style="color: #d4a646; margin: 0; font-size: 28px;">Hidden Haven Realty</h1>
+                </div>
+                
+                <div style="background-color: #ffffff; padding: 30px; border: 1px solid #e5e5e5; border-top: none;">
+                    <p style="font-size: 18px; margin-bottom: 20px;">Dear {recipient_name},</p>
+                    
+                    <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                        I hope this message finds you well! As requested, I'm delighted to share this curated 
+                        <strong style="color: #d4a646;">{request.list_type} List</strong> with you. These are trusted professionals 
+                        that I personally recommend.
+                    </p>
+                    
+                    <h2 style="color: #1a2744; border-bottom: 2px solid #d4a646; padding-bottom: 10px; margin-top: 30px;">
+                        Your {request.list_type} List ({len(list_contacts)} Contact{'' if len(list_contacts) == 1 else 's'})
+                    </h2>
+                    
+                    {contact_list_html}
+                    
+                    <p style="font-size: 16px; line-height: 1.6; margin-top: 30px;">
+                        Please don't hesitate to reach out if you need any additional information or have questions 
+                        about any of these contacts. I'm always here to help!
+                    </p>
+                    
+                    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e5e5;">
+                        <p style="font-size: 16px; white-space: pre-line;">{sender_signature}</p>
+                    </div>
+                </div>
+                
+                <div style="background-color: #1a2744; padding: 15px; text-align: center; border-radius: 0 0 8px 8px;">
+                    <p style="color: #a0a0a0; font-size: 12px; margin: 0;">
+                        © {datetime.now().year} Hidden Haven Realty | Luxury Real Estate Services
+                    </p>
+                </div>
+            </body>
+            </html>
+            """
+            
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = f"Here's Your {request.list_type} List"
+            msg['From'] = smtp_settings.get('from_email', smtp_settings['username'])
+            msg['To'] = recipient['email']
+            
+            msg.attach(MIMEText(email_html, 'html'))
+            
+            try:
+                server.send_message(msg)
+                sent_count += 1
+                
+                # Log successful send
+                await db.email_logs.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "to": recipient['email'],
+                    "to_name": recipient_name,
+                    "subject": f"Here's Your {request.list_type} List",
+                    "list_type": request.list_type,
+                    "contacts_count": len(list_contacts),
+                    "sender_id": current_user["user_id"],
+                    "status": "sent",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                })
+            except Exception as e:
+                errors.append(f"{recipient['email']}: {str(e)}")
+        
+        server.quit()
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"SMTP connection failed: {str(e)}")
+    
+    return {
+        "message": f"Successfully sent to {sent_count} recipient(s)",
+        "sent": sent_count,
+        "errors": errors if errors else None,
+        "smtp_configured": True
+    }
+
 @router.get("/export")
 async def export_contacts(
     category: Optional[str] = Query(None, description="Filter by category: buyer, seller"),
