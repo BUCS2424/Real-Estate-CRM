@@ -2255,11 +2255,13 @@ export const ContactsPage = () => {
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
           <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Total</p><p className="text-2xl font-bold">{stats.total}</p></div><Users className="w-8 h-8 text-amber-500" /></div></CardContent></Card>
           <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Buyers</p><p className="text-2xl font-bold text-emerald-600">{stats.buyers}</p></div><ShoppingCart className="w-8 h-8 text-emerald-500" /></div></CardContent></Card>
           <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Sellers</p><p className="text-2xl font-bold text-orange-600">{stats.sellers}</p></div><Home className="w-8 h-8 text-orange-500" /></div></CardContent></Card>
-          <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">New</p><p className="text-2xl font-bold text-blue-600">{stats.new}</p></div><Clock className="w-8 h-8 text-blue-500" /></div></CardContent></Card>
+          <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Lenders</p><p className="text-2xl font-bold text-blue-600">{stats.lenders || 0}</p></div><Building2 className="w-8 h-8 text-blue-500" /></div></CardContent></Card>
+          <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Vendors</p><p className="text-2xl font-bold text-purple-600">{stats.vendors || 0}</p></div><Briefcase className="w-8 h-8 text-purple-500" /></div></CardContent></Card>
+          <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">New</p><p className="text-2xl font-bold text-cyan-600">{stats.new}</p></div><Clock className="w-8 h-8 text-cyan-500" /></div></CardContent></Card>
           <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Qualified</p><p className="text-2xl font-bold text-green-600">{stats.qualified}</p></div><CheckCircle className="w-8 h-8 text-green-500" /></div></CardContent></Card>
         </div>
       )}
