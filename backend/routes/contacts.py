@@ -413,11 +413,21 @@ async def send_smart_list(
     if not request.contact_ids:
         raise HTTPException(status_code=400, detail="No contacts in the list")
     
-    # Get sender profile - current_user has 'sub' as the user id
+    # Get sender profile - try by ID first, then by email from token
     user_id = current_user.get("sub") or current_user.get("user_id")
     sender = await db.users.find_one({"id": user_id}, {"_id": 0})
+    
+    # If not found by ID, try by email (for older accounts)
+    if not sender and current_user.get("email"):
+        sender = await db.users.find_one({"email": current_user.get("email")}, {"_id": 0})
+    
+    # If still not found, create a minimal sender object
     if not sender:
-        raise HTTPException(status_code=404, detail="Sender profile not found")
+        sender = {
+            "email": current_user.get("email", "noreply@hiddenhaven.com"),
+            "first_name": "",
+            "last_name": ""
+        }
     
     sender_name = f"{sender.get('first_name', '')} {sender.get('last_name', '')}".strip() or sender.get('email', 'Hidden Haven Realty')
     sender_signature = sender.get('signature', f"""
