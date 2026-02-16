@@ -1402,10 +1402,10 @@ const ContactDetail = ({ contactId, onBack }) => {
                   <CardDescription>Update all contact information</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Contact Type - Buyer/Seller Selection */}
+                  {/* Contact Type - Buyer/Seller/Lender/Vendor Selection */}
                   <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
                     <Label className="text-sm font-semibold text-amber-600 mb-3 block">Contact Type</Label>
-                    <div className="flex gap-4">
+                    <div className="flex flex-wrap gap-2">
                       <Button 
                         type="button"
                         variant={editData.category === 'buyer' ? 'default' : 'outline'}
@@ -1421,6 +1421,22 @@ const ContactDetail = ({ contactId, onBack }) => {
                         onClick={() => setEditData({ ...editData, category: 'seller' })}
                       >
                         <Home className="w-4 h-4 mr-2" />Seller
+                      </Button>
+                      <Button 
+                        type="button"
+                        variant={editData.category === 'lender' ? 'default' : 'outline'}
+                        className={editData.category === 'lender' ? 'bg-blue-500 hover:bg-blue-600 text-white' : ''}
+                        onClick={() => setEditData({ ...editData, category: 'lender' })}
+                      >
+                        <Building2 className="w-4 h-4 mr-2" />Lender
+                      </Button>
+                      <Button 
+                        type="button"
+                        variant={editData.category === 'vendor' ? 'default' : 'outline'}
+                        className={editData.category === 'vendor' ? 'bg-purple-500 hover:bg-purple-600 text-white' : ''}
+                        onClick={() => setEditData({ ...editData, category: 'vendor' })}
+                      >
+                        <Briefcase className="w-4 h-4 mr-2" />Vendor
                       </Button>
                     </div>
                   </div>
