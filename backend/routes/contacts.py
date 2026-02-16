@@ -586,7 +586,7 @@ Hidden Haven Realty
                     "subject": f"Here's Your {request.list_type} List",
                     "list_type": request.list_type,
                     "contacts_count": len(list_contacts),
-                    "sender_id": current_user["user_id"],
+                    "sender_id": user_id,
                     "status": "sent",
                     "created_at": datetime.now(timezone.utc).isoformat()
                 })
