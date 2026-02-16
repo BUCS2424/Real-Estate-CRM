@@ -708,26 +708,28 @@ const ContactDetail = ({ contactId, onBack }) => {
                               </p>
                             )}
                           </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">-</p>
-                        )}
-                      </div>
+                        </div>
+                      )}
                       
-                      {/* Company/Organization */}
+                      {/* Company/Organization - only show if any company info exists */}
                       {(company || jobTitle || contact.department) && (
                         <>
-                          <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Company/Organization</Label>
-                            <p className="font-medium">{company || '-'}</p>
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Job Title</Label>
-                            <p className="font-medium">{jobTitle || '-'}</p>
-                          </div>
+                          {company && (
+                            <div className="space-y-1">
+                              <Label className="text-xs text-muted-foreground">Company/Organization</Label>
+                              <p className="font-medium">{company}</p>
+                            </div>
+                          )}
+                          {jobTitle && (
+                            <div className="space-y-1">
+                              <Label className="text-xs text-muted-foreground">Job Title</Label>
+                              <p className="font-medium">{jobTitle}</p>
+                            </div>
+                          )}
                           {contact.department && (
                             <div className="col-span-2 space-y-1">
                               <Label className="text-xs text-muted-foreground">Department</Label>
-                              <p className="font-medium">{contact.department}</p>
+                              <p className="font-medium">{contact.department}</p></p>
                             </div>
                           )}
                         </>
