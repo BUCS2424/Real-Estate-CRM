@@ -1847,6 +1847,9 @@ export const ContactsPage = () => {
   const [deletingAll, setDeletingAll] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   
+  // Smart List
+  const [showSmartListModal, setShowSmartListModal] = useState(false);
+  
   // iPhone Sync
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [syncFile, setSyncFile] = useState(null);
