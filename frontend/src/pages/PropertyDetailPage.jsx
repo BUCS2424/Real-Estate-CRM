@@ -127,7 +127,7 @@ export const PropertyDetailPage = () => {
   }
 
   const images = property.images?.length > 0 
-    ? property.images 
+    ? property.images.map(img => typeof img === 'string' ? { url: img } : img)
     : [{ url: 'https://images.unsplash.com/photo-1578439297699-eb414262c2de?w=1200&q=80' }];
 
   return (
