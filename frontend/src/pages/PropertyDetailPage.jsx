@@ -19,13 +19,15 @@ import {
   Share2,
   X,
   Loader2,
-  Check
+  Check,
+  Calculator
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner';
+import { MortgageCalculator } from '../components/MortgageCalculator';
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('en-US', { 
