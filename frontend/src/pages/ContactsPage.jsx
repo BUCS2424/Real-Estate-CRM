@@ -2285,16 +2285,114 @@ export const ContactsPage = () => {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - Clickable Filters */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-          <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Total</p><p className="text-2xl font-bold">{stats.total}</p></div><Users className="w-8 h-8 text-amber-500" /></div></CardContent></Card>
-          <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Buyers</p><p className="text-2xl font-bold text-emerald-600">{stats.buyers}</p></div><ShoppingCart className="w-8 h-8 text-emerald-500" /></div></CardContent></Card>
-          <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Sellers</p><p className="text-2xl font-bold text-orange-600">{stats.sellers}</p></div><Home className="w-8 h-8 text-orange-500" /></div></CardContent></Card>
-          <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Lenders</p><p className="text-2xl font-bold text-blue-600">{stats.lenders || 0}</p></div><Building2 className="w-8 h-8 text-blue-500" /></div></CardContent></Card>
-          <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Vendors</p><p className="text-2xl font-bold text-purple-600">{stats.vendors || 0}</p></div><Briefcase className="w-8 h-8 text-purple-500" /></div></CardContent></Card>
-          <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">New</p><p className="text-2xl font-bold text-cyan-600">{stats.new}</p></div><Clock className="w-8 h-8 text-cyan-500" /></div></CardContent></Card>
-          <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Qualified</p><p className="text-2xl font-bold text-green-600">{stats.qualified}</p></div><CheckCircle className="w-8 h-8 text-green-500" /></div></CardContent></Card>
+          <Card 
+            className={`cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] ${filterCategory === 'all' && filterStatus === 'all' ? 'ring-2 ring-amber-500 bg-amber-500/5' : ''}`}
+            onClick={() => { setFilterCategory('all'); setFilterStatus('all'); }}
+            data-testid="filter-total"
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total</p>
+                  <p className="text-2xl font-bold">{stats.total}</p>
+                </div>
+                <Users className="w-8 h-8 text-amber-500" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card 
+            className={`cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] ${filterCategory === 'buyer' ? 'ring-2 ring-emerald-500 bg-emerald-500/5' : ''}`}
+            onClick={() => { setFilterCategory('buyer'); setFilterStatus('all'); }}
+            data-testid="filter-buyers"
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Buyers</p>
+                  <p className="text-2xl font-bold text-emerald-600">{stats.buyers}</p>
+                </div>
+                <ShoppingCart className="w-8 h-8 text-emerald-500" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card 
+            className={`cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] ${filterCategory === 'seller' ? 'ring-2 ring-orange-500 bg-orange-500/5' : ''}`}
+            onClick={() => { setFilterCategory('seller'); setFilterStatus('all'); }}
+            data-testid="filter-sellers"
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Sellers</p>
+                  <p className="text-2xl font-bold text-orange-600">{stats.sellers}</p>
+                </div>
+                <Home className="w-8 h-8 text-orange-500" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card 
+            className={`cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] ${filterCategory === 'lender' ? 'ring-2 ring-blue-500 bg-blue-500/5' : ''}`}
+            onClick={() => { setFilterCategory('lender'); setFilterStatus('all'); }}
+            data-testid="filter-lenders"
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Lenders</p>
+                  <p className="text-2xl font-bold text-blue-600">{stats.lenders || 0}</p>
+                </div>
+                <Building2 className="w-8 h-8 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card 
+            className={`cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] ${filterCategory === 'vendor' ? 'ring-2 ring-purple-500 bg-purple-500/5' : ''}`}
+            onClick={() => { setFilterCategory('vendor'); setFilterStatus('all'); }}
+            data-testid="filter-vendors"
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Vendors</p>
+                  <p className="text-2xl font-bold text-purple-600">{stats.vendors || 0}</p>
+                </div>
+                <Briefcase className="w-8 h-8 text-purple-500" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card 
+            className={`cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] ${filterStatus === 'new' ? 'ring-2 ring-cyan-500 bg-cyan-500/5' : ''}`}
+            onClick={() => { setFilterStatus('new'); setFilterCategory('all'); }}
+            data-testid="filter-new"
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">New</p>
+                  <p className="text-2xl font-bold text-cyan-600">{stats.new}</p>
+                </div>
+                <Clock className="w-8 h-8 text-cyan-500" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card 
+            className={`cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] ${filterStatus === 'qualified' ? 'ring-2 ring-green-500 bg-green-500/5' : ''}`}
+            onClick={() => { setFilterStatus('qualified'); setFilterCategory('all'); }}
+            data-testid="filter-qualified"
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Qualified</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.qualified}</p>
+                </div>
+                <CheckCircle className="w-8 h-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
