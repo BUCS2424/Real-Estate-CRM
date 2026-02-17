@@ -1563,3 +1563,112 @@ Completed the Property Leads page enhancement with a tabbed interface supporting
 - Contact Sync via iCloud Drive
 - Booking Notifications (email, SMS, desktop)
 
+
+
+---
+
+## Update: February 17, 2026 - Automated Mortgage Rate Updates (FRED API)
+
+### Feature: Automated Mortgage Rate Fetching
+
+Implemented automatic mortgage rate updates using the Federal Reserve Economic Data (FRED) API. Rates are now fetched automatically every 2 weeks, eliminating the need for manual updates.
+
+#### Backend Implementation
+
+**New Service:** `/app/backend/services/mortgage_rates_service.py`
+- `fetch_fred_rate()` - Fetches a single rate from FRED API
+- `fetch_all_rates()` - Fetches all available rates and estimates others
+- `update_mortgage_rates_from_fred()` - Main update function
+- Fetches 30-year and 15-year conventional rates directly from FRED
+- Estimates FHA, VA, USDA rates based on typical market spreads
+
+**Scheduler Integration:** `/app/backend/server.py`
+- Added APScheduler with AsyncIOScheduler
+- Background job runs every 2 weeks
+- Initial fetch on startup if no FRED rates exist
+- Graceful shutdown of scheduler
+
+**New Endpoints:** `/app/backend/routes/settings.py`
+- `POST /api/settings/mortgage-rates/fetch-fred` - Manual trigger for FRED fetch (admin only)
+- `GET /api/settings/mortgage-rates/status` - Get automation status (admin only)
+
+#### Frontend Implementation
+
+**Updated:** `/app/frontend/src/pages/settings/admin/MortgageRatesSettings.jsx`
+- Added automation status card showing:
+  - FRED API configuration status
+  - Update interval (every 2 weeks)
+  - Data source indicator
+  - "Fetch Latest Rates Now" button
+- Auto-update badge showing when rates were fetched by FRED vs manual
+- Updated info box with automation tips
+
+#### Environment Variables
+- `FRED_API_KEY` - Added to `/app/backend/.env`
+
+#### Data Flow
+1. Scheduler runs every 2 weeks (or on startup if no data)
+2. Fetches MORTGAGE30US and MORTGAGE15US from FRED API
+3. Estimates other rates (FHA, VA, USDA) based on market spreads
+4. Saves to `mortgage_rates` collection with metadata
+5. Manual fetch available via admin UI
+
+#### Rates Fetched (February 17, 2026)
+- 30-Year Fixed: 6.09% (from FRED)
+- 15-Year Fixed: 5.44% (from FRED)
+- 20-Year Fixed: 5.84% (estimated)
+- FHA 30yr: 5.715% (estimated)
+- VA 30yr: 5.465% (estimated)
+
+#### Files Created
+- `/app/backend/services/mortgage_rates_service.py`
+
+#### Files Modified
+- `/app/backend/server.py` - Added scheduler, startup event, shutdown cleanup
+- `/app/backend/routes/settings.py` - Added FRED fetch and status endpoints
+- `/app/backend/.env` - Added FRED_API_KEY
+- `/app/frontend/src/pages/settings/admin/MortgageRatesSettings.jsx` - Added automation UI
+
+#### Dependencies Added
+- `apscheduler` - Background job scheduling
+- (httpx was already installed)
+
+### Verified & Tested
+- FRED API integration working ✅
+- Scheduler starts on backend startup ✅
+- Initial fetch runs if no rates exist ✅
+- Manual fetch button works ✅
+- Automation status endpoint returns correct data ✅
+- Rates display correctly in UI ✅
+
+---
+
+## Current Status (February 17, 2026)
+
+### Completed Today
+- ✅ Automated Mortgage Rate Updates via FRED API
+- ✅ Background scheduler running every 2 weeks
+- ✅ Manual "Fetch Latest Rates Now" button in admin UI
+- ✅ Automation status display in settings
+
+### Known Issues (Unchanged)
+- **P0:** Bookings data loss (not investigated)
+- **P0:** Unreliable production deployments
+- **P1:** Contact Import - user verification pending on production
+- **P1:** Smart List Email - user needs to test on production
+- **P1:** Web scrapers blocked (awaiting user decision on paid API)
+- **P1:** iDrive e2 storage credentials invalid
+
+### Upcoming Tasks
+1. **P0:** MLS Integration activation (blocked on Bridge API credentials)
+2. **P1:** Build Buyer Lead Page
+3. **P1:** Jacquie Lawson Card Sender automation
+4. **P1:** Social Media Auto-Poster
+
+### Backlog
+- Refactor ContactsPage.jsx (~2900 lines → smaller components)
+- TMS Integration
+- Advanced Lead Management (auction/bidding)
+- Advanced Reporting & Analytics
+- Booking Notifications (email, SMS, desktop)
+
