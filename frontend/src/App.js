@@ -158,6 +158,7 @@ function App() {
                 <Route path="admin/jacquie-lawson" element={<JacquieLawsonSettings />} />
                 <Route path="admin/elevenlabs" element={<ElevenLabsSettings />} />
                 <Route path="admin/mortgage-rates" element={<MortgageRatesSettings />} />
+                <Route path="admin/samples" element={<SamplesSettings />} />
                 <Route path="admin/reports" element={<AdminReports />} />
                 <Route path="admin/audit-log" element={<AuditLog />} />
                 <Route path="admin/roles" element={<RolesPermissions />} />
