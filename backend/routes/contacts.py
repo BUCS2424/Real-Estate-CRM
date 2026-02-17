@@ -666,19 +666,34 @@ Sent from Hidden Haven Realty CRM
                     "message_id": msg['Message-ID'],
                     "created_at": datetime.now(timezone.utc).isoformat()
                 })
+                print(f"[SMART LIST] Email sent successfully to {recipient_email}")
             except Exception as e:
+                print(f"[SMART LIST] Failed to send to {recipient_email}: {str(e)}")
                 errors.append(f"{recipient_email}: {str(e)}")
         
         server.quit()
+        print(f"[SMART LIST] SMTP session closed. Sent: {sent_count}, Errors: {len(errors)}")
         
+    except smtplib.SMTPAuthenticationError as e:
+        print(f"[SMART LIST] SMTP Authentication Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"SMTP authentication failed. Please check your username and password.")
+    except smtplib.SMTPConnectError as e:
+        print(f"[SMART LIST] SMTP Connection Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Could not connect to SMTP server. Please check host and port settings.")
+    except smtplib.SMTPException as e:
+        print(f"[SMART LIST] SMTP Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"SMTP error: {str(e)}")
     except Exception as e:
+        print(f"[SMART LIST] Unexpected Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"SMTP connection failed: {str(e)}")
     
     return {
-        "message": f"Successfully sent to {sent_count} recipient(s)",
+        "message": f"Successfully sent to {sent_count} recipient(s)" + (f" ({len(errors)} failed)" if errors else ""),
         "sent": sent_count,
+        "failed": len(errors),
         "errors": errors if errors else None,
-        "smtp_configured": True
+        "smtp_configured": True,
+        "from_email": from_email
     }
 
 @router.get("/export")
