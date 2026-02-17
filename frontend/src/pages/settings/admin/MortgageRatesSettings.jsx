@@ -17,7 +17,7 @@ import {
   Info
 } from 'lucide-react';
 import { toast } from 'sonner';
-import api from '../../lib/api';
+import api from '../../../lib/api';
 
 export const MortgageRatesSettings = () => {
   const [loading, setLoading] = useState(true);
