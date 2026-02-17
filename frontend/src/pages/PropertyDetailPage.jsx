@@ -314,6 +314,16 @@ export const PropertyDetailPage = () => {
                   </div>
                 )}
               </div>
+
+              {/* Mortgage Calculator */}
+              <div className="bg-[#0d1f3c]/80 border border-amber-400/20 rounded-2xl p-6 relative overflow-hidden">
+                <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-400/5 rounded-full blur-2xl"></div>
+                <MortgageCalculator 
+                  propertyPrice={property.price}
+                  propertyAddress={`${property.address}, ${property.city}, ${property.state}`}
+                  embedded={true}
+                />
+              </div>
             </div>
 
             {/* Sidebar */}
