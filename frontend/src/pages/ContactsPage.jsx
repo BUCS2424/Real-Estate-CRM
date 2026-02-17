@@ -1907,6 +1907,12 @@ export const ContactsPage = () => {
     fetchContacts();
   }, [selectedLetter, page]);
 
+  // Re-fetch when filters change
+  useEffect(() => {
+    setPage(0);
+    fetchContacts();
+  }, [filterCategory, filterStatus]);
+
   // Live search - debounced to avoid too many API calls
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -1944,6 +1950,13 @@ export const ContactsPage = () => {
       }
       if (searchQuery) {
         params.search = searchQuery;
+      }
+      // Add category and status filters
+      if (filterCategory && filterCategory !== 'all') {
+        params.category = filterCategory;
+      }
+      if (filterStatus && filterStatus !== 'all') {
+        params.status = filterStatus;
       }
       
       const res = await contactsAPI.list(params);
