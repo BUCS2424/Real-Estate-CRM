@@ -508,6 +508,7 @@ Hidden Haven Realty
     import smtplib
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
+    from email.utils import formataddr, formatdate, make_msgid
     
     try:
         if smtp_settings.get('use_ssl'):
@@ -519,60 +520,117 @@ Hidden Haven Realty
         
         server.login(smtp_settings['username'], smtp_settings['password'])
         
+        from_email = smtp_settings.get('from_email', smtp_settings['username'])
+        from_name = smtp_settings.get('from_name', sender_name)
+        
         for recipient in recipients:
             if not recipient.get('email'):
                 continue
             
             recipient_name = f"{recipient.get('first_name', '')} {recipient.get('last_name', '')}".strip() or "Valued Client"
+            recipient_email = recipient['email']
             
-            # Build personalized email
-            email_html = f"""
-            <html>
-            <body style="font-family: Georgia, 'Times New Roman', serif; color: #1a2744; max-width: 800px; margin: 0 auto; padding: 20px;">
-                <div style="background: linear-gradient(135deg, #1a2744 0%, #2a3a5c 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-                    <h1 style="color: #d4a646; margin: 0; font-size: 28px;">Hidden Haven Realty</h1>
-                </div>
-                
-                <div style="background-color: #ffffff; padding: 30px; border: 1px solid #e5e5e5; border-top: none;">
-                    <p style="font-size: 18px; margin-bottom: 20px;">Dear {recipient_name},</p>
-                    
-                    <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-                        I hope this message finds you well! As requested, I'm delighted to share this curated 
-                        <strong style="color: #d4a646;">{request.list_type} List</strong> with you. These are trusted professionals 
-                        that I personally recommend.
-                    </p>
-                    
-                    <h2 style="color: #1a2744; border-bottom: 2px solid #d4a646; padding-bottom: 10px; margin-top: 30px;">
-                        Your {request.list_type} List ({len(list_contacts)} Contact{'' if len(list_contacts) == 1 else 's'})
-                    </h2>
-                    
-                    {contact_list_html}
-                    
-                    <p style="font-size: 16px; line-height: 1.6; margin-top: 30px;">
-                        Please don't hesitate to reach out if you need any additional information or have questions 
-                        about any of these contacts. I'm always here to help!
-                    </p>
-                    
-                    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e5e5;">
-                        <p style="font-size: 16px; white-space: pre-line;">{sender_signature}</p>
-                    </div>
-                </div>
-                
-                <div style="background-color: #1a2744; padding: 15px; text-align: center; border-radius: 0 0 8px 8px;">
-                    <p style="color: #a0a0a0; font-size: 12px; margin: 0;">
-                        © {datetime.now().year} Hidden Haven Realty | Luxury Real Estate Services
-                    </p>
-                </div>
-            </body>
-            </html>
-            """
+            # Build plain text version for better deliverability
+            plain_text = f"""Dear {recipient_name},
+
+I hope this message finds you well! As requested, I'm delighted to share this curated {request.list_type} List with you. These are trusted professionals that I personally recommend.
+
+Your {request.list_type} List ({len(list_contacts)} Contact{'s' if len(list_contacts) != 1 else ''}):
+
+"""
+            for contact in list_contacts:
+                c_name = f"{contact.get('first_name', '')} {contact.get('last_name', '')}".strip()
+                c_company = contact.get('company', '')
+                c_email = contact.get('email', '')
+                c_phone = contact.get('phone') or contact.get('mobile_phone') or ''
+                plain_text += f"- {c_name}"
+                if c_company:
+                    plain_text += f" ({c_company})"
+                if c_email:
+                    plain_text += f" | {c_email}"
+                if c_phone:
+                    plain_text += f" | {c_phone}"
+                plain_text += "\n"
             
+            plain_text += f"""
+
+Please don't hesitate to reach out if you need any additional information or have questions about any of these contacts. I'm always here to help!
+
+{sender_signature}
+
+--
+Sent from Hidden Haven Realty CRM
+"""
+            
+            # Build personalized email HTML
+            email_html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your {request.list_type} List</title>
+</head>
+<body style="font-family: Georgia, 'Times New Roman', serif; color: #1a2744; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+    <div style="background: linear-gradient(135deg, #1a2744 0%, #2a3a5c 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h1 style="color: #d4a646; margin: 0; font-size: 28px;">Hidden Haven Realty</h1>
+    </div>
+    
+    <div style="background-color: #ffffff; padding: 30px; border: 1px solid #e5e5e5; border-top: none;">
+        <p style="font-size: 18px; margin-bottom: 20px;">Dear {recipient_name},</p>
+        
+        <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+            I hope this message finds you well! As requested, I'm delighted to share this curated 
+            <strong style="color: #d4a646;">{request.list_type} List</strong> with you. These are trusted professionals 
+            that I personally recommend.
+        </p>
+        
+        <h2 style="color: #1a2744; border-bottom: 2px solid #d4a646; padding-bottom: 10px; margin-top: 30px;">
+            Your {request.list_type} List ({len(list_contacts)} Contact{'' if len(list_contacts) == 1 else 's'})
+        </h2>
+        
+        {contact_list_html}
+        
+        <p style="font-size: 16px; line-height: 1.6; margin-top: 30px;">
+            Please don't hesitate to reach out if you need any additional information or have questions 
+            about any of these contacts. I'm always here to help!
+        </p>
+        
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e5e5;">
+            <p style="font-size: 16px; white-space: pre-line;">{sender_signature}</p>
+        </div>
+    </div>
+    
+    <div style="background-color: #1a2744; padding: 15px; text-align: center; border-radius: 0 0 8px 8px;">
+        <p style="color: #a0a0a0; font-size: 12px; margin: 0;">
+            &copy; {datetime.now().year} Hidden Haven Realty | Luxury Real Estate Services
+        </p>
+    </div>
+</body>
+</html>"""
+            
+            # Create multipart message with both plain text and HTML
             msg = MIMEMultipart('alternative')
-            msg['Subject'] = f"Here's Your {request.list_type} List"
-            msg['From'] = smtp_settings.get('from_email', smtp_settings['username'])
-            msg['To'] = recipient['email']
             
-            msg.attach(MIMEText(email_html, 'html'))
+            # Essential headers for deliverability
+            msg['Subject'] = f"Your {request.list_type} List from {from_name}"
+            msg['From'] = formataddr((from_name, from_email))
+            msg['To'] = formataddr((recipient_name, recipient_email))
+            msg['Reply-To'] = formataddr((from_name, from_email))
+            msg['Date'] = formatdate(localtime=True)
+            msg['Message-ID'] = make_msgid(domain=from_email.split('@')[-1] if '@' in from_email else 'hiddenhaven.com')
+            
+            # Add priority headers (normal priority)
+            msg['X-Priority'] = '3'
+            msg['X-Mailer'] = 'Hidden Haven Realty CRM'
+            
+            # Attach both plain text and HTML versions
+            # Plain text first (fallback)
+            part1 = MIMEText(plain_text, 'plain', 'utf-8')
+            # HTML second (preferred)
+            part2 = MIMEText(email_html, 'html', 'utf-8')
+            
+            msg.attach(part1)
+            msg.attach(part2)
             
             try:
                 server.send_message(msg)
@@ -581,17 +639,20 @@ Hidden Haven Realty
                 # Log successful send
                 await db.email_logs.insert_one({
                     "id": str(uuid.uuid4()),
-                    "to": recipient['email'],
+                    "to": recipient_email,
                     "to_name": recipient_name,
-                    "subject": f"Here's Your {request.list_type} List",
+                    "from_email": from_email,
+                    "from_name": from_name,
+                    "subject": f"Your {request.list_type} List from {from_name}",
                     "list_type": request.list_type,
                     "contacts_count": len(list_contacts),
                     "sender_id": user_id,
                     "status": "sent",
+                    "message_id": msg['Message-ID'],
                     "created_at": datetime.now(timezone.utc).isoformat()
                 })
             except Exception as e:
-                errors.append(f"{recipient['email']}: {str(e)}")
+                errors.append(f"{recipient_email}: {str(e)}")
         
         server.quit()
         
