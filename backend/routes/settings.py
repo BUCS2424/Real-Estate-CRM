@@ -294,6 +294,7 @@ async def save_mortgage_rates(rates: dict, current_user: dict = Depends(get_curr
     # Add metadata
     rates["last_updated"] = datetime.now(timezone.utc).isoformat()
     rates["updated_by"] = current_user.get("email") or current_user.get("sub")
+    rates["auto_updated"] = False  # Mark as manually updated
     
     await db.mortgage_rates.update_one(
         {},
@@ -302,3 +303,59 @@ async def save_mortgage_rates(rates: dict, current_user: dict = Depends(get_curr
     )
     
     return {"message": "Mortgage rates saved successfully"}
+
+
+@router.post("/mortgage-rates/fetch-fred")
+async def fetch_mortgage_rates_from_fred(current_user: dict = Depends(get_current_user)):
+    """Manually trigger a fetch of mortgage rates from FRED API (admin only)"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    from services.mortgage_rates_service import update_mortgage_rates_from_fred
+    
+    result = await update_mortgage_rates_from_fred(db)
+    
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=400, 
+            detail=result.get("message", "Failed to fetch rates from FRED")
+        )
+    
+    return result
+
+
+@router.get("/mortgage-rates/status")
+async def get_mortgage_rates_status(current_user: dict = Depends(get_current_user)):
+    """Get the status of mortgage rate automation (admin only)"""
+    import os
+    
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Check if FRED API key is configured
+    fred_key = os.environ.get("FRED_API_KEY")
+    fred_configured = bool(fred_key)
+    
+    # Get current rates info
+    rates = await db.mortgage_rates.find_one({}, {"_id": 0})
+    
+    # Get scheduler info from app state if available
+    next_update = None
+    try:
+        from server import scheduler
+        from services.mortgage_rates_service import get_next_update_time
+        next_update = get_next_update_time(scheduler)
+    except:
+        pass
+    
+    return {
+        "fred_api_configured": fred_configured,
+        "fred_api_key_masked": f"{fred_key[:8]}...{fred_key[-4:]}" if fred_key and len(fred_key) > 12 else None,
+        "auto_update_enabled": True,  # Scheduler runs if FRED key exists
+        "update_interval": "Every 2 weeks",
+        "last_updated": rates.get("last_updated") if rates else None,
+        "last_updated_by": rates.get("updated_by") if rates else None,
+        "data_source": rates.get("data_source") if rates else None,
+        "was_auto_updated": rates.get("auto_updated", False) if rates else False,
+        "next_scheduled_update": next_update
+    }
