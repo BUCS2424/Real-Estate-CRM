@@ -33,6 +33,7 @@ import { NewsletterArchivePage } from './pages/NewsletterArchivePage';
 import { AboutPage } from './pages/AboutPage';
 import { LandingPagesPage } from './pages/LandingPagesPage';
 import { PropertyLandingPage } from './pages/PropertyLandingPage';
+import { MortgageCalculatorPage } from './pages/MortgageCalculatorPage';
 import { MediaLibraryPage } from './pages/MediaLibraryPage';
 import { PropertyLookupPage } from './pages/PropertyLookupPage';
 
