@@ -323,7 +323,7 @@ export const LandingPage = () => {
               >
                 <div className="relative overflow-hidden rounded-lg mb-4">
                   <img 
-                    src={listing.images?.[0]?.url || 'https://images.unsplash.com/photo-1578439297699-eb414262c2de?w=800&q=80'} 
+                    src={typeof listing.images?.[0] === 'string' ? listing.images[0] : (listing.images?.[0]?.url || 'https://images.unsplash.com/photo-1578439297699-eb414262c2de?w=800&q=80')} 
                     alt={listing.address}
                     className="w-full h-[280px] object-cover transition-transform duration-700 group-hover:scale-110"
                   />
