@@ -168,6 +168,90 @@ async def test_telnyx_connection(current_user: dict = Depends(get_current_user))
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Connection failed: {str(e)}")
 
+@router.post("/smtp/test-send")
+async def test_smtp_send(
+    test_email: str = Query(..., description="Email address to send test to"),
+    current_user: dict = Depends(get_current_user)
+):
+    """Send a test email to verify SMTP configuration"""
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+    from email.utils import formataddr, formatdate
+    
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get SMTP settings
+    smtp_settings = await db.settings.find_one({"type": "smtp"}, {"_id": 0})
+    
+    if not smtp_settings or not smtp_settings.get('host'):
+        raise HTTPException(status_code=400, detail="SMTP not configured. Go to Settings > SMTP to configure.")
+    
+    try:
+        # Connect to SMTP server
+        if smtp_settings.get('use_ssl'):
+            server = smtplib.SMTP_SSL(smtp_settings['host'], smtp_settings.get('port', 465), timeout=30)
+        else:
+            server = smtplib.SMTP(smtp_settings['host'], smtp_settings.get('port', 587), timeout=30)
+            if smtp_settings.get('use_tls', True):
+                server.starttls()
+        
+        # Login
+        server.login(smtp_settings['username'], smtp_settings['password'])
+        
+        # Create test email
+        from_email = smtp_settings.get('from_email', smtp_settings['username'])
+        from_name = smtp_settings.get('from_name', 'Hidden Haven Realty')
+        
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = 'Test Email from Hidden Haven Realty CRM'
+        msg['From'] = formataddr((from_name, from_email))
+        msg['To'] = test_email
+        msg['Date'] = formatdate(localtime=True)
+        
+        html_content = f"""
+        <html>
+        <body style="font-family: Georgia, serif; color: #1a2744; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: #1a2744; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="color: #d4a646; margin: 0;">Hidden Haven Realty</h1>
+            </div>
+            <div style="background: #fff; padding: 30px; border: 1px solid #e5e5e5;">
+                <h2 style="color: #1a2744;">SMTP Test Successful!</h2>
+                <p>If you're reading this, your SMTP configuration is working correctly.</p>
+                <p><strong>From:</strong> {from_email}</p>
+                <p><strong>To:</strong> {test_email}</p>
+                <p><strong>Server:</strong> {smtp_settings['host']}:{smtp_settings.get('port', 587)}</p>
+                <p><strong>Time:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+            </div>
+            <div style="background: #1a2744; padding: 10px; text-align: center; border-radius: 0 0 8px 8px;">
+                <p style="color: #888; font-size: 12px; margin: 0;">Hidden Haven Realty CRM</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        msg.attach(MIMEText(html_content, 'html'))
+        
+        # Send
+        server.send_message(msg)
+        server.quit()
+        
+        return {
+            "success": True,
+            "message": f"Test email sent successfully to {test_email}",
+            "from_email": from_email,
+            "smtp_host": smtp_settings['host']
+        }
+        
+    except smtplib.SMTPAuthenticationError as e:
+        raise HTTPException(status_code=400, detail=f"SMTP Authentication failed: {str(e)}")
+    except smtplib.SMTPConnectError as e:
+        raise HTTPException(status_code=400, detail=f"Could not connect to SMTP server: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"SMTP test failed: {str(e)}")
+
+
 
 # ============ MORTGAGE RATES SETTINGS ============
 
