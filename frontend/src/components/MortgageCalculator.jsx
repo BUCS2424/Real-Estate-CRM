@@ -90,6 +90,9 @@ export const MortgageCalculator = ({
   embedded = false,
   onEmailResults = null 
 }) => {
+  // Rates from backend
+  const [ratesConfig, setRatesConfig] = useState(null);
+  
   // Basic inputs
   const [homePrice, setHomePrice] = useState(propertyPrice || 350000);
   const [downPaymentPercent, setDownPaymentPercent] = useState(20);
@@ -108,6 +111,37 @@ export const MortgageCalculator = ({
   const [compareMode, setCompareMode] = useState(false);
   const [scenarios, setScenarios] = useState([]);
 
+  // Fetch rates from backend on mount
+  useEffect(() => {
+    const fetchRates = async () => {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/settings/mortgage-rates`);
+        if (response.ok) {
+          const data = await response.json();
+          setRatesConfig(data);
+          // Set initial interest rate based on loan type and term
+          const rateKey = `${loanType}_${loanTermYears}yr`;
+          if (data[rateKey]) {
+            setInterestRate(data[rateKey]);
+          }
+        }
+      } catch (error) {
+        console.log('Using default rates');
+      }
+    };
+    fetchRates();
+  }, []);
+
+  // Update interest rate when loan type or term changes
+  useEffect(() => {
+    if (ratesConfig) {
+      const rateKey = `${loanType}_${loanTermYears}yr`;
+      if (ratesConfig[rateKey]) {
+        setInterestRate(ratesConfig[rateKey]);
+      }
+    }
+  }, [loanType, loanTermYears, ratesConfig]);
+
   // Update home price when property price changes
   useEffect(() => {
     if (propertyPrice > 0) {
@@ -117,11 +151,13 @@ export const MortgageCalculator = ({
 
   // Auto-calculate property tax and insurance estimates
   useEffect(() => {
-    // Estimate property tax (default 1.1% of home value annually)
-    setAnnualPropertyTax(Math.round(homePrice * (propertyTaxRate / 100)));
-    // Estimate homeowners insurance (~0.35% of home value annually)
-    setAnnualInsurance(Math.round(homePrice * 0.0035));
-  }, [homePrice, propertyTaxRate]);
+    const taxRate = ratesConfig?.property_tax_rate || propertyTaxRate;
+    const insuranceRate = ratesConfig?.insurance_rate || 0.35;
+    // Estimate property tax
+    setAnnualPropertyTax(Math.round(homePrice * (taxRate / 100)));
+    // Estimate homeowners insurance
+    setAnnualInsurance(Math.round(homePrice * (insuranceRate / 100)));
+  }, [homePrice, propertyTaxRate, ratesConfig]);
 
   // Set default down payment based on loan type
   useEffect(() => {
