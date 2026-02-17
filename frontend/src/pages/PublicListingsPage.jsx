@@ -516,7 +516,7 @@ export const PublicListingsPage = () => {
                       {/* Image */}
                       <div className="relative h-64 overflow-hidden">
                         <img 
-                          src={listing.images?.[0]?.url || 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800'}
+                          src={typeof listing.images?.[0] === 'string' ? listing.images[0] : (listing.images?.[0]?.url || 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800')}
                           alt={listing.address}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
