@@ -167,3 +167,54 @@ async def test_telnyx_connection(current_user: dict = Depends(get_current_user))
         return {"success": True, "message": "Connection successful!"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Connection failed: {str(e)}")
+
+
+# ============ MORTGAGE RATES SETTINGS ============
+
+@router.get("/mortgage-rates")
+async def get_mortgage_rates():
+    """Get mortgage rate settings (public - used by calculator)"""
+    settings = await db.mortgage_rates.find_one({}, {"_id": 0})
+    
+    # Return defaults if no settings exist
+    if not settings:
+        return {
+            "conventional_30yr": 6.875,
+            "conventional_20yr": 6.625,
+            "conventional_15yr": 6.125,
+            "conventional_10yr": 5.875,
+            "fha_30yr": 6.500,
+            "fha_15yr": 5.875,
+            "va_30yr": 6.250,
+            "va_15yr": 5.750,
+            "usda_30yr": 6.375,
+            "property_tax_rate": 1.1,
+            "insurance_rate": 0.35,
+            "pmi_rate_under_10": 1.0,
+            "pmi_rate_10_to_20": 0.5,
+            "fha_mip_upfront": 1.75,
+            "fha_mip_annual": 0.85,
+            "va_funding_fee": 2.15,
+            "usda_guarantee_fee": 1.0,
+            "usda_annual_fee": 0.35
+        }
+    
+    return settings
+
+@router.post("/mortgage-rates")
+async def save_mortgage_rates(rates: dict, current_user: dict = Depends(get_current_user)):
+    """Save mortgage rate settings (admin only)"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Add metadata
+    rates["last_updated"] = datetime.now(timezone.utc).isoformat()
+    rates["updated_by"] = current_user.get("email") or current_user.get("sub")
+    
+    await db.mortgage_rates.update_one(
+        {},
+        {"$set": rates},
+        upsert=True
+    )
+    
+    return {"message": "Mortgage rates saved successfully"}
