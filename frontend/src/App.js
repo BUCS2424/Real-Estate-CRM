@@ -99,6 +99,7 @@ function App() {
             <Route path="/property/:slug" element={<PropertyLandingPage />} />
             <Route path="/listing/:id" element={<PropertyDetailPage />} />
             <Route path="/showcase" element={<PublicListingsPage />} />
+            <Route path="/mortgage-calculator" element={<MortgageCalculatorPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/newsletter-archive" element={<NewsletterArchivePage />} />
             <Route path="/write-review" element={<WriteReviewPage />} />
