@@ -13,13 +13,13 @@ import {
   Shield,
   Landmark,
   Percent,
-  DollarSign,
   Info,
   Zap,
   Calendar,
   CheckCircle2,
-  AlertCircle,
-  Clock
+  Clock,
+  Lock,
+  TrendingUp
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../../../lib/api';
@@ -70,7 +70,6 @@ export const MortgageRatesSettings = () => {
         setRates(prev => ({ ...prev, ...response.data }));
       }
     } catch (error) {
-      // If no settings exist yet, use defaults
       console.log('Using default rates');
     } finally {
       setLoading(false);
@@ -103,8 +102,20 @@ export const MortgageRatesSettings = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.post('/settings/mortgage-rates', rates);
-      toast.success('Mortgage rates updated successfully');
+      // Only save the editable calculation rates
+      const calculationRates = {
+        property_tax_rate: rates.property_tax_rate,
+        insurance_rate: rates.insurance_rate,
+        pmi_rate_under_10: rates.pmi_rate_under_10,
+        pmi_rate_10_to_20: rates.pmi_rate_10_to_20,
+        fha_mip_upfront: rates.fha_mip_upfront,
+        fha_mip_annual: rates.fha_mip_annual,
+        va_funding_fee: rates.va_funding_fee,
+        usda_guarantee_fee: rates.usda_guarantee_fee,
+        usda_annual_fee: rates.usda_annual_fee
+      };
+      await api.post('/settings/mortgage-rates', calculationRates);
+      toast.success('Calculation rates saved successfully');
       fetchAutomationStatus();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to save rates');
@@ -128,358 +139,195 @@ export const MortgageRatesSettings = () => {
     );
   }
 
+  // Read-only rate input component
+  const ReadOnlyRateInput = ({ label, value, highlight }) => (
+    <div>
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <div className={`relative mt-1 ${highlight ? 'ring-2 ring-amber-500/30 rounded-md' : ''}`}>
+        <Input
+          type="text"
+          value={value?.toFixed(3) || '0.000'}
+          readOnly
+          disabled
+          className="pr-8 bg-muted/50 cursor-not-allowed font-mono"
+        />
+        <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-serif text-foreground mb-2">Mortgage Rate Settings</h1>
-          <p className="text-muted-foreground">Configure default rates for the mortgage calculator</p>
+          <p className="text-muted-foreground">View current rates for the mortgage calculator</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={fetchRates}>
+        <Button 
+          onClick={handleFetchFred}
+          disabled={fetchingFred || !automationStatus?.fred_api_configured}
+          className="bg-amber-500 hover:bg-amber-600 text-black"
+        >
+          {fetchingFred ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
             <RefreshCw className="w-4 h-4 mr-2" />
-            Reset
-          </Button>
-          <Button onClick={handleSave} disabled={saving} className="bg-amber-500 hover:bg-amber-600 text-black">
+          )}
+          Fetch Latest Rates
+        </Button>
+      </div>
+
+      {/* FRED API Automation Explanation Card */}
+      <Card className="border-amber-500/30 bg-gradient-to-r from-amber-500/5 via-amber-500/10 to-transparent">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="w-5 h-5 text-amber-500" />
+            Automated Rate Updates
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Your mortgage rates are automatically kept current using the <strong className="text-foreground">Federal Reserve Economic Data (FRED) API</strong> — the same trusted source used by banks, economists, and financial institutions nationwide.
+          </p>
+          
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-background/50 border">
+              <Clock className="w-5 h-5 text-blue-500 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium">Every 2 Weeks</p>
+                <p className="text-xs text-muted-foreground">Rates refresh automatically</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-background/50 border">
+              <TrendingUp className="w-5 h-5 text-green-500 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium">Real Market Data</p>
+                <p className="text-xs text-muted-foreground">Direct from Federal Reserve</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-background/50 border">
+              <CheckCircle2 className="w-5 h-5 text-amber-500 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium">Always Accurate</p>
+                <p className="text-xs text-muted-foreground">No manual updates needed</p>
+              </div>
+            </div>
+          </div>
+
+          {rates.last_updated && (
+            <div className="flex flex-wrap items-center gap-4 pt-2 border-t text-sm">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                <span>Last updated: {new Date(rates.last_updated).toLocaleString()}</span>
+              </div>
+              {rates.data_source && (
+                <span className="px-2 py-1 rounded-full text-xs bg-green-500/10 text-green-600 border border-green-500/30">
+                  Source: {rates.data_source}
+                </span>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Interest Rates Section - Read Only */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Lock className="w-4 h-4 text-muted-foreground" />
+          <h2 className="text-lg font-medium">Current Interest Rates</h2>
+          <span className="text-xs text-muted-foreground">(Auto-updated from FRED)</span>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Conventional Loan Rates */}
+          <Card className="bg-muted/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Home className="w-5 h-5 text-blue-500" />
+                Conventional Loans
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <ReadOnlyRateInput label="30-Year Fixed" value={rates.conventional_30yr} highlight />
+                <ReadOnlyRateInput label="20-Year Fixed" value={rates.conventional_20yr} />
+                <ReadOnlyRateInput label="15-Year Fixed" value={rates.conventional_15yr} highlight />
+                <ReadOnlyRateInput label="10-Year Fixed" value={rates.conventional_10yr} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* FHA Loan Rates */}
+          <Card className="bg-muted/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Building2 className="w-5 h-5 text-green-500" />
+                FHA Loans
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <ReadOnlyRateInput label="30-Year Fixed" value={rates.fha_30yr} />
+                <ReadOnlyRateInput label="15-Year Fixed" value={rates.fha_15yr} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* VA Loan Rates */}
+          <Card className="bg-muted/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Shield className="w-5 h-5 text-purple-500" />
+                VA Loans
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <ReadOnlyRateInput label="30-Year Fixed" value={rates.va_30yr} />
+                <ReadOnlyRateInput label="15-Year Fixed" value={rates.va_15yr} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* USDA Loan Rates */}
+          <Card className="bg-muted/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Landmark className="w-5 h-5 text-amber-500" />
+                USDA Loans
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <ReadOnlyRateInput label="30-Year Fixed" value={rates.usda_30yr} />
+                <div></div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Editable Calculation Rates Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Calculator className="w-4 h-4 text-amber-500" />
+            <h2 className="text-lg font-medium">Calculation Settings</h2>
+            <span className="text-xs text-muted-foreground">(Editable)</span>
+          </div>
+          <Button onClick={handleSave} disabled={saving} size="sm" className="bg-amber-500 hover:bg-amber-600 text-black">
             {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
             Save Changes
           </Button>
         </div>
-      </div>
 
-      {/* FRED API Automation Status Card */}
-      <Card className="border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-transparent">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-amber-500" />
-            Automated Rate Updates (FRED API)
-          </CardTitle>
-          <CardDescription>
-            Rates are automatically fetched from the Federal Reserve Economic Data every 2 weeks
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap items-center gap-6">
-            {/* Status Indicators */}
-            <div className="flex items-center gap-2">
-              {automationStatus?.fred_api_configured ? (
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
-              ) : (
-                <AlertCircle className="w-5 h-5 text-red-500" />
-              )}
-              <span className="text-sm">
-                FRED API: {automationStatus?.fred_api_configured ? 'Configured' : 'Not Configured'}
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-blue-500" />
-              <span className="text-sm">Update Interval: Every 2 weeks</span>
-            </div>
-            
-            {rates.data_source && (
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-purple-500" />
-                <span className="text-sm">Source: {rates.data_source}</span>
-              </div>
-            )}
-            
-            {/* Fetch Now Button */}
-            <Button 
-              onClick={handleFetchFred}
-              disabled={fetchingFred || !automationStatus?.fred_api_configured}
-              variant="outline"
-              className="ml-auto border-amber-500/50 hover:bg-amber-500/10"
-            >
-              {fetchingFred ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <RefreshCw className="w-4 h-4 mr-2" />
-              )}
-              Fetch Latest Rates Now
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {rates.last_updated && (
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <span>
-            Last updated: {new Date(rates.last_updated).toLocaleString()}
-          </span>
-          {rates.updated_by && (
-            <span className={`px-2 py-1 rounded-full text-xs ${
-              rates.auto_updated 
-                ? 'bg-green-500/10 text-green-600 border border-green-500/30' 
-                : 'bg-blue-500/10 text-blue-600 border border-blue-500/30'
-            }`}>
-              {rates.auto_updated ? 'Auto-Updated' : 'Manual Update'} by {rates.updated_by}
-            </span>
-          )}
-        </div>
-      )}
-
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Conventional Loan Rates */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Home className="w-5 h-5 text-blue-500" />
-              Conventional Loan Rates
-            </CardTitle>
-            <CardDescription>Traditional mortgage interest rates</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-xs">30-Year Fixed</Label>
-                <div className="relative mt-1">
-                  <Input
-                    type="number"
-                    step="0.125"
-                    value={rates.conventional_30yr}
-                    onChange={(e) => updateRate('conventional_30yr', e.target.value)}
-                    className="pr-8"
-                  />
-                  <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs">20-Year Fixed</Label>
-                <div className="relative mt-1">
-                  <Input
-                    type="number"
-                    step="0.125"
-                    value={rates.conventional_20yr}
-                    onChange={(e) => updateRate('conventional_20yr', e.target.value)}
-                    className="pr-8"
-                  />
-                  <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs">15-Year Fixed</Label>
-                <div className="relative mt-1">
-                  <Input
-                    type="number"
-                    step="0.125"
-                    value={rates.conventional_15yr}
-                    onChange={(e) => updateRate('conventional_15yr', e.target.value)}
-                    className="pr-8"
-                  />
-                  <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs">10-Year Fixed</Label>
-                <div className="relative mt-1">
-                  <Input
-                    type="number"
-                    step="0.125"
-                    value={rates.conventional_10yr}
-                    onChange={(e) => updateRate('conventional_10yr', e.target.value)}
-                    className="pr-8"
-                  />
-                  <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* FHA Loan Rates */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-green-500" />
-              FHA Loan Rates
-            </CardTitle>
-            <CardDescription>Government-backed FHA loan rates</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-xs">30-Year Fixed</Label>
-                <div className="relative mt-1">
-                  <Input
-                    type="number"
-                    step="0.125"
-                    value={rates.fha_30yr}
-                    onChange={(e) => updateRate('fha_30yr', e.target.value)}
-                    className="pr-8"
-                  />
-                  <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs">15-Year Fixed</Label>
-                <div className="relative mt-1">
-                  <Input
-                    type="number"
-                    step="0.125"
-                    value={rates.fha_15yr}
-                    onChange={(e) => updateRate('fha_15yr', e.target.value)}
-                    className="pr-8"
-                  />
-                  <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                </div>
-              </div>
-            </div>
-            <div className="pt-2 border-t">
-              <p className="text-xs text-muted-foreground mb-2">FHA Mortgage Insurance</p>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs">Upfront MIP</Label>
-                  <div className="relative mt-1">
-                    <Input
-                      type="number"
-                      step="0.25"
-                      value={rates.fha_mip_upfront}
-                      onChange={(e) => updateRate('fha_mip_upfront', e.target.value)}
-                      className="pr-8"
-                    />
-                    <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs">Annual MIP</Label>
-                  <div className="relative mt-1">
-                    <Input
-                      type="number"
-                      step="0.05"
-                      value={rates.fha_mip_annual}
-                      onChange={(e) => updateRate('fha_mip_annual', e.target.value)}
-                      className="pr-8"
-                    />
-                    <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* VA Loan Rates */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-purple-500" />
-              VA Loan Rates
-            </CardTitle>
-            <CardDescription>Veterans Affairs loan rates</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-xs">30-Year Fixed</Label>
-                <div className="relative mt-1">
-                  <Input
-                    type="number"
-                    step="0.125"
-                    value={rates.va_30yr}
-                    onChange={(e) => updateRate('va_30yr', e.target.value)}
-                    className="pr-8"
-                  />
-                  <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs">15-Year Fixed</Label>
-                <div className="relative mt-1">
-                  <Input
-                    type="number"
-                    step="0.125"
-                    value={rates.va_15yr}
-                    onChange={(e) => updateRate('va_15yr', e.target.value)}
-                    className="pr-8"
-                  />
-                  <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                </div>
-              </div>
-            </div>
-            <div className="pt-2 border-t">
-              <div>
-                <Label className="text-xs">VA Funding Fee (first-time, &lt;5% down)</Label>
-                <div className="relative mt-1">
-                  <Input
-                    type="number"
-                    step="0.05"
-                    value={rates.va_funding_fee}
-                    onChange={(e) => updateRate('va_funding_fee', e.target.value)}
-                    className="pr-8"
-                  />
-                  <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* USDA Loan Rates */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Landmark className="w-5 h-5 text-amber-500" />
-              USDA Loan Rates
-            </CardTitle>
-            <CardDescription>Rural development loan rates</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-xs">30-Year Fixed</Label>
-              <div className="relative mt-1">
-                <Input
-                  type="number"
-                  step="0.125"
-                  value={rates.usda_30yr}
-                  onChange={(e) => updateRate('usda_30yr', e.target.value)}
-                  className="pr-8"
-                />
-                <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              </div>
-            </div>
-            <div className="pt-2 border-t">
-              <p className="text-xs text-muted-foreground mb-2">USDA Guarantee Fees</p>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs">Upfront Fee</Label>
-                  <div className="relative mt-1">
-                    <Input
-                      type="number"
-                      step="0.25"
-                      value={rates.usda_guarantee_fee}
-                      onChange={(e) => updateRate('usda_guarantee_fee', e.target.value)}
-                      className="pr-8"
-                    />
-                    <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs">Annual Fee</Label>
-                  <div className="relative mt-1">
-                    <Input
-                      type="number"
-                      step="0.05"
-                      value={rates.usda_annual_fee}
-                      onChange={(e) => updateRate('usda_annual_fee', e.target.value)}
-                      className="pr-8"
-                    />
-                    <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Default Calculations */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-base">
               <Calculator className="w-5 h-5 text-amber-500" />
               Default Calculation Rates
             </CardTitle>
-            <CardDescription>These rates are used for automatic estimates in the calculator</CardDescription>
+            <CardDescription>These rates are used for automatic estimates in the calculator and can be customized for your market</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -540,6 +388,62 @@ export const MortgageRatesSettings = () => {
                 <p className="text-xs text-muted-foreground mt-1">Annual % of loan</p>
               </div>
             </div>
+
+            {/* Loan-specific fees */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-4 border-t">
+              <div>
+                <Label className="text-xs">FHA Upfront MIP</Label>
+                <div className="relative mt-1">
+                  <Input
+                    type="number"
+                    step="0.25"
+                    value={rates.fha_mip_upfront}
+                    onChange={(e) => updateRate('fha_mip_upfront', e.target.value)}
+                    className="pr-8"
+                  />
+                  <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">FHA Annual MIP</Label>
+                <div className="relative mt-1">
+                  <Input
+                    type="number"
+                    step="0.05"
+                    value={rates.fha_mip_annual}
+                    onChange={(e) => updateRate('fha_mip_annual', e.target.value)}
+                    className="pr-8"
+                  />
+                  <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">VA Funding Fee</Label>
+                <div className="relative mt-1">
+                  <Input
+                    type="number"
+                    step="0.05"
+                    value={rates.va_funding_fee}
+                    onChange={(e) => updateRate('va_funding_fee', e.target.value)}
+                    className="pr-8"
+                  />
+                  <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">USDA Guarantee Fee</Label>
+                <div className="relative mt-1">
+                  <Input
+                    type="number"
+                    step="0.25"
+                    value={rates.usda_guarantee_fee}
+                    onChange={(e) => updateRate('usda_guarantee_fee', e.target.value)}
+                    className="pr-8"
+                  />
+                  <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -550,13 +454,12 @@ export const MortgageRatesSettings = () => {
           <div className="flex items-start gap-3">
             <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
             <div className="text-sm">
-              <p className="font-medium text-blue-600 mb-1">Automated Rate Updates</p>
+              <p className="font-medium text-blue-600 mb-1">How It Works</p>
               <ul className="text-muted-foreground space-y-1">
-                <li>• Rates are automatically fetched from FRED (Federal Reserve) every 2 weeks</li>
-                <li>• 30-year and 15-year conventional rates come directly from FRED data</li>
-                <li>• FHA, VA, and USDA rates are estimated based on typical market spreads</li>
-                <li>• You can still manually adjust rates - they will be preserved until the next auto-update</li>
-                <li>• Click "Fetch Latest Rates Now" to get the most current rates immediately</li>
+                <li>• <strong>Interest rates</strong> (30yr, 15yr, etc.) are fetched directly from the Federal Reserve and cannot be manually changed</li>
+                <li>• <strong>Calculation settings</strong> (tax rates, insurance, PMI, fees) can be customized for your local market</li>
+                <li>• FHA, VA, and USDA rates are calculated based on typical market spreads from the conventional rate</li>
+                <li>• Click "Fetch Latest Rates" anytime to get the most current data immediately</li>
               </ul>
             </div>
           </div>
