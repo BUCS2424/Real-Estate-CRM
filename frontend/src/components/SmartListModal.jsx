@@ -194,7 +194,15 @@ export const SmartListModal = ({ isOpen, onClose, currentUser }) => {
         categories: selectedCategories
       });
       
-      toast.success(`List sent to ${selectedRecipients.length} recipient(s)`);
+      const data = response.data;
+      
+      if (data.smtp_configured === false) {
+        toast.warning(`SMTP not configured. ${data.sent} email(s) queued for later.`);
+      } else if (data.failed > 0) {
+        toast.warning(`Sent ${data.sent} email(s), ${data.failed} failed. Check logs for details.`);
+      } else {
+        toast.success(`Successfully sent to ${data.sent} recipient(s) from ${data.from_email || 'your email'}`);
+      }
       
       // Reset state
       setSelectedRecipients([]);
