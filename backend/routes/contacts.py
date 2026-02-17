@@ -206,6 +206,7 @@ async def get_contacts(
     search: Optional[str] = Query(None),
     letter: Optional[str] = Query(None),
     category: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
     current_user: dict = Depends(get_current_user)
 ):
     """Get contacts with pagination and filters"""
@@ -244,6 +245,10 @@ async def get_contacts(
     # Category filter
     if category:
         conditions.append({"category": category})
+    
+    # Status filter
+    if status:
+        conditions.append({"status": status})
     
     # Combine all conditions with $and if there are multiple
     if len(conditions) > 1:
