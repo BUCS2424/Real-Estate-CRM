@@ -27,7 +27,8 @@ import {
   Building2,
   Heart,
   Mic,
-  Calculator
+  Calculator,
+  Eye
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
