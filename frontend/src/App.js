@@ -63,6 +63,7 @@ import { LeadScoringSettings } from './pages/settings/developer/LeadScoringSetti
 import { MLSSettings } from './pages/settings/developer/MLSSettings';
 import { JacquieLawsonSettings } from './pages/settings/developer/JacquieLawsonSettings';
 import { ElevenLabsSettings } from './pages/settings/admin/ElevenLabsSettings';
+import { MortgageRatesSettings } from './pages/settings/admin/MortgageRatesSettings';
 import { SignatureSettings } from './pages/settings/profile/SignatureSettings';
 import { MailingListsPage } from './pages/MailingListsPage';
 import ReviewsManagementPage from './pages/ReviewsManagementPage';
