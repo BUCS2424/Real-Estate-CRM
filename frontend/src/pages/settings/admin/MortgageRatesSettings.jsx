@@ -550,12 +550,13 @@ export const MortgageRatesSettings = () => {
           <div className="flex items-start gap-3">
             <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
             <div className="text-sm">
-              <p className="font-medium text-blue-600 mb-1">Rate Update Tips</p>
+              <p className="font-medium text-blue-600 mb-1">Automated Rate Updates</p>
               <ul className="text-muted-foreground space-y-1">
-                <li>• Update rates weekly or when market conditions change significantly</li>
-                <li>• Check Freddie Mac, Bankrate, or your preferred lender for current rates</li>
-                <li>• Rates shown are used as defaults in the public mortgage calculator</li>
-                <li>• Users can still adjust rates manually in the calculator</li>
+                <li>• Rates are automatically fetched from FRED (Federal Reserve) every 2 weeks</li>
+                <li>• 30-year and 15-year conventional rates come directly from FRED data</li>
+                <li>• FHA, VA, and USDA rates are estimated based on typical market spreads</li>
+                <li>• You can still manually adjust rates - they will be preserved until the next auto-update</li>
+                <li>• Click "Fetch Latest Rates Now" to get the most current rates immediately</li>
               </ul>
             </div>
           </div>
