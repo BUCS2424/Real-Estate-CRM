@@ -14,7 +14,12 @@ import {
   Landmark,
   Percent,
   DollarSign,
-  Info
+  Info,
+  Zap,
+  Calendar,
+  CheckCircle2,
+  AlertCircle,
+  Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../../../lib/api';
@@ -22,6 +27,8 @@ import api from '../../../lib/api';
 export const MortgageRatesSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [fetchingFred, setFetchingFred] = useState(false);
+  const [automationStatus, setAutomationStatus] = useState(null);
   const [rates, setRates] = useState({
     // Default interest rates by loan type
     conventional_30yr: 6.875,
@@ -45,11 +52,14 @@ export const MortgageRatesSettings = () => {
     usda_annual_fee: 0.35,
     // Last updated
     last_updated: null,
-    updated_by: null
+    updated_by: null,
+    data_source: null,
+    auto_updated: false
   });
 
   useEffect(() => {
     fetchRates();
+    fetchAutomationStatus();
   }, []);
 
   const fetchRates = async () => {
@@ -67,11 +77,35 @@ export const MortgageRatesSettings = () => {
     }
   };
 
+  const fetchAutomationStatus = async () => {
+    try {
+      const response = await api.get('/settings/mortgage-rates/status');
+      setAutomationStatus(response.data);
+    } catch (error) {
+      console.log('Could not fetch automation status');
+    }
+  };
+
+  const handleFetchFred = async () => {
+    setFetchingFred(true);
+    try {
+      const response = await api.post('/settings/mortgage-rates/fetch-fred');
+      toast.success(`Rates updated from FRED API! 30yr: ${response.data.conventional_30yr}%`);
+      fetchRates();
+      fetchAutomationStatus();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to fetch rates from FRED');
+    } finally {
+      setFetchingFred(false);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
       await api.post('/settings/mortgage-rates', rates);
       toast.success('Mortgage rates updated successfully');
+      fetchAutomationStatus();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to save rates');
     } finally {
@@ -113,11 +147,76 @@ export const MortgageRatesSettings = () => {
         </div>
       </div>
 
+      {/* FRED API Automation Status Card */}
+      <Card className="border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-transparent">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="w-5 h-5 text-amber-500" />
+            Automated Rate Updates (FRED API)
+          </CardTitle>
+          <CardDescription>
+            Rates are automatically fetched from the Federal Reserve Economic Data every 2 weeks
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap items-center gap-6">
+            {/* Status Indicators */}
+            <div className="flex items-center gap-2">
+              {automationStatus?.fred_api_configured ? (
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+              ) : (
+                <AlertCircle className="w-5 h-5 text-red-500" />
+              )}
+              <span className="text-sm">
+                FRED API: {automationStatus?.fred_api_configured ? 'Configured' : 'Not Configured'}
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-blue-500" />
+              <span className="text-sm">Update Interval: Every 2 weeks</span>
+            </div>
+            
+            {rates.data_source && (
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-purple-500" />
+                <span className="text-sm">Source: {rates.data_source}</span>
+              </div>
+            )}
+            
+            {/* Fetch Now Button */}
+            <Button 
+              onClick={handleFetchFred}
+              disabled={fetchingFred || !automationStatus?.fred_api_configured}
+              variant="outline"
+              className="ml-auto border-amber-500/50 hover:bg-amber-500/10"
+            >
+              {fetchingFred ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4 mr-2" />
+              )}
+              Fetch Latest Rates Now
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {rates.last_updated && (
-        <p className="text-sm text-muted-foreground">
-          Last updated: {new Date(rates.last_updated).toLocaleString()}
-          {rates.updated_by && ` by ${rates.updated_by}`}
-        </p>
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <span>
+            Last updated: {new Date(rates.last_updated).toLocaleString()}
+          </span>
+          {rates.updated_by && (
+            <span className={`px-2 py-1 rounded-full text-xs ${
+              rates.auto_updated 
+                ? 'bg-green-500/10 text-green-600 border border-green-500/30' 
+                : 'bg-blue-500/10 text-blue-600 border border-blue-500/30'
+            }`}>
+              {rates.auto_updated ? 'Auto-Updated' : 'Manual Update'} by {rates.updated_by}
+            </span>
+          )}
+        </div>
       )}
 
       <div className="grid gap-6 md:grid-cols-2">
