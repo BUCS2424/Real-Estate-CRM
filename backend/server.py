@@ -429,6 +429,10 @@ app.add_middleware(
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    # Shutdown scheduler gracefully
+    if scheduler.running:
+        scheduler.shutdown(wait=False)
+        logger.info("Background scheduler stopped.")
     close_db()
 
 @app.get("/health")
