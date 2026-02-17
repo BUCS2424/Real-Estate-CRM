@@ -3,6 +3,7 @@ Fusion Builder CRM API - Main Server
 Refactored modular architecture
 """
 import os
+import logging
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -13,6 +14,10 @@ from datetime import datetime, timezone
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -28,6 +33,46 @@ os.makedirs(SITE_IMAGES_DIR, exist_ok=True)
 
 # Import database
 from database import db, close_db
+
+# ============ BACKGROUND SCHEDULER FOR MORTGAGE RATES ============
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+
+scheduler = AsyncIOScheduler()
+
+async def scheduled_mortgage_rate_update():
+    """Background job to update mortgage rates from FRED API"""
+    from services.mortgage_rates_service import update_mortgage_rates_from_fred
+    logger.info("Running scheduled mortgage rate update...")
+    result = await update_mortgage_rates_from_fred(db)
+    if result.get("success"):
+        logger.info(f"Scheduled update complete: 30yr rate = {result.get('conventional_30yr')}%")
+    else:
+        logger.error(f"Scheduled update failed: {result.get('error')}")
+
+@app.on_event("startup")
+async def start_scheduler():
+    """Initialize and start the background scheduler"""
+    fred_key = os.environ.get("FRED_API_KEY")
+    if fred_key:
+        # Schedule mortgage rate updates every 2 weeks (14 days)
+        scheduler.add_job(
+            scheduled_mortgage_rate_update,
+            IntervalTrigger(weeks=2),
+            id="mortgage_rate_update",
+            name="Update Mortgage Rates from FRED",
+            replace_existing=True
+        )
+        scheduler.start()
+        logger.info("Background scheduler started. Mortgage rates will update every 2 weeks.")
+        
+        # Run initial update on startup if no rates exist
+        rates = await db.mortgage_rates.find_one({}, {"_id": 0})
+        if not rates or not rates.get("auto_updated"):
+            logger.info("No FRED rates found, running initial fetch...")
+            await scheduled_mortgage_rate_update()
+    else:
+        logger.warning("FRED_API_KEY not configured. Mortgage rate auto-update disabled.")
 
 # Import and include all routers
 from routes import api_router
