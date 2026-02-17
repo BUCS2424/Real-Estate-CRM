@@ -510,24 +510,39 @@ Hidden Haven Realty
     from email.mime.multipart import MIMEMultipart
     from email.utils import formataddr, formatdate, make_msgid
     
+    print(f"[SMART LIST] Attempting SMTP connection to {smtp_settings.get('host')}:{smtp_settings.get('port')}")
+    print(f"[SMART LIST] SSL: {smtp_settings.get('use_ssl')}, TLS: {smtp_settings.get('use_tls')}")
+    print(f"[SMART LIST] Username: {smtp_settings.get('username', 'NOT SET')[:20]}...")
+    
     try:
         if smtp_settings.get('use_ssl'):
-            server = smtplib.SMTP_SSL(smtp_settings['host'], smtp_settings.get('port', 465))
+            print("[SMART LIST] Using SMTP_SSL connection")
+            server = smtplib.SMTP_SSL(smtp_settings['host'], smtp_settings.get('port', 465), timeout=30)
         else:
-            server = smtplib.SMTP(smtp_settings['host'], smtp_settings.get('port', 587))
+            print("[SMART LIST] Using SMTP with STARTTLS")
+            server = smtplib.SMTP(smtp_settings['host'], smtp_settings.get('port', 587), timeout=30)
             if smtp_settings.get('use_tls', True):
                 server.starttls()
         
+        print("[SMART LIST] Attempting login...")
         server.login(smtp_settings['username'], smtp_settings['password'])
+        print("[SMART LIST] Login successful!")
         
         from_email = smtp_settings.get('from_email', smtp_settings['username'])
         from_name = smtp_settings.get('from_name', sender_name)
         
+        print(f"[SMART LIST] From: {from_name} <{from_email}>")
+        print(f"[SMART LIST] Recipients: {len(recipients)}")
+        
         for recipient in recipients:
             if not recipient.get('email'):
+                print(f"[SMART LIST] Skipping recipient without email")
                 continue
             
             recipient_name = f"{recipient.get('first_name', '')} {recipient.get('last_name', '')}".strip() or "Valued Client"
+            recipient_email = recipient['email']
+            
+            print(f"[SMART LIST] Sending to: {recipient_name} <{recipient_email}>")
             recipient_email = recipient['email']
             
             # Build plain text version for better deliverability
