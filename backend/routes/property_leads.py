@@ -558,6 +558,91 @@ async def convert_to_showcase(lead_id: str, current_user: dict = Depends(get_cur
     }
 
 
+@router.post("/{lead_id}/unconvert")
+async def unconvert_from_showcase(
+    lead_id: str, 
+    delete_listing: bool = True,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Un-convert a property lead that was previously converted to a showcase listing.
+    This resets the lead back to its previous state so it can be edited and re-converted.
+    
+    Args:
+        lead_id: The ID of the property lead to un-convert
+        delete_listing: If True (default), also deletes the associated showcase listing
+    """
+    lead = await db.property_leads.find_one({"id": lead_id}, {"_id": 0})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Property lead not found")
+    
+    # Check if the lead is actually converted
+    if lead.get("status") != "converted":
+        raise HTTPException(status_code=400, detail="This property lead is not converted")
+    
+    listing_id = lead.get("converted_to_listing_id")
+    listing_deleted = False
+    
+    # Optionally delete the associated showcase listing
+    if delete_listing and listing_id:
+        # Delete from properties collection
+        result = await db.properties.delete_one({"id": listing_id})
+        listing_deleted = result.deleted_count > 0
+        
+        # Also try listings collection (in case it was created with old code)
+        if not listing_deleted:
+            result = await db.listings.delete_one({"id": listing_id})
+            listing_deleted = result.deleted_count > 0
+    
+    # Determine what status to reset to
+    # Check activity log for previous status, default to 'new'
+    previous_status = "new"
+    activity_log = lead.get("activity", [])
+    for activity in reversed(activity_log):
+        if activity.get("type") == "status_change" and activity.get("from_status"):
+            previous_status = activity.get("from_status")
+            break
+    
+    # Reset the lead status
+    await db.property_leads.update_one(
+        {"id": lead_id},
+        {
+            "$set": {
+                "status": previous_status,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            },
+            "$unset": {
+                "converted_to_listing_id": "",
+                "converted_at": "",
+                "converted_by": ""
+            }
+        }
+    )
+    
+    # Add activity log
+    activity = {
+        "type": "unconverted",
+        "description": f"Un-converted from Showcase Listing by {current_user.get('name') or current_user.get('email')}",
+        "user": current_user.get("name") or current_user.get("email"),
+        "previous_listing_id": listing_id,
+        "listing_deleted": listing_deleted,
+        "reset_to_status": previous_status,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+    await db.property_leads.update_one(
+        {"id": lead_id},
+        {"$push": {"activity": activity}}
+    )
+    
+    return {
+        "message": "Property lead has been un-converted",
+        "lead_id": lead_id,
+        "reset_to_status": previous_status,
+        "listing_deleted": listing_deleted,
+        "previous_listing_id": listing_id
+    }
+
+
 @router.post("/{lead_id}/pull-owner-info")
 async def pull_owner_info(lead_id: str, current_user: dict = Depends(get_current_user)):
     """Pull owner information from county tax records"""
