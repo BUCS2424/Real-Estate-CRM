@@ -97,10 +97,60 @@ export const ListingsPage = () => {
   const [importDestination, setImportDestination] = useState('listings');
   const [importFile, setImportFile] = useState(null);
   const [importing, setImporting] = useState(false);
+  
+  // Badge management state
+  const [badgeModalOpen, setBadgeModalOpen] = useState(false);
+  const [selectedListing, setSelectedListing] = useState(null);
+  const [availableBadges, setAvailableBadges] = useState([]);
+  const [selectedBadges, setSelectedBadges] = useState([]);
+  const [savingBadges, setSavingBadges] = useState(false);
 
   useEffect(() => {
     fetchListings();
+    fetchBadgeTypes();
   }, []);
+  
+  const fetchBadgeTypes = async () => {
+    try {
+      const res = await badgeAPI.getTypes();
+      setAvailableBadges(res.data.all_badges || []);
+    } catch (error) {
+      console.error('Failed to load badge types');
+    }
+  };
+  
+  const openBadgeModal = (listing, e) => {
+    e.stopPropagation();
+    setSelectedListing(listing);
+    setSelectedBadges(listing.badges || []);
+    setBadgeModalOpen(true);
+  };
+  
+  const toggleBadge = (badgeId) => {
+    setSelectedBadges(prev => 
+      prev.includes(badgeId) 
+        ? prev.filter(b => b !== badgeId)
+        : [...prev, badgeId]
+    );
+  };
+  
+  const saveBadges = async () => {
+    if (!selectedListing) return;
+    setSavingBadges(true);
+    try {
+      await badgeAPI.setPropertyBadges(selectedListing.id, selectedBadges);
+      // Update local state
+      setListings(prev => prev.map(l => 
+        l.id === selectedListing.id ? { ...l, badges: selectedBadges } : l
+      ));
+      toast.success('Badges updated successfully');
+      setBadgeModalOpen(false);
+    } catch (error) {
+      toast.error('Failed to update badges');
+    } finally {
+      setSavingBadges(false);
+    }
+  };
 
   const fetchListings = async () => {
     setLoading(true);
