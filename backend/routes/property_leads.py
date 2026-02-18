@@ -431,38 +431,82 @@ async def convert_to_showcase(lead_id: str, current_user: dict = Depends(get_cur
     if lead.get("status") == "converted":
         raise HTTPException(status_code=400, detail="This property has already been converted")
     
-    # Create listing from lead data
+    # Create listing from lead data - include ALL fields from the lead
     listing_id = str(uuid.uuid4())
+    
+    # Build address for storage folder
+    address_slug = (lead.get("address", "") or "property").lower()
+    address_slug = "-".join(address_slug.split()[:5])  # First 5 words
+    storage_folder = f"properties/{address_slug}-{listing_id[:8]}"
+    
+    # Process images - convert gallery_images to the format expected by properties
+    images = []
+    for img in lead.get("gallery_images", []):
+        if isinstance(img, str):
+            images.append(img)
+        elif isinstance(img, dict) and img.get("url"):
+            images.append(img["url"])
+    
     listing_data = {
         "id": listing_id,
-        "address": lead.get("address", ""),
+        # Core address fields
+        "address": lead.get("address") or lead.get("property_address", ""),
         "city": lead.get("city", ""),
-        "state": lead.get("state", ""),
+        "state": lead.get("state", "FL"),
         "zip_code": lead.get("zip_code", ""),
         "county": lead.get("county", ""),
-        "property_type": lead.get("property_type", "Single Family"),
+        # Property details
+        "property_type": lead.get("property_type", "single_family"),
         "bedrooms": lead.get("bedrooms"),
         "bathrooms": lead.get("bathrooms"),
-        "sqft": lead.get("sqft"),
+        "square_feet": lead.get("sqft") or lead.get("square_feet"),
+        "sqft": lead.get("sqft") or lead.get("square_feet"),
         "lot_size": lead.get("lot_size"),
+        "lot_size_acres": lead.get("lot_size_acres"),
         "year_built": lead.get("year_built"),
-        "price": lead.get("estimated_value") or lead.get("price"),
-        "description": lead.get("description", ""),
+        "garage_spaces": lead.get("garage_spaces"),
+        "pool": lead.get("pool", False),
+        # Pricing
+        "price": lead.get("asking_price") or lead.get("estimated_value") or lead.get("price"),
+        "estimated_value": lead.get("estimated_value"),
+        # Description and features
+        "description": lead.get("description") or lead.get("notes", ""),
         "features": lead.get("features", []),
+        "amenities": lead.get("amenities", []),
+        # Images
+        "images": images,
+        "gallery_images": lead.get("gallery_images", []),
+        # Status
         "status": "active",
+        "mls_status": lead.get("mls_status", "Off Market"),
+        "mls_number": lead.get("mls_number", ""),
+        # Source tracking
         "source": "property_lead",
         "source_lead_id": lead_id,
+        "lead_source": lead.get("source", ""),
+        "lead_status": lead.get("lead_status", ""),
+        # Owner info
         "owner_name": lead.get("owner_name"),
         "owner_email": lead.get("owner_email"),
         "owner_phone": lead.get("owner_phone"),
-        "gallery_images": lead.get("gallery_images", []),
-        "created_by": current_user["name"],
+        "owner_mailing_address": lead.get("owner_mailing_address"),
+        # Financial info from lead
+        "equity_estimate": lead.get("equity_estimate"),
+        "mortgage_balance": lead.get("mortgage_balance"),
+        "tax_assessed_value": lead.get("tax_assessed_value"),
+        # Storage
+        "storage_folder": storage_folder,
+        # Metadata
+        "created_by": current_user.get("sub") or current_user.get("name"),
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     
-    # Insert listing
-    await db.listings.insert_one(listing_data)
+    # Remove None values to keep the document clean
+    listing_data = {k: v for k, v in listing_data.items() if v is not None}
+    
+    # Insert into PROPERTIES collection (not listings) - this is what the public API reads from
+    await db.properties.insert_one(listing_data)
     
     # Update lead status to converted
     await db.property_leads.update_one(
@@ -472,7 +516,7 @@ async def convert_to_showcase(lead_id: str, current_user: dict = Depends(get_cur
                 "status": "converted",
                 "converted_to_listing_id": listing_id,
                 "converted_at": datetime.now(timezone.utc).isoformat(),
-                "converted_by": current_user["name"],
+                "converted_by": current_user.get("name") or current_user.get("email"),
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }
         }
@@ -481,8 +525,8 @@ async def convert_to_showcase(lead_id: str, current_user: dict = Depends(get_cur
     # Add activity log
     activity = {
         "type": "converted_to_listing",
-        "description": f"Converted to Showcase Listing by {current_user['name']}",
-        "user": current_user["name"],
+        "description": f"Converted to Showcase Listing by {current_user.get('name') or current_user.get('email')}",
+        "user": current_user.get("name") or current_user.get("email"),
         "listing_id": listing_id,
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
@@ -494,7 +538,8 @@ async def convert_to_showcase(lead_id: str, current_user: dict = Depends(get_cur
     return {
         "message": "Property lead converted to showcase listing",
         "listing_id": listing_id,
-        "lead_id": lead_id
+        "lead_id": lead_id,
+        "showcase_url": f"/listing/{listing_id}"
     }
 
 
