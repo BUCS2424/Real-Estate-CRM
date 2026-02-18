@@ -735,6 +735,126 @@ async def delete_property(property_id: str, current_user: dict = Depends(require
     
     return {"message": "Property deleted"}
 
+
+# ============ BADGE MANAGEMENT ============
+
+@router.get("/badge-types")
+async def get_badge_types(current_user: dict = Depends(get_current_user)):
+    """Get all available badge types"""
+    # Default badge types
+    default_badges = [
+        {"id": "sold", "label": "SOLD", "color": "#ffffff", "bg_color": "#ef4444", "icon": "check-circle"},
+        {"id": "featured", "label": "FEATURED", "color": "#1a2744", "bg_color": "#f59e0b", "icon": "star"},
+        {"id": "private_auction", "label": "PRIVATE AUCTION", "color": "#ffffff", "bg_color": "#8b5cf6", "icon": "gavel"},
+        {"id": "new_listing", "label": "NEW LISTING", "color": "#ffffff", "bg_color": "#22c55e", "icon": "sparkles"},
+        {"id": "price_reduced", "label": "PRICE REDUCED", "color": "#ffffff", "bg_color": "#3b82f6", "icon": "trending-down"},
+        {"id": "under_contract", "label": "UNDER CONTRACT", "color": "#ffffff", "bg_color": "#ec4899", "icon": "file-signature"},
+        {"id": "off_market", "label": "OFF MARKET", "color": "#d4a646", "bg_color": "#1a2744", "icon": "eye-off"},
+        {"id": "coming_soon", "label": "COMING SOON", "color": "#1a2744", "bg_color": "#fbbf24", "icon": "clock"},
+    ]
+    
+    # Get custom badges from database
+    custom_badges_doc = await db.settings.find_one({"type": "custom_badges"}, {"_id": 0})
+    custom_badges = custom_badges_doc.get("badges", []) if custom_badges_doc else []
+    
+    return {
+        "default_badges": default_badges,
+        "custom_badges": custom_badges,
+        "all_badges": default_badges + custom_badges
+    }
+
+
+@router.post("/badge-types")
+async def create_badge_type(badge_data: dict, current_user: dict = Depends(require_role([UserRole.SUPERUSER, UserRole.ADMIN]))):
+    """Create a custom badge type"""
+    badge_id = badge_data.get("id") or badge_data.get("label", "").lower().replace(" ", "_")
+    
+    new_badge = {
+        "id": badge_id,
+        "label": badge_data.get("label", "").upper(),
+        "color": badge_data.get("color", "#ffffff"),
+        "bg_color": badge_data.get("bg_color", "#6b7280"),
+        "icon": badge_data.get("icon", "tag"),
+        "custom": True
+    }
+    
+    # Add to custom badges in settings
+    await db.settings.update_one(
+        {"type": "custom_badges"},
+        {"$push": {"badges": new_badge}},
+        upsert=True
+    )
+    
+    return {"message": "Badge type created", "badge": new_badge}
+
+
+@router.delete("/badge-types/{badge_id}")
+async def delete_badge_type(badge_id: str, current_user: dict = Depends(require_role([UserRole.SUPERUSER, UserRole.ADMIN]))):
+    """Delete a custom badge type"""
+    # Remove from custom badges
+    await db.settings.update_one(
+        {"type": "custom_badges"},
+        {"$pull": {"badges": {"id": badge_id}}}
+    )
+    
+    # Remove this badge from all properties that have it
+    await db.properties.update_many(
+        {"badges": badge_id},
+        {"$pull": {"badges": badge_id}}
+    )
+    
+    return {"message": "Badge type deleted"}
+
+
+@router.post("/properties/{property_id}/badges")
+async def add_badge_to_property(property_id: str, badge_data: dict, current_user: dict = Depends(get_current_user)):
+    """Add a badge to a property"""
+    badge_id = badge_data.get("badge_id")
+    if not badge_id:
+        raise HTTPException(status_code=400, detail="badge_id is required")
+    
+    # Add badge to property (avoid duplicates)
+    result = await db.properties.update_one(
+        {"id": property_id},
+        {"$addToSet": {"badges": badge_id}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    return {"message": f"Badge '{badge_id}' added to property"}
+
+
+@router.delete("/properties/{property_id}/badges/{badge_id}")
+async def remove_badge_from_property(property_id: str, badge_id: str, current_user: dict = Depends(get_current_user)):
+    """Remove a badge from a property"""
+    result = await db.properties.update_one(
+        {"id": property_id},
+        {"$pull": {"badges": badge_id}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    return {"message": f"Badge '{badge_id}' removed from property"}
+
+
+@router.put("/properties/{property_id}/badges")
+async def set_property_badges(property_id: str, badges_data: dict, current_user: dict = Depends(get_current_user)):
+    """Set all badges for a property (replaces existing badges)"""
+    badges = badges_data.get("badges", [])
+    
+    result = await db.properties.update_one(
+        {"id": property_id},
+        {"$set": {"badges": badges}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    return {"message": "Property badges updated", "badges": badges}
+
+
 # Public property endpoints
 @router.get("/public/properties")
 async def get_public_properties(
