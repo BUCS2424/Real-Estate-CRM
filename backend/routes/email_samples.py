@@ -112,7 +112,7 @@ def generate_smart_list_sample(data):
         <h3 style="color: #1a2744; margin: 0 0 10px 0; font-size: 18px;">Michael Rodriguez</h3>
         <p style="margin: 5px 0; color: #666;"><strong>Company:</strong> First National Bank</p>
         <p style="margin: 5px 0; color: #666;"><strong>Email:</strong> m.rodriguez@fnb.com</p>
-        <p style="margin: 5px 0; color: #666;"><strong>Phone:</strong> (727) 555-0123</p>
+        <p style="margin: 5px 0; color: #666;"><strong>Phone:</strong> (813) 629-7355</p>
     </div>
     """
     
