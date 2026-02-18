@@ -1184,16 +1184,22 @@ async def upload_multiple_property_images(
     uploaded = []
     errors = []
     
-    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    # Support common image formats including HEIC/HEIF from iOS
+    allowed_types = [
+        "image/jpeg", "image/png", "image/gif", "image/webp",
+        "image/heic", "image/heif", "image/bmp", "image/tiff"
+    ]
+    allowed_extensions = ["jpg", "jpeg", "png", "gif", "webp", "heic", "heif", "bmp", "tiff"]
     
     for file in files:
-        if file.content_type not in allowed_types:
-            errors.append(f"{file.filename}: Invalid file type")
+        file_ext = file.filename.split('.')[-1].lower() if '.' in file.filename else ''
+        
+        if file.content_type not in allowed_types and file_ext not in allowed_extensions:
+            errors.append(f"{file.filename}: Invalid file type '{file.content_type}'")
             continue
         
         try:
-            file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
-            unique_filename = f"{uuid.uuid4().hex[:12]}.{file_ext}"
+            unique_filename = f"{uuid.uuid4().hex[:12]}.{file_ext if file_ext else 'jpg'}"
             file_path = os.path.join(images_dir, unique_filename)
             
             content = await file.read()
