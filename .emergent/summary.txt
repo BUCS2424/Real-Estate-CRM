@@ -14,95 +14,79 @@ The user wants to build a Fusion Builder All In One CRM platform. This is a comp
 **User's preferred language**: English
 
 **what currently exists?**
-A feature-rich full-stack React/FastAPI/MongoDB application with JWT authentication, a deal pipeline, and dynamic lead scoring.
+A feature-rich full-stack React/FastAPI/MongoDB application. The platform includes JWT authentication, a deal pipeline, dynamic lead scoring, and public-facing real estate pages.
 
-In this session, the agent performed numerous critical bug fixes related to contact import, data updates, and email sending. Several new features were also completed:
-1.  **Robust Contact Import:** The import logic was completely rewritten to be consistent and reliable, preventing duplicates and providing better error reporting. A Delete All Contacts feature was added to manage data integrity.
-2.  **Contact Category Expansion:** Lender and Vendor categories were added throughout the contacts module.
-3.  **Smart List Feature:** A new feature to filter contacts and email the generated list to specified recipients was built.
-4.  **UI/UX Improvements:** The contact detail page was updated to hide empty fields for a cleaner look.
-5.  **Custom Mortgage Calculator:** A RatePlug-style mortgage calculator was built from scratch. It's available on property detail pages and as a standalone tool. An admin settings page was created for agents to manage the default interest rates.
-6.  **Critical Bug Fixes:** Resolved a data loss issue on contact updates and fixed a server-crashing bug that prevented user login.
-
-The session ended while starting to work on automating the mortgage rate updates.
+In this session, the agent implemented several major features and fixes:
+1.  **Mortgage Rate Automation:** Integrated the FRED API to automatically fetch and update mortgage rates every two weeks. The admin UI was updated to show this status and make the rates read-only.
+2.  **Clickable Stat Card Filters:** The statistics cards (e.g., Total Contacts, Lenders) on the  are now clickable buttons that filter the contact list instantly.
+3.  **Email Samples Page:** A new admin page was created to preview all system-generated emails (e.g., Welcome Email, Smart List Email), allowing admins to see the final rendered HTML.
+4.  **Showcase Listing Integration:**
+    *   Fixed the public property detail page, which was previously showing Property Not Found due to incorrect routing and data fetching.
+    *   Corrected the property lead-to-showcase conversion process to save data to the correct database collection () and transfer all relevant fields.
+5.  **Listing Badge System:** A full-featured badge system was implemented, allowing admins to add styled badges like SOLD, FEATURED, and PRIVATE AUCTION to listings. These badges are visible on the public home and showcase pages.
+6.  **Un-convert Property Lead:** Added an endpoint and UI button to revert a showcase listing back to a property lead, in case of accidental conversion.
 
 **Last working item**:
-*   **Last item agent was working:** Automating the mortgage rate updates for the custom mortgage calculator. The agent researched data sources and identified the FRED (Federal Reserve Economic Data) API as a suitable free option.
+*   **Last item agent was working:** Implementing the un-convert property lead feature. The agent created the backend endpoint () and added a corresponding button to the  in the frontend.
 *   **Status:** IN PROGRESS
 *   **Agent Testing Done:** N
 *   **Which testing method agent to use?** backend testing agent
 *   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-*   **Issue 1: Critical Data Loss - Bookings (P0)**
-*   **Issue 2: Unreliable Production Deployments (P0)**
-*   **Issue 3: Contact Import Inconsistencies (P0)**
-*   **Issue 4: Smart List Email Not Received on Production (P1)**
-*   **Issue 5: Web Scrapers are Fragile (P1)**
-*   **Issue 6: iDrive e2 Storage Credentials Invalid (P1)**
+*   **Issue 1: Un-convert Property Lead (P0)**
+*   **Issue 2: Critical Data Loss - Bookings (P0)**
+*   **Issue 3: Unreliable Production Deployments (P0)**
+*   **Issue 4: Contact Import Inconsistencies (P0)**
+*   **Issue 5: Smart List Email Not Received on Production (P1)**
+*   **Issue 6: Web Scrapers are Fragile (P1)**
+*   **Issue 7: iDrive e2 Storage Credentials Invalid (P1)**
 
 **Issues Detail:**
-*   **Issue 1: Critical Data Loss - Bookings**
-    *   **Description:** The user's booking data was previously wiped. The root cause is unknown. This is a recurring critical issue.
-    *   **Attempted fixes:** None.
+*   **Issue 1: Un-convert Property Lead**
+    *   **Description:** The feature to revert a converted property lead has been implemented but not tested. This is a destructive action as it can delete a public listing.
+    *   **Attempted fixes:** Backend and frontend code has been written.
     *   **Next debug checklist:**
-        1.  Investigate application logs around the time the data loss occurred (if available).
-        2.  Review all backend endpoints that interact with the  collection for destructive operations.
-        3.  Consider adding logging and audit trails for all delete operations on critical collections.
-    *   **Why fix this issue and what will be achieved with the fix?** To prevent catastrophic data loss and ensure platform reliability.
+        1.  Log in as the super user.
+        2.  Navigate to a property lead that has been converted.
+        3.  Click the Un-convert Lead button.
+        4.  Verify the lead's status is reset in the UI and database.
+        5.  Verify the associated showcase listing is deleted from the  collection and no longer appears on the public site.
+    *   **Why fix this issue and what will be achieved with the fix?** To provide a safety mechanism for accidental lead conversions and allow for data correction.
+    *   **Status:** IN PROGRESS
+    *   **Is recurring issue?** N
+    *   **Should Test frontend/backend/both after fix?** both
+    *   **Blocked on other issue:** None
+*   **Issue 2: Critical Data Loss - Bookings**
+    *   **Description:** User's booking data was previously wiped. The root cause is unknown.
     *   **Status:** NOT STARTED
     *   **Is recurring issue?** Y
-    *   **Should Test frontend/backend/both after fix?** backend
-*   **Issue 2: Unreliable Production Deployments**
-    *   **Description:** The manual deployment process is error-prone, leading to divergence between preview and production environments and potential data issues.
-    *   **Attempted fixes:** None.
-    *   **Next debug checklist:** Propose implementing a CI/CD pipeline and a proper data seeding/migration strategy.
-    *   **Why fix this issue and what will be achieved with the fix?** To ensure stable, reliable, and predictable deployments.
+*   **Issue 3: Unreliable Production Deployments**
+    *   **Description:** The manual deployment process is error-prone.
     *   **Status:** NOT STARTED
     *   **Is recurring issue?** Y
-    *   **Should Test frontend/backend/both after fix?** NA
-*   **Issue 3: Contact Import Inconsistencies**
-    *   **Description:** The user has repeatedly reported that the number of imported contacts is inconsistent. The agent has rewritten the import logic to be robust, but user trust is low.
-    *   **Attempted fixes:** The entire import function in  was rewritten to use in-memory sets for duplicate checking and to provide detailed reporting.
-    *   **Next debug checklist:**
-        1.  Ask the user to re-deploy and test the import with the latest code.
-        2.  If it still fails, ask the user to provide the exact CSV file and the import results shown in the UI.
-        3.  Analyze the provided file against the database state to pinpoint discrepancies.
-    *   **Why fix this issue and what will be achieved with the fix?** To restore a critical data migration path for the user.
+*   **Issue 4: Contact Import Inconsistencies**
+    *   **Description:** User has repeatedly reported inconsistent import counts. The logic was rewritten, but user trust is low.
     *   **Status:** USER VERIFICATION PENDING
     *   **Is recurring issue?** Y
-    *   **Should Test frontend/backend/both after fix?** backend
-*   **Issue 4: Smart List Email Not Received on Production**
-    *   **Description:** User reports that the Smart List email feature says sent but emails are not being received, even with SMTP configured on their deployed site.
-    *   **Attempted fixes:** The agent significantly improved email headers for better deliverability and added extensive logging. A diagnostic endpoint () was also created.
-    *   **Next debug checklist:**
-        1.  Instruct the user to use the new diagnostic endpoint on their production site.
-        2.  Ask the user to trigger a Smart List send and provide the backend logs, which now contain detailed SMTP error information.
-        3.  Check if the user's domain has correct SPF, DKIM, and DMARC records.
-    *   **Why fix this issue and what will be achieved with the fix?** Enables a key marketing and communication feature.
-    *   **Status:** BLOCKED
+*   **Issue 5: Smart List Email Not Received on Production**
+    *   **Description:** User reports emails are not being received on their deployed site.
+    *   **Status:** BLOCKED (on user to test diagnostic endpoint on production)
     *   **Is recurring issue?** Y
-    *   **Should Test frontend/backend/both after fix?** backend
-*   **Issue 5: Web Scrapers are Fragile**
-    *   **Description:** The web scrapers are unreliable. The user has decided to build around this with the MLS integration.
+*   **Issue 6: Web Scrapers are Fragile**
+    *   **Description:** Web scrapers are unreliable.
     *   **Status:** NOT STARTED
     *   **Is recurring issue?** Y
-*   **Issue 6: iDrive e2 Storage Credentials Invalid**
-    *   **Description:** The  S3 client is failing due to invalid credentials.
+*   **Issue 7: iDrive e2 Storage Credentials Invalid**
+    *   **Description:**  S3 client is failing.
     *   **Status:** NOT STARTED
     *   **Is recurring issue?** N
 
 **In progress Task List**:
-*   **Task 1: Automate Mortgage Rate Updates (P0)**
-    *   **Where to resume:** Implement a background job (e.g., using  or a simple cron) that calls a new service function. This function will fetch 30-year fixed-rate mortgage data from the FRED API () and update the  document in the  collection.
-    *   **What will be achieved with this?** The custom mortgage calculator will always have up-to-date, real-world interest rates without manual intervention.
-    *   **Status:** IN PROGRESS
-    *   **Should Test frontend/backend/both after fix?** backend
-    *   **Blocked on something:** Needs a free API key from the FRED website.
-*   **Task 2: Jacquie Lawson Card Sender Integration (P1)**
+*   **Task 1: Jacquie Lawson Card Sender Integration (P1)**
     *   **Where to resume:** . Implement the  function using Playwright for browser automation.
     *   **Status:** IN PROGRESS
-*   **Task 3: Social Media Auto-Poster (P1)**
+*   **Task 2: Social Media Auto-Poster (P1)**
     *   **Where to resume:** . Implement OAuth flows and API integrations for social platforms.
     *   **Status:** IN PROGRESS
 
@@ -118,84 +102,86 @@ The session ended while starting to work on automating the mortgage rate updates
     *   Booking Notifications (email, SMS, desktop).
 
 **Completed work in this session**
-- **Contact Import Logic Rewrite:** Overhauled the  endpoint for robust and consistent duplicate detection (by email or name) and better reporting.
-- **Contact Update Data Loss Fix:** Corrected the  endpoint to perform a partial update, preventing data erasure.
-- **Smart List Email Fixes:** Resolved multiple backend crashes (, ) and significantly improved email headers to enhance deliverability.
-- **Delete All Contacts Feature:** Added a UI button and a  endpoint for data cleanup.
-- **Lender & Vendor Categories:** Added two new contact categories across the entire application.
-- **Custom Mortgage Calculator:** Built a full-featured, RatePlug-style calculator with an admin settings page for managing default rates.
-- **Hide Empty Fields UI:** Updated the contact detail view to hide empty fields for a cleaner interface.
-- **Login Failure Resolution:** Fixed a  in  that was crashing the backend server and blocking logins.
-- **Blueprint Generation:** Provided a detailed blueprint for recreating the Showcase Listings feature in another application.
+- **Mortgage Rate Automation:** Integrated FRED API to fetch and display real-time mortgage rates, with an admin UI to show status and a background scheduler for updates.
+- **Clickable Stat Card Filters:** Transformed static info cards on the Contacts page into interactive filters.
+- **Email Samples Preview Page:** Built a new admin page for previewing all system-generated email templates.
+- **Showcase Listing & Conversion Flow:**
+  - Fixed the public property detail page routing and data fetching.
+  - Rewrote the property lead-to-showcase conversion logic, ensuring all data transfers to the correct database collection.
+- **Dynamic Listing Badge System:** Created a full-featured system to add and manage styled badges (e.g., SOLD, FEATURED) on property listings, visible on both admin and public pages.
+- **Un-convert Property Lead:** Added backend logic and a UI button to revert a converted lead to its original state.
 
 **Earlier issues found/mentioned but not fixed**
 - The critical P0 issues regarding **Bookings data loss** and **unreliable production deployments** remain unaddressed due to user-driven prioritization of feature development.
 
 **Known issue recurrence from previous fork**
-- **Database Synchronization / Data Loss:** This critical issue persists and is the likely cause of the lost booking data. Recurrence count: 4. Status: NOT STARTED.
-- **Unreliable Web Scraping:** This problem persists. The user has decided to build around it with the MLS integration. Recurrence count: 4. Status: BLOCKED.
+- **Database Synchronization / Data Loss:** This critical issue persists and is the likely cause of the lost booking data. Recurrence count: 5. Status: NOT STARTED.
+- **Unreliable Web Scraping:** This problem persists. The user has decided to build around it with the MLS integration. Recurrence count: 5. Status: BLOCKED.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-*   **Robust Data Import:** Logic was rewritten to use in-memory sets for efficient duplicate checking against both the database and within the import file itself.
-*   **Partial Updates (PATCH behavior):** Fixed a critical data loss bug by changing a  endpoint's logic from a full document replacement () to a partial update of only the fields provided in the request payload.
-*   **Email Deliverability:** Enhanced  usage to include critical headers (, , ) and a multipart structure (plain text + HTML) to reduce the likelihood of being marked as spam.
-*   **Component-Based Architecture:** New features (Smart List, Mortgage Calculator) were built as separate, reusable React components to avoid further bloating the massive .
-*   **API-Driven Settings:** Created an admin UI to manage application settings (mortgage rates), which are fetched via an API and used to configure public-facing components.
+*   **Background Scheduler:** Used  to create a recurring background job for fetching mortgage rates from the FRED API.
+*   **Backend Query Enhancement:** Added a  filter to the  endpoint to support UI filtering.
+*   **Route Specificity Fix:** Resolved a FastAPI routing bug where a generic route () was incorrectly matching a more specific one () by reordering them in .
+*   **Data Conversion/Reversal Logic:** Implemented robust logic for converting a  to a  (ensuring data integrity and correct collection) and added a reverse (un-convert) operation.
+*   **Dynamic UI Badges:** Created a system where data from the backend (a list of a property's badges) is mapped to a frontend configuration object to render styled components with specific icons and colors.
 
 **key DB schema**
-*   **settings:** A new document  is used to store default rates for the calculator.
+*   **settings:** The  document was updated to include  and .
+*   **properties:** Added a  field (array of strings) to store assigned badge names. Many new fields are also transferred from  during conversion.
+*   **property_leads:** The  and  fields are managed by the convert/un-convert logic.
 
 **changes in tech stack**
-*   None.
+*   **apscheduler:** Added for background task scheduling.
 
 **All files of reference**
-*   : Core logic for contacts, including the rewritten import and new smart list features.
-*   : New endpoints for managing mortgage rates and diagnosing SMTP.
-*   : The main contacts page, which was heavily modified.
-*   : The new component for the Smart List feature.
-*   : The new component for the mortgage calculator.
-*   : The new UI for managing mortgage rates.
-*   : Modified to embed the mortgage calculator.
+*   : Core logic for lead conversion and un-conversion.
+*   : New endpoints for the badge system.
+*   : New service for fetching data from the FRED API.
+*   : Modified to initialize and shut down the .
+*   : UI for mortgage rate automation and read-only display.
+*   : Modified for clickable stat card filters.
+*   : UI for triggering the badge management modal.
+*   : New component for selecting badges for a property.
+*   : Fixed data fetching and routing issues.
 
 **Areas that need refactoring**:
-*    is now over 2900 lines. It is a critical maintenance risk and should be the highest priority for refactoring. The agent has started breaking out new features into components, but the core file remains dangerously large.
+*    is still over 2900 lines. The addition of filtering logic has increased its complexity, making it an even higher refactoring priority.
 
 **key api endpoints**
-*   : Deletes all contacts.
-*   : Filters contacts based on criteria.
-*   : Sends the filtered list via email.
-*   : Performs a partial update on a contact, preserving existing data.
-*   : Completely rewritten endpoint for robust CSV/VCF import.
-*   : Fetches default mortgage rates.
-*   : Saves default mortgage rates.
-*   : A diagnostic endpoint to test SMTP configuration.
+*   : Manually triggers a mortgage rate update.
+*   : Gets the status of the rate automation.
+*   : Gets the HTML for a sample email template for preview.
+*   : Reverts a converted property lead to its original state.
+*   : Retrieves all available badge types.
+*   : Sets the badges for a specific property.
 
 **Critical Info for New Agent**
-*   **User Sensitivity to Data Integrity:** The user is extremely sensitive to bugs related to data import and data loss. The contact import logic was rewritten and tested in preview, but you must be prepared to help the user debug any perceived inconsistencies on their production environment.
-*   ** is a High-Risk File:** This file is nearly 3000 lines long. Any modification is extremely high-risk. Strongly recommend proposing a dedicated refactoring sprint to the user to break it down into smaller, manageable components.
-*   **Production vs. Preview Divergence:** The user frequently reports issues on their deployed site that do not occur in the preview environment (e.g., configured SMTP, data state). Debugging these issues requires guiding the user to gather console logs and network data from their end, as you cannot access their production server.
+*   **Test the Un-convert Feature:** The last feature implemented was . It has been coded but is completely untested. Since it's a destructive action (it can delete a public listing), it must be thoroughly tested before moving on.
+*   ** is High-Risk:** This file is dangerously large. Be extremely cautious when making changes. Adding new features to it is not recommended; propose refactoring it into smaller components first.
+*   **API Route Inconsistency:** The badge API endpoints were created at the root of their router, so the path is  instead of . The frontend has been adjusted, but be aware of this pattern if extending the API.
+*   **User Focus:** The user prioritizes new feature development over fixing underlying stability issues like data loss and deployment workflows. Be prepared to work on features while keeping these critical-but-deferred issues in mind.
 
 **documents and test reports created in this job**
-*   None.
+*    (Updated)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** can we automate the admin Mortgage Rate Settings menu item? with maybe an ai to go fetch every 2 weeks? (Status: **In Progress**, this is the current task).
-2.  **User:** lets do it (re: mortgage calculator) (Status: **Completed**).
-3.  **User:** can we develop our own rate plug to work and look just as nice? (Status: **Completed**).
-4.  **User:** does rate plug have a free api to use in the user listings for the mls showcase? (Status: **Completed**, agent researched and provided alternatives).
-5.  **User:** no one is receiving the smart list email... (Status: **Blocked**, user needs to test on production with new logging).
-6.  **User:** on the smart list email out, the smtp is connected and has been tested... (Status: **Addressed**, agent improved email headers and added diagnostics).
-7.  **User:** in the quick info also, company, budget, lead score (re: hiding empty fields) (Status: **Completed**).
-8.  **User:** on the contact information page, lets hide all the fields that are not filled in... (Status: **Completed**).
-9.  **User:** iTS CONFIGURED IN THE DEPLOYED SITE (re: SMTP) (Status: **Addressed**, agent fixed code and informed user to redeploy).
-10. **User:** Failed to send list on smart list send (Status: **Resolved**, agent fixed a backend crash).
+1.  **User:** i need an un-convert property lead... (Status: **In Progress**, this is the current task).
+2.  **User:** in the showcase listing, we need to be able to add beautiful BADGES... (Status: **Completed**).
+3.  **User:** we need to be sure that when you convert a property lead into a showcase listing, that all features work... (Status: **Completed**).
+4.  **User:** where is teh listing page when you click on it? (Status: **Resolved**, agent fixed the routing).
+5.  **User:** lets connect the showcase listings from the back end to the home page and to the showcase page... (Status: **Completed**).
+6.  **User:** i want a samples section in the admin menu... (Status: **Completed**).
+7.  **User:** lets create buttons with these stat cards, so when pressed they immediately filter... (Status: **Completed**).
+8.  **User:** i meant on the admin settings page itself maybe make them read only... (Status: **Completed**).
+9.  **User:** can you write a blurb about how the Mortgage Rate Settings... gets automatically updated... (Status: **Completed**).
+10. **User:** Complete the Mortgage Rate Automation using FRED API... (Status: **Completed**).
 
 **Project Health Check:**
 *   **Broken:**
-    *   **Bookings Data:** Collection is empty. Root cause is unknown and this is a recurring issue.
+    *   **Bookings Data:** Collection remains empty. Root cause is unknown and this is a recurring issue.
     *   **Deployment Workflow:** Unreliable, manual process causing environment divergence.
     *   **Web Scrapers:** Non-functional.
     *   **iDrive e2 Integration:** Invalid credentials.
@@ -205,7 +191,6 @@ The session ended while starting to work on automating the mortgage rate updates
     *   **Social Media Service:** API integration logic is not yet implemented.
 *   **Pending User Verification (Production):**
     *   **Contact Import:** Logic has been completely rewritten and tested in preview.
-    *   **Contact Update:** Data loss bug has been fixed in the code.
     *   **Smart List Email Send:** Functionality is fixed, headers improved, and logging added.
 
 **3rd Party Integrations**
@@ -213,10 +198,10 @@ The session ended while starting to work on automating the mortgage rate updates
 *   **APIFree.ai (SkyReels V3):** For AI avatar video generation.
 *   **boto3:** S3 client (failing due to credentials).
 *   **Bridge API (Stellar MLS):** Integration scaffolded, awaiting credentials.
-*   **Planned:** FRED API for mortgage rates.
+*   **FRED API:** **[Newly Implemented]** For automated mortgage rate updates.
 
 **Testing status**
-*   **Testing agent used after significant changes:** NO (Agent self-tested extensively with curl).
+*   **Testing agent used after significant changes:** NO (Agent self-tested extensively with  and screenshots).
 *   **Troubleshoot agent used after agent stuck in loop:** NO
 *   **Test files created:** None.
 *   **Known regressions:**
@@ -228,4 +213,6 @@ The session ended while starting to work on automating the mortgage rate updates
 *   **Password:** 
 
 **What agent forgot to execute**
-The agent was highly productive, addressing numerous user requests and critical bugs. However, the  was not utilized despite the complexity and criticality of the fixes. The core recurring issues of data loss and deployment instability also remain unaddressed, as the user continuously prioritized new feature development.</analysis>
+*   The  was not utilized, despite numerous significant feature implementations and fixes. Self-testing was performed, but a dedicated testing agent would have provided more robust coverage.
+*   The core P0 issues (data loss, deployment instability) were not addressed, as the agent followed the user's priority for new features.
+*   The agent did not propose a refactoring of the high-risk  file, instead adding more functionality to it, increasing its technical debt.</analysis>

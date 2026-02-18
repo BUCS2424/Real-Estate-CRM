@@ -8,7 +8,7 @@ import os
 import io
 import csv
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://fusion-crm-preview.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://hidden-haven-dev.preview.emergentagent.com')
 
 # Test credentials
 TEST_EMAIL = "mel@a2gdesigns.com"
