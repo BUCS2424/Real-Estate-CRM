@@ -801,9 +801,9 @@ export const LandingPage = () => {
           </form>
 
           <div className="flex flex-col sm:flex-row gap-8 justify-center items-center text-white/60">
-            <a href="tel:+15551234567" className="flex items-center gap-2 hover:text-amber-400 transition-colors">
+            <a href="tel:+18136297355" className="flex items-center gap-2 hover:text-amber-400 transition-colors">
               <Phone className="w-4 h-4" />
-              +1 (555) 123-4567
+              (813) 629-7355
             </a>
             <a href="mailto:info@fusionestates.com" className="flex items-center gap-2 hover:text-amber-400 transition-colors">
               <Mail className="w-4 h-4" />
