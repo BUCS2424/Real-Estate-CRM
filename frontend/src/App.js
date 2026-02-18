@@ -98,8 +98,8 @@ function App() {
             <Routes>
               {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
-            <Route path="/property/:slug" element={<PropertyLandingPage />} />
-            <Route path="/listing/:id" element={<PropertyDetailPage />} />
+            <Route path="/property/:slug" element={<PropertyDetailPage />} />
+            <Route path="/listing/:slug" element={<PropertyDetailPage />} />  {/* Backwards compatibility */}
             <Route path="/showcase" element={<PublicListingsPage />} />
             <Route path="/mortgage-calculator" element={<MortgageCalculatorPage />} />
             <Route path="/about" element={<AboutPage />} />
