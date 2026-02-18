@@ -295,7 +295,7 @@ const ListingDetailPage = () => {
           </Button>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" asChild>
-              <a href={`/listing/${id}`} target="_blank" rel="noopener noreferrer">
+              <a href={`/property/${listing?.slug || id}`} target="_blank" rel="noopener noreferrer">
                 <Eye className="w-4 h-4 mr-2" />
                 Preview
               </a>
