@@ -435,8 +435,20 @@ async def convert_to_showcase(lead_id: str, current_user: dict = Depends(get_cur
     # Create listing from lead data - include ALL fields from the lead
     listing_id = str(uuid.uuid4())
     
+    # Generate URL-friendly slug from address
+    address = lead.get("address") or lead.get("property_address", "")
+    city = lead.get("city", "")
+    state = lead.get("state", "FL")
+    zip_code = lead.get("zip_code", "")
+    
+    base_slug = generate_property_slug(address, city, state, zip_code)
+    
+    # Ensure slug is unique
+    existing_slugs = await db.properties.distinct("slug")
+    unique_slug = ensure_unique_slug(base_slug, existing_slugs)
+    
     # Build address for storage folder
-    address_slug = (lead.get("address", "") or "property").lower()
+    address_slug = (address or "property").lower()
     address_slug = "-".join(address_slug.split()[:5])  # First 5 words
     storage_folder = f"properties/{address_slug}-{listing_id[:8]}"
     
@@ -450,11 +462,12 @@ async def convert_to_showcase(lead_id: str, current_user: dict = Depends(get_cur
     
     listing_data = {
         "id": listing_id,
+        "slug": unique_slug,  # SEO-friendly URL slug
         # Core address fields
-        "address": lead.get("address") or lead.get("property_address", ""),
-        "city": lead.get("city", ""),
-        "state": lead.get("state", "FL"),
-        "zip_code": lead.get("zip_code", ""),
+        "address": address,
+        "city": city,
+        "state": state,
+        "zip_code": zip_code,
         "county": lead.get("county", ""),
         # Property details
         "property_type": lead.get("property_type", "single_family"),
