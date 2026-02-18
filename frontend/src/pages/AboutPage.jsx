@@ -113,7 +113,7 @@ export const AboutPage = () => {
                     Schedule a Call
                   </Button>
                 </a>
-                <a href="mailto:sheila@fusionestates.com">
+                <a href="mailto:info@hiddenhavenrealty.com">
                   <Button variant="outline" className="border-white/30 hover:bg-white/10">
                     <Mail className="w-4 h-4 mr-2" />
                     Send a Message
