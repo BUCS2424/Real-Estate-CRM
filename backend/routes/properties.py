@@ -520,6 +520,229 @@ async def delete_listing(listing_id: str, current_user: dict = Depends(require_r
     return {"message": "Listing deleted"}
 
 
+# ============ LISTING IMAGE UPLOAD ============
+
+LISTING_IMAGES_DIR = "/app/backend/static/listing-images"
+
+def get_listing_images_dir(listing_id: str) -> str:
+    """Get or create the images directory for a listing"""
+    dir_path = os.path.join(LISTING_IMAGES_DIR, listing_id)
+    os.makedirs(dir_path, exist_ok=True)
+    return dir_path
+
+
+@router.post("/listings/{listing_id}/images/upload")
+async def upload_listing_image(
+    listing_id: str,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload an image to a listing's gallery"""
+    # Verify listing exists
+    listing = await db.properties.find_one({"id": listing_id}, {"_id": 0})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    # Validate file type
+    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, PNG, GIF, WEBP allowed.")
+    
+    # Create directory for this listing
+    images_dir = get_listing_images_dir(listing_id)
+    
+    # Generate unique filename
+    file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+    unique_filename = f"{uuid.uuid4().hex[:12]}.{file_ext}"
+    file_path = os.path.join(images_dir, unique_filename)
+    
+    # Save file
+    try:
+        content = await file.read()
+        with open(file_path, "wb") as f:
+            f.write(content)
+        
+        file_size = len(content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
+    
+    # Create image record
+    image_record = {
+        "id": str(uuid.uuid4()),
+        "filename": unique_filename,
+        "original_name": file.filename,
+        "url": f"/api/listings/{listing_id}/images/file/{unique_filename}",
+        "size": file_size,
+        "content_type": file.content_type,
+        "uploaded_by": current_user.get("name") or current_user.get("email"),
+        "uploaded_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Update listing with new image
+    await db.properties.update_one(
+        {"id": listing_id},
+        {
+            "$push": {"images": image_record},
+            "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+        }
+    )
+    
+    return {
+        "message": "Image uploaded successfully",
+        "image": image_record
+    }
+
+
+@router.post("/listings/{listing_id}/images/upload-multiple")
+async def upload_multiple_listing_images(
+    listing_id: str,
+    files: List[UploadFile] = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload multiple images to a listing's gallery"""
+    # Verify listing exists
+    listing = await db.properties.find_one({"id": listing_id}, {"_id": 0})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    images_dir = get_listing_images_dir(listing_id)
+    
+    uploaded = []
+    errors = []
+    
+    for file in files:
+        if file.content_type not in allowed_types:
+            errors.append(f"{file.filename}: Invalid file type")
+            continue
+        
+        try:
+            file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+            unique_filename = f"{uuid.uuid4().hex[:12]}.{file_ext}"
+            file_path = os.path.join(images_dir, unique_filename)
+            
+            content = await file.read()
+            with open(file_path, "wb") as f:
+                f.write(content)
+            
+            image_record = {
+                "id": str(uuid.uuid4()),
+                "filename": unique_filename,
+                "original_name": file.filename,
+                "url": f"/api/listings/{listing_id}/images/file/{unique_filename}",
+                "size": len(content),
+                "content_type": file.content_type,
+                "uploaded_by": current_user.get("name") or current_user.get("email"),
+                "uploaded_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            await db.properties.update_one(
+                {"id": listing_id},
+                {"$push": {"images": image_record}}
+            )
+            
+            uploaded.append(image_record)
+        except Exception as e:
+            errors.append(f"{file.filename}: {str(e)}")
+    
+    # Update timestamp
+    await db.properties.update_one(
+        {"id": listing_id},
+        {"$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {
+        "message": f"Uploaded {len(uploaded)} images",
+        "uploaded": uploaded,
+        "errors": errors
+    }
+
+
+@router.get("/listings/{listing_id}/images/file/{filename}")
+async def get_listing_image(listing_id: str, filename: str):
+    """Serve a listing image file"""
+    from fastapi.responses import FileResponse
+    
+    file_path = os.path.join(LISTING_IMAGES_DIR, listing_id, filename)
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Image not found")
+    
+    return FileResponse(file_path)
+
+
+@router.delete("/listings/{listing_id}/images/{image_id}")
+async def delete_listing_image(
+    listing_id: str,
+    image_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete an image from a listing's gallery"""
+    listing = await db.properties.find_one({"id": listing_id}, {"_id": 0})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    images = listing.get("images", [])
+    image_to_delete = next((img for img in images if img.get("id") == image_id), None)
+    
+    if not image_to_delete:
+        raise HTTPException(status_code=404, detail="Image not found")
+    
+    # Delete file from disk
+    file_path = os.path.join(LISTING_IMAGES_DIR, listing_id, image_to_delete["filename"])
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    
+    # Remove from database
+    await db.properties.update_one(
+        {"id": listing_id},
+        {
+            "$pull": {"images": {"id": image_id}},
+            "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+        }
+    )
+    
+    return {"message": "Image deleted successfully"}
+
+
+@router.put("/listings/{listing_id}/images/reorder")
+async def reorder_listing_images(
+    listing_id: str,
+    image_ids: List[str],
+    current_user: dict = Depends(get_current_user)
+):
+    """Reorder images in a listing's gallery"""
+    listing = await db.properties.find_one({"id": listing_id}, {"_id": 0})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    current_images = listing.get("images", [])
+    image_map = {img["id"]: img for img in current_images}
+    
+    # Reorder based on provided IDs
+    reordered = []
+    for img_id in image_ids:
+        if img_id in image_map:
+            reordered.append(image_map[img_id])
+    
+    # Add any images not in the reorder list to the end
+    for img in current_images:
+        if img["id"] not in image_ids:
+            reordered.append(img)
+    
+    await db.properties.update_one(
+        {"id": listing_id},
+        {
+            "$set": {
+                "images": reordered,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    return {"message": "Images reordered", "images": reordered}
+
+
 @router.post("/listings/import-csv")
 async def import_listings_csv(
     file: UploadFile = File(...),
