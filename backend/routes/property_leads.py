@@ -12,6 +12,7 @@ from models.user import UserRole
 from models.property_lead import PropertyLeadCreate, PropertyLeadUpdate, PropertyLeadNote
 from database import db
 from services.county_scrapers import search_property
+from utils.slug import generate_property_slug, ensure_unique_slug
 
 router = APIRouter(prefix="/property-leads", tags=["Property Leads"])
 
