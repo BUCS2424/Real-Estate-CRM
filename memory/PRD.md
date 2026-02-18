@@ -1672,3 +1672,85 @@ Implemented automatic mortgage rate updates using the Federal Reserve Economic D
 - Advanced Reporting & Analytics
 - Booking Notifications (email, SMS, desktop)
 
+---
+
+## Update: February 18, 2026 - Un-convert Property Lead Feature
+
+### Feature: Un-convert Property Lead from Showcase Listing
+
+Implemented the ability to revert a property lead that was previously converted to a showcase listing. This provides a safety mechanism for accidental conversions and allows users to edit and re-convert leads.
+
+#### Backend Implementation
+- **Endpoint:** `POST /api/property-leads/{lead_id}/unconvert`
+  - Query param: `delete_listing` (boolean, default=true)
+  - When `delete_listing=true`: Deletes the associated showcase listing from `properties` collection
+  - When `delete_listing=false`: Only resets the lead status, preserves the listing
+  - Resets lead status to previous state (from activity log, or 'new' as fallback)
+  - Clears `converted_to_listing_id`, `converted_at`, `converted_by` fields
+  - Adds "unconverted" entry to activity log
+
+#### Frontend Implementation
+- **UI Changes:** `/app/frontend/src/pages/PropertyLeadDetailPage.jsx`
+  - Conditional button rendering based on lead status:
+    - Non-converted leads: Shows "Convert to Showcase Listing" button
+    - Converted leads: Shows "View Showcase Listing" + "Un-convert Lead" buttons
+  - Two-step confirmation dialog:
+    1. First confirm asks whether to delete the listing (OK = delete, Cancel = keep)
+    2. Second confirm asks for final confirmation
+  - Added `data-testid` attributes for testing
+  - Toast notifications with appropriate success messages
+
+- **API Function:** `/app/frontend/src/lib/api.js`
+  - `propertyLeadsAPI.unconvertFromShowcase(id, deleteListing)` - line 422
+
+#### Test Results
+- **Backend:** 100% (6/6 tests passed)
+- **Frontend:** 100% (12/12 tests passed)
+- Test file: `/app/backend/tests/test_unconvert_property_leads.py`
+- Test report: `/app/test_reports/iteration_14.json`
+
+#### Files Modified
+- `/app/backend/routes/property_leads.py` - Lines 561-643 (unconvert endpoint)
+- `/app/frontend/src/pages/PropertyLeadDetailPage.jsx` - Lines 347-366 (handler), Lines 464-522 (UI buttons)
+- `/app/frontend/src/lib/api.js` - Line 422 (API method)
+
+#### Verified & Tested
+- Unconvert with delete_listing=true deletes showcase listing ✅
+- Unconvert with delete_listing=false preserves showcase listing ✅
+- Lead status resets to 'new' or previous status ✅
+- Activity log updated with 'unconverted' entry ✅
+- UI buttons appear/hide correctly based on status ✅
+- Confirmation dialogs work correctly ✅
+- View Showcase Listing navigation works ✅
+
+---
+
+## Current Status (February 18, 2026)
+
+### Completed Today
+- ✅ **Un-convert Property Lead Feature** - Fully tested and working
+  - Backend endpoint with delete_listing option
+  - Frontend UI with conditional button rendering
+  - Two-step confirmation dialogs
+
+### Known Issues (Unchanged)
+- **P0:** Bookings data loss (not investigated)
+- **P0:** Unreliable production deployments
+- **P1:** Contact Import - user verification pending on production
+- **P1:** Smart List Email - user needs to test on production
+- **P1:** Web scrapers blocked (awaiting user decision on paid API)
+- **P1:** iDrive e2 storage credentials invalid
+
+### Upcoming Tasks
+1. **P0:** MLS Integration activation (blocked on Bridge API credentials)
+2. **P1:** Build Buyer Lead Page
+3. **P1:** Jacquie Lawson Card Sender automation
+4. **P1:** Social Media Auto-Poster
+
+### Backlog
+- Refactor ContactsPage.jsx (~2900 lines → smaller components)
+- TMS Integration
+- Advanced Lead Management (auction/bidding)
+- Advanced Reporting & Analytics
+- Booking Notifications (email, SMS, desktop)
+
