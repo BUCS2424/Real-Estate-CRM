@@ -419,6 +419,7 @@ export const propertyLeadsAPI = {
   // Property data scraping
   generateData: (id) => api.post(`/property-leads/${id}/generate-data`),
   convertToShowcase: (id) => api.post(`/property-leads/${id}/convert-to-showcase`),
+  unconvertFromShowcase: (id, deleteListing = true) => api.post(`/property-leads/${id}/unconvert?delete_listing=${deleteListing}`),
   
   // Property Images Gallery
   getImages: (id) => api.get(`/property-leads/${id}/images`),
