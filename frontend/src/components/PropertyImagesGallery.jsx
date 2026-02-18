@@ -71,8 +71,15 @@ export const PropertyImagesGallery = ({ leadId, images = [], onImagesChange }) =
   const uploadFiles = async (fileList) => {
     const files = Array.from(fileList);
     const validFiles = files.filter(file => {
-      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-      if (!validTypes.includes(file.type)) {
+      // Support all common image formats including iOS HEIC
+      const validTypes = [
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+        'image/heic', 'image/heif', 'image/bmp', 'image/tiff'
+      ];
+      const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'bmp', 'tiff'];
+      const ext = file.name.split('.').pop()?.toLowerCase() || '';
+      
+      if (!validTypes.includes(file.type) && !validExtensions.includes(ext)) {
         toast.error(`${file.name} is not a valid image type`);
         return false;
       }
@@ -91,19 +98,30 @@ export const PropertyImagesGallery = ({ leadId, images = [], onImagesChange }) =
       if (validFiles.length === 1) {
         const formData = new FormData();
         formData.append('file', validFiles[0]);
-        await propertyLeadsAPI.uploadImage(leadId, formData);
+        const response = await propertyLeadsAPI.uploadImage(leadId, formData);
         toast.success('Image uploaded');
       } else {
         const formData = new FormData();
         validFiles.forEach(file => formData.append('files', file));
-        await propertyLeadsAPI.uploadMultipleImages(leadId, formData);
-        toast.success(`${validFiles.length} images uploaded`);
+        const response = await propertyLeadsAPI.uploadMultipleImages(leadId, formData);
+        
+        // Show specific feedback about what was uploaded
+        const uploaded = response.data?.uploaded?.length || 0;
+        const errors = response.data?.errors || [];
+        
+        if (errors.length > 0) {
+          toast.warning(`${uploaded} images uploaded, ${errors.length} failed`);
+          errors.forEach(err => console.error('Upload error:', err));
+        } else {
+          toast.success(`${uploaded} images uploaded`);
+        }
       }
       
       onImagesChange?.();
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Failed to upload images');
+      const errorMsg = error.response?.data?.detail || 'Failed to upload images';
+      toast.error(errorMsg);
     } finally {
       setUploading(false);
     }
