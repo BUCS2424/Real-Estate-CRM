@@ -397,6 +397,60 @@ async def migrate_storage_folders(current_user: dict = Depends(get_current_user)
     
     return {"message": f"Migrated {updated_count} properties with storage folders"}
 
+
+@router.post("/listings/migrate-slugs")
+async def migrate_slugs(current_user: dict = Depends(get_current_user)):
+    """
+    Generate SEO-friendly URL slugs for existing properties that don't have them.
+    Example: "804 S Davis Blvd, Tampa, FL 33606" -> "804-s-davis-blvd-tampa-fl-33606"
+    """
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Find properties without slugs
+    properties = await db.properties.find(
+        {"$or": [{"slug": None}, {"slug": {"$exists": False}}, {"slug": ""}]},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    # Get all existing slugs to avoid duplicates
+    existing_slugs = await db.properties.distinct("slug")
+    existing_slugs = [s for s in existing_slugs if s]  # Filter out None/empty
+    
+    updated_count = 0
+    results = []
+    
+    for prop in properties:
+        address = prop.get("address", "")
+        city = prop.get("city", "")
+        state = prop.get("state", "FL")
+        zip_code = prop.get("zip_code", "")
+        
+        if not address:
+            continue
+            
+        base_slug = generate_property_slug(address, city, state, zip_code)
+        unique_slug = ensure_unique_slug(base_slug, existing_slugs)
+        
+        await db.properties.update_one(
+            {"id": prop["id"]},
+            {"$set": {"slug": unique_slug}}
+        )
+        
+        existing_slugs.append(unique_slug)  # Add to list to prevent duplicates in this batch
+        updated_count += 1
+        results.append({
+            "id": prop["id"],
+            "address": address,
+            "slug": unique_slug
+        })
+    
+    return {
+        "message": f"Generated slugs for {updated_count} properties",
+        "updated_count": updated_count,
+        "results": results
+    }
+
 @router.get("/listings/{listing_id}")
 async def get_listing(listing_id: str, current_user: dict = Depends(get_current_user)):
     """Alias for /properties/{id} for frontend compatibility"""
