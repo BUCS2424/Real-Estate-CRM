@@ -38,7 +38,7 @@ const formatPrice = (price) => {
 };
 
 export const PropertyDetailPage = () => {
-  const { id } = useParams();
+  const { slug } = useParams();  // Changed from id to slug
   const { branding } = useBranding();
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -55,16 +55,23 @@ export const PropertyDetailPage = () => {
   useEffect(() => {
     const fetchProperty = async () => {
       try {
-        const res = await publicAPI.getListing(id);
+        // Try to fetch by slug first, fall back to ID for backwards compatibility
+        const res = await publicAPI.getListingBySlug(slug);
         setProperty(res.data);
       } catch (error) {
-        console.error('Failed to load property');
+        // Fallback: try fetching by ID (for old links)
+        try {
+          const res = await publicAPI.getListing(slug);
+          setProperty(res.data);
+        } catch (fallbackError) {
+          console.error('Failed to load property');
+        }
       } finally {
         setLoading(false);
       }
     };
     fetchProperty();
-  }, [id]);
+  }, [slug]);
 
   const handleSubmitInquiry = async (e) => {
     e.preventDefault();
