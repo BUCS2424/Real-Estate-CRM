@@ -557,6 +557,7 @@ async def convert_to_showcase(lead_id: str, current_user: dict = Depends(get_cur
         "description": f"Converted to Showcase Listing by {current_user.get('name') or current_user.get('email')}",
         "user": current_user.get("name") or current_user.get("email"),
         "listing_id": listing_id,
+        "slug": unique_slug,
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
     await db.property_leads.update_one(
@@ -567,8 +568,9 @@ async def convert_to_showcase(lead_id: str, current_user: dict = Depends(get_cur
     return {
         "message": "Property lead converted to showcase listing",
         "listing_id": listing_id,
+        "slug": unique_slug,
         "lead_id": lead_id,
-        "showcase_url": f"/listing/{listing_id}"
+        "showcase_url": f"/property/{unique_slug}"
     }
 
 
