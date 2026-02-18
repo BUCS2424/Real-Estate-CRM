@@ -348,11 +348,36 @@ export const LandingPage = () => {
                     className="w-full h-[280px] object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628] via-transparent to-transparent" />
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-amber-400 text-black text-xs font-medium px-3 py-1 rounded">
-                      OFF MARKET
-                    </span>
+                  
+                  {/* Badges - Show custom badges or default "OFF MARKET" */}
+                  <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                    {listing.badges && listing.badges.length > 0 ? (
+                      listing.badges.map((badgeId) => {
+                        const config = BADGE_CONFIG[badgeId];
+                        if (!config) return null;
+                        const BadgeIcon = config.icon;
+                        return (
+                          <span
+                            key={badgeId}
+                            className="flex items-center gap-1 text-xs font-bold px-3 py-1 rounded shadow-lg"
+                            style={{ 
+                              backgroundColor: config.bg, 
+                              color: config.color,
+                              boxShadow: `0 4px 6px -1px ${config.bg}40`
+                            }}
+                          >
+                            <BadgeIcon className="w-3 h-3" />
+                            {config.label}
+                          </span>
+                        );
+                      })
+                    ) : (
+                      <span className="bg-amber-400 text-black text-xs font-medium px-3 py-1 rounded">
+                        OFF MARKET
+                      </span>
+                    )}
                   </div>
+                  
                   <div className="absolute bottom-4 left-4 right-4">
                     <p className="text-2xl font-serif mb-1">{formatPrice(listing.price)}</p>
                     <p className="text-white/70 text-sm">{listing.address}</p>
