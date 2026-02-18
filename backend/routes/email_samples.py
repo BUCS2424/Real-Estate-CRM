@@ -14,7 +14,7 @@ def get_sample_data():
     return {
         "sender_name": "Sheila Desautels",
         "sender_title": "Luxury Real Estate Specialist",
-        "sender_email": "sheila@hiddenhaven.com",
+        "sender_email": "info@hiddenhavenrealty.com",
         "sender_phone": "(813) 629-7355",
         "recipient_name": "John Smith",
         "recipient_email": "john.smith@example.com",
