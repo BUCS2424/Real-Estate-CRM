@@ -179,6 +179,23 @@ export const listingsAPI = {
   importCSV: (formData) => api.post('/listings/import-csv', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
+  // Image management
+  uploadImage: (id, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/listings/${id}/images/upload`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  uploadMultipleImages: (id, files) => {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    return api.post(`/listings/${id}/images/upload-multiple`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  deleteImage: (listingId, imageId) => api.delete(`/listings/${listingId}/images/${imageId}`),
+  reorderImages: (id, imageIds) => api.put(`/listings/${id}/images/reorder`, imageIds),
 };
 
 // Property Badge Management
