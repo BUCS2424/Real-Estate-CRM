@@ -466,16 +466,25 @@ async def convert_to_showcase(lead_id: str, current_user: dict = Depends(get_cur
         "year_built": lead.get("year_built"),
         "garage_spaces": lead.get("garage_spaces"),
         "pool": lead.get("pool", False),
+        "homestead": lead.get("homestead"),
+        "parcel_id": lead.get("parcel_id"),
         # Pricing
-        "price": lead.get("asking_price") or lead.get("estimated_value") or lead.get("price"),
+        "price": lead.get("list_price") or lead.get("asking_price") or lead.get("estimated_value") or lead.get("price"),
+        "list_price": lead.get("list_price"),
         "estimated_value": lead.get("estimated_value"),
+        "price_per_sqft": lead.get("price_per_sqft"),
+        # Tax info
+        "tax_assessed_value": lead.get("tax_assessed_value"),
+        "tax_building_value": lead.get("tax_building_value"),
+        "tax_land_value": lead.get("tax_land_value"),
         # Description and features
-        "description": lead.get("description") or lead.get("notes", ""),
+        "description": lead.get("description") or lead.get("submission_message", ""),
         "features": lead.get("features", []),
         "amenities": lead.get("amenities", []),
-        # Images
+        # Images - include both formats for compatibility
         "images": images,
         "gallery_images": lead.get("gallery_images", []),
+        "street_view": lead.get("street_view"),
         # Status
         "status": "active",
         "mls_status": lead.get("mls_status", "Off Market"),
@@ -484,16 +493,22 @@ async def convert_to_showcase(lead_id: str, current_user: dict = Depends(get_cur
         "source": "property_lead",
         "source_lead_id": lead_id,
         "lead_source": lead.get("source", ""),
-        "lead_status": lead.get("lead_status", ""),
+        "original_lead_status": lead.get("status", ""),
+        "lead_priority": lead.get("priority", ""),
+        "lead_tags": lead.get("tags", []),
         # Owner info
         "owner_name": lead.get("owner_name"),
         "owner_email": lead.get("owner_email"),
         "owner_phone": lead.get("owner_phone"),
         "owner_mailing_address": lead.get("owner_mailing_address"),
+        "owner_mailing_city": lead.get("owner_mailing_city"),
+        "owner_mailing_state": lead.get("owner_mailing_state"),
+        "owner_mailing_zip": lead.get("owner_mailing_zip"),
         # Financial info from lead
         "equity_estimate": lead.get("equity_estimate"),
         "mortgage_balance": lead.get("mortgage_balance"),
-        "tax_assessed_value": lead.get("tax_assessed_value"),
+        # Scraped data (keep for reference)
+        "scraped_data": lead.get("scraped_data"),
         # Storage
         "storage_folder": storage_folder,
         # Metadata
