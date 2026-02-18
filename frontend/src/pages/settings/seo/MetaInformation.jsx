@@ -101,7 +101,7 @@ export const MetaInformation = () => {
               <div className="p-4 bg-white dark:bg-gray-900 rounded-lg border">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                   <Globe className="w-4 h-4" />
-                  fusionbuilder.com
+                  hiddenhavenrealty.com
                 </div>
                 <h3 className="text-lg text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
                   {meta.global.title}
