@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -35,7 +35,9 @@ import {
   Plus,
   X,
   CheckCircle,
-  Clock
+  Clock,
+  Upload,
+  GripVertical
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { listingsAPI } from '../lib/api';
