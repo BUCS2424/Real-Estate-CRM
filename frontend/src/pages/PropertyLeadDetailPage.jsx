@@ -337,6 +337,7 @@ const PropertyLeadDetailPage = () => {
     try {
       const res = await propertyLeadsAPI.convertToShowcase(id);
       toast.success('Converted to Showcase Listing');
+      // Navigate to the new slug-based URL
       navigate(`/listings/${res.data.listing_id}`);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to convert');
