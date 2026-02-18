@@ -630,6 +630,7 @@ async def unconvert_from_showcase(
             },
             "$unset": {
                 "converted_to_listing_id": "",
+                "converted_to_listing_slug": "",
                 "converted_at": "",
                 "converted_by": ""
             }
