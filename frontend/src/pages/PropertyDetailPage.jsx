@@ -357,11 +357,11 @@ export const PropertyDetailPage = () => {
                       Schedule Private Viewing
                     </Button>
                     <div className="mt-6 space-y-3">
-                      <a href="tel:+15551234567" className="flex items-center gap-3 text-white/70 hover:text-amber-400 transition-colors">
+                      <a href="tel:+18136297355" className="flex items-center gap-3 text-white/70 hover:text-amber-400 transition-colors">
                         <div className="w-10 h-10 bg-amber-400/10 rounded-lg flex items-center justify-center">
                           <Phone className="w-5 h-5 text-amber-400" />
                         </div>
-                        +1 (555) 123-4567
+                        (813) 629-7355
                       </a>
                       <a href="mailto:info@fusionestates.com" className="flex items-center gap-3 text-white/70 hover:text-amber-400 transition-colors">
                         <div className="w-10 h-10 bg-amber-400/10 rounded-lg flex items-center justify-center">
