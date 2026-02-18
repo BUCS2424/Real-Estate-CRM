@@ -13,9 +13,9 @@ import { useBranding } from '../../../contexts/BrandingContext';
 export const GeneralSettings = () => {
   const { refreshBranding } = useBranding();
   const [settings, setSettings] = useState({
-    siteName: 'Fusion Luxury Estates',
-    siteUrl: 'https://fusionluxuryestates.com',
-    supportEmail: 'support@fusionluxuryestates.com',
+    siteName: 'Hidden Haven Realty',
+    siteUrl: 'https://hiddenhavenrealty.com',
+    supportEmail: 'info@hiddenhavenrealty.com',
     timezone: 'America/New_York',
     dateFormat: 'MM/DD/YYYY',
     currency: 'USD',
