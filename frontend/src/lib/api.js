@@ -181,6 +181,16 @@ export const listingsAPI = {
   }),
 };
 
+// Property Badge Management
+export const badgeAPI = {
+  getTypes: () => api.get('/properties/badge-types'),
+  createType: (data) => api.post('/properties/badge-types', data),
+  deleteType: (badgeId) => api.delete(`/properties/badge-types/${badgeId}`),
+  addToProperty: (propertyId, badgeId) => api.post(`/properties/properties/${propertyId}/badges`, { badge_id: badgeId }),
+  removeFromProperty: (propertyId, badgeId) => api.delete(`/properties/properties/${propertyId}/badges/${badgeId}`),
+  setPropertyBadges: (propertyId, badges) => api.put(`/properties/properties/${propertyId}/badges`, { badges }),
+};
+
 // Public APIs (no auth required)
 export const publicAPI = {
   getListings: (limit = 12) => api.get(`/public/listings?limit=${limit}`),
