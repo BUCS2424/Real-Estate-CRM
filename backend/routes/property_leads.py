@@ -452,13 +452,47 @@ async def convert_to_showcase(lead_id: str, current_user: dict = Depends(get_cur
     address_slug = "-".join(address_slug.split()[:5])  # First 5 words
     storage_folder = f"properties/{address_slug}-{listing_id[:8]}"
     
-    # Process images - convert gallery_images to the format expected by properties
+    # Process images - COPY files from property lead folder to listing folder
+    # and update URLs to point to the new listing endpoint
     images = []
+    lead_images_dir = os.path.join(PROPERTY_IMAGES_DIR, lead_id)
+    listing_images_dir = f"/app/backend/static/listing-images/{listing_id}"
+    
+    # Create the listing images directory
+    os.makedirs(listing_images_dir, exist_ok=True)
+    
     for img in lead.get("gallery_images", []):
-        if isinstance(img, str):
-            images.append(img)
-        elif isinstance(img, dict) and img.get("url"):
-            images.append(img["url"])
+        if isinstance(img, dict):
+            # Copy the actual file if it exists locally
+            if img.get("filename"):
+                src_path = os.path.join(lead_images_dir, img["filename"])
+                if os.path.exists(src_path):
+                    import shutil
+                    dst_path = os.path.join(listing_images_dir, img["filename"])
+                    shutil.copy2(src_path, dst_path)
+                    
+                    # Create new image record with updated URL pointing to listings endpoint
+                    new_img = {
+                        "id": img.get("id") or str(uuid.uuid4()),
+                        "filename": img["filename"],
+                        "original_name": img.get("original_name", img["filename"]),
+                        "url": f"/api/listings/{listing_id}/images/file/{img['filename']}",
+                        "size": img.get("size"),
+                        "content_type": img.get("content_type", "image/jpeg"),
+                        "uploaded_by": img.get("uploaded_by"),
+                        "uploaded_at": img.get("uploaded_at")
+                    }
+                    images.append(new_img)
+                else:
+                    # File doesn't exist locally, keep original URL if it's external
+                    if img.get("url") and (img["url"].startswith("http") or img["url"].startswith("//")):
+                        images.append(img)
+            elif img.get("url"):
+                # External URL or already processed image
+                images.append(img)
+        elif isinstance(img, str):
+            # Just a URL string
+            images.append({"url": img, "id": str(uuid.uuid4())})
     
     listing_data = {
         "id": listing_id,
