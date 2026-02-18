@@ -432,6 +432,26 @@ export const ListingsPage = () => {
                         <Badge className={getStatusColor(listing.status)}>
                           {STATUS_OPTIONS.find(s => s.value === listing.status)?.label || listing.status}
                         </Badge>
+                        {/* Display Property Badges */}
+                        {listing.badges && listing.badges.length > 0 && (
+                          <div className="flex flex-wrap gap-1 justify-end">
+                            {listing.badges.map(badgeId => {
+                              const badge = availableBadges.find(b => b.id === badgeId);
+                              if (!badge) return null;
+                              const BadgeIcon = BADGE_ICONS[badge.icon] || Tag;
+                              return (
+                                <span 
+                                  key={badgeId}
+                                  className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium"
+                                  style={{ backgroundColor: badge.bg_color, color: badge.color }}
+                                >
+                                  <BadgeIcon className="w-3 h-3" />
+                                  {badge.label}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
                         {listing.mls_number && (
                           <span className="text-xs text-muted-foreground">MLS# {listing.mls_number}</span>
                         )}
@@ -442,6 +462,15 @@ export const ListingsPage = () => {
                         )}
                       </div>
                       <div className="flex gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={(e) => openBadgeModal(listing, e)}
+                          className="text-amber-500 hover:text-amber-600"
+                          title="Manage Badges"
+                        >
+                          <Tag className="w-4 h-4" />
+                        </Button>
                         <Button 
                           variant="ghost" 
                           size="icon"
@@ -467,6 +496,93 @@ export const ListingsPage = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Badge Management Modal */}
+      <Dialog open={badgeModalOpen} onOpenChange={setBadgeModalOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Tag className="w-5 h-5 text-amber-500" />
+              Manage Badges
+            </DialogTitle>
+            <DialogDescription>
+              {selectedListing?.address && (
+                <span>Select badges for <strong>{selectedListing.address}</strong></span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              {availableBadges.map(badge => {
+                const BadgeIcon = BADGE_ICONS[badge.icon] || Tag;
+                const isSelected = selectedBadges.includes(badge.id);
+                return (
+                  <button
+                    key={badge.id}
+                    onClick={() => toggleBadge(badge.id)}
+                    className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                      isSelected 
+                        ? 'border-amber-500 bg-amber-500/10' 
+                        : 'border-border hover:border-amber-500/50'
+                    }`}
+                  >
+                    <div 
+                      className="flex items-center gap-1.5 px-2 py-1 rounded text-xs font-bold"
+                      style={{ backgroundColor: badge.bg_color, color: badge.color }}
+                    >
+                      <BadgeIcon className="w-3 h-3" />
+                      {badge.label}
+                    </div>
+                    {isSelected && (
+                      <CheckCircle className="w-4 h-4 text-amber-500 ml-auto" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            
+            {selectedBadges.length > 0 && (
+              <div className="pt-3 border-t">
+                <Label className="text-sm text-muted-foreground mb-2 block">Selected Badges:</Label>
+                <div className="flex flex-wrap gap-2">
+                  {selectedBadges.map(badgeId => {
+                    const badge = availableBadges.find(b => b.id === badgeId);
+                    if (!badge) return null;
+                    const BadgeIcon = BADGE_ICONS[badge.icon] || Tag;
+                    return (
+                      <span 
+                        key={badgeId}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold"
+                        style={{ backgroundColor: badge.bg_color, color: badge.color }}
+                      >
+                        <BadgeIcon className="w-3 h-3" />
+                        {badge.label}
+                        <button 
+                          onClick={() => toggleBadge(badgeId)}
+                          className="ml-1 hover:opacity-70"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBadgeModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={saveBadges} disabled={savingBadges} className="bg-amber-500 hover:bg-amber-600 text-black">
+              {savingBadges ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Save Badges
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Import CSV Dialog */}
       <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
