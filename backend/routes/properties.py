@@ -904,6 +904,21 @@ async def get_public_property(property_id: str):
         raise HTTPException(status_code=404, detail="Property not found")
     return prop
 
+@router.get("/public/property/by-slug/{slug}")
+async def get_public_property_by_slug(slug: str):
+    """
+    Get a public property by its SEO-friendly URL slug.
+    Example: /api/public/property/by-slug/804-s-davis-blvd-tampa-fl-33606
+    """
+    prop = await db.properties.find_one({"slug": slug, "status": "active"}, {"_id": 0})
+    if not prop:
+        # Try fallback: search by ID if it looks like a UUID
+        if len(slug) >= 32 and '-' in slug:
+            prop = await db.properties.find_one({"id": slug, "status": "active"}, {"_id": 0})
+        if not prop:
+            raise HTTPException(status_code=404, detail="Property not found")
+    return prop
+
 # AI Property Lookup
 @router.post("/properties/ai-lookup")
 async def ai_property_lookup(address: str, current_user: dict = Depends(get_current_user)):
