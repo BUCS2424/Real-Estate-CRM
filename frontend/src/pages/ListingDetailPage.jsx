@@ -569,35 +569,123 @@ const ListingDetailPage = () => {
                         <Image className="w-5 h-5 text-amber-500" />
                         Property Images
                       </CardTitle>
-                      <CardDescription>Photos of the property</CardDescription>
+                      <CardDescription>Drag and drop images to upload them to this property</CardDescription>
                     </div>
-                    <Button variant="outline" size="sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Image
-                    </Button>
+                    <label htmlFor="image-upload">
+                      <Button variant="outline" size="sm" asChild disabled={uploadingImages}>
+                        <span className="cursor-pointer">
+                          {uploadingImages ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Upload className="w-4 h-4 mr-2" />
+                          )}
+                          Upload Images
+                        </span>
+                      </Button>
+                    </label>
+                    <input
+                      id="image-upload"
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      disabled={uploadingImages}
+                    />
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {listing.images?.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {listing.images.map((img, idx) => (
-                        <div key={idx} className="relative group aspect-video rounded-lg overflow-hidden bg-muted">
-                          <img 
-                            src={img.url} 
-                            alt={img.caption || `Image ${idx + 1}`}
-                            className="w-full h-full object-cover"
+                  {/* Drag and Drop Zone */}
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`
+                      relative border-2 border-dashed rounded-xl p-8 mb-6 transition-all duration-200
+                      ${isDragging 
+                        ? 'border-amber-500 bg-amber-500/10' 
+                        : 'border-muted-foreground/25 hover:border-amber-500/50 hover:bg-muted/50'
+                      }
+                    `}
+                  >
+                    {uploadingImages ? (
+                      <div className="text-center">
+                        <Loader2 className="w-12 h-12 mx-auto mb-4 text-amber-500 animate-spin" />
+                        <p className="text-lg font-medium">Uploading images...</p>
+                        <div className="mt-4 w-full max-w-xs mx-auto bg-muted rounded-full h-2 overflow-hidden">
+                          <div 
+                            className="h-full bg-amber-500 transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
                           />
-                          {idx === 0 && (
-                            <Badge className="absolute top-2 left-2 bg-amber-500 text-black">Cover</Badge>
-                          )}
                         </div>
-                      ))}
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <Upload className={`w-12 h-12 mx-auto mb-4 ${isDragging ? 'text-amber-500' : 'text-muted-foreground'}`} />
+                        <p className="text-lg font-medium">
+                          {isDragging ? 'Drop images here!' : 'Drag & drop images here'}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          or click "Upload Images" to browse
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Supports: JPG, PNG, GIF, WebP
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Image Gallery */}
+                  {listing.images?.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-muted-foreground">
+                          {listing.images.length} image{listing.images.length !== 1 ? 's' : ''} • First image is the cover photo
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {listing.images.map((img, idx) => (
+                          <div 
+                            key={img.id || idx} 
+                            className="relative group aspect-video rounded-lg overflow-hidden bg-muted border border-border"
+                          >
+                            <img 
+                              src={img.url} 
+                              alt={img.original_name || img.caption || `Image ${idx + 1}`}
+                              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                            />
+                            {/* Overlay on hover */}
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDeleteImage(img.id)}
+                                className="h-8"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            {/* Cover badge */}
+                            {idx === 0 && (
+                              <Badge className="absolute top-2 left-2 bg-amber-500 text-black text-xs">
+                                Cover
+                              </Badge>
+                            )}
+                            {/* File info */}
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <p className="text-xs text-white truncate">
+                                {img.original_name || img.filename}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ) : (
-                    <div className="text-center py-12 text-muted-foreground">
+                    <div className="text-center py-8 text-muted-foreground">
                       <Image className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>No images yet</p>
-                      <p className="text-sm">Add photos to showcase this property</p>
+                      <p>No images uploaded yet</p>
+                      <p className="text-sm">Drag and drop images above to get started</p>
                     </div>
                   )}
                 </CardContent>
