@@ -1098,17 +1098,25 @@ async def upload_property_image(
     if not lead:
         raise HTTPException(status_code=404, detail="Property lead not found")
     
-    # Validate file type
-    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
-    if file.content_type not in allowed_types:
-        raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG, PNG, GIF, WEBP allowed.")
+    # Validate file type - support common image formats including HEIC/HEIF from iOS
+    allowed_types = [
+        "image/jpeg", "image/png", "image/gif", "image/webp",
+        "image/heic", "image/heif",  # iOS formats
+        "image/bmp", "image/tiff"
+    ]
+    
+    # Also check by file extension as fallback (browsers sometimes report wrong content-type)
+    allowed_extensions = ["jpg", "jpeg", "png", "gif", "webp", "heic", "heif", "bmp", "tiff"]
+    file_ext = file.filename.split('.')[-1].lower() if '.' in file.filename else ''
+    
+    if file.content_type not in allowed_types and file_ext not in allowed_extensions:
+        raise HTTPException(status_code=400, detail=f"Invalid file type '{file.content_type}'. Only JPEG, PNG, GIF, WEBP, HEIC allowed.")
     
     # Create directory for this property
     images_dir = get_property_images_dir(lead_id)
     
-    # Generate unique filename
-    file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
-    unique_filename = f"{uuid.uuid4().hex[:12]}.{file_ext}"
+    # Generate unique filename - preserve extension from original
+    unique_filename = f"{uuid.uuid4().hex[:12]}.{file_ext if file_ext else 'jpg'}"
     file_path = os.path.join(images_dir, unique_filename)
     
     # Save file
