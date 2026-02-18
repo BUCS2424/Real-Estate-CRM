@@ -550,12 +550,28 @@ export const PublicListingsPage = () => {
                           </Badge>
                         </div>
                         
-                        {/* Status Badge */}
-                        {listing.status && listing.status !== 'active' && (
-                          <div className="absolute top-4 right-4">
-                            <Badge variant="secondary" className="capitalize">
-                              {listing.status}
-                            </Badge>
+                        {/* Custom Badges */}
+                        {listing.badges && listing.badges.length > 0 && (
+                          <div className="absolute top-4 right-4 flex flex-col gap-2">
+                            {listing.badges.map((badgeId) => {
+                              const config = BADGE_CONFIG[badgeId];
+                              if (!config) return null;
+                              const BadgeIcon = config.icon;
+                              return (
+                                <div
+                                  key={badgeId}
+                                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold shadow-lg"
+                                  style={{ 
+                                    backgroundColor: config.bg, 
+                                    color: config.color,
+                                    boxShadow: `0 4px 6px -1px ${config.bg}40`
+                                  }}
+                                >
+                                  <BadgeIcon className="w-3 h-3" />
+                                  {config.label}
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                         
