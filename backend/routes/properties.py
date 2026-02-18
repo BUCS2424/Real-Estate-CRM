@@ -718,9 +718,12 @@ async def generate_listing_description(listing_id: str, current_user: dict = Dep
         raise HTTPException(status_code=404, detail="Listing not found")
     
     try:
-        from emergentintegrations.llm.chat import chat, Message
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
         
         llm_api_key = os.environ.get('EMERGENT_LLM_KEY') or os.environ.get('LLM_API_KEY')
+        
+        if not llm_api_key:
+            raise HTTPException(status_code=500, detail="LLM API key not configured")
         
         prompt = f"""Write a compelling luxury real estate listing description for this property:
 
@@ -734,11 +737,16 @@ Property Type: {listing.get('property_type')}
 
 Write a professional, enticing description (2-3 paragraphs) that highlights the property's best features and appeals to luxury home buyers."""
 
-        response = await chat(
+        # Initialize the chat with the new LlmChat class
+        chat = LlmChat(
             api_key=llm_api_key,
-            messages=[Message(role="user", content=prompt)],
-            model="gpt-4o-mini"
-        )
+            session_id=f"listing-description-{listing_id}",
+            system_message="You are a luxury real estate copywriter. Write compelling property descriptions that appeal to high-net-worth buyers."
+        ).with_model("openai", "gpt-4o-mini")
+        
+        # Send the message and get the response
+        user_message = UserMessage(text=prompt)
+        response = await chat.send_message(user_message)
         
         # Update the listing with the generated description
         await db.properties.update_one(
@@ -749,6 +757,8 @@ Write a professional, enticing description (2-3 paragraphs) that highlights the 
         return {"success": True, "description": response}
             
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Description generation failed: {str(e)}")
 
 # =========== END LISTINGS ALIASES ===========
