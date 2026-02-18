@@ -1725,13 +1725,91 @@ Implemented the ability to revert a property lead that was previously converted 
 
 ---
 
+## Update: February 18, 2026 - SEO-Friendly Property URLs
+
+### Feature: Address-Based URL Slugs for Showcase Properties
+
+Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uuid}`, properties now use `/property/{address-slug}` format.
+
+#### URL Format
+- **Example:** `/property/804-s-davis-blvd-tampa-fl-33606`
+- Pattern: `{street-number}-{street-name}-{city}-{state}-{zip}`
+- Abbreviations applied: Boulevard → blvd, Street → st, Avenue → ave, Drive → dr, etc.
+- Lowercase, hyphen-separated, special characters removed
+
+#### Backend Implementation
+- **New Utility:** `/app/backend/utils/slug.py`
+  - `generate_property_slug(address, city, state, zip_code)` - Generates URL-friendly slugs
+  - `ensure_unique_slug(base_slug, existing_slugs)` - Ensures uniqueness by appending numbers
+
+- **Updated Convert Endpoint:** `/app/backend/routes/property_leads.py`
+  - Generates slug when converting lead to showcase listing
+  - Stores slug in both `properties` collection and lead's `converted_to_listing_slug` field
+
+- **New Public Endpoint:** `GET /api/public/property/by-slug/{slug}`
+  - Fetches property by slug for public display
+  - Falls back to ID lookup for backwards compatibility
+
+- **Migration Endpoint:** `POST /api/listings/migrate-slugs`
+  - Generates slugs for existing properties without them
+  - Ensures uniqueness across all properties
+
+#### Frontend Implementation
+- **Routing:** `/app/frontend/src/App.js`
+  - `/property/:slug` → PropertyDetailPage (primary route)
+  - `/listing/:slug` → PropertyDetailPage (backwards compatibility)
+
+- **API:** `/app/frontend/src/lib/api.js`
+  - `publicAPI.getListingBySlug(slug)` - New method for slug-based lookup
+
+- **Updated Components:**
+  - `LandingPage.jsx` - Links use `listing.slug || listing.id`
+  - `PublicListingsPage.jsx` - Links use `listing.slug || listing.id`
+  - `ListingDetailPage.jsx` - Preview button uses slug
+  - `PropertyLeadDetailPage.jsx` - "View Public Page" button uses slug
+  - `PropertyDetailPage.jsx` - Uses `useParams().slug`, falls back to ID lookup
+
+#### Slug Generation Rules
+1. Combine address + city + state + zip_code
+2. Apply abbreviations (Boulevard → blvd, Street → st, etc.)
+3. Remove special characters, keep alphanumeric
+4. Replace spaces with hyphens
+5. Convert to lowercase
+6. Ensure uniqueness (append -2, -3, etc. if needed)
+
+#### Migration Results
+- 17 existing properties migrated with slugs
+- Examples:
+  - `2519-n-riverside-dr-tampa-fl`
+  - `456-ocean-dr-miami-beach-fl-33139`
+  - `804-s-davis-blvd-tampa-fl-33606`
+
+#### Files Created/Modified
+- `/app/backend/utils/slug.py` (NEW)
+- `/app/backend/routes/property_leads.py` - Added slug generation on convert
+- `/app/backend/routes/properties.py` - Added slug endpoint and migration
+- `/app/frontend/src/lib/api.js` - Added getListingBySlug
+- `/app/frontend/src/App.js` - Updated routing
+- `/app/frontend/src/pages/PropertyDetailPage.jsx` - Uses slug param
+- `/app/frontend/src/pages/LandingPage.jsx` - Uses slug in links
+- `/app/frontend/src/pages/PublicListingsPage.jsx` - Uses slug in links
+
+#### Verified & Tested
+- New properties get slugs automatically on conversion ✅
+- Existing properties migrated with slugs ✅
+- Public slug endpoint works correctly ✅
+- Frontend links use slugs ✅
+- Backwards compatibility with ID URLs ✅
+
+---
+
 ## Current Status (February 18, 2026)
 
 ### Completed Today
 - ✅ **Un-convert Property Lead Feature** - Fully tested and working
-  - Backend endpoint with delete_listing option
-  - Frontend UI with conditional button rendering
-  - Two-step confirmation dialogs
+- ✅ **SEO-Friendly Property URLs** - Address-based slugs for all properties
+  - Example: `/property/804-s-davis-blvd-tampa-fl-33606`
+  - All 17 existing properties migrated with slugs
 
 ### Known Issues (Unchanged)
 - **P0:** Bookings data loss (not investigated)
