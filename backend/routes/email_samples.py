@@ -448,7 +448,7 @@ def generate_lead_notification_sample(data):
         <div style="background: #f9fafb; padding: 20px; border-radius: 8px; border-left: 4px solid #22c55e;">
             <p style="margin: 0 0 10px 0;"><strong>Name:</strong> {data['recipient_name']}</p>
             <p style="margin: 0 0 10px 0;"><strong>Email:</strong> {data['recipient_email']}</p>
-            <p style="margin: 0 0 10px 0;"><strong>Phone:</strong> (555) 987-6543</p>
+            <p style="margin: 0 0 10px 0;"><strong>Phone:</strong> (813) 629-7355</p>
             <p style="margin: 0 0 10px 0;"><strong>Type:</strong> Buyer</p>
             <p style="margin: 0 0 10px 0;"><strong>Interest:</strong> Waterfront Properties</p>
             <p style="margin: 0;"><strong>Budget:</strong> $1.5M - $2.5M</p>
