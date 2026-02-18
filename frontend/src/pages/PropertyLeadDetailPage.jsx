@@ -462,11 +462,12 @@ const PropertyLeadDetailPage = () => {
             
             {/* Quick Actions */}
             <div className="space-y-2">
-              {lead.status !== 'converted' && (
+              {lead.status !== 'converted' ? (
                 <Button 
                   onClick={handleConvertToShowcase} 
                   disabled={convertingToShowcase}
                   className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  data-testid="convert-to-showcase-btn"
                 >
                   {convertingToShowcase ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -475,11 +476,40 @@ const PropertyLeadDetailPage = () => {
                   )}
                   Convert to Showcase Listing
                 </Button>
+              ) : (
+                <>
+                  {/* Show link to the showcase listing when converted */}
+                  {lead.converted_to_listing_id && (
+                    <Button 
+                      onClick={() => navigate(`/listings/${lead.converted_to_listing_id}`)}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                      data-testid="view-showcase-listing-btn"
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      View Showcase Listing
+                    </Button>
+                  )}
+                  <Button 
+                    onClick={handleUnconvertFromShowcase}
+                    disabled={convertingToShowcase}
+                    variant="outline"
+                    className="w-full border-red-500/50 text-red-600 hover:bg-red-500/10"
+                    data-testid="unconvert-lead-btn"
+                  >
+                    {convertingToShowcase ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                    )}
+                    Un-convert Lead
+                  </Button>
+                </>
               )}
               <Button 
                 onClick={handlePullOwnerInfo} 
                 disabled={pullingOwner}
                 className="w-full bg-amber-500 hover:bg-amber-600 text-black"
+                data-testid="pull-owner-info-btn"
               >
                 {pullingOwner ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -488,7 +518,7 @@ const PropertyLeadDetailPage = () => {
                 )}
                 Pull Owner Info
               </Button>
-              <Button variant="outline" className="w-full" onClick={() => setEditMode(true)}>
+              <Button variant="outline" className="w-full" onClick={() => setEditMode(true)} data-testid="edit-property-btn">
                 <Edit2 className="w-4 h-4 mr-2" />
                 Edit Property
               </Button>
