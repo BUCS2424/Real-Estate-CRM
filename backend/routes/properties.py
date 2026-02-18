@@ -10,6 +10,7 @@ from database import db
 from models.property import PropertyListingCreate, PropertyListingResponse, PropertySubmissionCreate, PropertySubmissionResponse
 from models.user import UserRole
 from utils.auth import get_current_user, require_role
+from utils.slug import generate_property_slug, ensure_unique_slug
 
 router = APIRouter()
 
