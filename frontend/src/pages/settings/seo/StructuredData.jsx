@@ -22,15 +22,15 @@ export const StructuredData = () => {
   const schemaExample = `{
   "@context": "https://schema.org",
   "@type": "RealEstateAgent",
-  "name": "Fusion Builder CRM",
-  "url": "https://fusionbuilder.com",
+  "name": "Hidden Haven Realty",
+  "url": "https://hiddenhavenrealty.com",
   "telephone": "+1-813-629-7355",
   "address": {
     "@type": "PostalAddress",
-    "streetAddress": "123 Main St",
-    "addressLocality": "New York",
-    "addressRegion": "NY",
-    "postalCode": "10001"
+    "streetAddress": "Tampa, FL",
+    "addressLocality": "Tampa",
+    "addressRegion": "FL",
+    "postalCode": "33601"
   }
 }`;
 
