@@ -363,11 +363,11 @@ export const PropertyDetailPage = () => {
                         </div>
                         (813) 629-7355
                       </a>
-                      <a href="mailto:info@fusionestates.com" className="flex items-center gap-3 text-white/70 hover:text-amber-400 transition-colors">
+                      <a href="mailto:info@hiddenhavenrealty.com" className="flex items-center gap-3 text-white/70 hover:text-amber-400 transition-colors">
                         <div className="w-10 h-10 bg-amber-400/10 rounded-lg flex items-center justify-center">
                           <Mail className="w-5 h-5 text-amber-400" />
                         </div>
-                        info@fusionestates.com
+                        info@hiddenhavenrealty.com
                       </a>
                     </div>
                   </div>
