@@ -200,13 +200,13 @@ def generate_foldable_brochure_page1(
     # Branding info
     if branding:
         company_name = branding.get('company_name', 'Hidden Haven Realty')
-        company_phone = branding.get('phone', agent_info.get('phone', '(555) 123-4567'))
+        company_phone = branding.get('phone', agent_info.get('phone', '(813) 629-7355'))
         company_website = branding.get('website', 'hiddenhavenrealty.com')
         company_address = branding.get('address', 'Tampa, FL')
         logo_url = branding.get('logo_url')
     else:
         company_name = 'Hidden Haven Realty'
-        company_phone = agent_info.get('phone', '(555) 123-4567')
+        company_phone = agent_info.get('phone', '(813) 629-7355')
         company_website = 'hiddenhavenrealty.com'
         company_address = 'Tampa, FL'
         logo_url = None
