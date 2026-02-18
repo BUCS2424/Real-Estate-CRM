@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { listingsAPI, propertyLeadsAPI } from '../lib/api';
+import { listingsAPI, propertyLeadsAPI, badgeAPI } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Home,
@@ -22,7 +22,16 @@ import {
   Users,
   CheckCircle,
   TrendingUp,
-  Calendar
+  Calendar,
+  Tag,
+  Star,
+  Gavel,
+  Sparkles,
+  TrendingDown,
+  FileSignature,
+  EyeOff,
+  Clock,
+  X
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -45,6 +54,19 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { toast } from 'sonner';
+
+// Badge icons mapping
+const BADGE_ICONS = {
+  'check-circle': CheckCircle,
+  'star': Star,
+  'gavel': Gavel,
+  'sparkles': Sparkles,
+  'trending-down': TrendingDown,
+  'file-signature': FileSignature,
+  'eye-off': EyeOff,
+  'clock': Clock,
+  'tag': Tag,
+};
 
 const STATUS_OPTIONS = [
   { value: 'draft', label: 'Draft', color: 'bg-gray-500/20 text-gray-600 border-gray-500/50' },
