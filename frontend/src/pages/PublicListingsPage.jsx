@@ -509,7 +509,7 @@ export const PublicListingsPage = () => {
                 {filteredListings.map((listing) => (
                   <Link 
                     key={listing.id} 
-                    to={`/property/${listing.id}`}
+                    to={`/listing/${listing.id}`}
                     className="group"
                   >
                     <div className="bg-[#0d1f3c]/50 rounded-2xl overflow-hidden border border-amber-400/10 hover:border-amber-400/30 transition-all duration-300 hover:shadow-xl hover:shadow-amber-400/5">
