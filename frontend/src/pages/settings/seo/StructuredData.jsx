@@ -24,7 +24,7 @@ export const StructuredData = () => {
   "@type": "RealEstateAgent",
   "name": "Fusion Builder CRM",
   "url": "https://fusionbuilder.com",
-  "telephone": "+1-555-123-4567",
+  "telephone": "+1-813-629-7355",
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "123 Main St",
