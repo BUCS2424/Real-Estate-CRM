@@ -83,7 +83,8 @@ export const PropertyDetailPage = () => {
     try {
       await publicAPI.submitLead({
         ...formData,
-        property_id: id,
+        property_id: property?.id || slug,
+        property_slug: slug,
         source: 'property_detail'
       });
       toast.success('Thank you! An agent will contact you shortly.');
