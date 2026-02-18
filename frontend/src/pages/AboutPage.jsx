@@ -107,7 +107,7 @@ export const AboutPage = () => {
                 serving families and communities with dedication, integrity, and an unwavering commitment to excellence.
               </p>
               <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-                <a href="tel:+15551234567">
+                <a href="tel:+18136297355">
                   <Button className="bg-amber-400 text-black hover:bg-amber-300">
                     <Phone className="w-4 h-4 mr-2" />
                     Schedule a Call
