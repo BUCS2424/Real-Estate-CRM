@@ -344,6 +344,27 @@ const PropertyLeadDetailPage = () => {
     }
   };
 
+  const handleUnconvertFromShowcase = async () => {
+    const deleteListing = window.confirm(
+      `Un-convert "${lead.address}" from Showcase Listing?\n\nClick OK to also DELETE the showcase listing.\nClick Cancel to keep the listing but reset this lead.`
+    );
+    
+    if (!window.confirm(`Are you sure you want to un-convert this lead? This will reset its status so it can be edited and re-converted.`)) {
+      return;
+    }
+    
+    setConvertingToShowcase(true);
+    try {
+      const res = await propertyLeadsAPI.unconvertFromShowcase(id, deleteListing);
+      toast.success(`Lead un-converted! Status reset to "${res.data.reset_to_status}"${deleteListing && res.data.listing_deleted ? '. Showcase listing deleted.' : ''}`);
+      fetchLead(); // Refresh the lead data
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to un-convert');
+    } finally {
+      setConvertingToShowcase(false);
+    }
+  };
+
   const getScoreColor = (score) => {
     if (score >= 80) return 'text-green-500';
     if (score >= 60) return 'text-blue-500';
