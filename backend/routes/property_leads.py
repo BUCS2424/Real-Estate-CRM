@@ -544,6 +544,7 @@ async def convert_to_showcase(lead_id: str, current_user: dict = Depends(get_cur
             "$set": {
                 "status": "converted",
                 "converted_to_listing_id": listing_id,
+                "converted_to_listing_slug": unique_slug,  # Store slug for easy access
                 "converted_at": datetime.now(timezone.utc).isoformat(),
                 "converted_by": current_user.get("name") or current_user.get("email"),
                 "updated_at": datetime.now(timezone.utc).isoformat()
