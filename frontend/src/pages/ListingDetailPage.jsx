@@ -76,6 +76,11 @@ const ListingDetailPage = () => {
   // Edit mode
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState({});
+  
+  // Image upload state
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     if (id) {
@@ -94,6 +99,87 @@ const ListingDetailPage = () => {
       navigate('/listings');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Image upload handlers
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const files = Array.from(e.dataTransfer.files).filter(
+      file => file.type.startsWith('image/')
+    );
+    
+    if (files.length === 0) {
+      toast.error('Please drop image files only');
+      return;
+    }
+    
+    await uploadImages(files);
+  }, [id]);
+
+  const handleFileSelect = async (e) => {
+    const files = Array.from(e.target.files).filter(
+      file => file.type.startsWith('image/')
+    );
+    
+    if (files.length === 0) return;
+    await uploadImages(files);
+  };
+
+  const uploadImages = async (files) => {
+    setUploadingImages(true);
+    setUploadProgress(0);
+    
+    try {
+      const totalFiles = files.length;
+      let uploaded = 0;
+      
+      if (files.length === 1) {
+        await listingsAPI.uploadImage(id, files[0]);
+        uploaded = 1;
+      } else {
+        const res = await listingsAPI.uploadMultipleImages(id, files);
+        uploaded = res.data.uploaded?.length || 0;
+        if (res.data.errors?.length > 0) {
+          toast.warning(`${res.data.errors.length} files failed to upload`);
+        }
+      }
+      
+      setUploadProgress(100);
+      toast.success(`${uploaded} image${uploaded !== 1 ? 's' : ''} uploaded successfully`);
+      fetchListing();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to upload images');
+    } finally {
+      setUploadingImages(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleDeleteImage = async (imageId) => {
+    if (!window.confirm('Delete this image?')) return;
+    
+    try {
+      await listingsAPI.deleteImage(id, imageId);
+      toast.success('Image deleted');
+      fetchListing();
+    } catch (error) {
+      toast.error('Failed to delete image');
     }
   };
 
