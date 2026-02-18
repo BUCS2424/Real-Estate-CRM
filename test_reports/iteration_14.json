@@ -1,0 +1,82 @@
+{
+  "summary": "Completed comprehensive testing of the Un-convert Property Lead feature. All backend API tests passed (6/6). All frontend UI tests passed. The feature allows users to revert a property lead that was previously converted to a showcase listing.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "Backend: POST /api/property-leads/{lead_id}/unconvert returns 400 for non-converted leads",
+    "Backend: POST /api/property-leads/{lead_id}/unconvert returns 404 for non-existent leads",
+    "Backend: GET /api/property-leads/{lead_id} returns converted lead with converted_to_listing_id",
+    "Backend: Convert then unconvert with delete_listing=true - listing deleted, status reset to 'new'",
+    "Backend: Convert then unconvert with delete_listing=false - listing preserved, status reset",
+    "Backend: Activity log updated with 'unconverted' entry after un-convert",
+    "Frontend: 'Un-convert Lead' button appears ONLY for converted leads",
+    "Frontend: 'View Showcase Listing' button appears for converted leads with listing ID",
+    "Frontend: 'Convert to Showcase Listing' button appears ONLY for non-converted leads",
+    "Frontend: Confirmation dialogs work correctly (two-step: delete option + confirmation)",
+    "Frontend: 'View Showcase Listing' navigates correctly to /listings/{id}",
+    "Frontend: Lead detail page shows correct status badges (CONVERTED vs NEW)"
+  ],
+  "features_verified": {
+    "unconvert_endpoint": "POST /api/property-leads/{lead_id}/unconvert works correctly",
+    "delete_listing_true": "When delete_listing=true, the showcase listing is deleted from properties collection",
+    "delete_listing_false": "When delete_listing=false, the showcase listing is preserved",
+    "status_reset": "Lead status is reset to 'new' (or previous status from activity log)",
+    "fields_cleared": "converted_to_listing_id and converted_at fields are cleared from the lead",
+    "activity_log": "Activity log is updated with 'unconverted' entry",
+    "ui_button_visibility": "UI buttons show/hide correctly based on lead status",
+    "confirmation_dialogs": "Two-step confirmation dialogs work (delete option + final confirmation)",
+    "view_showcase_button": "View Showcase Listing button navigates to listing page"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_unconvert_property_leads.py",
+    "/app/test_reports/pytest/unconvert_property_leads_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_unconvert_property_leads.py"
+  ],
+  "success_rate": {
+    "backend": "100% (6/6 tests passed)",
+    "frontend": "100% (12/12 tests passed)"
+  },
+  "test_credentials": {
+    "email": "mel@a2gdesigns.com",
+    "password": "BigDaddy2016!!"
+  },
+  "test_data_used": {
+    "converted_lead_id": "efbd3a4d-b922-4c6f-b4bb-b96d84ab4540",
+    "converted_lead_address": "123 New Test Ave",
+    "non_converted_lead_id": "a19d52e7-4c10-47fd-a717-9d0128813a44",
+    "non_converted_lead_address": "123 Test Conversion Street"
+  },
+  "seed_data_creation": "None - used existing data from database",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Un-convert feature is fully tested and working. The feature consists of: 1) Backend endpoint POST /api/property-leads/{lead_id}/unconvert?delete_listing=true/false 2) Frontend UI with conditional button rendering based on lead status 3) Two-step confirmation dialog for delete option and final confirmation. Test data includes leads '123 New Test Ave' (converted) and '123 Test Conversion Street' (new) which can be used for convert/unconvert testing cycles.",
+  "api_endpoints_tested": [
+    {
+      "method": "POST",
+      "endpoint": "/api/property-leads/{lead_id}/unconvert",
+      "params": "delete_listing (boolean, default=true)",
+      "description": "Un-converts a property lead, optionally deleting the associated showcase listing"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/api/property-leads/{lead_id}",
+      "description": "Gets lead details including converted_to_listing_id for converted leads"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/api/property-leads/{lead_id}/convert-to-showcase",
+      "description": "Converts a lead to showcase listing (used for test setup)"
+    }
+  ]
+}
