@@ -429,7 +429,7 @@ async def send_smart_list(
     # If still not found, create a minimal sender object
     if not sender:
         sender = {
-            "email": current_user.get("email", "noreply@hiddenhaven.com"),
+            "email": current_user.get("email", "info@hiddenhavenrealty.com"),
             "first_name": "",
             "last_name": ""
         }
