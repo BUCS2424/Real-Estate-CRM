@@ -195,6 +195,7 @@ export const badgeAPI = {
 export const publicAPI = {
   getListings: (limit = 12) => api.get(`/public/listings?limit=${limit}`),
   getListing: (id) => api.get(`/public/listings/${id}`),
+  getListingBySlug: (slug) => api.get(`/public/property/by-slug/${slug}`),
   submitLead: (data) => api.post('/public/leads', data),
 };
 
