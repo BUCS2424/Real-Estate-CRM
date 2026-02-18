@@ -14,7 +14,15 @@ import {
   Play,
   Menu,
   X,
-  Loader2
+  Loader2,
+  Star,
+  CheckCircle,
+  Gavel,
+  Sparkles,
+  TrendingDown,
+  FileSignature,
+  EyeOff,
+  Clock
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -23,6 +31,18 @@ import { PhoneVerification } from '../components/PhoneVerification';
 import TestimonialsCarousel from '../components/TestimonialsCarousel';
 import { toast } from 'sonner';
 import { useBranding } from '../contexts/BrandingContext';
+
+// Badge configuration for display
+const BADGE_CONFIG = {
+  sold: { label: 'SOLD', color: '#ffffff', bg: '#ef4444', icon: CheckCircle },
+  featured: { label: 'FEATURED', color: '#1a2744', bg: '#f59e0b', icon: Star },
+  private_auction: { label: 'PRIVATE AUCTION', color: '#ffffff', bg: '#8b5cf6', icon: Gavel },
+  new_listing: { label: 'NEW LISTING', color: '#ffffff', bg: '#22c55e', icon: Sparkles },
+  price_reduced: { label: 'PRICE REDUCED', color: '#ffffff', bg: '#3b82f6', icon: TrendingDown },
+  under_contract: { label: 'UNDER CONTRACT', color: '#ffffff', bg: '#ec4899', icon: FileSignature },
+  off_market: { label: 'OFF MARKET', color: '#d4a646', bg: '#1a2744', icon: EyeOff },
+  coming_soon: { label: 'COMING SOON', color: '#1a2744', bg: '#fbbf24', icon: Clock },
+};
 
 // Fallback listings if database is empty
 const FALLBACK_LISTINGS = [
