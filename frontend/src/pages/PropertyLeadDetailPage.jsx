@@ -479,16 +479,27 @@ const PropertyLeadDetailPage = () => {
                 </Button>
               ) : (
                 <>
-                  {/* Show link to the showcase listing when converted */}
+                  {/* Show links to the showcase listing when converted */}
                   {lead.converted_to_listing_id && (
-                    <Button 
-                      onClick={() => navigate(`/listings/${lead.converted_to_listing_id}`)}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                      data-testid="view-showcase-listing-btn"
-                    >
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      View Showcase Listing
-                    </Button>
+                    <>
+                      <Button 
+                        onClick={() => navigate(`/listings/${lead.converted_to_listing_id}`)}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        data-testid="view-showcase-listing-btn"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Manage Listing
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => window.open(`/property/${lead.converted_to_listing_slug || lead.converted_to_listing_id}`, '_blank')}
+                        data-testid="view-public-page-btn"
+                      >
+                        <Globe className="w-4 h-4 mr-2" />
+                        View Public Page
+                      </Button>
+                    </>
                   )}
                   <Button 
                     onClick={handleUnconvertFromShowcase}
