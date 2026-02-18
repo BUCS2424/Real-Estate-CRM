@@ -805,9 +805,9 @@ export const LandingPage = () => {
               <Phone className="w-4 h-4" />
               (813) 629-7355
             </a>
-            <a href="mailto:info@fusionestates.com" className="flex items-center gap-2 hover:text-amber-400 transition-colors">
+            <a href="mailto:info@hiddenhavenrealty.com" className="flex items-center gap-2 hover:text-amber-400 transition-colors">
               <Mail className="w-4 h-4" />
-              info@fusionestates.com
+              info@hiddenhavenrealty.com
             </a>
           </div>
         </div>
