@@ -319,7 +319,7 @@ export const LandingPage = () => {
               <div 
                 key={`${listing.id}-${index}`}
                 className="flex-shrink-0 w-[350px] md:w-[400px] group cursor-pointer"
-                onClick={() => navigate(`/property/${listing.id}`)}
+                onClick={() => navigate(`/listing/${listing.id}`)}
               >
                 <div className="relative overflow-hidden rounded-lg mb-4">
                   <img 
