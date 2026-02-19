@@ -1832,3 +1832,33 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 - Advanced Reporting & Analytics
 - Booking Notifications (email, SMS, desktop)
 
+---
+
+## Update: February 19, 2026 - Image Transfer Bug Fix
+
+### Bug Fix: Incomplete Image Transfer on Production
+
+**Problem:** When converting a property lead to a showcase listing on production, only some images were being transferred (6 of 12).
+
+**Root Cause:** The `convert_to_showcase` function in `/app/backend/routes/property_leads.py` used a brittle `os.path.exists()` check before attempting to copy image files. In containerized production environments, file paths can differ, causing the check to fail silently and skip images.
+
+**Solution:** Removed the `os.path.exists()` check and instead:
+1. Attempt to copy ALL images listed in the lead's `gallery_images` array
+2. Catch `FileNotFoundError` specifically when files don't exist
+3. Log detailed error messages for failed copies with `[CONVERT] ✗`
+4. Preserve the original image record with its URL as fallback (so images may still display if the original URL is accessible)
+5. Added comprehensive logging showing exactly which images were copied vs. failed
+
+**Key Code Changes:** `/app/backend/routes/property_leads.py` (lines 455-525)
+- Added detailed logging for each image processing step
+- Changed from "check then copy" to "try copy, catch error"
+- Images that fail to copy are now preserved with their original URLs instead of being silently dropped
+
+**Testing:** All 9 tests passed (100%)
+- Tested with existing files: 5/5 images copied successfully
+- Tested with missing files: Conversion succeeds, 4/4 image records preserved with URL fallback
+- Test file: `/app/backend/tests/test_convert_to_showcase.py`
+
+**Files Modified:**
+- `/app/backend/routes/property_leads.py` - Image transfer logic improved
+
