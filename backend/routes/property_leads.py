@@ -463,68 +463,87 @@ async def convert_to_showcase(lead_id: str, current_user: dict = Depends(get_cur
     
     # Track conversion results for logging
     images_copied = 0
+    images_failed_copy = 0
     images_referenced = 0
+    gallery_images = lead.get("gallery_images", [])
     
-    for img in lead.get("gallery_images", []):
+    print(f"[CONVERT] Starting image transfer for lead {lead_id}")
+    print(f"[CONVERT] Lead has {len(gallery_images)} gallery images")
+    print(f"[CONVERT] Source dir: {lead_images_dir} (exists: {os.path.exists(lead_images_dir)})")
+    print(f"[CONVERT] Dest dir: {listing_images_dir}")
+    
+    # List files in source directory if it exists
+    if os.path.exists(lead_images_dir):
+        try:
+            files_in_dir = os.listdir(lead_images_dir)
+            print(f"[CONVERT] Files in source dir: {files_in_dir}")
+        except Exception as e:
+            print(f"[CONVERT] Could not list source dir: {e}")
+    
+    for idx, img in enumerate(gallery_images):
+        print(f"[CONVERT] Processing image {idx + 1}/{len(gallery_images)}: {img}")
+        
         if isinstance(img, dict):
             img_url = img.get("url", "")
             img_filename = img.get("filename", "")
             
-            # Case 1: Local file with filename - try to copy
+            # Case 1: Local file with filename - ALWAYS try to copy
             if img_filename:
                 src_path = os.path.join(lead_images_dir, img_filename)
-                if os.path.exists(src_path):
-                    try:
-                        import shutil
-                        dst_path = os.path.join(listing_images_dir, img_filename)
-                        shutil.copy2(src_path, dst_path)
-                        images_copied += 1
-                        
-                        # Create new image record with updated URL
-                        new_img = {
-                            "id": img.get("id") or str(uuid.uuid4()),
-                            "filename": img_filename,
-                            "original_name": img.get("original_name", img_filename),
-                            "url": f"/api/listings/{listing_id}/images/file/{img_filename}",
-                            "size": img.get("size"),
-                            "content_type": img.get("content_type", "image/jpeg"),
-                            "uploaded_by": img.get("uploaded_by"),
-                            "uploaded_at": img.get("uploaded_at")
-                        }
-                        images.append(new_img)
-                        continue
-                    except Exception as e:
-                        print(f"[CONVERT] Failed to copy image {img_filename}: {e}")
+                dst_path = os.path.join(listing_images_dir, img_filename)
                 
-                # File doesn't exist locally - check if we have a working URL
-                if img_url:
-                    # If the URL is external (http/https), keep it as-is
-                    if img_url.startswith("http") or img_url.startswith("//"):
-                        images.append(img)
-                        images_referenced += 1
-                    # If it's a local API URL, keep the original property-leads URL
-                    # (The file still exists on the server, just not being copied)
-                    elif "/api/property-leads/" in img_url:
-                        # Keep the original URL - it will still work
-                        images.append(img)
-                        images_referenced += 1
-                    else:
-                        # Unknown URL format, include anyway
-                        images.append(img)
-                        images_referenced += 1
-            
-            # Case 2: No filename but has URL - external or processed image
-            elif img_url:
+                # Attempt to copy the file - don't skip based on os.path.exists()
+                try:
+                    import shutil
+                    shutil.copy2(src_path, dst_path)
+                    images_copied += 1
+                    print(f"[CONVERT] ✓ Copied: {img_filename}")
+                    
+                    # Create new image record with updated URL pointing to listings endpoint
+                    new_img = {
+                        "id": img.get("id") or str(uuid.uuid4()),
+                        "filename": img_filename,
+                        "original_name": img.get("original_name", img_filename),
+                        "url": f"/api/listings/{listing_id}/images/file/{img_filename}",
+                        "size": img.get("size"),
+                        "content_type": img.get("content_type", "image/jpeg"),
+                        "uploaded_by": img.get("uploaded_by"),
+                        "uploaded_at": img.get("uploaded_at")
+                    }
+                    images.append(new_img)
+                    continue
+                except FileNotFoundError:
+                    images_failed_copy += 1
+                    print(f"[CONVERT] ✗ File not found: {src_path}")
+                except Exception as e:
+                    images_failed_copy += 1
+                    print(f"[CONVERT] ✗ Copy failed for {img_filename}: {type(e).__name__}: {e}")
+                
+                # File copy failed - preserve the original image record with its URL
+                # so the image can still be displayed if the URL is accessible
+                print(f"[CONVERT] Preserving original image record with URL: {img_url}")
                 images.append(img)
                 images_referenced += 1
             
+            # Case 2: No filename but has URL - external or processed image
+            elif img_url:
+                print(f"[CONVERT] No filename, keeping URL reference: {img_url}")
+                images.append(img)
+                images_referenced += 1
+            else:
+                print(f"[CONVERT] Image has no filename or URL, skipping: {img}")
+            
         elif isinstance(img, str):
             # Just a URL string - keep as-is
+            print(f"[CONVERT] String URL, converting to dict: {img}")
             images.append({"url": img, "id": str(uuid.uuid4())})
             images_referenced += 1
+        else:
+            print(f"[CONVERT] Unknown image format, skipping: {type(img)} - {img}")
     
-    print(f"[CONVERT] Lead {lead_id}: {images_copied} images copied, {images_referenced} images referenced by URL")
-    print(f"[CONVERT] Total images for listing: {len(images)}")
+    print(f"[CONVERT] === IMAGE TRANSFER SUMMARY ===")
+    print(f"[CONVERT] Lead {lead_id}: {images_copied} copied, {images_failed_copy} failed, {images_referenced} referenced by URL")
+    print(f"[CONVERT] Total images for listing: {len(images)} (from {len(gallery_images)} in lead)")
     
     listing_data = {
         "id": listing_id,
