@@ -264,7 +264,7 @@ export const SearchWithdrawn = () => {
                 <p className="text-sm text-muted-foreground">Updated</p>
               </div>
               <div className="text-center p-4 bg-gray-500/10 rounded-lg">
-                <p className="text-3xl font-bold text-gray-500">{result.skipped_dead_leads || 0}</p>
+                <p className="text-3xl font-bold text-gray-500" data-testid="withdrawn-results-skipped-count">{result.skipped_dead_leads || 0}</p>
                 <p className="text-sm text-muted-foreground">Skipped (Dead)</p>
               </div>
               <div className="text-center p-4 bg-red-500/10 rounded-lg">
