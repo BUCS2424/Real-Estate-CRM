@@ -368,6 +368,7 @@ export const ModerateWithdrawn = () => {
                       size="sm" 
                       className="flex-1 bg-green-500 hover:bg-green-600"
                       onClick={() => setSelectedListing(listing)}
+                      data-testid={`withdrawn-convert-${listing.mls_id}`}
                     >
                       <UserPlus className="w-4 h-4 mr-1" />
                       Convert to Lead
