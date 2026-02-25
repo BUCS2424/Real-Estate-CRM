@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the Withdrawn Listings UI in MLS Hub and validate MLS sidebar UX updates"
+user_problem_statement: "Verify moderation detail modals are no longer transparent"
 
 backend:
   - task: "Withdrawn Listings API endpoints"
