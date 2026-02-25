@@ -346,6 +346,7 @@ export const ModerateWithdrawn = () => {
                         variant="outline" 
                         className="flex-1 border-green-500 text-green-500 hover:bg-green-500/10"
                         onClick={() => handleApprove(listing.mls_id)}
+                        data-testid={`withdrawn-approve-${listing.mls_id}`}
                       >
                         <CheckCircle className="w-4 h-4 mr-1" />
                         Approve
