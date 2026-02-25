@@ -113,7 +113,11 @@ export const SearchWithdrawn = () => {
                   <p className="text-xs text-muted-foreground">Dead Leads</p>
                 </div>
               </div>
-              <Button variant="outline" onClick={() => navigate('/mls/withdrawn/moderate')}>
+              <Button
+                variant="outline"
+                onClick={() => navigate('/mls/withdrawn/moderate')}
+                data-testid="withdrawn-review-pending-button"
+              >
                 Review Pending
               </Button>
             </div>
