@@ -109,7 +109,7 @@ export const SearchWithdrawn = () => {
                   <p className="text-xs text-muted-foreground">Converted to Leads</p>
                 </div>
                 <div className="text-center border-l pl-4">
-                  <p className="text-2xl font-bold text-gray-500">{stats.dead_leads_count || 0}</p>
+                  <p className="text-2xl font-bold text-gray-500" data-testid="withdrawn-stats-dead-leads">{stats.dead_leads_count || 0}</p>
                   <p className="text-xs text-muted-foreground">Dead Leads</p>
                 </div>
               </div>
