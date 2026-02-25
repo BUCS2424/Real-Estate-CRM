@@ -293,10 +293,11 @@ export const SearchWithdrawn = () => {
             )}
 
             <div className="flex gap-3">
-              <Button 
+              [0m[0m[0m[0m[0m[0m              [0m[0m[0m[0m[0m[0m<Button 
                 variant="outline" 
                 onClick={() => navigate('/mls/withdrawn/moderate')}
                 className="flex-1"
+                data-testid="withdrawn-results-review-button"
               >
                 <XCircle className="w-4 h-4 mr-2" />
                 Review Withdrawn Listings
