@@ -308,7 +308,7 @@ export const ModerateWithdrawn = () => {
                 </div>
 
                 {/* Address */}
-                <p className="font-medium truncate">{listing.address}</p>
+                <p className="font-medium truncate" data-testid={`withdrawn-listing-address-${listing.mls_id}`}>{listing.address}</p>
                 <p className="text-sm text-muted-foreground mb-2">
                   {listing.city}, {listing.state} {listing.zip_code}
                 </p>
