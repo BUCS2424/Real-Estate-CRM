@@ -30,7 +30,7 @@ export const ConvertedListings = () => {
   const fetchListings = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/mls-listings?status=converted&limit=100');
+      const response = await api.get('/mls-listings/?status=converted&limit=100');
       setListings(response.data.listings || []);
       setTotal(response.data.total || 0);
     } catch (error) {
