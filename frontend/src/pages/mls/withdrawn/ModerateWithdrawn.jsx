@@ -220,7 +220,7 @@ export const ModerateWithdrawn = () => {
               <SelectContent>
                 <SelectItem value="pending" data-testid="withdrawn-status-pending">Pending</SelectItem>
                 <SelectItem value="approved" data-testid="withdrawn-status-approved">Approved</SelectItem>
-                <SelectItem value="converted">Converted</SelectItem>
+                <SelectItem value="converted" data-testid="withdrawn-status-converted">Converted</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
