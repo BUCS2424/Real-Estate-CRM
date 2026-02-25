@@ -186,6 +186,7 @@ export const ModerateWithdrawn = () => {
             onClick={handleBulkConvert}
             disabled={converting}
             className="bg-green-500 hover:bg-green-600"
+            data-testid="withdrawn-bulk-convert-button"
           >
             <UserPlus className="w-4 h-4 mr-2" />
             Convert to Leads ({selectedIds.length})
