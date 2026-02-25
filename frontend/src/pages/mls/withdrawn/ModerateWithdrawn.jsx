@@ -486,6 +486,7 @@ export const ModerateWithdrawn = () => {
                   <Button 
                     onClick={() => window.open(`/property-leads/${selectedListing.converted_to_lead_id}`, '_blank')}
                     variant="outline"
+                    data-testid="withdrawn-dialog-view-lead-button"
                   >
                     <Eye className="w-4 h-4 mr-2" />
                     View Property Lead
