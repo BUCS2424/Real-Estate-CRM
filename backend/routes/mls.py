@@ -144,6 +144,9 @@ async def search_mls(
     current_user: dict = Depends(get_current_user)
 ):
     """Search MLS properties via Bridge API"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
     if not mls_service.is_configured():
         return {
             "properties": [],
