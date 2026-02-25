@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the Withdrawn Listings UI in MLS Hub"
+user_problem_statement: "Test the Withdrawn Listings UI in MLS Hub and validate MLS sidebar UX updates"
 
 backend:
   - task: "Withdrawn Listings API endpoints"
@@ -118,6 +118,30 @@ backend:
         comment: "API endpoints working correctly. GET /withdrawn-listings/, POST /withdrawn-listings/search, GET /withdrawn-listings/stats all functioning. 18 listings returned in moderate page."
 
 frontend:
+  - task: "Main sidebar auto-collapse on MLS routes"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/layout/MainLayout.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Main sidebar auto-collapse functionality working perfectly. useEffect in MainLayout.jsx correctly detects when pathname starts with '/mls' and sets sidebarCollapsed to true. Testing confirmed: Main sidebar is 256px on dashboard, auto-collapses to 64px when navigating to /mls, stays collapsed at 64px on /mls/withdrawn/search, and auto-expands back to 256px when returning to dashboard. No console errors detected."
+
+  - task: "MLS Hub sidebar width and label display"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/layout/MLSLayout.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "MLS Hub sidebar width is 256px (w-64 Tailwind class) which is adequate for displaying all labels without wrapping. All submenu labels including 'Converted to Leads' have whitespace-nowrap CSS applied (line 226). Visual and programmatic testing confirmed that 'Converted to Leads' displays on a single line without wrapping in both Withdrawn and Expired accordions. Sidebar toggle functionality works correctly."
+
   - task: "Withdrawn Listings accordion in MLS Hub sidebar"
     implemented: true
     working: true
@@ -128,7 +152,7 @@ frontend:
     status_history:
       - working: true
         agent: "testing"
-        comment: "Withdrawn Listings accordion renders correctly in MLS Hub sidebar, positioned beneath Expired Listings as required. Accordion expands/collapses properly and shows all 3 sub-menu items (Search Withdrawn, Moderate, Converted to Leads). Red color theme with XCircle icon applied correctly."
+        comment: "Withdrawn Listings accordion renders correctly in MLS Hub sidebar, positioned beneath Expired Listings as required. Accordion expands/collapses properly and shows all 3 sub-menu items (Search Withdrawn, Moderate, Converted to Leads). Red color theme with XCircle icon applied correctly. All submenu items have proper data-testid attributes and whitespace-nowrap CSS."
 
   - task: "Search Withdrawn page UI"
     implemented: true
@@ -180,8 +204,8 @@ frontend:
 
 metadata:
   created_by: "testing_agent"
-  version: "1.0"
-  test_sequence: 1
+  version: "1.1"
+  test_sequence: 2
   run_ui: true
   test_date: "2025-02-25"
 
@@ -194,3 +218,5 @@ test_plan:
 agent_communication:
   - agent: "testing"
     message: "Completed comprehensive testing of Withdrawn Listings UI feature in MLS Hub. All core functionality working as expected. Login successful with provided credentials. Accordion appears correctly in sidebar beneath Expired Listings. All three subpages (Search Withdrawn, Moderate Withdrawn, Converted to Leads) render with required UI elements. Navigation between pages works smoothly. Minor HTML structure issue found in ModerateWithdrawn.jsx where Badge component creates nested div inside p tag causing React hydration warning - should use span wrapper instead. Feature is production-ready with this minor fix recommended."
+  - agent: "testing"
+    message: "Completed validation of MLS sidebar UX updates (2025-02-25). All requirements verified successfully: (1) Login works with mel@a2gdesigns.com credentials, (2) Main sidebar auto-collapses from 256px to 64px when navigating to /mls routes, (3) Main sidebar stays collapsed at 64px throughout all MLS routes including /mls/withdrawn/search, (4) Main sidebar auto-expands back to 256px when leaving MLS routes, (5) MLS Hub sidebar width is 256px which is adequate for all labels, (6) All labels including 'Converted to Leads' have whitespace-nowrap CSS and display on a single line without wrapping. No UI issues detected. No console errors or network failures. All UX requirements met."
