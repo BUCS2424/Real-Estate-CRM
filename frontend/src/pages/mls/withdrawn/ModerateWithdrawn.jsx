@@ -139,18 +139,20 @@ export const ModerateWithdrawn = () => {
     }
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status, listingId) => {
+    const testId = listingId ? `withdrawn-status-${listingId}` : 'withdrawn-status-badge';
+
     switch (status) {
       case 'pending':
-        return <Badge variant="outline" className="border-yellow-500 text-yellow-500">Pending</Badge>;
+        return <Badge variant="outline" className="border-yellow-500 text-yellow-500" data-testid={testId}>Pending</Badge>;
       case 'approved':
-        return <Badge variant="outline" className="border-green-500 text-green-500">Approved</Badge>;
+        return <Badge variant="outline" className="border-green-500 text-green-500" data-testid={testId}>Approved</Badge>;
       case 'converted':
-        return <Badge variant="outline" className="border-blue-500 text-blue-500">Converted</Badge>;
+        return <Badge variant="outline" className="border-blue-500 text-blue-500" data-testid={testId}>Converted</Badge>;
       case 'rejected':
-        return <Badge variant="outline" className="border-red-500 text-red-500">Rejected</Badge>;
+        return <Badge variant="outline" className="border-red-500 text-red-500" data-testid={testId}>Rejected</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline" data-testid={testId}>{status}</Badge>;
     }
   };
 
