@@ -268,7 +268,7 @@ export const SearchWithdrawn = () => {
                 <p className="text-sm text-muted-foreground">Skipped (Dead)</p>
               </div>
               <div className="text-center p-4 bg-red-500/10 rounded-lg">
-                <p className="text-3xl font-bold text-red-500">{result.total_found}</p>
+                <p className="text-3xl font-bold text-red-500" data-testid="withdrawn-results-total-count">{result.total_found}</p>
                 <p className="text-sm text-muted-foreground">Total Found</p>
               </div>
             </div>
