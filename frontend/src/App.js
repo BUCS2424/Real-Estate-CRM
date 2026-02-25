@@ -162,7 +162,7 @@ function App() {
                 <Route path="pull" element={<PullListings />} />
                 <Route path="moderate" element={<ModerateListings />} />
                 <Route path="converted" element={<ConvertedListings />} />
-                <Route path="search" element={<MLSOverview />} />
+                <Route path="search" element={<MLSSearch />} />
                 <Route path="sync-history" element={<MLSOverview />} />
                 <Route path="settings" element={<MLSOverview />} />
                 {/* Expired Listings */}
