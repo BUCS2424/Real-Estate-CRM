@@ -164,6 +164,10 @@ function App() {
                 <Route path="search" element={<MLSOverview />} />
                 <Route path="sync-history" element={<MLSOverview />} />
                 <Route path="settings" element={<MLSOverview />} />
+                {/* Expired Listings */}
+                <Route path="expired/search" element={<SearchExpired />} />
+                <Route path="expired/moderate" element={<ModerateExpired />} />
+                <Route path="expired/converted" element={<ConvertedExpired />} />
               </Route>
 
               {/* Settings with nested layout */}
