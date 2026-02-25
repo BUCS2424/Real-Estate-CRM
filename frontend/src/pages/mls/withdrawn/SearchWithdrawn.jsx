@@ -260,7 +260,7 @@ export const SearchWithdrawn = () => {
                 <p className="text-sm text-muted-foreground">New Listings</p>
               </div>
               <div className="text-center p-4 bg-blue-500/10 rounded-lg">
-                <p className="text-3xl font-bold text-blue-500">{result.updated_listings}</p>
+                <p className="text-3xl font-bold text-blue-500" data-testid="withdrawn-results-updated-count">{result.updated_listings}</p>
                 <p className="text-sm text-muted-foreground">Updated</p>
               </div>
               <div className="text-center p-4 bg-gray-500/10 rounded-lg">
