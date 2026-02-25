@@ -86,7 +86,12 @@ async def search_expired(
     if not mls_service.is_configured():
         raise HTTPException(status_code=400, detail="MLS API not configured")
     
-    # Search for expired/withdrawn listings
+    # Get dead leads list to exclude
+    dead_leads_cursor = db.dead_leads.find({}, {"mls_id": 1, "_id": 0})
+    dead_leads_list = [doc["mls_id"] async for doc in dead_leads_cursor]
+    dead_leads_set = set(dead_leads_list)
+    
+    # Search for expired listings only (withdrawn has its own section)
     result = await mls_service.search_properties(
         dataset="stellar",
         city=request.city,
@@ -94,33 +99,26 @@ async def search_expired(
         min_price=request.min_price,
         max_price=request.max_price,
         bedrooms=request.bedrooms,
-        status="Expired",  # Search for expired status
+        status="Expired",
         limit=request.limit
     )
-    
-    # Also search for withdrawn if no expired found
-    if len(result.get("properties", [])) == 0:
-        result = await mls_service.search_properties(
-            dataset="stellar",
-            city=request.city,
-            zip_code=request.zip_code,
-            min_price=request.min_price,
-            max_price=request.max_price,
-            bedrooms=request.bedrooms,
-            status="Withdrawn",
-            limit=request.limit
-        )
     
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
     
-    # Save to expired_listings collection
+    # Save to expired_listings collection (excluding dead leads)
     new_count = 0
     updated_count = 0
+    skipped_dead = 0
     
     for listing in result.get("properties", []):
         mls_id = listing.get("mls_id")
         if not mls_id:
+            continue
+        
+        # Skip if in dead leads list
+        if mls_id in dead_leads_set:
+            skipped_dead += 1
             continue
         
         # Check if already exists
