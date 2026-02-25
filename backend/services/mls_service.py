@@ -185,6 +185,7 @@ class MLSService:
     
     async def get_my_listings(
         self,
+        dataset: Optional[str] = None,
         agent_id: Optional[str] = None,
         status: Optional[str] = None,
         limit: int = 100
@@ -194,80 +195,80 @@ class MLSService:
         For syncing to Showcase Listings
         """
         if not self.is_configured():
-            return {"error": "MLS API not configured", "listings": [], "total": 0}
+            return {"error": "Bridge API not configured", "listings": [], "total": 0}
         
         agent = agent_id or AGENT_MLS_ID
-        if not agent:
-            return {"error": "Agent MLS ID not configured", "listings": [], "total": 0}
+        ds = dataset or self.dataset
         
         params = {
             "access_token": self.token,
-            "limit": limit,
-            "filter": f"ListAgentMlsId eq '{agent}'"
+            "$top": min(limit, 200)
         }
         
+        filters = []
+        if agent:
+            filters.append(f"ListAgentMlsId eq '{agent}'")
         if status:
-            params["filter"] += f" and StandardStatus eq '{status}'"
+            filters.append(f"StandardStatus eq '{status}'")
+        
+        if filters:
+            params["$filter"] = " and ".join(filters)
         
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.get(
-                    f"{self.base_url}/{self.dataset}/listings/residential",
-                    params=params,
-                    headers=self.headers
+                    f"{self.base_url}/OData/{ds}/Property",
+                    params=params
                 )
                 
                 if response.status_code == 200:
                     data = response.json()
-                    listings = self._transform_listings(data.get("bundle", []))
+                    listings = self._transform_listings(data.get("value", []))
                     return {
                         "listings": listings,
-                        "total": data.get("total", len(listings)),
-                        "agent_id": agent
+                        "total": len(listings),
+                        "agent_id": agent,
+                        "dataset": ds
                     }
                 else:
                     return {
-                        "error": f"MLS API error: {response.status_code}",
+                        "error": f"Bridge API error: {response.status_code}",
                         "listings": [],
                         "total": 0
                     }
         except Exception as e:
             return {
-                "error": f"MLS API connection error: {str(e)}",
+                "error": f"Bridge API connection error: {str(e)}",
                 "listings": [],
                 "total": 0
             }
     
-    async def get_property_details(self, mls_id: str) -> Dict[str, Any]:
+    async def get_property_details(self, dataset: Optional[str] = None, mls_id: str = "") -> Dict[str, Any]:
         """
-        Get full property details by MLS ID
+        Get full property details by MLS ID/ListingKey
         """
         if not self.is_configured():
-            return {"error": "MLS API not configured"}
+            return {"error": "Bridge API not configured"}
         
-        params = {
-            "access_token": self.token,
-            "filter": f"ListingId eq '{mls_id}'"
-        }
+        ds = dataset or self.dataset
         
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
+                # Try to get by ListingKey directly
                 response = await client.get(
-                    f"{self.base_url}/{self.dataset}/listings/residential",
-                    params=params,
-                    headers=self.headers
+                    f"{self.base_url}/OData/{ds}/Property('{mls_id}')",
+                    params={"access_token": self.token}
                 )
                 
                 if response.status_code == 200:
                     data = response.json()
-                    bundle = data.get("bundle", [])
-                    if bundle:
-                        return self._transform_listing_detail(bundle[0])
+                    return self._transform_listing_detail(data)
+                elif response.status_code == 404:
                     return {"error": "Property not found"}
                 else:
-                    return {"error": f"MLS API error: {response.status_code}"}
+                    return {"error": f"Bridge API error: {response.status_code}"}
         except Exception as e:
-            return {"error": f"MLS API connection error: {str(e)}"}
+            return {"error": f"Bridge API connection error: {str(e)}"}
     
     def _transform_listings(self, listings: List[Dict]) -> List[Dict]:
         """Transform Bridge API listing data to our format"""
