@@ -302,11 +302,21 @@ class MLSService:
         """Transform full listing detail"""
         base = self._transform_listings([listing])[0]
         
+        # Helper to handle fields that could be strings or lists
+        def to_list(value):
+            if value is None:
+                return []
+            if isinstance(value, list):
+                return value
+            if isinstance(value, str):
+                return [v.strip() for v in value.split(",") if v.strip()]
+            return [str(value)]
+        
         # Add additional details
         base.update({
-            "features": listing.get("InteriorFeatures", "").split(",") if listing.get("InteriorFeatures") else [],
-            "exterior_features": listing.get("ExteriorFeatures", "").split(",") if listing.get("ExteriorFeatures") else [],
-            "appliances": listing.get("Appliances", "").split(",") if listing.get("Appliances") else [],
+            "features": to_list(listing.get("InteriorFeatures")),
+            "exterior_features": to_list(listing.get("ExteriorFeatures")),
+            "appliances": to_list(listing.get("Appliances")),
             "parking": listing.get("ParkingFeatures"),
             "pool": listing.get("PoolFeatures"),
             "hoa_fee": listing.get("AssociationFee"),
