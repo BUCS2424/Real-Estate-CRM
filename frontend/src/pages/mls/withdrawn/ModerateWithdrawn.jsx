@@ -243,7 +243,11 @@ export const ModerateWithdrawn = () => {
           <CardContent className="p-8 text-center">
             <XCircle className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
             <p className="text-muted-foreground mb-4">No withdrawn listings found</p>
-            <Button variant="outline" onClick={() => window.location.href = '/mls/withdrawn/search'}>
+            <Button
+              variant="outline"
+              onClick={() => window.location.href = '/mls/withdrawn/search'}
+              data-testid="withdrawn-empty-search-button"
+            >
               Search for Withdrawn Listings
             </Button>
           </CardContent>
