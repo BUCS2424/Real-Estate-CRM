@@ -304,7 +304,7 @@ export const ModerateWithdrawn = () => {
                 {/* Price */}
                 <div className="flex items-center gap-2 mb-2">
                   <DollarSign className="w-4 h-4 text-red-500" />
-                  <span className="text-xl font-bold">{formatPrice(listing.list_price)}</span>
+                  <span className="text-xl font-bold" data-testid={`withdrawn-listing-price-${listing.mls_id}`}>{formatPrice(listing.list_price)}</span>
                 </div>
 
                 {/* Address */}
