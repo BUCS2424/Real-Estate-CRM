@@ -192,6 +192,7 @@ export const ConvertedWithdrawn = () => {
                     size="sm" 
                     variant="ghost"
                     onClick={() => window.open(`/property-leads/${listing.converted_to_lead_id}`, '_blank')}
+                    data-testid={`withdrawn-converted-open-lead-${listing.mls_id}`}
                   >
                     <ExternalLink className="w-4 h-4" />
                   </Button>
