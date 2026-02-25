@@ -459,10 +459,10 @@ export const ModerateWithdrawn = () => {
 
                 {/* Tag Info */}
                 <div className="col-span-2 p-3 bg-red-500/10 rounded-lg">
-                  <p className="text-sm flex items-center gap-2">
+                  <div className="text-sm flex items-center gap-2" data-testid="withdrawn-dialog-tag-info">
                     <Tag className="w-4 h-4 text-red-500" />
-                    Will be tagged as: <Badge className="bg-red-500">withdrawn</Badge>
-                  </p>
+                    <span>Will be tagged as:</span> <Badge className="bg-red-500">withdrawn</Badge>
+                  </div>
                 </div>
               </div>
 
