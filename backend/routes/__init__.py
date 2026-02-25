@@ -33,6 +33,7 @@ from .email import router as email_router
 from .skyreels import router as skyreels_router
 from .mls import router as mls_router
 from .mls_listings import router as mls_listings_router
+from .expired_listings import router as expired_listings_router
 from .jacquie_lawson import router as jacquie_lawson_router
 from .social_media import router as social_media_router
 from .elevenlabs import router as elevenlabs_router
