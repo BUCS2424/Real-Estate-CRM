@@ -144,6 +144,7 @@ export const SearchWithdrawn = () => {
                 placeholder="e.g. Tampa"
                 value={searchParams.city}
                 onChange={(e) => setSearchParams(prev => ({ ...prev, city: e.target.value }))}
+                data-testid="withdrawn-search-city-input"
               />
             </div>
             
