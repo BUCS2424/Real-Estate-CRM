@@ -356,6 +356,7 @@ export const ModerateWithdrawn = () => {
                         variant="outline" 
                         className="border-red-500 text-red-500 hover:bg-red-500/10"
                         onClick={() => handleReject(listing.mls_id)}
+                        data-testid={`withdrawn-reject-${listing.mls_id}`}
                       >
                         <XCircle className="w-4 h-4" />
                       </Button>
