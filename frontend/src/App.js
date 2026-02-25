@@ -169,6 +169,10 @@ function App() {
                 <Route path="expired/search" element={<SearchExpired />} />
                 <Route path="expired/moderate" element={<ModerateExpired />} />
                 <Route path="expired/converted" element={<ConvertedExpired />} />
+                {/* Withdrawn Listings */}
+                <Route path="withdrawn/search" element={<SearchWithdrawn />} />
+                <Route path="withdrawn/moderate" element={<ModerateWithdrawn />} />
+                <Route path="withdrawn/converted" element={<ConvertedWithdrawn />} />
               </Route>
 
               {/* Settings with nested layout */}
