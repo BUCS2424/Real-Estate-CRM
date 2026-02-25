@@ -307,6 +307,23 @@ async def convert_to_lead(
     
     await db.property_leads.insert_one(lead_doc)
     
+    # Add to dead leads list so it won't be pulled again
+    await db.dead_leads.update_one(
+        {"mls_id": expired_listing["mls_id"]},
+        {
+            "$set": {
+                "mls_id": expired_listing["mls_id"],
+                "address": expired_listing.get("address"),
+                "city": expired_listing.get("city"),
+                "source": "expired",
+                "converted_to_lead_id": lead_id,
+                "added_at": datetime.now(timezone.utc).isoformat(),
+                "added_by": current_user["id"]
+            }
+        },
+        upsert=True
+    )
+    
     # Update expired listing status
     await db.expired_listings.update_one(
         {"mls_id": expired_listing["mls_id"]},
@@ -323,7 +340,8 @@ async def convert_to_lead(
     return {
         "message": "Converted to property lead",
         "lead_id": lead_id,
-        "address": lead_doc["address"]
+        "address": lead_doc["address"],
+        "tags": lead_doc["tags"]
     }
 
 
