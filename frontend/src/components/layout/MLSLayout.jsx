@@ -177,6 +177,60 @@ export const MLSLayout = () => {
             )}
           </div>
           
+          {/* Withdrawn Listings Accordion */}
+          <div className="space-y-1">
+            <button
+              onClick={() => !collapsed && setWithdrawnOpen(!withdrawnOpen)}
+              data-testid="mls-nav-withdrawn-listings"
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                isWithdrawnPath 
+                  ? "bg-red-500/20 text-red-500 font-medium" 
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <XCircle className={cn("w-5 h-5 shrink-0", collapsed && "mx-auto")} />
+              {!collapsed && (
+                <>
+                  <span className="flex-1 text-left">Withdrawn Listings</span>
+                  <ChevronDown 
+                    className={cn(
+                      "w-4 h-4 transition-transform",
+                      withdrawnOpen && "rotate-180"
+                    )} 
+                  />
+                </>
+              )}
+            </button>
+            
+            {/* Withdrawn Sub-menu */}
+            {!collapsed && withdrawnOpen && (
+              <div className="ml-4 pl-2 border-l border-muted space-y-1">
+                {withdrawnMenuItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = location.pathname === item.path;
+                  
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      data-testid={`mls-nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm",
+                        active 
+                          ? "bg-red-500/20 text-red-500 font-medium" 
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      )}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          
           {/* Divider */}
           <div className="border-t my-2" />
           
