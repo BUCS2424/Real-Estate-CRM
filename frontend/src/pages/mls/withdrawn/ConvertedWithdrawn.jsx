@@ -71,7 +71,7 @@ export const ConvertedWithdrawn = () => {
             <UserPlus className="w-6 h-6 text-green-500" />
             Converted to Leads
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground" data-testid="withdrawn-converted-total">
             Withdrawn listings converted to property leads for follow-up ({total} total)
           </p>
         </div>
