@@ -129,6 +129,7 @@ async def get_available_datasets(current_user: dict = Depends(get_current_user))
 
 @router.get("/search")
 async def search_mls(
+    dataset: Optional[str] = Query(None, description="Dataset code (e.g., 'test', 'gcmls2')"),
     address: Optional[str] = Query(None, description="Street address"),
     city: Optional[str] = Query(None, description="City name"),
     zip_code: Optional[str] = Query(None, description="ZIP code"),
@@ -137,22 +138,22 @@ async def search_mls(
     bedrooms: Optional[int] = Query(None, description="Minimum bedrooms"),
     bathrooms: Optional[float] = Query(None, description="Minimum bathrooms"),
     property_type: Optional[str] = Query(None, description="Property type"),
-    status: Optional[str] = Query("Active", description="Listing status (Active, Pending, Sold)"),
-    limit: int = Query(50, ge=1, le=100),
+    status: Optional[str] = Query("Active", description="Listing status (Active, Pending, Closed)"),
+    limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     current_user: dict = Depends(get_current_user)
 ):
-    """Search Stellar MLS properties"""
+    """Search MLS properties via Bridge API"""
     if not mls_service.is_configured():
-        # Return mock data for development until credentials are added
         return {
-            "properties": _get_mock_search_results(city, min_price, max_price, limit),
+            "properties": [],
             "total": 0,
             "configured": False,
-            "message": "MLS API not configured - showing mock data"
+            "message": "Bridge API not configured"
         }
     
     result = await mls_service.search_properties(
+        dataset=dataset,
         address=address,
         city=city,
         zip_code=zip_code,
@@ -171,21 +172,23 @@ async def search_mls(
 
 @router.get("/my-listings")
 async def get_my_listings(
-    agent_id: Optional[str] = Query(None, description="Agent MLS ID (uses env default if not provided)"),
+    dataset: Optional[str] = Query(None, description="Dataset code"),
+    agent_id: Optional[str] = Query(None, description="Agent MLS ID"),
     status: Optional[str] = Query(None, description="Filter by status"),
     limit: int = Query(100, ge=1, le=200),
     current_user: dict = Depends(get_current_user)
 ):
-    """Get your own listings from Stellar MLS by agent ID"""
+    """Get your own listings from MLS by agent ID"""
     if not mls_service.is_configured():
         return {
             "listings": [],
             "total": 0,
             "configured": False,
-            "message": "MLS API not configured - add Bridge API credentials"
+            "message": "Bridge API not configured"
         }
     
     result = await mls_service.get_my_listings(
+        dataset=dataset,
         agent_id=agent_id,
         status=status,
         limit=limit
@@ -197,17 +200,17 @@ async def get_my_listings(
 @router.get("/property/{mls_id}")
 async def get_property_detail(
     mls_id: str,
+    dataset: Optional[str] = Query(None, description="Dataset code"),
     current_user: dict = Depends(get_current_user)
 ):
-    """Get full property details by MLS ID"""
+    """Get full property details by MLS ID/ListingKey"""
     if not mls_service.is_configured():
         return {
-            "error": "MLS API not configured",
-            "configured": False,
-            "message": "Add Bridge API credentials to access property details"
+            "error": "Bridge API not configured",
+            "configured": False
         }
     
-    result = await mls_service.get_property_details(mls_id)
+    result = await mls_service.get_property_details(dataset=dataset, mls_id=mls_id)
     return result
 
 
