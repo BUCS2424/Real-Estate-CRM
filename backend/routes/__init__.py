@@ -71,6 +71,8 @@ api_router.include_router(skyreels_router, prefix="/skyreels", tags=["SkyReels V
 api_router.include_router(mls_router, tags=["MLS Integration"])
 api_router.include_router(mls_listings_router, tags=["MLS Listings Management"])
 api_router.include_router(expired_listings_router, tags=["Expired Listings Management"])
+api_router.include_router(withdrawn_listings_router, tags=["Withdrawn Listings Management"])
+api_router.include_router(dead_leads_router, tags=["Dead Leads Management"])
 api_router.include_router(jacquie_lawson_router, tags=["Jacquie Lawson Cards"])
 api_router.include_router(social_media_router, tags=["Social Media"])
 api_router.include_router(elevenlabs_router, tags=["ElevenLabs AI"])
