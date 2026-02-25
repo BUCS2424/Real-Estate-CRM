@@ -36,6 +36,13 @@ const expiredMenuItems = [
   { path: '/mls/expired/converted', label: 'Converted to Leads', icon: UserPlus },
 ];
 
+// Withdrawn Listings sub-menu items
+const withdrawnMenuItems = [
+  { path: '/mls/withdrawn/search', label: 'Search Withdrawn', icon: FileSearch },
+  { path: '/mls/withdrawn/moderate', label: 'Moderate', icon: ClipboardCheck },
+  { path: '/mls/withdrawn/converted', label: 'Converted to Leads', icon: UserPlus },
+];
+
 // Bottom menu items
 const bottomMenuItems = [
   { path: '/mls/sync-history', label: 'Sync History', icon: RefreshCw },
