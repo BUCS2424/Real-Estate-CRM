@@ -472,6 +472,7 @@ export const ModerateWithdrawn = () => {
                     onClick={() => handleConvertToLead(selectedListing.mls_id)}
                     disabled={converting}
                     className="bg-green-500 hover:bg-green-600"
+                    data-testid="withdrawn-dialog-convert-button"
                   >
                     {converting ? (
                       <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
