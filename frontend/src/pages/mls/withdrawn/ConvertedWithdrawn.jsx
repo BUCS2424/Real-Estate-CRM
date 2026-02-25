@@ -115,7 +115,7 @@ export const ConvertedWithdrawn = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {listings.map((listing) => (
-            <Card key={listing.mls_id} className="overflow-hidden">
+            <Card key={listing.mls_id} className="overflow-hidden" data-testid={`withdrawn-converted-card-${listing.mls_id}`}>
               {/* Image */}
               <div className="relative h-48 bg-muted">
                 {listing.primary_photo ? (
