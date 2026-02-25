@@ -176,7 +176,7 @@ export const ModerateWithdrawn = () => {
             <XCircle className="w-6 h-6 text-red-500" />
             Moderate Withdrawn Listings
           </h1>
-          <p className="text-muted-foreground">
+          [0m[0m[0m[0m[0m[0m          [0m[0m[0m[0m[0m[0m[0m[0m[0m[0m[0m[0m[0m[0m[0m[0m[0m[0m[0m[0m<p className="text-muted-foreground" data-testid="withdrawn-total-count">
             Review and convert withdrawn listings to leads ({total} total)
           </p>
         </div>
