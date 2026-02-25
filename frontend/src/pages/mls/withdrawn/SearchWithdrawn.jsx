@@ -105,7 +105,7 @@ export const SearchWithdrawn = () => {
                   <p className="text-xs text-muted-foreground">Pending Review</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-green-500">{stats.by_sync_status?.converted || 0}</p>
+                  <p className="text-2xl font-bold text-green-500" data-testid="withdrawn-stats-converted">{stats.by_sync_status?.converted || 0}</p>
                   <p className="text-xs text-muted-foreground">Converted to Leads</p>
                 </div>
                 <div className="text-center border-l pl-4">
