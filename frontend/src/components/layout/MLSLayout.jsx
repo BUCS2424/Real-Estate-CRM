@@ -131,7 +131,7 @@ export const MLSLayout = () => {
         {/* Menu Items */}
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
           {/* Main Menu Items */}
-          {mlsMenuItems.map(renderMenuItem)}
+          {visibleMlsMenuItems.map(renderMenuItem)}
 
           {/* My Listings Accordion */}
           <div className="space-y-1">
