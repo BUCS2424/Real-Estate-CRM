@@ -503,7 +503,7 @@ export const mlsAPI = {
   // Search properties
   search: (params = {}) => {
     const query = new URLSearchParams();
-    if (params.address) query.append('address', params.address);
+    if (params.dataset) query.append('dataset', params.dataset);
     if (params.city) query.append('city', params.city);
     if (params.zip_code) query.append('zip_code', params.zip_code);
     if (params.min_price) query.append('min_price', params.min_price);
