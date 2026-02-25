@@ -24,7 +24,8 @@ import {
   DollarSign,
   Wrench,
   Video,
-  Share2
+  Share2,
+  Database
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
