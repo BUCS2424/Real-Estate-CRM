@@ -118,12 +118,24 @@ backend:
         comment: "API endpoints working correctly. GET /withdrawn-listings/, POST /withdrawn-listings/search, GET /withdrawn-listings/stats all functioning. 18 listings returned in moderate page."
 
 frontend:
+  - task: "Moderation detail modals have solid backgrounds (not transparent)"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/ui/dialog.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Verified all three moderation detail modals have solid white backgrounds. Testing confirmed: (1) /mls/moderate eye icon opens detail modal with solid white background (rgb(255, 255, 255), opacity: 1), (2) /mls/expired/moderate eye icon opens detail modal with solid white background (rgb(255, 255, 255), opacity: 1), (3) /mls/withdrawn/moderate eye icon opens detail modal with solid white background (rgb(255, 255, 255), opacity: 1). Dialog component properly applies bg-card class providing solid background. All modals display content clearly with professional white dialog panels. No transparency issues detected."
+  
   - task: "Main sidebar auto-collapse on MLS routes"
     implemented: true
     working: true
     file: "/app/frontend/src/components/layout/MainLayout.jsx"
     stuck_count: 0
-    priority: "high"
+    priority: "low"
     needs_retesting: false
     status_history:
       - working: true
