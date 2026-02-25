@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Verify moderation detail modals are no longer transparent"
+user_problem_statement: "Test new MLS Search page (admin-only)"
 
 backend:
   - task: "Withdrawn Listings API endpoints"
