@@ -11,8 +11,10 @@ export const MainLayout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
-    if (location.pathname === '/mls') {
+    if (location.pathname.startsWith('/mls')) {
       setSidebarCollapsed(true);
+    } else {
+      setSidebarCollapsed(false);
     }
   }, [location.pathname]);
 
