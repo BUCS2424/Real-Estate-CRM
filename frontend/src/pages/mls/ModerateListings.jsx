@@ -54,11 +54,11 @@ export const ModerateListings = () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (statusFilter) params.append('status', statusFilter);
-      if (mlsStatusFilter) params.append('mls_status', mlsStatusFilter);
+      if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter);
+      if (mlsStatusFilter && mlsStatusFilter !== 'all') params.append('mls_status', mlsStatusFilter);
       params.append('limit', '50');
       
-      const response = await api.get(`/mls-listings?${params}`);
+      const response = await api.get(`/mls-listings/?${params}`);
       setListings(response.data.listings || []);
       setTotal(response.data.total || 0);
     } catch (error) {
