@@ -106,7 +106,7 @@ export const ConvertedWithdrawn = () => {
             <UserPlus className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
             <p className="text-muted-foreground mb-4">No converted listings yet</p>
             <Link to="/mls/withdrawn/moderate">
-              <Button variant="outline">
+              <Button variant="outline" data-testid="withdrawn-converted-go-moderate">
                 Go to Moderate
               </Button>
             </Link>
