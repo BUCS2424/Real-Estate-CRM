@@ -225,7 +225,7 @@ export const ModerateWithdrawn = () => {
               </SelectContent>
             </Select>
 
-            <Button variant="outline" size="sm" onClick={selectAll}>
+            <Button variant="outline" size="sm" onClick={selectAll} data-testid="withdrawn-select-all-button">
               <CheckCheck className="w-4 h-4 mr-2" />
               {selectedIds.length === listings.length ? 'Deselect All' : 'Select All'}
             </Button>
