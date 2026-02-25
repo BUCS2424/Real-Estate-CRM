@@ -216,15 +216,16 @@ async def get_property_detail(
 
 @router.post("/sync-to-showcase")
 async def sync_listings_to_showcase(
+    dataset: Optional[str] = Query(None, description="Dataset code"),
     agent_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
     """Sync your MLS listings to Showcase Listings"""
     if not mls_service.is_configured():
-        raise HTTPException(status_code=400, detail="MLS API not configured")
+        raise HTTPException(status_code=400, detail="Bridge API not configured")
     
     # Get listings from MLS
-    result = await mls_service.get_my_listings(agent_id=agent_id, status="Active")
+    result = await mls_service.get_my_listings(dataset=dataset, agent_id=agent_id, status="Active")
     
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
@@ -233,8 +234,8 @@ async def sync_listings_to_showcase(
     updated = 0
     
     for listing in result.get("listings", []):
-        # Check if already in showcase
-        existing = await db.showcase_listings.find_one({"mls_id": listing["mls_id"]})
+        # Check if already in showcase (use properties collection)
+        existing = await db.properties.find_one({"mls_id": listing["mls_id"]})
         
         showcase_doc = {
             "mls_id": listing["mls_id"],
@@ -245,12 +246,12 @@ async def sync_listings_to_showcase(
             "bedrooms": listing["bedrooms"],
             "bathrooms": listing["bathrooms"],
             "sqft": listing["sqft"],
-            "list_price": listing["list_price"],
-            "status": listing["status"],
+            "price": listing["list_price"],
+            "status": "active",
             "property_type": listing["property_type"],
             "year_built": listing["year_built"],
             "description": listing["description"],
-            "photos": listing.get("photos", []),
+            "images": [{"url": p, "id": str(uuid.uuid4())} for p in listing.get("photos", []) if p],
             "primary_photo": listing.get("primary_photo"),
             "listing_agent": listing.get("listing_agent"),
             "mls_synced": True,
@@ -259,19 +260,24 @@ async def sync_listings_to_showcase(
         }
         
         if existing:
-            # Update existing
-            await db.showcase_listings.update_one(
+            await db.properties.update_one(
                 {"mls_id": listing["mls_id"]},
                 {"$set": showcase_doc}
             )
             updated += 1
         else:
-            # Create new
             showcase_doc["id"] = str(uuid.uuid4())
             showcase_doc["created_at"] = datetime.now(timezone.utc).isoformat()
             showcase_doc["is_featured"] = False
-            await db.showcase_listings.insert_one(showcase_doc)
+            await db.properties.insert_one(showcase_doc)
             synced += 1
+    
+    # Update last sync time
+    await db.settings.update_one(
+        {"type": "mls_config"},
+        {"$set": {"last_sync": datetime.now(timezone.utc).isoformat()}},
+        upsert=True
+    )
     
     return {
         "message": "Sync complete",
@@ -284,11 +290,12 @@ async def sync_listings_to_showcase(
 @router.post("/import-to-lead/{mls_id}")
 async def import_mls_to_lead(
     mls_id: str,
+    dataset: Optional[str] = Query(None, description="Dataset code"),
     current_user: dict = Depends(get_current_user)
 ):
     """Import an MLS listing as a Property Lead"""
     if not mls_service.is_configured():
-        raise HTTPException(status_code=400, detail="MLS API not configured")
+        raise HTTPException(status_code=400, detail="Bridge API not configured")
     
     # Check if already imported
     existing = await db.property_leads.find_one({"mls_id": mls_id})
@@ -296,7 +303,7 @@ async def import_mls_to_lead(
         raise HTTPException(status_code=400, detail="This listing has already been imported as a lead")
     
     # Get property details from MLS
-    property_data = await mls_service.get_property_details(mls_id)
+    property_data = await mls_service.get_property_details(dataset=dataset, mls_id=mls_id)
     
     if "error" in property_data:
         raise HTTPException(status_code=400, detail=property_data["error"])
@@ -318,7 +325,6 @@ async def import_mls_to_lead(
         "property_type": property_data.get("property_type"),
         "list_price": property_data.get("list_price"),
         "estimated_value": property_data.get("list_price"),
-        "photos": property_data.get("photos", []),
         "description": property_data.get("description"),
         "features": property_data.get("features", []),
         "listing_agent": property_data.get("listing_agent"),
@@ -336,6 +342,7 @@ async def import_mls_to_lead(
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "mls_id": mls_id
         }],
+        "gallery_images": [{"url": p, "id": str(uuid.uuid4())} for p in property_data.get("photos", []) if p],
         "created_by": current_user["id"],
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat()
@@ -348,46 +355,3 @@ async def import_mls_to_lead(
         "lead_id": lead_doc["id"],
         "address": lead_doc["address"]
     }
-
-
-def _get_mock_search_results(city=None, min_price=None, max_price=None, limit=10):
-    """Return mock data for development/demo when MLS not configured"""
-    # This allows the UI to work before credentials are added
-    mock_properties = [
-        {
-            "mls_id": "MOCK001",
-            "address": "123 Demo Street",
-            "city": city or "Tampa",
-            "state": "FL",
-            "zip_code": "33601",
-            "bedrooms": 4,
-            "bathrooms": 3,
-            "sqft": 2500,
-            "list_price": 450000,
-            "status": "Active",
-            "property_type": "Single Family",
-            "days_on_market": 15,
-            "primary_photo": None,
-            "listing_agent": "Demo Agent",
-            "description": "Beautiful home - MLS API not configured (showing mock data)"
-        },
-        {
-            "mls_id": "MOCK002",
-            "address": "456 Sample Ave",
-            "city": city or "Tampa",
-            "state": "FL",
-            "zip_code": "33602",
-            "bedrooms": 3,
-            "bathrooms": 2,
-            "sqft": 1800,
-            "list_price": 350000,
-            "status": "Active",
-            "property_type": "Single Family",
-            "days_on_market": 7,
-            "primary_photo": None,
-            "listing_agent": "Demo Agent",
-            "description": "Charming property - MLS API not configured (showing mock data)"
-        }
-    ]
-    
-    return mock_properties[:limit]
