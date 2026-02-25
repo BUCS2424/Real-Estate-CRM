@@ -154,6 +154,17 @@ function App() {
                 <Route path="analytics" element={<SocialMediaDashboard />} />
               </Route>
 
+              {/* MLS Hub with nested layout */}
+              <Route path="/mls" element={<MLSLayout />}>
+                <Route index element={<MLSOverview />} />
+                <Route path="pull" element={<PullListings />} />
+                <Route path="moderate" element={<ModerateListings />} />
+                <Route path="converted" element={<ConvertedListings />} />
+                <Route path="search" element={<MLSOverview />} />
+                <Route path="sync-history" element={<MLSOverview />} />
+                <Route path="settings" element={<MLSOverview />} />
+              </Route>
+
               {/* Settings with nested layout */}
               <Route path="/settings" element={<SettingsLayout />}>
                 <Route index element={<SettingsOverview />} />
