@@ -75,7 +75,7 @@ export const ConvertedWithdrawn = () => {
             Withdrawn listings converted to property leads for follow-up ({total} total)
           </p>
         </div>
-        <Button variant="outline" onClick={fetchListings}>
+        <Button variant="outline" onClick={fetchListings} data-testid="withdrawn-converted-refresh-button">
           <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
         </Button>
