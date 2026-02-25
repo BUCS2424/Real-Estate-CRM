@@ -169,7 +169,7 @@ export const MLSLayout = () => {
                       )}
                     >
                       <Icon className="w-4 h-4 shrink-0" />
-                      <span>{item.label}</span>
+                      <span className="whitespace-nowrap">{item.label}</span>
                     </Link>
                   );
                 })}
@@ -223,7 +223,7 @@ export const MLSLayout = () => {
                       )}
                     >
                       <Icon className="w-4 h-4 shrink-0" />
-                      <span>{item.label}</span>
+                      <span className="whitespace-nowrap">{item.label}</span>
                     </Link>
                   );
                 })}
