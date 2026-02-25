@@ -262,6 +262,7 @@ export const ModerateWithdrawn = () => {
               className={`overflow-hidden hover:border-red-500/50 transition-colors ${
                 selectedIds.includes(listing.mls_id) ? 'ring-2 ring-red-500' : ''
               }`}
+              data-testid={`withdrawn-listing-card-${listing.mls_id}`}
             >
               {/* Image */}
               <div className="relative h-48 bg-muted">
