@@ -183,6 +183,7 @@ export const ConvertedWithdrawn = () => {
                     size="sm" 
                     className="flex-1 bg-green-500 hover:bg-green-600"
                     onClick={() => window.location.href = `/property-leads/${listing.converted_to_lead_id}`}
+                    data-testid={`withdrawn-converted-view-lead-${listing.mls_id}`}
                   >
                     <Eye className="w-4 h-4 mr-1" />
                     View Lead
