@@ -218,7 +218,7 @@ export const ModerateWithdrawn = () => {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="pending" data-testid="withdrawn-status-pending">Pending</SelectItem>
                 <SelectItem value="approved">Approved</SelectItem>
                 <SelectItem value="converted">Converted</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
