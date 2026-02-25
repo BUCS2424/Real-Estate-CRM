@@ -201,7 +201,7 @@ export const MLSLayout = () => {
               <Clock className={cn("w-5 h-5 shrink-0", collapsed && "mx-auto")} />
               {!collapsed && (
                 <>
-                  <span className="flex-1 text-left">Expired Listings</span>
+                  <span className="flex-1 text-left whitespace-nowrap">Expired Listings</span>
                   <ChevronDown 
                     className={cn(
                       "w-4 h-4 transition-transform",
