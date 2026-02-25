@@ -56,6 +56,7 @@ const navItems = [
   { path: '/contacts', icon: Users, label: 'Contacts' },
   { type: 'sales', icon: DollarSign, label: 'Sales' },
   { path: '/listings', icon: Home, label: 'Showcase Listings' },
+  { path: '/mls', icon: Database, label: 'MLS Hub' },
   { path: '/social-media', icon: Share2, label: 'Social Media' },
   { path: '/property-lookup', icon: Search, label: 'Property Lookup' },
   { path: '/reviews', icon: Star, label: 'Reviews' },
