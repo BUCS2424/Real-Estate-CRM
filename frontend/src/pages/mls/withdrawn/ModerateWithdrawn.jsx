@@ -230,7 +230,7 @@ export const ModerateWithdrawn = () => {
               {selectedIds.length === listings.length ? 'Deselect All' : 'Select All'}
             </Button>
 
-            <Button variant="ghost" size="sm" onClick={fetchListings}>
+            <Button variant="ghost" size="sm" onClick={fetchListings} data-testid="withdrawn-refresh-button">
               <RefreshCw className="w-4 h-4" />
             </Button>
           </div>
