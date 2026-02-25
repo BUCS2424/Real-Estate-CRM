@@ -101,3 +101,96 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Test the Withdrawn Listings UI in MLS Hub"
+
+backend:
+  - task: "Withdrawn Listings API endpoints"
+    implemented: true
+    working: true
+    file: "/app/backend/routes/withdrawn_listings.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "API endpoints working correctly. GET /withdrawn-listings/, POST /withdrawn-listings/search, GET /withdrawn-listings/stats all functioning. 18 listings returned in moderate page."
+
+frontend:
+  - task: "Withdrawn Listings accordion in MLS Hub sidebar"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/layout/MLSLayout.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Withdrawn Listings accordion renders correctly in MLS Hub sidebar, positioned beneath Expired Listings as required. Accordion expands/collapses properly and shows all 3 sub-menu items (Search Withdrawn, Moderate, Converted to Leads). Red color theme with XCircle icon applied correctly."
+
+  - task: "Search Withdrawn page UI"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/mls/withdrawn/SearchWithdrawn.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Search Withdrawn page renders completely. Header displays correctly. Stats cards show Total Found (18), Pending Review (18), Converted (0). All search form inputs present: City (pre-filled with Tampa), ZIP Code, Min Bedrooms, Min Price, Max Price, Max Results. Search Withdrawn Listings button renders correctly with red background."
+
+  - task: "Moderate Withdrawn page UI"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/mls/withdrawn/ModerateWithdrawn.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Minor: HTML validation warning - Badge component (div) nested inside p tag at lines 203-204. This causes React hydration warning but doesn't affect functionality. Moderate Withdrawn page renders correctly with header, total count (18 total), status filter dropdown (with Pending/Approved/Converted/Rejected options), Select All button, and Refresh button all present. 18 listing cards render with property images, prices, addresses, property details (beds/baths/sqft), and action buttons (Approve/Reject for pending status). All required elements functional."
+
+  - task: "Converted to Leads page UI"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/mls/withdrawn/ConvertedWithdrawn.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Converted to Leads page renders correctly with header, total count text (0 total - expected for new feature), and Refresh button. Empty state displays properly with 'Go to Moderate' button when no converted listings exist."
+
+  - task: "Navigation between Withdrawn subpages"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/layout/MLSLayout.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Navigation between all three Withdrawn subpages (Search, Moderate, Converted) works without errors. Routes properly configured and page transitions smooth."
+
+metadata:
+  created_by: "testing_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: true
+  test_date: "2025-02-25"
+
+test_plan:
+  current_focus: []
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "testing"
+    message: "Completed comprehensive testing of Withdrawn Listings UI feature in MLS Hub. All core functionality working as expected. Login successful with provided credentials. Accordion appears correctly in sidebar beneath Expired Listings. All three subpages (Search Withdrawn, Moderate Withdrawn, Converted to Leads) render with required UI elements. Navigation between pages works smoothly. Minor HTML structure issue found in ModerateWithdrawn.jsx where Badge component creates nested div inside p tag causing React hydration warning - should use span wrapper instead. Feature is production-ready with this minor fix recommended."
