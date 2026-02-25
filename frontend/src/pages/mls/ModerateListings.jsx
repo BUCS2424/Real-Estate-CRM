@@ -225,14 +225,14 @@ export const ModerateListings = () => {
             </Select>
 
             <Select 
-              value={mlsStatusFilter} 
-              onValueChange={(v) => setSearchParams({ status: statusFilter, mls_status: v })}
+              value={mlsStatusFilter || "all"} 
+              onValueChange={(v) => setSearchParams({ status: statusFilter, mls_status: v === "all" ? "" : v })}
             >
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="MLS Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All</SelectItem>
+                <SelectItem value="all">All</SelectItem>
                 <SelectItem value="Active">Active</SelectItem>
                 <SelectItem value="Pending">Pending</SelectItem>
                 <SelectItem value="Closed">Closed/Sold</SelectItem>
