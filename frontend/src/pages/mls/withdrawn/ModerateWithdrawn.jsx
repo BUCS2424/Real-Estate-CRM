@@ -214,7 +214,7 @@ export const ModerateWithdrawn = () => {
               value={statusFilter} 
               onValueChange={(v) => setSearchParams({ status: v })}
             >
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-40" data-testid="withdrawn-status-filter">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
