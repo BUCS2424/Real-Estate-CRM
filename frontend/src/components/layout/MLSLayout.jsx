@@ -255,7 +255,7 @@ export const MLSLayout = () => {
               <XCircle className={cn("w-5 h-5 shrink-0", collapsed && "mx-auto")} />
               {!collapsed && (
                 <>
-                                                                                                                                                                                                                                          
+                  <span className="flex-1 text-left whitespace-nowrap">Withdrawn Listings</span>
                   <ChevronDown 
                     className={cn(
                       "w-4 h-4 transition-transform",
