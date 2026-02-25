@@ -57,7 +57,10 @@ const bottomMenuItems = [
 
 export const MLSLayout = () => {
   const location = useLocation();
+  const { isAdmin } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const canAccessMlsSearch = isAdmin();
+  const visibleMlsMenuItems = mlsMenuItems.filter((item) => item.path !== '/mls/search' || canAccessMlsSearch);
   
   // Check if we're in the expired section to auto-expand
   const isExpiredPath = location.pathname.includes('/mls/expired');
