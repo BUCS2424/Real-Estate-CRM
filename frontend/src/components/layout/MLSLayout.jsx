@@ -57,6 +57,10 @@ export const MLSLayout = () => {
   const isExpiredPath = location.pathname.includes('/mls/expired');
   const [expiredOpen, setExpiredOpen] = useState(isExpiredPath);
 
+  // Check if we're in the withdrawn section to auto-expand
+  const isWithdrawnPath = location.pathname.includes('/mls/withdrawn');
+  const [withdrawnOpen, setWithdrawnOpen] = useState(isWithdrawnPath);
+
   const isActive = (item) => {
     if (item.exact) {
       return location.pathname === item.path;
