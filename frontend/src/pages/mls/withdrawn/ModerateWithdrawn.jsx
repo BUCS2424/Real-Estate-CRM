@@ -282,6 +282,7 @@ export const ModerateWithdrawn = () => {
                 <div 
                   className="absolute top-2 left-2 w-6 h-6 rounded border-2 border-white bg-background/80 flex items-center justify-center cursor-pointer"
                   onClick={() => toggleSelect(listing.mls_id)}
+                  data-testid={`withdrawn-select-${listing.mls_id}`}
                 >
                   {selectedIds.includes(listing.mls_id) && (
                     <CheckCircle className="w-5 h-5 text-red-500" />
