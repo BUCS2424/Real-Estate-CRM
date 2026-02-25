@@ -210,6 +210,7 @@ export const SearchWithdrawn = () => {
                 max="200"
                 value={searchParams.limit}
                 onChange={(e) => setSearchParams(prev => ({ ...prev, limit: parseInt(e.target.value) || 50 }))}
+                data-testid="withdrawn-search-limit-input"
               />
             </div>
           </div>
