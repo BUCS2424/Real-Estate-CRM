@@ -1,5 +1,6 @@
 """
-MLS API Routes - Bridge API Integration for Stellar MLS
+MLS API Routes - Bridge API Integration
+Documentation: https://bridgedataoutput.com/docs/platform
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional
@@ -16,11 +17,12 @@ router = APIRouter(prefix="/mls", tags=["MLS Integration"])
 
 class MLSConfig(BaseModel):
     provider: str = "bridge"
-    api_key: str = ""
-    api_secret: str = ""
+    client_id: str = ""
+    client_secret: str = ""
     server_token: str = ""
+    browser_token: str = ""
     dataset_id: str = ""
-    mls_name: str = "Stellar MLS"
+    mls_name: str = ""
     enabled: bool = False
     auto_sync: bool = False
     sync_interval_hours: int = 24
@@ -29,22 +31,21 @@ class MLSConfig(BaseModel):
 @router.get("/status")
 async def get_mls_status(current_user: dict = Depends(get_current_user)):
     """Check if MLS API is configured and working"""
-    # Get config from database
     config = await db.settings.find_one({"type": "mls_config"})
     last_sync = config.get("last_sync") if config else None
     
     return {
         "configured": mls_service.is_configured(),
         "provider": "Bridge API",
-        "dataset": config.get("mls_name", "Stellar MLS") if config else "Stellar MLS",
+        "dataset": config.get("mls_name", "Not Set") if config else "Not Set",
         "last_sync": last_sync,
-        "message": "Ready for credentials" if not mls_service.is_configured() else "Connected"
+        "message": "Connected" if mls_service.is_configured() else "Ready for credentials"
     }
 
 
 @router.get("/config")
 async def get_mls_config(current_user: dict = Depends(get_current_user)):
-    """Get MLS configuration (API keys masked)"""
+    """Get MLS configuration (sensitive fields masked)"""
     if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
         raise HTTPException(status_code=403, detail="Admin access required")
     
@@ -53,24 +54,26 @@ async def get_mls_config(current_user: dict = Depends(get_current_user)):
     if not config:
         return {
             "provider": "bridge",
-            "api_key": "",
-            "api_secret": "",
+            "client_id": "",
+            "client_secret": "",
             "server_token": "",
+            "browser_token": "",
             "dataset_id": "",
-            "mls_name": "Stellar MLS",
+            "mls_name": "",
             "enabled": False,
             "auto_sync": False,
             "sync_interval_hours": 24
         }
     
-    # Return config but mask sensitive fields for display
+    # Mask sensitive fields
     return {
         "provider": config.get("provider", "bridge"),
-        "api_key": config.get("api_key", ""),
-        "api_secret": config.get("api_secret", ""),
-        "server_token": config.get("server_token", ""),
+        "client_id": config.get("client_id", "")[:8] + "..." if config.get("client_id") else "",
+        "client_secret": "••••••••" if config.get("client_secret") else "",
+        "server_token": config.get("server_token", "")[:8] + "..." if config.get("server_token") else "",
+        "browser_token": config.get("browser_token", "")[:8] + "..." if config.get("browser_token") else "",
         "dataset_id": config.get("dataset_id", ""),
-        "mls_name": config.get("mls_name", "Stellar MLS"),
+        "mls_name": config.get("mls_name", ""),
         "enabled": config.get("enabled", False),
         "auto_sync": config.get("auto_sync", False),
         "sync_interval_hours": config.get("sync_interval_hours", 24)
@@ -97,41 +100,31 @@ async def save_mls_config(config: MLSConfig, current_user: dict = Depends(get_cu
     )
     
     # Update the service with new credentials
-    if config.api_key and config.api_secret:
-        mls_service.configure(
-            api_key=config.api_key,
-            api_secret=config.api_secret,
-            server_token=config.server_token,
-            dataset_id=config.dataset_id
-        )
+    mls_service.configure(
+        client_id=config.client_id,
+        client_secret=config.client_secret,
+        server_token=config.server_token,
+        dataset_id=config.dataset_id
+    )
     
     return {"message": "MLS configuration saved"}
 
 
 @router.post("/test")
 async def test_mls_connection(current_user: dict = Depends(get_current_user)):
-    """Test MLS API connection"""
+    """Test Bridge API connection and list available datasets"""
     if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
         raise HTTPException(status_code=403, detail="Admin access required")
     
-    # Get config from database
-    config = await db.settings.find_one({"type": "mls_config"})
-    
-    if not config or not config.get("api_key"):
-        return {
-            "success": False,
-            "error": "MLS API credentials not configured"
-        }
-    
-    # Try to make a test request
-    try:
-        result = await mls_service.test_connection()
-        return result
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    result = await mls_service.test_connection()
+    return result
+
+
+@router.get("/datasets")
+async def get_available_datasets(current_user: dict = Depends(get_current_user)):
+    """Get all datasets available with current API credentials"""
+    result = await mls_service.get_datasets()
+    return result
 
 
 @router.get("/search")
