@@ -381,6 +381,7 @@ export const ModerateWithdrawn = () => {
                       variant="outline" 
                       className="flex-1"
                       onClick={() => window.open(`/property-leads/${listing.converted_to_lead_id}`, '_blank')}
+                      data-testid={`withdrawn-view-lead-${listing.mls_id}`}
                     >
                       <Eye className="w-4 h-4 mr-1" />
                       View Lead
