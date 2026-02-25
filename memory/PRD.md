@@ -1962,3 +1962,15 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 ### Tests & Verification
 - Playwright smoke: login → /mls/withdrawn/search → /mls/withdrawn/moderate ✅
 - Auto frontend testing agent: Withdrawn pages render and navigation works ✅
+
+
+---
+
+## Update: February 25, 2026 - MLS Sidebar UX Tweaks
+
+### Completed
+- Main app sidebar auto-collapses when entering any /mls route for more workspace
+- MLS Hub sidebar expanded width (w-64) and labels forced single-line
+
+### Tests & Verification
+- Playwright: /mls/withdrawn/search loads with main sidebar collapsed and MLS menu labels in one line ✅
