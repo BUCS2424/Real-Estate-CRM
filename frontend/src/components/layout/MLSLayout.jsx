@@ -9,18 +9,34 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Database,
   RefreshCw,
-  BarChart3
+  Clock,
+  FileSearch,
+  ClipboardCheck,
+  UserPlus
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
+// Main MLS menu items
 const mlsMenuItems = [
   { path: '/mls', label: 'Overview', icon: LayoutDashboard, exact: true },
   { path: '/mls/pull', label: 'Pull Listings', icon: Download },
   { path: '/mls/moderate', label: 'Moderate', icon: CheckCircle },
   { path: '/mls/converted', label: 'Converted', icon: ArrowRightCircle },
   { path: '/mls/search', label: 'MLS Search', icon: Search },
+];
+
+// Expired Listings sub-menu items
+const expiredMenuItems = [
+  { path: '/mls/expired/search', label: 'Search Expired', icon: FileSearch },
+  { path: '/mls/expired/moderate', label: 'Moderate', icon: ClipboardCheck },
+  { path: '/mls/expired/converted', label: 'Converted to Leads', icon: UserPlus },
+];
+
+// Bottom menu items
+const bottomMenuItems = [
   { path: '/mls/sync-history', label: 'Sync History', icon: RefreshCw },
   { path: '/mls/settings', label: 'Settings', icon: Settings },
 ];
@@ -28,12 +44,39 @@ const mlsMenuItems = [
 export const MLSLayout = () => {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  
+  // Check if we're in the expired section to auto-expand
+  const isExpiredPath = location.pathname.includes('/mls/expired');
+  const [expiredOpen, setExpiredOpen] = useState(isExpiredPath);
 
   const isActive = (item) => {
     if (item.exact) {
       return location.pathname === item.path;
     }
     return location.pathname.startsWith(item.path) && item.path !== '/mls';
+  };
+
+  const renderMenuItem = (item) => {
+    const Icon = item.icon;
+    const active = isActive(item) || (item.exact && location.pathname === item.path);
+    
+    return (
+      <Link
+        key={item.path}
+        to={item.path}
+        data-testid={`mls-nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+        className={cn(
+          "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+          active 
+            ? "bg-amber-500/20 text-amber-500 font-medium" 
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        )}
+        title={collapsed ? item.label : undefined}
+      >
+        <Icon className="w-5 h-5 shrink-0" />
+        {!collapsed && <span>{item.label}</span>}
+      </Link>
+    );
   };
 
   return (
@@ -62,28 +105,71 @@ export const MLSLayout = () => {
 
         {/* Menu Items */}
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-          {mlsMenuItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item) || (item.exact && location.pathname === item.path);
+          {/* Main Menu Items */}
+          {mlsMenuItems.map(renderMenuItem)}
+          
+          {/* Divider */}
+          <div className="border-t my-2" />
+          
+          {/* Expired Listings Accordion */}
+          <div className="space-y-1">
+            <button
+              onClick={() => !collapsed && setExpiredOpen(!expiredOpen)}
+              data-testid="mls-nav-expired-listings"
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                isExpiredPath 
+                  ? "bg-orange-500/20 text-orange-500 font-medium" 
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <Clock className={cn("w-5 h-5 shrink-0", collapsed && "mx-auto")} />
+              {!collapsed && (
+                <>
+                  <span className="flex-1 text-left">Expired Listings</span>
+                  <ChevronDown 
+                    className={cn(
+                      "w-4 h-4 transition-transform",
+                      expiredOpen && "rotate-180"
+                    )} 
+                  />
+                </>
+              )}
+            </button>
             
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                data-testid={`mls-nav-${item.label.toLowerCase().replace(' ', '-')}`}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
-                  active 
-                    ? "bg-amber-500/20 text-amber-500 font-medium" 
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-                title={collapsed ? item.label : undefined}
-              >
-                <Icon className="w-5 h-5 shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
-              </Link>
-            );
-          })}
+            {/* Expired Sub-menu */}
+            {!collapsed && expiredOpen && (
+              <div className="ml-4 pl-2 border-l border-muted space-y-1">
+                {expiredMenuItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = location.pathname === item.path;
+                  
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      data-testid={`mls-nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm",
+                        active 
+                          ? "bg-orange-500/20 text-orange-500 font-medium" 
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      )}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          
+          {/* Divider */}
+          <div className="border-t my-2" />
+          
+          {/* Bottom Menu Items */}
+          {bottomMenuItems.map(renderMenuItem)}
         </nav>
 
         {/* Footer - Connection Status */}
