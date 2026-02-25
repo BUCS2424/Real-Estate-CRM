@@ -155,6 +155,7 @@ export const SearchWithdrawn = () => {
                 placeholder="e.g. 33601"
                 value={searchParams.zip_code}
                 onChange={(e) => setSearchParams(prev => ({ ...prev, zip_code: e.target.value }))}
+                data-testid="withdrawn-search-zip-input"
               />
             </div>
             
