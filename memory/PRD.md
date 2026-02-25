@@ -1998,3 +1998,18 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 
 ### Tests & Verification
 - Playwright: opened expired moderation detail modal and verified opaque background ✅
+
+
+---
+
+## Update: February 25, 2026 - MLS Search Page (Admin-only)
+
+### Completed
+- Built MLS Search page with all MLS-supported filters (dataset, address, city, zip, price, beds, baths, property type, status, limit, offset)
+- Added MLS Search results cards with view/import-to-lead actions and details modal
+- Restricted MLS search/property/import endpoints to Admin/Superuser only
+- MLS Search menu item positioned directly under Overview in MLS Hub sidebar
+
+### Tests & Verification
+- Playwright: /mls/search page renders and filters visible ✅
+- Auto frontend testing agent: MLS Search menu placement + filters + search flow ✅
