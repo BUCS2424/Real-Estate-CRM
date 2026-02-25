@@ -16,17 +16,22 @@ import {
   FileSearch,
   ClipboardCheck,
   UserPlus,
-  XCircle
+  XCircle,
+  Home
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 // Main MLS menu items
 const mlsMenuItems = [
   { path: '/mls', label: 'Overview', icon: LayoutDashboard, exact: true },
+  { path: '/mls/search', label: 'MLS Search', icon: Search },
+];
+
+// My Listings sub-menu items
+const myListingsMenuItems = [
   { path: '/mls/pull', label: 'Pull Listings', icon: Download },
   { path: '/mls/moderate', label: 'Moderate', icon: CheckCircle },
   { path: '/mls/converted', label: 'Converted', icon: ArrowRightCircle },
-  { path: '/mls/search', label: 'MLS Search', icon: Search },
 ];
 
 // Expired Listings sub-menu items
@@ -60,6 +65,10 @@ export const MLSLayout = () => {
   // Check if we're in the withdrawn section to auto-expand
   const isWithdrawnPath = location.pathname.includes('/mls/withdrawn');
   const [withdrawnOpen, setWithdrawnOpen] = useState(isWithdrawnPath);
+
+  // Check if we're in the my listings section to auto-expand
+  const isMyListingsPath = ['/mls/pull', '/mls/moderate', '/mls/converted'].some((path) => location.pathname.startsWith(path));
+  const [myListingsOpen, setMyListingsOpen] = useState(isMyListingsPath);
 
   const isActive = (item) => {
     if (item.exact) {
