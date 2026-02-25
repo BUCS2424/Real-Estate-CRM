@@ -1987,3 +1987,14 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 
 ### Tests & Verification
 - Playwright screenshot: /mls shows MY Listings accordion and items ✅
+
+
+---
+
+## Update: February 25, 2026 - MLS Moderation Modal Background Fix
+
+### Completed
+- Updated shared DialogContent styling to use solid card background and text foreground
+
+### Tests & Verification
+- Playwright: opened expired moderation detail modal and verified opaque background ✅
