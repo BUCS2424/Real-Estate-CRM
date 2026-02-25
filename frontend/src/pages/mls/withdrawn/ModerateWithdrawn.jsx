@@ -392,6 +392,7 @@ export const ModerateWithdrawn = () => {
                     size="sm" 
                     variant="ghost"
                     onClick={() => setSelectedListing(listing)}
+                    data-testid={`withdrawn-view-details-${listing.mls_id}`}
                   >
                     <Eye className="w-4 h-4" />
                   </Button>
