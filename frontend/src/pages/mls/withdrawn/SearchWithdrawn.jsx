@@ -256,7 +256,7 @@ export const SearchWithdrawn = () => {
           <CardContent>
             <div className="grid grid-cols-4 gap-4 mb-6">
               <div className="text-center p-4 bg-green-500/10 rounded-lg">
-                <p className="text-3xl font-bold text-green-500">{result.new_listings}</p>
+                <p className="text-3xl font-bold text-green-500" data-testid="withdrawn-results-new-count">{result.new_listings}</p>
                 <p className="text-sm text-muted-foreground">New Listings</p>
               </div>
               <div className="text-center p-4 bg-blue-500/10 rounded-lg">
