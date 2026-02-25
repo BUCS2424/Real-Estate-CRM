@@ -15,7 +15,8 @@ import {
   Clock,
   FileSearch,
   ClipboardCheck,
-  UserPlus
+  UserPlus,
+  XCircle
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
