@@ -294,7 +294,7 @@ export const ModerateWithdrawn = () => {
                 </Badge>
                 
                 <div className="absolute bottom-2 right-2">
-                  {getStatusBadge(listing.sync_status)}
+                  {getStatusBadge(listing.sync_status, listing.mls_id)}
                 </div>
               </div>
 
