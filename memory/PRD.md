@@ -1947,3 +1947,18 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 **Files Modified:**
 - `/app/backend/routes/property_leads.py` - Image transfer logic improved
 
+
+
+---
+
+## Update: February 25, 2026 - Withdrawn Listings Prospecting Tool Completed
+
+### Completed
+- Added Withdrawn Listings accordion to MLS Hub sidebar with Search/Moderate/Converted routes
+- Wired Withdrawn pages into App routes and exports
+- Added comprehensive data-testid coverage across Withdrawn Search/Moderate/Converted pages for QA automation
+- Fixed HTML structure warning in Withdrawn moderation dialog tag info
+
+### Tests & Verification
+- Playwright smoke: login → /mls/withdrawn/search → /mls/withdrawn/moderate ✅
+- Auto frontend testing agent: Withdrawn pages render and navigation works ✅
