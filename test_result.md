@@ -202,6 +202,66 @@ frontend:
         agent: "testing"
         comment: "Navigation between all three Withdrawn subpages (Search, Moderate, Converted) works without errors. Routes properly configured and page transitions smooth."
 
+  - task: "MY Listings accordion in MLS Hub sidebar"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/layout/MLSLayout.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "MY Listings accordion renders correctly in MLS Hub sidebar, positioned above Expired Listings accordion. Accordion expands/collapses properly and shows all 3 sub-menu items (Pull Listings, Moderate, Converted). Uses amber color theme with Home icon. All submenu items have proper data-testid attributes and whitespace-nowrap CSS. Accordion remains expanded when navigating between sub-pages. Overview and MLS Search remain as top-level items above the accordion."
+
+  - task: "Pull Listings page UI"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/mls/PullListings.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Pull Listings page renders correctly with header 'Pull Listings' and subheading 'Sync your MLS listings from Stellar MLS'. Pull Options section displays agent information (Sheila Desautels, MLS ID: 261507429). Shows three checkboxes for Active Listings, Include Pending/Under Contract, and Include Sold/Closed. Pull Listings Now button renders correctly with amber background. 'How it works' section explains the 4-step process clearly."
+
+  - task: "Moderate Listings page UI"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/mls/ModerateListings.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Moderate Listings page renders correctly with header 'Moderate Listings' and subheading 'Review and approve MLS listings (7 total)'. Status filter dropdown with Pending option visible. Select All button and Refresh button present. 7 listing cards display with property images, prices, addresses, property details (beds/baths/sqft), status badges (Pending/Active), and action buttons (Approve/Reject/View). All required elements functional. No console errors."
+
+  - task: "Converted Listings page UI"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/mls/ConvertedListings.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Converted Listings page renders correctly with header 'Converted Listings' and subheading 'MLS listings that are now on your Showcase (0 total)'. Refresh button present. Empty state displays properly with checkmark icon, message 'No converted listings yet', and 'Go to Moderate' button that navigates back to moderate page."
+
+  - task: "Navigation between MY Listings subpages"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/layout/MLSLayout.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Navigation between all three MY Listings subpages (Pull, Moderate, Converted) works correctly. Routes /mls/pull, /mls/moderate, /mls/converted properly configured. Page transitions smooth without errors. Active state highlighting works correctly showing amber background for active page."
+
 metadata:
   created_by: "testing_agent"
   version: "1.1"
