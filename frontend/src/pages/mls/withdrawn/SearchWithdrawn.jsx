@@ -101,7 +101,7 @@ export const SearchWithdrawn = () => {
                   <p className="text-xs text-muted-foreground">Total Found</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-yellow-500">{stats.by_sync_status?.pending || 0}</p>
+                  <p className="text-2xl font-bold text-yellow-500" data-testid="withdrawn-stats-pending">{stats.by_sync_status?.pending || 0}</p>
                   <p className="text-xs text-muted-foreground">Pending Review</p>
                 </div>
                 <div className="text-center">
