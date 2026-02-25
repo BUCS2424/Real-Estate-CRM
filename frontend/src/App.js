@@ -84,7 +84,7 @@ import { ComposePost } from './pages/social-media/ComposePost';
 
 // MLS Pages
 import { MLSLayout } from './components/layout/MLSLayout';
-import { MLSOverview, PullListings, ModerateListings, ConvertedListings } from './pages/mls';
+import { MLSOverview, PullListings, ModerateListings, ConvertedListings, MLSSearch } from './pages/mls';
 import { SearchExpired, ModerateExpired, ConvertedExpired } from './pages/mls/expired';
 import { SearchWithdrawn, ModerateWithdrawn, ConvertedWithdrawn } from './pages/mls/withdrawn';
 
