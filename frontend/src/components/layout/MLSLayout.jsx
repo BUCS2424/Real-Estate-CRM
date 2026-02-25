@@ -86,7 +86,7 @@ export const MLSLayout = () => {
         title={collapsed ? item.label : undefined}
       >
         <Icon className="w-5 h-5 shrink-0" />
-        {!collapsed && <span>{item.label}</span>}
+        {!collapsed && <span className="whitespace-nowrap">{item.label}</span>}
       </Link>
     );
   };
@@ -96,7 +96,7 @@ export const MLSLayout = () => {
       {/* MLS Sidebar */}
       <aside className={cn(
         "bg-card border-r transition-all duration-300 flex flex-col",
-        collapsed ? "w-16" : "w-56"
+        collapsed ? "w-16" : "w-64"
       )}>
         {/* Header */}
         <div className="p-4 border-b flex items-center justify-between">

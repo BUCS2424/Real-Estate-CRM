@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Outlet, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
@@ -7,7 +7,14 @@ import { cn } from '../../lib/utils';
 
 export const MainLayout = () => {
   const { user, loading } = useAuth();
+  const location = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  useEffect(() => {
+    if (location.pathname === '/mls') {
+      setSidebarCollapsed(true);
+    }
+  }, [location.pathname]);
 
   if (loading) {
     return (
