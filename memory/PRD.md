@@ -1974,3 +1974,16 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 
 ### Tests & Verification
 - Playwright: /mls/withdrawn/search loads with main sidebar collapsed and MLS menu labels in one line ✅
+
+
+---
+
+## Update: February 25, 2026 - MLS My Listings Accordion
+
+### Completed
+- Added "MY Listings" accordion in MLS Hub sidebar
+- Moved Pull Listings, Moderate, Converted under MY Listings
+- Kept Overview and MLS Search as top-level items
+
+### Tests & Verification
+- Playwright screenshot: /mls shows MY Listings accordion and items ✅
