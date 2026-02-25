@@ -47,25 +47,26 @@ class MLSService:
         return bool(self.server_token and self.server_token != "")
     
     async def test_connection(self) -> Dict[str, Any]:
-        """Test the MLS API connection"""
+        """Test the Bridge API connection"""
         if not self.is_configured():
-            return {"success": False, "error": "MLS API credentials not configured"}
+            return {"success": False, "error": "Bridge API credentials not configured"}
         
         try:
             async with httpx.AsyncClient(timeout=15.0) as client:
-                # Try a simple search to test credentials
-                params = {
-                    "access_token": self.token,
-                    "limit": 1
-                }
+                # Test by fetching available datasets
                 response = await client.get(
-                    f"{self.base_url}/{self.dataset}/listings/residential",
-                    params=params,
-                    headers=self.headers
+                    f"{self.base_url}/datasets",
+                    params={"access_token": self.token}
                 )
                 
                 if response.status_code == 200:
-                    return {"success": True, "message": "Connection successful"}
+                    data = response.json()
+                    datasets = data.get("bundle", [])
+                    return {
+                        "success": True, 
+                        "message": f"Connection successful! Access to {len(datasets)} datasets",
+                        "datasets": [{"code": d.get("datasetCode"), "name": d.get("name")} for d in datasets]
+                    }
                 elif response.status_code == 401:
                     return {"success": False, "error": "Invalid API credentials"}
                 elif response.status_code == 403:
@@ -76,6 +77,28 @@ class MLSService:
             return {"success": False, "error": "Connection timed out"}
         except Exception as e:
             return {"success": False, "error": f"Connection error: {str(e)}"}
+    
+    async def get_datasets(self) -> Dict[str, Any]:
+        """Get all datasets available to this API key"""
+        if not self.is_configured():
+            return {"error": "Bridge API not configured", "datasets": []}
+        
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                response = await client.get(
+                    f"{self.base_url}/datasets",
+                    params={"access_token": self.token}
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    return {
+                        "datasets": data.get("bundle", []),
+                        "total": len(data.get("bundle", []))
+                    }
+                return {"error": f"API error: {response.status_code}", "datasets": []}
+        except Exception as e:
+            return {"error": str(e), "datasets": []}
     
     async def search_properties(
         self,
