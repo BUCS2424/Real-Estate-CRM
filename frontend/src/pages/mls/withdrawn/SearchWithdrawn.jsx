@@ -185,6 +185,7 @@ export const SearchWithdrawn = () => {
                 placeholder="e.g. 200000"
                 value={searchParams.min_price}
                 onChange={(e) => setSearchParams(prev => ({ ...prev, min_price: e.target.value }))}
+                data-testid="withdrawn-search-min-price-input"
               />
             </div>
             
