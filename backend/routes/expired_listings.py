@@ -171,6 +171,7 @@ async def search_expired(
         "message": "Search complete",
         "new_listings": new_count,
         "updated_listings": updated_count,
+        "skipped_dead_leads": skipped_dead,
         "total_found": len(result.get("properties", [])),
         "search_criteria": {
             "city": request.city,
