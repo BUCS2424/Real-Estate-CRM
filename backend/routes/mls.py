@@ -300,6 +300,9 @@ async def import_mls_to_lead(
     current_user: dict = Depends(get_current_user)
 ):
     """Import an MLS listing as a Property Lead"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
     if not mls_service.is_configured():
         raise HTTPException(status_code=400, detail="Bridge API not configured")
     
