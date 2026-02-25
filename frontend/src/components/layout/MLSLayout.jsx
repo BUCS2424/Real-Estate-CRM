@@ -128,6 +128,60 @@ export const MLSLayout = () => {
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
           {/* Main Menu Items */}
           {mlsMenuItems.map(renderMenuItem)}
+
+          {/* My Listings Accordion */}
+          <div className="space-y-1">
+            <button
+              onClick={() => !collapsed && setMyListingsOpen(!myListingsOpen)}
+              data-testid="mls-nav-my-listings"
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                isMyListingsPath 
+                  ? "bg-amber-500/20 text-amber-500 font-medium" 
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <Home className={cn("w-5 h-5 shrink-0", collapsed && "mx-auto")} />
+              {!collapsed && (
+                <>
+                  <span className="flex-1 text-left whitespace-nowrap">MY Listings</span>
+                  <ChevronDown 
+                    className={cn(
+                      "w-4 h-4 transition-transform",
+                      myListingsOpen && "rotate-180"
+                    )} 
+                  />
+                </>
+              )}
+            </button>
+
+            {/* My Listings Sub-menu */}
+            {!collapsed && myListingsOpen && (
+              <div className="ml-4 pl-2 border-l border-muted space-y-1">
+                {myListingsMenuItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = location.pathname === item.path;
+
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      data-testid={`mls-nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm",
+                        active 
+                          ? "bg-amber-500/20 text-amber-500 font-medium" 
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      )}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span className="whitespace-nowrap">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
           
           {/* Divider */}
           <div className="border-t my-2" />
