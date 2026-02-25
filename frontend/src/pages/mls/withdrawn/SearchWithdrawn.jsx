@@ -306,6 +306,7 @@ export const SearchWithdrawn = () => {
                 variant="outline" 
                 onClick={handleSearch}
                 disabled={searching}
+                data-testid="withdrawn-results-search-again-button"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Search Again
