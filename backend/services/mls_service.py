@@ -1,54 +1,50 @@
 """
-MLS Service - Bridge API Integration for Stellar MLS
-Ready for Bridge API credentials - plug and play
+MLS Service - Bridge API Integration
+Supports RESO Web API and Bridge Web API
+Documentation: https://bridgedataoutput.com/docs/platform
 """
 import httpx
 import os
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
 
-# Bridge API Configuration (Add credentials when received)
+# Bridge API Configuration
 BRIDGE_API_URL = os.environ.get("BRIDGE_API_URL", "https://api.bridgedataoutput.com/api/v2")
-BRIDGE_API_TOKEN = os.environ.get("BRIDGE_API_TOKEN", "")
-BRIDGE_DATASET = os.environ.get("BRIDGE_DATASET", "stellar_mls")  # Stellar MLS dataset
+BRIDGE_SERVER_TOKEN = os.environ.get("IDX_SERVER_TOKEN", "")  # Server Token for API access
+BRIDGE_DATASET = os.environ.get("BRIDGE_DATASET", "test")  # Default to test dataset
 
 # Your Agent ID for pulling your listings
 AGENT_MLS_ID = os.environ.get("AGENT_MLS_ID", "")
 
 
 class MLSService:
-    """Service for interacting with Bridge API / Stellar MLS"""
+    """Service for interacting with Bridge API"""
     
     def __init__(self):
         self.base_url = BRIDGE_API_URL
-        self.token = BRIDGE_API_TOKEN
+        self.token = BRIDGE_SERVER_TOKEN
         self.dataset = BRIDGE_DATASET
-        self.api_key = ""
-        self.api_secret = ""
-        self.server_token = ""
-        self._update_headers()
+        self.client_id = os.environ.get("IDX_CLIENT_ID", "")
+        self.client_secret = os.environ.get("IDX_CLIENT_SECRET", "")
+        self.server_token = BRIDGE_SERVER_TOKEN
+        self.browser_token = os.environ.get("IDX_BROWSER_TOKEN", "")
     
-    def _update_headers(self):
-        """Update headers with current token"""
-        self.headers = {
-            "Authorization": f"Bearer {self.token}",
-            "Content-Type": "application/json"
-        }
-    
-    def configure(self, api_key: str, api_secret: str, server_token: str = "", dataset_id: str = ""):
+    def configure(self, client_id: str = "", client_secret: str = "", 
+                  server_token: str = "", dataset_id: str = ""):
         """Configure the MLS service with credentials"""
-        self.api_key = api_key
-        self.api_secret = api_secret
-        self.server_token = server_token
+        if client_id:
+            self.client_id = client_id
+        if client_secret:
+            self.client_secret = client_secret
+        if server_token:
+            self.server_token = server_token
+            self.token = server_token
         if dataset_id:
             self.dataset = dataset_id
-        # For Bridge API, the token is typically the server_token or a combination
-        self.token = server_token or api_key
-        self._update_headers()
     
     def is_configured(self) -> bool:
-        """Check if MLS credentials are configured"""
-        return bool((self.token and self.token != "") or (self.api_key and self.api_key != ""))
+        """Check if Bridge API credentials are configured"""
+        return bool(self.server_token and self.server_token != "")
     
     async def test_connection(self) -> Dict[str, Any]:
         """Test the MLS API connection"""
