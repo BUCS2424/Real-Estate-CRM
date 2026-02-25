@@ -102,6 +102,7 @@ class MLSService:
     
     async def search_properties(
         self,
+        dataset: Optional[str] = None,
         address: Optional[str] = None,
         city: Optional[str] = None,
         zip_code: Optional[str] = None,
@@ -110,28 +111,20 @@ class MLSService:
         bedrooms: Optional[int] = None,
         bathrooms: Optional[float] = None,
         property_type: Optional[str] = None,
-        status: Optional[str] = None,  # Active, Pending, Sold, etc.
+        status: Optional[str] = None,
         limit: int = 50,
         offset: int = 0
     ) -> Dict[str, Any]:
         """
-        Search Stellar MLS properties
-        Returns list of properties matching criteria
+        Search MLS properties via Bridge API (RESO Web API)
         """
         if not self.is_configured():
-            return {"error": "MLS API not configured", "properties": [], "total": 0}
+            return {"error": "Bridge API not configured", "properties": [], "total": 0}
         
-        # Build query parameters for Bridge API
-        params = {
-            "access_token": self.token,
-            "limit": limit,
-            "offset": offset
-        }
+        ds = dataset or self.dataset
         
-        # Add filters
+        # Build OData filter
         filters = []
-        if address:
-            filters.append(f"UnparsedAddress eq '{address}'")
         if city:
             filters.append(f"City eq '{city}'")
         if zip_code:
@@ -146,36 +139,46 @@ class MLSService:
             filters.append(f"BathroomsTotalInteger ge {bathrooms}")
         if status:
             filters.append(f"StandardStatus eq '{status}'")
+        if address:
+            filters.append(f"contains(UnparsedAddress, '{address}')")
+        
+        params = {
+            "access_token": self.token,
+            "$top": min(limit, 200),
+            "$skip": offset
+        }
         
         if filters:
-            params["filter"] = " and ".join(filters)
+            params["$filter"] = " and ".join(filters)
         
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
+                # Use RESO Web API (OData) endpoint
                 response = await client.get(
-                    f"{self.base_url}/{self.dataset}/listings/residential",
-                    params=params,
-                    headers=self.headers
+                    f"{self.base_url}/OData/{ds}/Property",
+                    params=params
                 )
                 
                 if response.status_code == 200:
                     data = response.json()
-                    properties = self._transform_listings(data.get("bundle", []))
+                    properties = self._transform_listings(data.get("value", []))
                     return {
                         "properties": properties,
-                        "total": data.get("total", len(properties)),
+                        "total": data.get("@odata.count", len(properties)),
                         "offset": offset,
-                        "limit": limit
+                        "limit": limit,
+                        "dataset": ds
                     }
                 else:
+                    error_text = response.text[:200] if response.text else "Unknown error"
                     return {
-                        "error": f"MLS API error: {response.status_code}",
+                        "error": f"Bridge API error: {response.status_code} - {error_text}",
                         "properties": [],
                         "total": 0
                     }
         except Exception as e:
             return {
-                "error": f"MLS API connection error: {str(e)}",
+                "error": f"Bridge API connection error: {str(e)}",
                 "properties": [],
                 "total": 0
             }
