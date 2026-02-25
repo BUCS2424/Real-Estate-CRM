@@ -1834,6 +1834,56 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 
 ---
 
+## Update: February 19, 2026 - MLS Hub Dashboard Complete
+
+### MLS Hub - Full Dashboard Built
+
+**New Section:** MLS Hub in main admin sidebar with dedicated sidebar navigation
+
+**Features Implemented:**
+1. **MLS Overview Dashboard** (`/mls`)
+   - Connection status (Bridge API / Stellar MLS)
+   - Stats: Pending Review, Approved, Converted, Total
+   - MLS Status Breakdown: Active, Pending Sale, Closed
+   - Quick Actions: Pull, Review, Search
+
+2. **Pull Listings** (`/mls/pull`)
+   - Syncs Sheila Desautels' listings from Stellar MLS
+   - Options: Include Pending, Include Sold
+   - Shows results: New, Updated, Total Processed
+
+3. **Moderate Listings** (`/mls/moderate`)
+   - Grid view of all pulled listings with photos
+   - Filters: Sync Status (Pending/Approved/Converted), MLS Status
+   - Actions: Approve, Reject, Convert to Showcase
+   - Bulk selection and conversion
+   - Detail modal with full property info
+
+4. **Converted Listings** (`/mls/converted`)
+   - Shows all listings converted to public Showcase
+   - Direct link to view on public website
+
+**Backend Routes Created:**
+- `GET /api/mls-listings/` - List all pulled listings with filters
+- `GET /api/mls-listings/stats` - Get statistics
+- `POST /api/mls-listings/pull` - Pull from MLS
+- `PATCH /api/mls-listings/{id}/status` - Approve/Reject
+- `POST /api/mls-listings/{id}/convert-to-showcase` - Convert to Showcase
+- `POST /api/mls-listings/bulk-convert` - Bulk conversion
+
+**Files Created:**
+- `/app/backend/routes/mls_listings.py` - Backend routes
+- `/app/frontend/src/components/layout/MLSLayout.jsx` - MLS sidebar layout
+- `/app/frontend/src/pages/mls/MLSOverview.jsx` - Dashboard
+- `/app/frontend/src/pages/mls/PullListings.jsx` - Pull feature
+- `/app/frontend/src/pages/mls/ModerateListings.jsx` - Moderation
+- `/app/frontend/src/pages/mls/ConvertedListings.jsx` - Converted view
+
+**Database Collection:**
+- `mls_listings` - Stores pulled MLS data with sync status
+
+---
+
 ## Update: February 19, 2026 - Bridge API Integration Complete
 
 ### Bridge API / Stellar MLS Integration
