@@ -293,7 +293,7 @@ export const SearchWithdrawn = () => {
             )}
 
             <div className="flex gap-3">
-                            <Button 
+              <Button 
                 variant="outline" 
                 onClick={() => navigate('/mls/withdrawn/moderate')}
                 className="flex-1"
