@@ -207,6 +207,9 @@ async def get_property_detail(
     current_user: dict = Depends(get_current_user)
 ):
     """Get full property details by MLS ID/ListingKey"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
     if not mls_service.is_configured():
         return {
             "error": "Bridge API not configured",
