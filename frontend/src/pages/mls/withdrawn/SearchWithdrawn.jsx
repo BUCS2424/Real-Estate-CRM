@@ -97,7 +97,7 @@ export const SearchWithdrawn = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-red-500">{stats.total}</p>
+                  <p className="text-2xl font-bold text-red-500" data-testid="withdrawn-stats-total">{stats.total}</p>
                   <p className="text-xs text-muted-foreground">Total Found</p>
                 </div>
                 <div className="text-center">
