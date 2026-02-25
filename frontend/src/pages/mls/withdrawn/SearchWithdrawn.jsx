@@ -170,6 +170,7 @@ export const SearchWithdrawn = () => {
                 placeholder="e.g. 3"
                 value={searchParams.bedrooms}
                 onChange={(e) => setSearchParams(prev => ({ ...prev, bedrooms: e.target.value }))}
+                data-testid="withdrawn-search-bedrooms-input"
               />
             </div>
             
