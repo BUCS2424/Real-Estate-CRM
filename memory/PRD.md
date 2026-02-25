@@ -1834,7 +1834,42 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 
 ---
 
-## Update: February 19, 2026 - Image Transfer Bug Fix
+## Update: February 19, 2026 - Bridge API Integration Complete
+
+### Bridge API / Stellar MLS Integration
+
+**Status:** ✅ CONNECTED AND WORKING
+
+**Credentials Added:**
+- Client ID: KSz1Z7zwY0KrgNAN63UH
+- Server Token: 60de473419bfe5a6b575267a8b31055d  
+- Dataset: `stellar` (Stellar MLS)
+
+**API Endpoints Available:**
+- `POST /api/mls/test` - Test connection
+- `GET /api/mls/datasets` - List available datasets
+- `GET /api/mls/search` - Search MLS properties
+- `GET /api/mls/property/{mls_id}` - Get property details
+- `POST /api/mls/import-to-lead/{mls_id}` - Import as property lead
+- `POST /api/mls/sync-to-showcase` - Sync agent listings to showcase
+
+**Current Feed Access:**
+- Feed Type: BBO (Back Office)
+- Available Data: Sold/Closed properties, Withdrawn listings
+- **Note:** Active listings require IDX feed approval from Stellar MLS
+
+**Datasets Available with Current Credentials:**
+1. stellar - Stellar MLS (Florida)
+2. gcmls2 - Gulf Coast MLS
+3. akmls2 - Alaska MLS
+4. triangle - Doorify MLS
+5. united - MLS United
+6. + 5 more regional MLSs
+
+**Files Modified:**
+- `/app/backend/services/mls_service.py` - Updated for Bridge API
+- `/app/backend/routes/mls.py` - Updated endpoints
+- `/app/backend/.env` - Added Bridge API credentials
 
 ### Bug Fix: Incomplete Image Transfer on Production
 
