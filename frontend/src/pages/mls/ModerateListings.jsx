@@ -54,8 +54,11 @@ export const ModerateListings = () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter);
-      if (mlsStatusFilter && mlsStatusFilter !== 'all') params.append('mls_status', mlsStatusFilter);
+      const effectiveStatusFilter = statusFilter === 'sold' ? '' : statusFilter;
+      const effectiveMlsStatusFilter = statusFilter === 'sold' ? 'Sold' : mlsStatusFilter;
+
+      if (effectiveStatusFilter && effectiveStatusFilter !== 'all') params.append('status', effectiveStatusFilter);
+      if (effectiveMlsStatusFilter && effectiveMlsStatusFilter !== 'all') params.append('mls_status', effectiveMlsStatusFilter);
       params.append('limit', '50');
       
       const response = await api.get(`/mls-listings/?${params}`);
