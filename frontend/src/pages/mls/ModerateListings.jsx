@@ -214,31 +214,33 @@ export const ModerateListings = () => {
             
             <Select 
               value={statusFilter} 
-              onValueChange={(v) => setSearchParams({ status: v, mls_status: mlsStatusFilter })}
+              onValueChange={(v) => setSearchParams({ status: v, mls_status: v === 'sold' ? 'Sold' : mlsStatusFilter })}
             >
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-40" data-testid="mls-moderate-status-filter">
                 <SelectValue placeholder="Sync Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="converted">Converted</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
+                <SelectItem value="pending" data-testid="mls-moderate-status-pending">Pending</SelectItem>
+                <SelectItem value="approved" data-testid="mls-moderate-status-approved">Approved</SelectItem>
+                <SelectItem value="converted" data-testid="mls-moderate-status-converted">Converted</SelectItem>
+                <SelectItem value="rejected" data-testid="mls-moderate-status-rejected">Rejected</SelectItem>
+                <SelectItem value="sold" data-testid="mls-moderate-status-sold">Sold</SelectItem>
               </SelectContent>
             </Select>
 
             <Select 
               value={mlsStatusFilter || "all"} 
-              onValueChange={(v) => setSearchParams({ status: statusFilter, mls_status: v === "all" ? "" : v })}
+              onValueChange={(v) => setSearchParams({ status: v === 'Sold' ? 'sold' : statusFilter === 'sold' ? 'all' : statusFilter, mls_status: v === "all" ? "" : v })}
             >
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-40" data-testid="mls-moderate-mls-status-filter">
                 <SelectValue placeholder="MLS Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Pending">Pending</SelectItem>
-                <SelectItem value="Closed">Closed/Sold</SelectItem>
+                <SelectItem value="all" data-testid="mls-moderate-mls-status-all">All</SelectItem>
+                <SelectItem value="Active" data-testid="mls-moderate-mls-status-active">Active</SelectItem>
+                <SelectItem value="Pending" data-testid="mls-moderate-mls-status-pending">Pending</SelectItem>
+                <SelectItem value="Closed" data-testid="mls-moderate-mls-status-closed">Closed</SelectItem>
+                <SelectItem value="Sold" data-testid="mls-moderate-mls-status-sold">Sold</SelectItem>
               </SelectContent>
             </Select>
 
