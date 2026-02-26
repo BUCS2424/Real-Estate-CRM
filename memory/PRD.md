@@ -2025,3 +2025,15 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 ### Tests & Verification
 - Playwright: opened Contacts “Add Contact” modal and verified opaque background ✅
 - Auto frontend testing agent: Add Contact, Smart List, and MLS moderation modals confirmed opaque ✅
+
+
+---
+
+## Update: February 26, 2026 - Moderate Listings Sold Filter
+
+### Completed
+- Added Sold option to Moderate Listings sync-status dropdown and MLS status dropdown
+- Sold filter now maps to MLS status = Sold and updates filter logic
+
+### Tests & Verification
+- Playwright: /mls/moderate dropdown shows Sold option ✅
