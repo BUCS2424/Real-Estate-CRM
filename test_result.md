@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test new MLS Search page (admin-only)"
+user_problem_statement: "Verify modal backgrounds are opaque site-wide"
 
 backend:
   - task: "Withdrawn Listings API endpoints"
