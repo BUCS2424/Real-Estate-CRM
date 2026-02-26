@@ -2013,3 +2013,15 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 ### Tests & Verification
 - Playwright: /mls/search page renders and filters visible ✅
 - Auto frontend testing agent: MLS Search menu placement + filters + search flow ✅
+
+
+---
+
+## Update: February 26, 2026 - Global Modal Background Fix
+
+### Completed
+- Added fallback solid background classes to Dialog and AlertDialog content so modals remain opaque in production
+
+### Tests & Verification
+- Playwright: opened Contacts “Add Contact” modal and verified opaque background ✅
+- Auto frontend testing agent: Add Contact, Smart List, and MLS moderation modals confirmed opaque ✅
