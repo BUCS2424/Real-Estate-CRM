@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Verify modal backgrounds are opaque site-wide"
+user_problem_statement: "Test Moderate Listings filter dropdown 'Sold' option in MLS Hub"
 
 backend:
   - task: "Withdrawn Listings API endpoints"
