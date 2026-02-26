@@ -164,6 +164,8 @@ export const ModerateListings = () => {
       case 'Pending':
         return <Badge className="bg-yellow-500">Pending</Badge>;
       case 'Closed':
+        return <Badge className="bg-gray-500">Closed</Badge>;
+      case 'Sold':
         return <Badge className="bg-gray-500">Sold</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
