@@ -252,6 +252,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Moderate Listings page renders correctly with header 'Moderate Listings' and subheading 'Review and approve MLS listings (7 total)'. Status filter dropdown with Pending option visible. Select All button and Refresh button present. 7 listing cards display with property images, prices, addresses, property details (beds/baths/sqft), status badges (Pending/Active), and action buttons (Approve/Reject/View). All required elements functional. No console errors."
+      - working: true
+        agent: "testing"
+        comment: "2025-02-26: Tested new 'Sold' filter option in Sync Status dropdown. VERIFIED SUCCESSFULLY: (1) Login with mel@a2gdesigns.com / BigDaddy2016!! works, (2) Navigated to /mls/moderate, (3) Opened first Sync Status dropdown and confirmed 'Sold' option is present alongside Pending, Approved, Converted, and Rejected options, (4) Selected 'Sold' option - no crash occurred, (5) Filter updated correctly - URL changed to ?status=sold&mls_status=Sold, (6) Page remained responsive and functional, (7) Empty state displayed correctly (0 total, 'No listings found with current filters' message), (8) Dropdown correctly shows 'Sold' as selected value. Feature working perfectly as designed with proper API parameter handling (effectiveMlsStatusFilter='Sold' when statusFilter='sold')."
 
   - task: "Converted Listings page UI"
     implemented: true
