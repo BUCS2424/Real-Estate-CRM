@@ -129,6 +129,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Verified all three moderation detail modals have solid white backgrounds. Testing confirmed: (1) /mls/moderate eye icon opens detail modal with solid white background (rgb(255, 255, 255), opacity: 1), (2) /mls/expired/moderate eye icon opens detail modal with solid white background (rgb(255, 255, 255), opacity: 1), (3) /mls/withdrawn/moderate eye icon opens detail modal with solid white background (rgb(255, 255, 255), opacity: 1). Dialog component properly applies bg-card class providing solid background. All modals display content clearly with professional white dialog panels. No transparency issues detected."
+      - working: true
+        agent: "testing"
+        comment: "2025-02-26: Site-wide verification completed. Tested Add Contact modal on /contacts page (rgb(255, 255, 255), opacity: 1), Smart List modal on /contacts page (rgb(255, 255, 255), opacity: 1), and MLS moderation modal on /mls/expired/moderate (rgb(255, 255, 255), opacity: 1). ALL MODALS CONFIRMED SOLID OPAQUE BACKGROUNDS. No transparency issues detected anywhere. Dialog component consistently provides solid white backgrounds across the entire application."
   
   - task: "Main sidebar auto-collapse on MLS routes"
     implemented: true
