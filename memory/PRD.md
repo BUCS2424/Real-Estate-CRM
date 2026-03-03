@@ -2055,3 +2055,18 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 - Playwright: /mls/expired/search shows default criteria + new filters ✅
 - Auto frontend testing agent: default criteria prefilled and search runs ✅
 - Backend smoke: /api/analytics/email/open/{id} returns 200 ✅
+
+
+---
+
+## Update: March 03, 2026 - Expired Test Now Button + Avatar Update
+
+### Completed
+- Added “Test Now” button to Expired Listings search page header (top right) to manually run automation
+- Wired Test Now to /api/expired-listings/automation/run (uses daily criteria + recipients)
+- Set automation avatar image to provided transparent PNG and store in automation settings
+- Added background image selection (primary MLS photo) to leads for future avatar compositing
+
+### Tests & Verification
+- Playwright: Expired Listings page shows Test Now button ✅
+- Auto frontend testing agent: Test Now button present (not clicked) ✅
