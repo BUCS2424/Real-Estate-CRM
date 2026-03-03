@@ -137,6 +137,11 @@ class MLSService:
             filters.append(f"BedroomsTotal ge {bedrooms}")
         if bathrooms:
             filters.append(f"BathroomsTotalInteger ge {bathrooms}")
+        if property_type:
+            safe_property_type = property_type.replace("'", "''")
+            filters.append(
+                f"contains(PropertyType, '{safe_property_type}') or contains(PropertySubType, '{safe_property_type}')"
+            )
         if status:
             filters.append(f"StandardStatus eq '{status}'")
         if address:
@@ -287,6 +292,7 @@ class MLSService:
                 "lot_size": listing.get("LotSizeAcres"),
                 "year_built": listing.get("YearBuilt"),
                 "property_type": listing.get("PropertyType"),
+                "property_sub_type": listing.get("PropertySubType"),
                 "list_price": listing.get("ListPrice"),
                 "status": listing.get("StandardStatus"),
                 "days_on_market": listing.get("DaysOnMarket"),

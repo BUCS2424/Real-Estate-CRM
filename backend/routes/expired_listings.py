@@ -19,11 +19,45 @@ router = APIRouter(prefix="/expired-listings", tags=["Expired Listings Managemen
 class SearchExpiredRequest(BaseModel):
     city: Optional[str] = None
     zip_code: Optional[str] = None
+    zip_codes: Optional[List[str]] = None
     min_price: Optional[int] = None
     max_price: Optional[int] = None
     bedrooms: Optional[int] = None
+    property_type: Optional[str] = None
+    exclude_rentals: bool = True
+    exclude_commercial: bool = True
     days_expired: Optional[int] = 90  # Default: expired in last 90 days
     limit: int = 50
+
+
+def _normalize_zip_codes(request: SearchExpiredRequest) -> List[str]:
+    if request.zip_codes:
+        if isinstance(request.zip_codes, list):
+            return [z.strip() for z in request.zip_codes if z and z.strip()]
+        if isinstance(request.zip_codes, str):
+            return [z.strip() for z in request.zip_codes.split(',') if z.strip()]
+    if request.zip_code:
+        return [z.strip() for z in request.zip_code.split(',') if z.strip()]
+    return []
+
+
+def _listing_matches_filters(listing: dict, property_type: Optional[str], exclude_rentals: bool, exclude_commercial: bool) -> bool:
+    property_values = " ".join([
+        str(listing.get("property_type") or ""),
+        str(listing.get("property_sub_type") or "")
+    ]).lower()
+
+    if property_type:
+        if property_type.lower() not in property_values:
+            return False
+
+    if exclude_rentals and any(term in property_values for term in ["rent", "lease"]):
+        return False
+
+    if exclude_commercial and "commercial" in property_values:
+        return False
+
+    return True
 
 
 @router.get("/")
@@ -74,6 +108,24 @@ async def get_expired_stats(current_user: dict = Depends(get_current_user)):
     }
 
 
+class ExpiredAutomationRequest(BaseModel):
+    test_emails: Optional[List[str]] = None
+
+
+@router.post("/automation/run")
+async def run_expired_automation_route(
+    request: ExpiredAutomationRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Manually run the daily expired listings automation"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    from services.expired_automation import run_expired_automation
+
+    return await run_expired_automation(test_emails=request.test_emails, manual_trigger=True)
+
+
 @router.post("/search")
 async def search_expired(
     request: SearchExpiredRequest,
@@ -90,28 +142,73 @@ async def search_expired(
     dead_leads_cursor = db.dead_leads.find({}, {"mls_id": 1, "_id": 0})
     dead_leads_list = [doc["mls_id"] async for doc in dead_leads_cursor]
     dead_leads_set = set(dead_leads_list)
-    
-    # Search for expired listings only (withdrawn has its own section)
-    result = await mls_service.search_properties(
-        dataset="stellar",
-        city=request.city,
-        zip_code=request.zip_code,
-        min_price=request.min_price,
-        max_price=request.max_price,
-        bedrooms=request.bedrooms,
-        status="Expired",
-        limit=request.limit
-    )
-    
-    if "error" in result:
-        raise HTTPException(status_code=400, detail=result["error"])
+
+    zip_codes = _normalize_zip_codes(request)
+    search_results = []
+    errors = []
+
+    if zip_codes:
+        for zip_code in zip_codes:
+            result = await mls_service.search_properties(
+                dataset="stellar",
+                city=request.city,
+                zip_code=zip_code,
+                min_price=request.min_price,
+                max_price=request.max_price,
+                bedrooms=request.bedrooms,
+                property_type=request.property_type,
+                status="Expired",
+                limit=request.limit
+            )
+            if "error" in result:
+                errors.append(result["error"])
+                continue
+            search_results.extend(result.get("properties", []))
+    else:
+        result = await mls_service.search_properties(
+            dataset="stellar",
+            city=request.city,
+            zip_code=request.zip_code,
+            min_price=request.min_price,
+            max_price=request.max_price,
+            bedrooms=request.bedrooms,
+            property_type=request.property_type,
+            status="Expired",
+            limit=request.limit
+        )
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+        search_results = result.get("properties", [])
+
+    if errors and not search_results:
+        raise HTTPException(status_code=400, detail=errors[0])
+
+    listings_map = {}
+    for listing in search_results:
+        mls_id = listing.get("mls_id")
+        if mls_id:
+            listings_map[mls_id] = listing
+
+    listings = list(listings_map.values())
+    filtered_listings = [
+        listing for listing in listings
+        if _listing_matches_filters(
+            listing,
+            request.property_type,
+            request.exclude_rentals,
+            request.exclude_commercial
+        )
+    ]
+    filtered_out = len(listings) - len(filtered_listings)
     
     # Save to expired_listings collection (excluding dead leads)
     new_count = 0
     updated_count = 0
     skipped_dead = 0
+    new_listing_ids = []
     
-    for listing in result.get("properties", []):
+    
+    for listing in filtered_listings:
         mls_id = listing.get("mls_id")
         if not mls_id:
             continue
@@ -138,6 +235,7 @@ async def search_expired(
             "lot_size": listing.get("lot_size"),
             "year_built": listing.get("year_built"),
             "property_type": listing.get("property_type"),
+            "property_sub_type": listing.get("property_sub_type"),
             "list_price": listing.get("list_price"),
             "original_list_price": listing.get("original_list_price") or listing.get("list_price"),
             "mls_status": listing.get("status"),
@@ -166,18 +264,26 @@ async def search_expired(
             listing_doc["pulled_by"] = current_user["id"]
             await db.expired_listings.insert_one(listing_doc)
             new_count += 1
+            new_listing_ids.append(mls_id)
+    
     
     return {
         "message": "Search complete",
         "new_listings": new_count,
         "updated_listings": updated_count,
         "skipped_dead_leads": skipped_dead,
-        "total_found": len(result.get("properties", [])),
+        "filtered_out": filtered_out,
+        "total_found": len(filtered_listings),
+        "new_listing_ids": new_listing_ids,
+        "matched_listing_ids": [listing.get("mls_id") for listing in filtered_listings if listing.get("mls_id")],
         "search_criteria": {
             "city": request.city,
-            "zip_code": request.zip_code,
+            "zip_codes": zip_codes or ([] if not request.zip_code else [request.zip_code]),
             "min_price": request.min_price,
-            "max_price": request.max_price
+            "max_price": request.max_price,
+            "property_type": request.property_type,
+            "exclude_rentals": request.exclude_rentals,
+            "exclude_commercial": request.exclude_commercial
         }
     }
 

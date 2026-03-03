@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { landingPagesAPI } from '../lib/api';
+import { landingPagesAPI, analyticsAPI } from '../lib/api';
 import { 
   Bed, 
   Bath, 
@@ -34,6 +34,8 @@ export const PropertyLandingPage = () => {
   const [activeVideo, setActiveVideo] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [trackingSessionId, setTrackingSessionId] = useState(null);
+  const [trackingStart, setTrackingStart] = useState(null);
   
   // Contact form
   const [contactForm, setContactForm] = useState({
@@ -46,6 +48,63 @@ export const PropertyLandingPage = () => {
   useEffect(() => {
     fetchPageData();
   }, [slug]);
+
+  useEffect(() => {
+    const startTrackingSession = async () => {
+      if (!pageData) return;
+      const params = new URLSearchParams(window.location.search);
+      const paramId = params.get('tracking_id');
+      const cookieMatch = document.cookie.match(/(?:^|; )mls_tracking_id=([^;]+)/);
+      const cookieId = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
+      const trackingId = paramId || cookieId;
+
+      if (!trackingId) return;
+
+      try {
+        const response = await analyticsAPI.startSession({
+          tracking_id: trackingId,
+          landing_slug: slug,
+          landing_url: window.location.href,
+          user_agent: navigator.userAgent
+        });
+        setTrackingSessionId(response.data.session_id);
+        setTrackingStart(Date.now());
+      } catch (error) {
+        console.error('Tracking start failed', error);
+      }
+    };
+
+    startTrackingSession();
+  }, [pageData, slug]);
+
+  useEffect(() => {
+    if (!trackingSessionId || !trackingStart) return;
+
+    const handleBeforeUnload = () => {
+      const duration = Math.floor((Date.now() - trackingStart) / 1000);
+      const payload = JSON.stringify({
+        session_id: trackingSessionId,
+        duration_seconds: duration
+      });
+
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(
+          `${process.env.REACT_APP_BACKEND_URL}/api/analytics/session/end`,
+          new Blob([payload], { type: 'application/json' })
+        );
+      } else {
+        fetch(`${process.env.REACT_APP_BACKEND_URL}/api/analytics/session/end`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+          keepalive: true
+        });
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [trackingSessionId, trackingStart]);
 
   const fetchPageData = async () => {
     try {

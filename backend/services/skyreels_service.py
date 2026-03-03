@@ -71,7 +71,7 @@ class SkyReelsService:
                     audio_url = "https://static.apifree.ai/static/a/20260128/skyreels-v3-standard-single-avatar-audio.mp3"
                 
                 payload = {
-                    "model": "skywork-ai/skyreels-v3/pro/single-avatar",
+                    "model": "skywork-ai/skyreels-v3/standard/single-avatar",
                     "first_frame_image": image_url,
                     "audios": [audio_url],
                     "prompt": prompt
@@ -221,7 +221,7 @@ async def generate_property_video(
     
     # Generate default prompt if no custom script
     if not custom_script:
-        prompt = f"""Professional real estate agent {agent_name} presenting a property. 
+        prompt = f"""Professional real estate agent {agent_name} presenting the property at {property_address}.
         The agent is speaking confidently and warmly, making eye contact with the camera.
         Natural hand gestures, professional attire, friendly smile."""
     else:

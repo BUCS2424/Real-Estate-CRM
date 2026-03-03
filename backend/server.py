@@ -37,6 +37,8 @@ from database import db, close_db
 # ============ BACKGROUND SCHEDULER FOR MORTGAGE RATES ============
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.cron import CronTrigger
+from zoneinfo import ZoneInfo
 
 scheduler = AsyncIOScheduler()
 
@@ -50,10 +52,23 @@ async def scheduled_mortgage_rate_update():
     else:
         logger.error(f"Scheduled update failed: {result.get('error')}")
 
+
+async def scheduled_expired_automation():
+    """Daily expired listing automation job"""
+    from services.expired_automation import run_expired_automation
+    logger.info("Running scheduled expired listings automation...")
+    try:
+        await run_expired_automation()
+        logger.info("Expired listings automation run complete.")
+    except Exception as exc:
+        logger.error(f"Expired listings automation failed: {exc}")
+
 @app.on_event("startup")
 async def start_scheduler():
     """Initialize and start the background scheduler"""
     fred_key = os.environ.get("FRED_API_KEY")
+    jobs_added = False
+
     if fred_key:
         # Schedule mortgage rate updates every 2 weeks (14 days)
         scheduler.add_job(
@@ -63,16 +78,30 @@ async def start_scheduler():
             name="Update Mortgage Rates from FRED",
             replace_existing=True
         )
+        jobs_added = True
+    else:
+        logger.warning("FRED_API_KEY not configured. Mortgage rate auto-update disabled.")
+
+    # Schedule daily expired listing automation at 7:00 AM EST
+    scheduler.add_job(
+        scheduled_expired_automation,
+        CronTrigger(hour=7, minute=0, timezone=ZoneInfo("America/New_York")),
+        id="expired_listings_automation",
+        name="Expired Listings Daily Automation",
+        replace_existing=True
+    )
+    jobs_added = True
+
+    if jobs_added and not scheduler.running:
         scheduler.start()
-        logger.info("Background scheduler started. Mortgage rates will update every 2 weeks.")
-        
-        # Run initial update on startup if no rates exist
+        logger.info("Background scheduler started.")
+
+    # Run initial mortgage rate update on startup if no rates exist
+    if fred_key:
         rates = await db.mortgage_rates.find_one({}, {"_id": 0})
         if not rates or not rates.get("auto_updated"):
             logger.info("No FRED rates found, running initial fetch...")
             await scheduled_mortgage_rate_update()
-    else:
-        logger.warning("FRED_API_KEY not configured. Mortgage rate auto-update disabled.")
 
 # Import and include all routers
 from routes import api_router
@@ -302,7 +331,7 @@ async def upload_site_image(
     # Validate file type
     allowed_types = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/svg+xml', 'image/x-icon']
     if file.content_type not in allowed_types:
-        raise HTTPException(status_code=400, detail=f"Invalid file type. Allowed: PNG, JPEG, GIF, WebP, SVG, ICO")
+        raise HTTPException(status_code=400, detail="Invalid file type. Allowed: PNG, JPEG, GIF, WebP, SVG, ICO")
     
     # Generate unique filename
     ext = file.filename.split('.')[-1] if '.' in file.filename else 'png'

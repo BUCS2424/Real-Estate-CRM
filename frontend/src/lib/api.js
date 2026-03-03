@@ -570,6 +570,12 @@ export const publicLeadsAPI = {
   },
 };
 
+// Analytics
+export const analyticsAPI = {
+  startSession: (payload) => api.post('/analytics/session/start', payload),
+  endSession: (payload) => api.post('/analytics/session/end', payload),
+};
+
 // Seed data
 export const seedAPI = {
   seed: () => api.post('/seed'),

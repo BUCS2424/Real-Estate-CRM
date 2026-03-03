@@ -40,6 +40,7 @@ from .jacquie_lawson import router as jacquie_lawson_router
 from .social_media import router as social_media_router
 from .elevenlabs import router as elevenlabs_router
 from .email_samples import router as email_samples_router
+from .analytics import router as analytics_router
 
 # Include all sub-routers
 api_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
@@ -77,7 +78,7 @@ api_router.include_router(jacquie_lawson_router, tags=["Jacquie Lawson Cards"])
 api_router.include_router(social_media_router, tags=["Social Media"])
 api_router.include_router(elevenlabs_router, tags=["ElevenLabs AI"])
 api_router.include_router(email_samples_router, prefix="/email", tags=["Email Samples"])
-
+api_router.include_router(analytics_router, tags=["Analytics"])
 @api_router.get("/")
 async def root():
     return {"message": "Hidden Haven Realty CRM API", "version": "2.0.0"}

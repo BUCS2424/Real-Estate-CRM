@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
+import { Checkbox } from '../../../components/ui/checkbox';
 import api from '../../../lib/api';
 import { toast } from 'sonner';
 
@@ -23,11 +24,14 @@ export const SearchExpired = () => {
   const [result, setResult] = useState(null);
   const [stats, setStats] = useState(null);
   const [searchParams, setSearchParams] = useState({
-    city: 'Tampa',
-    zip_code: '',
-    min_price: '',
+    city: '',
+    zip_code: '33602, 33606',
+    min_price: '750000',
     max_price: '',
     bedrooms: '',
+    property_type: 'Single Family',
+    exclude_rentals: true,
+    exclude_commercial: true,
     limit: 50
   });
 
@@ -51,10 +55,13 @@ export const SearchExpired = () => {
     try {
       const response = await api.post('/expired-listings/search', {
         city: searchParams.city || null,
-        zip_code: searchParams.zip_code || null,
+        zip_codes: searchParams.zip_code ? searchParams.zip_code.split(',').map(zip => zip.trim()).filter(Boolean) : null,
         min_price: searchParams.min_price ? parseInt(searchParams.min_price) : null,
         max_price: searchParams.max_price ? parseInt(searchParams.max_price) : null,
         bedrooms: searchParams.bedrooms ? parseInt(searchParams.bedrooms) : null,
+        property_type: searchParams.property_type || null,
+        exclude_rentals: !!searchParams.exclude_rentals,
+        exclude_commercial: !!searchParams.exclude_commercial,
         limit: searchParams.limit
       });
       
@@ -96,19 +103,19 @@ export const SearchExpired = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-orange-500">{stats.total}</p>
+                  <p className="text-2xl font-bold text-orange-500" data-testid="expired-stats-total">{stats.total}</p>
                   <p className="text-xs text-muted-foreground">Total Found</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-yellow-500">{stats.by_sync_status?.pending || 0}</p>
+                  <p className="text-2xl font-bold text-yellow-500" data-testid="expired-stats-pending">{stats.by_sync_status?.pending || 0}</p>
                   <p className="text-xs text-muted-foreground">Pending Review</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-green-500">{stats.by_sync_status?.converted || 0}</p>
+                  <p className="text-2xl font-bold text-green-500" data-testid="expired-stats-converted">{stats.by_sync_status?.converted || 0}</p>
                   <p className="text-xs text-muted-foreground">Converted to Leads</p>
                 </div>
               </div>
-              <Button variant="outline" onClick={() => navigate('/mls/expired/moderate')}>
+              <Button variant="outline" onClick={() => navigate('/mls/expired/moderate')} data-testid="expired-review-pending-button">
                 Review Pending
               </Button>
             </div>
@@ -139,16 +146,32 @@ export const SearchExpired = () => {
                 placeholder="e.g. Tampa"
                 value={searchParams.city}
                 onChange={(e) => setSearchParams(prev => ({ ...prev, city: e.target.value }))}
+                data-testid="expired-search-city-input"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="zip">ZIP Code</Label>
+              <Label htmlFor="zip">ZIP Codes (comma separated)</Label>
               <Input
                 id="zip"
-                placeholder="e.g. 33601"
+                placeholder="e.g. 33602, 33606"
                 value={searchParams.zip_code}
                 onChange={(e) => setSearchParams(prev => ({ ...prev, zip_code: e.target.value }))}
+                data-testid="expired-search-zip-input"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="property_type" className="flex items-center gap-2">
+                <Home className="w-4 h-4" />
+                Property Type
+              </Label>
+              <Input
+                id="property_type"
+                placeholder="e.g. Single Family"
+                value={searchParams.property_type}
+                onChange={(e) => setSearchParams(prev => ({ ...prev, property_type: e.target.value }))}
+                data-testid="expired-search-property-type-input"
               />
             </div>
             
@@ -163,6 +186,7 @@ export const SearchExpired = () => {
                 placeholder="e.g. 3"
                 value={searchParams.bedrooms}
                 onChange={(e) => setSearchParams(prev => ({ ...prev, bedrooms: e.target.value }))}
+                data-testid="expired-search-bedrooms-input"
               />
             </div>
             
@@ -177,6 +201,7 @@ export const SearchExpired = () => {
                 placeholder="e.g. 200000"
                 value={searchParams.min_price}
                 onChange={(e) => setSearchParams(prev => ({ ...prev, min_price: e.target.value }))}
+                data-testid="expired-search-min-price-input"
               />
             </div>
             
@@ -188,6 +213,7 @@ export const SearchExpired = () => {
                 placeholder="e.g. 500000"
                 value={searchParams.max_price}
                 onChange={(e) => setSearchParams(prev => ({ ...prev, max_price: e.target.value }))}
+                data-testid="expired-search-max-price-input"
               />
             </div>
             
@@ -200,8 +226,28 @@ export const SearchExpired = () => {
                 max="200"
                 value={searchParams.limit}
                 onChange={(e) => setSearchParams(prev => ({ ...prev, limit: parseInt(e.target.value) || 50 }))}
+                data-testid="expired-search-limit-input"
               />
             </div>
+          </div>
+
+          <div className="flex flex-wrap gap-6">
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={searchParams.exclude_rentals}
+                onCheckedChange={(checked) => setSearchParams(prev => ({ ...prev, exclude_rentals: !!checked }))}
+                data-testid="expired-search-exclude-rentals"
+              />
+              Exclude rentals/leases
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={searchParams.exclude_commercial}
+                onCheckedChange={(checked) => setSearchParams(prev => ({ ...prev, exclude_commercial: !!checked }))}
+                data-testid="expired-search-exclude-commercial"
+              />
+              Exclude commercial
+            </label>
           </div>
 
           <Button 
@@ -241,18 +287,24 @@ export const SearchExpired = () => {
           <CardContent>
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="text-center p-4 bg-green-500/10 rounded-lg">
-                <p className="text-3xl font-bold text-green-500">{result.new_listings}</p>
+                <p className="text-3xl font-bold text-green-500" data-testid="expired-results-new-count">{result.new_listings}</p>
                 <p className="text-sm text-muted-foreground">New Listings</p>
               </div>
               <div className="text-center p-4 bg-blue-500/10 rounded-lg">
-                <p className="text-3xl font-bold text-blue-500">{result.updated_listings}</p>
+                <p className="text-3xl font-bold text-blue-500" data-testid="expired-results-updated-count">{result.updated_listings}</p>
                 <p className="text-sm text-muted-foreground">Updated</p>
               </div>
               <div className="text-center p-4 bg-orange-500/10 rounded-lg">
-                <p className="text-3xl font-bold text-orange-500">{result.total_found}</p>
+                <p className="text-3xl font-bold text-orange-500" data-testid="expired-results-total-count">{result.total_found}</p>
                 <p className="text-sm text-muted-foreground">Total Found</p>
               </div>
             </div>
+
+            {result.filtered_out > 0 && (
+              <div className="text-sm text-muted-foreground mb-4" data-testid="expired-results-filtered-out">
+                Filtered out {result.filtered_out} listings that did not match the required criteria.
+              </div>
+            )}
 
             {result.new_listings > 0 && (
               <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg mb-4">

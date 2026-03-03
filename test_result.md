@@ -279,6 +279,18 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Navigation between all three MY Listings subpages (Pull, Moderate, Converted) works correctly. Routes /mls/pull, /mls/moderate, /mls/converted properly configured. Page transitions smooth without errors. Active state highlighting works correctly showing amber background for active page."
+  
+  - task: "Search Expired Listings default criteria and search functionality"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/mls/expired/SearchExpired.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "2025-03-03: Tested Expired Listings manual search criteria updates. VERIFIED SUCCESSFULLY: (1) Login with mel@a2gdesigns.com / BigDaddy2016!! works perfectly, (2) Navigation to /mls/expired/search successful, (3) ALL DEFAULT CRITERIA PREFILLED CORRECTLY: ZIP codes='33602, 33606', Property Type='Single Family', Min Price='750000', Exclude rentals/leases checkbox CHECKED, Exclude commercial checkbox CHECKED, (4) Search Expired Listings button visible, enabled, and functional - NO CRASH when clicked, (5) Results panel renders successfully showing '94 New Listings', '0 Updated', '94 Total Found' with proper color-coded display sections, (6) Success toast notification displays 'Found 94 new expired listings!', (7) Stats updated correctly from 12 to 106 total found. No console errors. No network errors. All UI elements properly styled with orange theme. Feature fully functional and production-ready."
 
   - task: "MLS Search page UI and functionality"
     implemented: true
@@ -294,10 +306,10 @@ frontend:
 
 metadata:
   created_by: "testing_agent"
-  version: "1.6"
-  test_sequence: 7
+  version: "1.7"
+  test_sequence: 8
   run_ui: true
-  test_date: "2025-02-26"
+  test_date: "2025-03-03"
 
 test_plan:
   current_focus: []
@@ -320,4 +332,6 @@ agent_communication:
     message: "Completed site-wide modal background opacity verification on 2025-02-26. TESTING PERFORMED: (1) Logged in with mel@a2gdesigns.com / BigDaddy2016!!, (2) Tested Add Contact modal on /contacts page - SOLID white background confirmed (rgb(255, 255, 255), opacity: 1), (3) Tested Smart List modal on /contacts page - SOLID white background confirmed (rgb(255, 255, 255), opacity: 1), (4) Tested MLS moderation detail modal on /mls/expired/moderate - SOLID white background confirmed (rgb(255, 255, 255), opacity: 1). RESULT: ALL MODALS HAVE SOLID, OPAQUE BACKGROUNDS. No transparency issues detected anywhere in the application. Dialog component (/app/frontend/src/components/ui/dialog.jsx) consistently applies solid white backgrounds (bg-white class) across all modal instances. Verification complete - modal backgrounds are fully opaque site-wide."
   - agent: "testing"
     message: "Completed testing of new 'Sold' filter option in Moderate Listings page on 2025-02-26. TEST RESULTS: ✓ ALL REQUIREMENTS PASSED. (1) Login successful with mel@a2gdesigns.com / BigDaddy2016!!, (2) Navigated to /mls/moderate successfully, (3) Found and opened Sync Status dropdown (first filter dropdown), (4) CONFIRMED: 'Sold' option is present in dropdown alongside Pending, Approved, Converted, and Rejected options, (5) Selected 'Sold' option - NO CRASH occurred, (6) Filter updated correctly - URL parameters changed to ?status=sold&mls_status=Sold, (7) Page remained fully responsive and functional, (8) Results displayed correctly showing '0 total' with proper empty state message 'No listings found with current filters', (9) Dropdown correctly displays 'Sold' as the selected value after selection. IMPLEMENTATION VERIFIED: Code properly handles 'Sold' selection by setting effectiveMlsStatusFilter='Sold' and clearing effectiveStatusFilter (lines 57-58). API call executes correctly with mls_status=Sold parameter. No console errors. No network failures. Feature is fully functional and production-ready."
+  - agent: "testing"
+    message: "Completed verification of Expired Listings manual search criteria updates on 2025-03-03. TEST RESULTS: ✓ ALL REQUIREMENTS PASSED. (1) Login with mel@a2gdesigns.com / BigDaddy2016!! works perfectly, (2) Navigation to /mls/expired/search successful, (3) ALL default criteria prefilled correctly: ZIP codes='33602, 33606', Property Type='Single Family', Min Price='750000', Exclude rentals/leases checkbox CHECKED, Exclude commercial checkbox CHECKED, (4) Search Expired Listings button is visible, enabled, and functional - clicked without crashing, (5) Results panel renders successfully showing 94 new listings found, (6) Success toast notification displays properly, (7) Stats cards update correctly from 12 to 106 total. No console errors. No network errors. All UI elements properly styled and functional. Feature is production-ready."
 
