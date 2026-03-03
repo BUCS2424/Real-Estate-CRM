@@ -25,7 +25,8 @@ DEFAULT_EXPIRED_CRITERIA = {
     "exclude_rentals": True,
     "exclude_commercial": True,
     "status": "Expired",
-    "limit": 50
+    "limit": 50,
+    "max_leads": 1
 }
 
 DEFAULT_RECIPIENTS = [
@@ -48,12 +49,20 @@ def _get_site_url() -> str:
 async def get_expired_automation_settings() -> dict:
     settings = await db.automation_settings.find_one({"type": "expired_daily"}, {"_id": 0})
     if settings:
+        updates = {}
+        now = datetime.now(timezone.utc).isoformat()
         if not settings.get("avatar_url"):
+            updates["avatar_url"] = SAMPLE_AGENT_AVATAR_URL
+        if "max_leads" not in settings.get("criteria", {}):
+            settings.setdefault("criteria", {})["max_leads"] = DEFAULT_EXPIRED_CRITERIA["max_leads"]
+            updates["criteria"] = settings["criteria"]
+        if updates:
+            updates["updated_at"] = now
             await db.automation_settings.update_one(
                 {"type": "expired_daily"},
-                {"$set": {"avatar_url": SAMPLE_AGENT_AVATAR_URL, "updated_at": datetime.now(timezone.utc).isoformat()}}
+                {"$set": updates}
             )
-            settings["avatar_url"] = SAMPLE_AGENT_AVATAR_URL
+            settings.update(updates)
         return settings
 
     now = datetime.now(timezone.utc).isoformat()
@@ -297,6 +306,9 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
 
     search_result = await search_expired(request=search_request, current_user=current_user)
     matched_ids = [mls_id for mls_id in search_result.get("matched_listing_ids", []) if mls_id]
+    max_leads = criteria.get("max_leads", 1)
+    if max_leads and max_leads > 0:
+        matched_ids = matched_ids[:max_leads]
 
     converted_leads = []
     conversion_errors = []

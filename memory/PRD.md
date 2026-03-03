@@ -2070,3 +2070,12 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 ### Tests & Verification
 - Playwright: Expired Listings page shows Test Now button ✅
 - Auto frontend testing agent: Test Now button present (not clicked) ✅
+
+
+---
+
+## Update: March 03, 2026 - Automation Limit to One Lead
+
+### Completed
+- Added max_leads=1 to expired automation criteria so Test Now converts only a single matching home
+- Backfilled max_leads into existing automation settings if missing
