@@ -2079,3 +2079,12 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 ### Completed
 - Added max_leads=1 to expired automation criteria so Test Now converts only a single matching home
 - Backfilled max_leads into existing automation settings if missing
+
+
+---
+
+## Update: March 03, 2026 - Test Now Converts One Lead Only
+
+### Completed
+- Manual Test Now runs now convert only 1 lead (test_max_leads=1)
+- Scheduled daily run remains unlimited (uses full criteria)

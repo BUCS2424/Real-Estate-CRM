@@ -25,9 +25,10 @@ DEFAULT_EXPIRED_CRITERIA = {
     "exclude_rentals": True,
     "exclude_commercial": True,
     "status": "Expired",
-    "limit": 50,
-    "max_leads": 1
+    "limit": 50
 }
+
+DEFAULT_TEST_MAX_LEADS = 1
 
 DEFAULT_RECIPIENTS = [
     "mel@a2gdesigns.com",
@@ -53,9 +54,8 @@ async def get_expired_automation_settings() -> dict:
         now = datetime.now(timezone.utc).isoformat()
         if not settings.get("avatar_url"):
             updates["avatar_url"] = SAMPLE_AGENT_AVATAR_URL
-        if "max_leads" not in settings.get("criteria", {}):
-            settings.setdefault("criteria", {})["max_leads"] = DEFAULT_EXPIRED_CRITERIA["max_leads"]
-            updates["criteria"] = settings["criteria"]
+        if settings.get("test_max_leads") is None:
+            updates["test_max_leads"] = DEFAULT_TEST_MAX_LEADS
         if updates:
             updates["updated_at"] = now
             await db.automation_settings.update_one(
@@ -71,6 +71,7 @@ async def get_expired_automation_settings() -> dict:
         "criteria": DEFAULT_EXPIRED_CRITERIA,
         "recipient_emails": DEFAULT_RECIPIENTS,
         "avatar_url": SAMPLE_AGENT_AVATAR_URL,
+        "test_max_leads": DEFAULT_TEST_MAX_LEADS,
         "created_at": now,
         "updated_at": now
     }
@@ -306,9 +307,11 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
 
     search_result = await search_expired(request=search_request, current_user=current_user)
     matched_ids = [mls_id for mls_id in search_result.get("matched_listing_ids", []) if mls_id]
-    max_leads = criteria.get("max_leads", 1)
-    if max_leads and max_leads > 0:
-        matched_ids = matched_ids[:max_leads]
+
+    if manual_trigger:
+        test_max = settings.get("test_max_leads", DEFAULT_TEST_MAX_LEADS)
+        if test_max and test_max > 0:
+            matched_ids = matched_ids[:test_max]
 
     converted_leads = []
     conversion_errors = []
@@ -333,7 +336,8 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
         "converted_count": len(converted_leads),
         "conversion_errors": conversion_errors,
         "recipients": recipients,
-        "avatar_url": avatar_url
+        "avatar_url": avatar_url,
+        "test_max_leads": settings.get("test_max_leads", DEFAULT_TEST_MAX_LEADS) if manual_trigger else None
     }
     await db.automation_runs.insert_one(run_log)
 
@@ -342,5 +346,6 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
         "converted_leads": converted_leads,
         "conversion_errors": conversion_errors,
         "recipients": recipients,
-        "avatar_url": avatar_url
+        "avatar_url": avatar_url,
+        "test_max_leads": settings.get("test_max_leads", DEFAULT_TEST_MAX_LEADS) if manual_trigger else None
     }
