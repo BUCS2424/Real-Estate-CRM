@@ -2088,3 +2088,19 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 ### Completed
 - Manual Test Now runs now convert only 1 lead (test_max_leads=1)
 - Scheduled daily run remains unlimited (uses full criteria)
+
+
+---
+
+## Update: March 03, 2026 - Landing Page Link Fix + Public Route
+
+### Completed
+- Switched landing page URLs to use SITE_URL + /landing/{slug} (no hiddenhavenrealty hardcode)
+- Added public frontend route /landing/:slug for PropertyLandingPage
+- Updated property lead creation to store landing_page_url and consistently build links
+- Added Test Now error feedback if automation fails (e.g., SMTP not configured)
+- Updated SITE_URL in preview env to preview domain
+
+### Tests & Verification
+- Playwright: /landing/test-slug renders public PropertyLandingPage (not gated) ✅
+- Auto frontend testing agent: landing links format /landing/{slug} confirmed ✅
