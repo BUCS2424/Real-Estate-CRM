@@ -2037,3 +2037,21 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 
 ### Tests & Verification
 - Playwright: /mls/moderate dropdown shows Sold option ✅
+
+
+---
+
+## Update: March 03, 2026 - Expired Listings Automation + Tracking
+
+### Completed
+- Added daily 7:00 AM EST scheduler for expired listings automation
+- Implemented expired automation workflow: pull → filter → auto-convert → brochure + landing page + placeholder avatar video → tracked email send
+- Built internal analytics endpoints for email open/click tracking and landing page session tracking
+- Updated Expired manual search UI with default criteria (zip 33602/33606, min $750k, single family, exclude rentals/commercial) and new filters
+- Updated MLS service to support property type filtering and property sub-type mapping
+- Added admin-only manual trigger endpoint: /api/expired-listings/automation/run
+
+### Tests & Verification
+- Playwright: /mls/expired/search shows default criteria + new filters ✅
+- Auto frontend testing agent: default criteria prefilled and search runs ✅
+- Backend smoke: /api/analytics/email/open/{id} returns 200 ✅
