@@ -20,8 +20,18 @@ from utils.auth import get_current_user
 
 router = APIRouter()
 
-# Production domain for preview URLs
-PRODUCTION_DOMAIN = os.environ.get("PRODUCTION_DOMAIN", "https://hiddenhavenrealty.com")
+# Landing page base URL
+SITE_URL = os.environ.get("SITE_URL")
+
+
+def get_site_url() -> str:
+    if not SITE_URL:
+        raise HTTPException(status_code=500, detail="SITE_URL is not configured")
+    return SITE_URL.rstrip("/")
+
+
+def build_preview_url(slug: str) -> str:
+    return f"{get_site_url()}/landing/{slug}"
 
 def generate_slug(address: str, city: str, state: str) -> str:
     """Generate URL-friendly slug from property address"""
@@ -135,7 +145,7 @@ async def create_landing_page(page_data: LandingPageCreate, current_user: dict =
         "agent_photo": page_data.agent_photo or "",
         "theme": theme,
         "status": LandingPageStatus.DRAFT,
-        "preview_url": f"{PRODUCTION_DOMAIN}/{slug}",
+        "preview_url": build_preview_url(slug),
         "created_at": now,
         "updated_at": now
     }
@@ -158,6 +168,7 @@ async def get_landing_pages(current_user: dict = Depends(get_current_user)):
     for page in pages:
         listing = await db.properties.find_one({"id": page["listing_id"]}, {"_id": 0})
         page["listing"] = listing
+        page["preview_url"] = build_preview_url(page["slug"])
     
     return pages
 
@@ -173,6 +184,7 @@ async def get_landing_page(page_id: str, current_user: dict = Depends(get_curren
     
     listing = await db.properties.find_one({"id": page["listing_id"]}, {"_id": 0})
     page["listing"] = listing
+    page["preview_url"] = build_preview_url(page["slug"])
     
     return page
 
@@ -227,10 +239,14 @@ async def publish_landing_page(page_id: str, current_user: dict = Depends(get_cu
     
     await db.landing_pages.update_one(
         {"id": page_id},
-        {"$set": {"status": LandingPageStatus.PUBLISHED, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        {"$set": {
+            "status": LandingPageStatus.PUBLISHED,
+            "preview_url": build_preview_url(page["slug"]),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
     )
     
-    return {"message": "Landing page published", "url": page["preview_url"]}
+    return {"message": "Landing page published", "url": build_preview_url(page["slug"])}
 
 @router.post("/{page_id}/unpublish")
 async def unpublish_landing_page(page_id: str, current_user: dict = Depends(get_current_user)):

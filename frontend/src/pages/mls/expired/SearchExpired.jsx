@@ -89,7 +89,12 @@ export const SearchExpired = () => {
     try {
       const response = await api.post('/expired-listings/automation/run', {});
       const converted = response.data?.converted_leads?.length || 0;
-      toast.success(`Automation run complete. Converted ${converted} leads.`);
+      const errors = response.data?.conversion_errors || [];
+      if (errors.length > 0) {
+        toast.error(`Automation finished with ${errors.length} error(s). Check email/landing page settings.`);
+      } else {
+        toast.success(`Automation run complete. Converted ${converted} leads.`);
+      }
     } catch (error) {
       console.error('Automation run failed:', error);
       toast.error(error.response?.data?.detail || 'Automation run failed');

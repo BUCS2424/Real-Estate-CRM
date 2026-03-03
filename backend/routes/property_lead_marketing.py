@@ -21,6 +21,17 @@ from services.brochure_generator import generate_brochure, calculate_lead_score
 from services.foldable_brochure import generate_foldable_brochure, generate_foldable_brochure_page1
 from services.property_scraper import scrape_property_data
 
+
+def get_site_url() -> str:
+    site_url = os.environ.get("SITE_URL")
+    if not site_url:
+        raise HTTPException(status_code=500, detail="SITE_URL is not configured")
+    return site_url.rstrip("/")
+
+
+def build_landing_page_url(slug: str) -> str:
+    return f"{get_site_url()}/landing/{slug}"
+
 router = APIRouter()
 
 
@@ -92,7 +103,7 @@ async def generate_brochure_endpoint(
     if request.include_qr and lead.get("landing_page_id"):
         landing_page = await db.landing_pages.find_one({"id": lead["landing_page_id"]}, {"_id": 0})
         if landing_page:
-            landing_page_url = landing_page.get("preview_url")
+            landing_page_url = build_landing_page_url(landing_page["slug"])
     
     # Generate brochure based on template type
     if request.template == 'foldable':
@@ -162,7 +173,7 @@ async def preview_brochure(
     if request.include_qr and lead.get("landing_page_id"):
         landing_page = await db.landing_pages.find_one({"id": lead["landing_page_id"]}, {"_id": 0})
         if landing_page:
-            landing_page_url = landing_page.get("preview_url")
+            landing_page_url = build_landing_page_url(landing_page["slug"])
     
     # Generate brochure based on template type
     if request.template == 'foldable':
@@ -225,8 +236,8 @@ async def email_brochure(
     landing_page_url = None
     if request.include_landing_page_link and lead.get("landing_page_id"):
         landing_page = await db.landing_pages.find_one({"id": lead["landing_page_id"]}, {"_id": 0})
-        if landing_page and landing_page.get("status") == "published":
-            landing_page_url = landing_page.get("preview_url")
+        if landing_page:
+            landing_page_url = build_landing_page_url(landing_page["slug"])
     
     # Generate brochure
     pdf_buffer, filename = await generate_brochure(
@@ -455,7 +466,7 @@ async def create_listing_from_lead(
             "agent_photo": settings.get("agent_photo", "") if settings else "",
             "theme": request.theme,
             "status": "draft",
-            "preview_url": f"https://hiddenhavenrealty.com/{slug}",
+            "preview_url": build_landing_page_url(slug),
             "created_at": now,
             "updated_at": now
         }
@@ -466,7 +477,10 @@ async def create_listing_from_lead(
         await db.property_leads.update_one(
             {"id": lead_id},
             {
-                "$set": {"landing_page_id": landing_page_id},
+                "$set": {
+                    "landing_page_id": landing_page_id,
+                    "landing_page_url": build_landing_page_url(landing_page["slug"])
+                },
                 "$push": {"activity": {
                     "type": "landing_page_created",
                     "description": f"Landing page created by {current_user['name']}",
@@ -481,7 +495,7 @@ async def create_listing_from_lead(
         )
         
         result["landing_page_id"] = landing_page_id
-        result["landing_page_url"] = landing_page["preview_url"]
+        result["landing_page_url"] = build_landing_page_url(landing_page["slug"])
         result["landing_page"] = landing_page
     
     return result
@@ -586,13 +600,13 @@ async def publish_lead_landing_page(
             "description": f"Landing page published by {current_user['name']}",
             "user": current_user["name"],
             "timestamp": now,
-            "data": {"url": landing_page["preview_url"]}
+            "data": {"url": build_landing_page_url(landing_page["slug"])}
         }}}
     )
     
     return {
         "message": "Landing page published",
-        "url": landing_page["preview_url"]
+        "url": build_landing_page_url(landing_page["slug"])
     }
 
 
@@ -664,14 +678,14 @@ async def run_marketing_workflow(
             results["steps"].append({
                 "step": "publish_landing_page",
                 "success": True,
-                "url": landing_page["preview_url"]
+                "url": build_landing_page_url(landing_page["slug"])
             })
         elif landing_page:
             results["steps"].append({
                 "step": "publish_landing_page",
                 "success": True,
                 "message": "Landing page already published",
-                "url": landing_page["preview_url"]
+                "url": build_landing_page_url(landing_page["slug"])
             })
     
     # Step 3: Email brochure

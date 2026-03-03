@@ -115,6 +115,8 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/book/:agentCode" element={<PublicBookingPage />} />
 
+            <Route path="/landing/:slug" element={<PropertyLandingPage />} />
+
             {/* Protected Routes */}
             <Route element={<MainLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />

@@ -47,6 +47,10 @@ def _get_site_url() -> str:
     return site_url.rstrip("/")
 
 
+def _build_landing_url(slug: str) -> str:
+    return f"{_get_site_url()}/landing/{slug}"
+
+
 async def get_expired_automation_settings() -> dict:
     settings = await db.automation_settings.find_one({"type": "expired_daily"}, {"_id": 0})
     if settings:
@@ -221,10 +225,11 @@ async def run_marketing_flow_for_lead(lead_id: str, recipient_emails: List[str],
         await publish_lead_landing_page(lead_id=lead_id, current_user=current_user)
 
     landing_page = None
-    landing_page_url = listing_result.get("landing_page_url")
+    landing_page_url = listing_result.get("landing_page_url") or (lead.get("landing_page_url") if lead else None)
     if not landing_page_url and lead and lead.get("landing_page_id"):
         landing_page = await db.landing_pages.find_one({"id": lead["landing_page_id"]}, {"_id": 0})
-        landing_page_url = landing_page.get("preview_url") if landing_page else None
+        if landing_page:
+            landing_page_url = _build_landing_url(landing_page["slug"])
 
     if not landing_page_url:
         landing_page_url = _get_site_url()
