@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test Moderate Listings filter dropdown 'Sold' option in MLS Hub"
+user_problem_statement: "Verify 'Test Now' button is present on Expired Listings search page"
 
 backend:
   - task: "Withdrawn Listings API endpoints"
@@ -291,6 +291,18 @@ frontend:
       - working: true
         agent: "testing"
         comment: "2025-03-03: Tested Expired Listings manual search criteria updates. VERIFIED SUCCESSFULLY: (1) Login with mel@a2gdesigns.com / BigDaddy2016!! works perfectly, (2) Navigation to /mls/expired/search successful, (3) ALL DEFAULT CRITERIA PREFILLED CORRECTLY: ZIP codes='33602, 33606', Property Type='Single Family', Min Price='750000', Exclude rentals/leases checkbox CHECKED, Exclude commercial checkbox CHECKED, (4) Search Expired Listings button visible, enabled, and functional - NO CRASH when clicked, (5) Results panel renders successfully showing '94 New Listings', '0 Updated', '94 Total Found' with proper color-coded display sections, (6) Success toast notification displays 'Found 94 new expired listings!', (7) Stats updated correctly from 12 to 106 total found. No console errors. No network errors. All UI elements properly styled with orange theme. Feature fully functional and production-ready."
+  
+  - task: "Test Now button on Expired Listings search page"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/mls/expired/SearchExpired.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "2025-03-03: Verified 'Test Now' button is present on Expired Listings Search page. VERIFIED SUCCESSFULLY: (1) Login with mel@a2gdesigns.com / BigDaddy2016!! successful, (2) Navigation to /mls/expired/search successful, (3) 'Test Now' button is PRESENT and VISIBLE at the top right of the page header (position x=1770, y=120), (4) Button has correct data-testid='expired-test-now-button', (5) Button text displays 'Test Now', (6) Button is properly styled with outline variant, (7) Button connects to handleTestNow function that calls /expired-listings/automation/run API endpoint. Button NOT clicked as per instructions to avoid triggering emails. No UI issues detected. No console errors. Feature working as expected."
 
   - task: "MLS Search page UI and functionality"
     implemented: true
@@ -306,8 +318,8 @@ frontend:
 
 metadata:
   created_by: "testing_agent"
-  version: "1.7"
-  test_sequence: 8
+  version: "1.8"
+  test_sequence: 9
   run_ui: true
   test_date: "2025-03-03"
 
@@ -334,4 +346,6 @@ agent_communication:
     message: "Completed testing of new 'Sold' filter option in Moderate Listings page on 2025-02-26. TEST RESULTS: ✓ ALL REQUIREMENTS PASSED. (1) Login successful with mel@a2gdesigns.com / BigDaddy2016!!, (2) Navigated to /mls/moderate successfully, (3) Found and opened Sync Status dropdown (first filter dropdown), (4) CONFIRMED: 'Sold' option is present in dropdown alongside Pending, Approved, Converted, and Rejected options, (5) Selected 'Sold' option - NO CRASH occurred, (6) Filter updated correctly - URL parameters changed to ?status=sold&mls_status=Sold, (7) Page remained fully responsive and functional, (8) Results displayed correctly showing '0 total' with proper empty state message 'No listings found with current filters', (9) Dropdown correctly displays 'Sold' as the selected value after selection. IMPLEMENTATION VERIFIED: Code properly handles 'Sold' selection by setting effectiveMlsStatusFilter='Sold' and clearing effectiveStatusFilter (lines 57-58). API call executes correctly with mls_status=Sold parameter. No console errors. No network failures. Feature is fully functional and production-ready."
   - agent: "testing"
     message: "Completed verification of Expired Listings manual search criteria updates on 2025-03-03. TEST RESULTS: ✓ ALL REQUIREMENTS PASSED. (1) Login with mel@a2gdesigns.com / BigDaddy2016!! works perfectly, (2) Navigation to /mls/expired/search successful, (3) ALL default criteria prefilled correctly: ZIP codes='33602, 33606', Property Type='Single Family', Min Price='750000', Exclude rentals/leases checkbox CHECKED, Exclude commercial checkbox CHECKED, (4) Search Expired Listings button is visible, enabled, and functional - clicked without crashing, (5) Results panel renders successfully showing 94 new listings found, (6) Success toast notification displays properly, (7) Stats cards update correctly from 12 to 106 total. No console errors. No network errors. All UI elements properly styled and functional. Feature is production-ready."
+  - agent: "testing"
+    message: "Completed verification of 'Test Now' button on Expired Listings Search page on 2025-03-03. TEST RESULTS: ✓ ALL REQUIREMENTS PASSED. (1) Login with mel@a2gdesigns.com / BigDaddy2016!! successful, (2) Navigation to /mls/expired/search successful, (3) 'Test Now' button IS PRESENT at the top right of the page header (position x=1770, y=120), (4) Button is visible and properly styled with outline variant, (5) Button text displays 'Test Now' correctly, (6) Button has correct data-testid='expired-test-now-button' for testing, (7) Implementation verified: handleTestNow function connects to /expired-listings/automation/run API endpoint. Button was NOT clicked as per instructions to avoid triggering email automation. No UI issues detected. No console errors. Feature working perfectly."
 

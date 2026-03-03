@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 export const SearchExpired = () => {
   const navigate = useNavigate();
   const [searching, setSearching] = useState(false);
+  const [runningAutomation, setRunningAutomation] = useState(false);
   const [result, setResult] = useState(null);
   const [stats, setStats] = useState(null);
   const [searchParams, setSearchParams] = useState({
@@ -83,17 +84,43 @@ export const SearchExpired = () => {
     }
   };
 
+  const handleTestNow = async () => {
+    setRunningAutomation(true);
+    try {
+      const response = await api.post('/expired-listings/automation/run', {});
+      const converted = response.data?.converted_leads?.length || 0;
+      toast.success(`Automation run complete. Converted ${converted} leads.`);
+    } catch (error) {
+      console.error('Automation run failed:', error);
+      toast.error(error.response?.data?.detail || 'Automation run failed');
+    } finally {
+      setRunningAutomation(false);
+    }
+  };
+
   return (
     <div className="space-y-6" data-testid="search-expired-page">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-serif font-bold flex items-center gap-2">
-          <Clock className="w-6 h-6 text-orange-500" />
-          Search Expired Listings
-        </h1>
-        <p className="text-muted-foreground">
-          Find expired listings in your area to prospect for new seller leads
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-serif font-bold flex items-center gap-2">
+            <Clock className="w-6 h-6 text-orange-500" />
+            Search Expired Listings
+          </h1>
+          <p className="text-muted-foreground">
+            Find expired listings in your area to prospect for new seller leads
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={handleTestNow}
+            disabled={runningAutomation}
+            data-testid="expired-test-now-button"
+          >
+            {runningAutomation ? 'Running...' : 'Test Now'}
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}

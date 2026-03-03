@@ -384,6 +384,8 @@ async def convert_to_lead(
         "estimated_value": expired_listing.get("list_price"),
         "original_list_price": expired_listing.get("original_list_price"),
         "description": expired_listing.get("description"),
+        "primary_photo": expired_listing.get("primary_photo"),
+        "background_image_url": expired_listing.get("primary_photo"),
         "gallery_images": [{"url": p, "id": str(uuid.uuid4())} for p in expired_listing.get("photos", []) if p],
         "previous_listing_agent": expired_listing.get("listing_agent"),
         "previous_listing_office": expired_listing.get("listing_office"),

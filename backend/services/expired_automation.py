@@ -35,7 +35,7 @@ DEFAULT_RECIPIENTS = [
 
 VIDEO_PLACEHOLDER_URL = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
 VIDEO_PLACEHOLDER_TITLE = "Agent Intro (Placeholder)"
-SAMPLE_AGENT_AVATAR_URL = "https://images.unsplash.com/photo-1576558656222-ba66febe3dec?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNzl8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDB8fHx8MTc3MjU1ODcwNHww&ixlib=rb-4.1.0&q=85"
+SAMPLE_AGENT_AVATAR_URL = "https://customer-assets.emergentagent.com/job_86aec819-c311-4278-9c10-e6f793ce5e8f/artifacts/knqrnpef_62e3c47e-2d5d-4360-98c5-8f0b3968a3f4-removebg-preview.png"
 
 
 def _get_site_url() -> str:
@@ -48,6 +48,12 @@ def _get_site_url() -> str:
 async def get_expired_automation_settings() -> dict:
     settings = await db.automation_settings.find_one({"type": "expired_daily"}, {"_id": 0})
     if settings:
+        if not settings.get("avatar_url"):
+            await db.automation_settings.update_one(
+                {"type": "expired_daily"},
+                {"$set": {"avatar_url": SAMPLE_AGENT_AVATAR_URL, "updated_at": datetime.now(timezone.utc).isoformat()}}
+            )
+            settings["avatar_url"] = SAMPLE_AGENT_AVATAR_URL
         return settings
 
     now = datetime.now(timezone.utc).isoformat()
@@ -55,6 +61,7 @@ async def get_expired_automation_settings() -> dict:
         "type": "expired_daily",
         "criteria": DEFAULT_EXPIRED_CRITERIA,
         "recipient_emails": DEFAULT_RECIPIENTS,
+        "avatar_url": SAMPLE_AGENT_AVATAR_URL,
         "created_at": now,
         "updated_at": now
     }
@@ -171,7 +178,7 @@ Best regards,
     )
 
 
-async def run_marketing_flow_for_lead(lead_id: str, recipient_emails: List[str], current_user: dict) -> dict:
+async def run_marketing_flow_for_lead(lead_id: str, recipient_emails: List[str], current_user: dict, avatar_url: Optional[str] = None) -> dict:
     lead = await db.property_leads.find_one({"id": lead_id}, {"_id": 0})
     if not lead:
         raise ValueError("Lead not found")
@@ -180,6 +187,17 @@ async def run_marketing_flow_for_lead(lead_id: str, recipient_emails: List[str],
         return {"recipients": [], "landing_page_url": None}
 
     agent_info = await _get_agent_info(current_user)
+    background_image_url = lead.get("background_image_url") or lead.get("primary_photo")
+    if not background_image_url:
+        gallery_images = lead.get("gallery_images") or []
+        if gallery_images:
+            background_image_url = gallery_images[0].get("url")
+
+    if background_image_url and not lead.get("background_image_url"):
+        await db.property_leads.update_one(
+            {"id": lead_id},
+            {"$set": {"background_image_url": background_image_url}}
+        )
 
     listing_result = await create_listing_from_lead(
         lead_id=lead_id,
@@ -214,7 +232,7 @@ async def run_marketing_flow_for_lead(lead_id: str, recipient_emails: List[str],
     try:
         await generate_property_video(
             property_address=lead.get("address", "Property"),
-            agent_image_url=agent_info.get("image_url") or SAMPLE_AGENT_AVATAR_URL,
+            agent_image_url=avatar_url or agent_info.get("image_url") or SAMPLE_AGENT_AVATAR_URL,
             agent_name=agent_info.get("name", "Agent")
         )
     except Exception:
@@ -257,6 +275,7 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
     settings = await get_expired_automation_settings()
     criteria = settings.get("criteria", DEFAULT_EXPIRED_CRITERIA)
     recipients = test_emails or settings.get("recipient_emails", DEFAULT_RECIPIENTS)
+    avatar_url = settings.get("avatar_url") or SAMPLE_AGENT_AVATAR_URL
 
     current_user = await get_admin_user()
     if not current_user:
@@ -288,7 +307,7 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
             lead_id = result.get("lead_id")
             if lead_id:
                 converted_leads.append(lead_id)
-                await run_marketing_flow_for_lead(lead_id, recipients, current_user)
+                await run_marketing_flow_for_lead(lead_id, recipients, current_user, avatar_url=avatar_url)
         except Exception as exc:
             conversion_errors.append({"mls_id": mls_id, "error": str(exc)})
 
@@ -301,7 +320,8 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
         "matched_count": len(matched_ids),
         "converted_count": len(converted_leads),
         "conversion_errors": conversion_errors,
-        "recipients": recipients
+        "recipients": recipients,
+        "avatar_url": avatar_url
     }
     await db.automation_runs.insert_one(run_log)
 
@@ -309,5 +329,6 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
         "search_result": search_result,
         "converted_leads": converted_leads,
         "conversion_errors": conversion_errors,
-        "recipients": recipients
+        "recipients": recipients,
+        "avatar_url": avatar_url
     }
