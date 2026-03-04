@@ -2120,3 +2120,16 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 ### Tests & Verification
 - Playwright: Dialer/Messages/Call History/Telnyx Settings render ✅
 - Auto frontend testing agent: all Telnyx UI verified ✅
+
+
+---
+
+## Update: March 04, 2026 - Buy/Sell Form Verification Hookup
+
+### Completed
+- Added backend phone/email verification endpoints using Telnyx Verify + SMTP OTP
+- Wired existing EmailVerification/PhoneVerification components with test IDs
+- Updated Access Exclusive Auctions form to require both email + phone verification before submit
+
+### Tests & Verification
+- Auto frontend testing agent: verification UI buttons appear and validation blocks submit ✅
