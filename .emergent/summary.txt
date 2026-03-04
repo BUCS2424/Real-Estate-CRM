@@ -5,202 +5,255 @@ The user wants to build a Fusion Builder All In One CRM platform. This is a comp
 *   **Core Platform:** Full-stack application (React/FastAPI/MongoDB) with JWT authentication, a dashboard, and various management pages for leads, listings, tasks, etc.
 *   **UI/UX:** A luxurious dark navy blue and gold/amber theme.
 *   **Lead & Property Management:** A comprehensive system for managing leads and properties, including lead scoring, a moderation queue, and importing data from MLS.
-*   **Marketing & Automation:** Tools for brochure generation, automated holiday e-card sending, and a social media auto-posting scheduler.
+*   **Marketing & Automation:**
+    *   Tools for brochure generation.
+    *   An automated marketing flow for Expired listings that runs daily, converts them to leads, generates a scripted AI avatar video, creates a landing page, and sends a marketing email.
+    *   Social media auto-posting scheduler.
 *   **Data Integration:** Features to pull property data from the Bridge API (Stellar MLS) and a robust CSV/vCard import system.
 *   **Prospecting Tools:** Build tools within the CRM to find and convert off-market listings (Expired, Withdrawn) into leads.
+*   **Communication Integration (Telnyx):** Integrate a full phone and SMS component for dialing, messaging, call history, and phone number verification on public forms.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A feature-rich full-stack application with JWT authentication, a deal pipeline, and dynamic lead scoring. The application is integrated with the Bridge API to pull real estate data from the Stellar MLS. A new MLS Hub has been built in the admin dashboard, which serves as a central point for managing MLS data. This hub includes a working prospecting tool for Expired listings and an in-progress tool for Withdrawn listings, allowing the user to search for, moderate, and convert these off-market properties into leads within the CRM.
+A feature-rich full-stack application with JWT authentication and a comprehensive MLS Hub for prospecting. This hub includes tools for Expired and Withdrawn listings. An automated marketing workflow for expired listings has been initiated but is incomplete and buggy. A major new feature, Telnyx integration for phone/SMS/verification, has been partially implemented by integrating code from a user-provided module, but it is also buggy and not fully functional. The public-facing site has lead capture forms that are experiencing critical issues with data submission and categorization.
 
 **Last working item**:
-*   **Last item agent was working:** Building the Withdrawn Listings prospecting tool. This feature is designed to mirror the Expired Listings tool, allowing the user to search for withdrawn properties in the MLS, moderate the results, and convert them into property leads. A key part of this task is implementing a dead lead list to prevent the system from re-importing MLS listings that have already been processed (for both expired and withdrawn workflows).
+*   **Last item agent was working:** Fixing a critical bug where leads from the public Buy form (under Access Exclusive Auctions) were being incorrectly saved as Seller leads in the CRM. The agent was in the process of debugging and correcting the lead submission logic.
 *   **Status:** IN PROGRESS
 *   **Agent Testing Done:** N
 *   **Which testing method agent to use?** both
 *   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-*   **Issue 1: Finish Withdrawn Listings feature (P0)**
-*   **Issue 2: Incomplete Image Transfer on Production (P0)**
-*   **Issue 3: Critical Data Loss - Bookings (P0)**
-*   **Issue 4: Unreliable Production Deployments (P0)**
-*   **Issue 5: Contact Import Inconsistencies (P0)**
-*   **Issue 6: Partial Image Rendering (P1)**
-*   **Issue 7: Smart List Email Not Received on Production (P1)**
-*   **Issue 8: Web Scrapers are Fragile (P1)**
-*   **Issue 9: iDrive e2 Storage Credentials Invalid (P1)**
+*   **Issue 1: Buyer/Seller Lead Miscategorization (P0)**
+*   **Issue 2: Public Lead Form Submission Fails (404 Error) (P0)**
+*   **Issue 3: Telnyx Phone Verification Flow is Broken (P0)**
+*   **Issue 4: Incomplete Automated Expired Listings Flow (P0)**
+*   **Issue 5: Avatar Video Generation Not Working (P1)**
+*   **Issue 6: Transparent Modals Site-Wide (P1)**
+*   **Issue 7: Incomplete Voice Cloning for Avatar (P1)**
 
 **Issues Detail:**
-*   **Issue 1: Finish Withdrawn Listings feature**
-    *   **Attempted fixes:** The agent has created the backend routes for searching withdrawn listings, converting them to leads, and managing a dead lead list. The frontend directory structure and placeholder files have also been created.
+*   **Issue 1: Buyer/Seller Lead Miscategorization**
+    *   **Description:** When a user fills out the Buy form on the public site, the resulting lead is incorrectly tagged as a Seller lead in the CRM. The Sell form might have the inverse problem.
+    *   **Attempted fixes:** The agent identified the hardcoded  in  and was in the process of making it dynamic based on the form context.
     *   **Next debug checklist:**
-        1.  Flesh out the frontend components in , including  and .
-        2.  Ensure the Convert to Lead functionality correctly tags the new lead as withdrawn and adds the original MLS ID to the  collection.
-        3.  Verify that the search functions for both Expired and Withdrawn listings filter out results that are already in the  collection.
-        4.  Test the complete end-to-end workflow: Search -> Moderate -> Convert -> Verify lead creation and dead list entry.
-    *   **Why fix this issue and what will be achieved with the fix?** This will complete a key prospecting tool for the user, allowing them to generate new seller leads from withdrawn listings.
+        1.  Verify the fix in  correctly passes the  prop.
+        2.  Ensure the parent components (, ) pass the correct  (Buyer or Seller).
+        3.  Test submissions from both the Buy and Sell forms to confirm they are created with the correct type in the database.
+    *   **Why fix this issue and what will be achieved with the fix?** This is a critical bug that corrupts CRM data and breaks lead management workflows. Fixing it will ensure leads are categorized correctly.
     *   **Status:** IN PROGRESS
     *   **Is recurring issue?** N
     *   **Should Test frontend/backend/both after fix?** both
-    *   **Blocked on other issue:** None
-*   **Issue 2: Incomplete Image Transfer on Production**
-    *   **Description:** When a property lead is converted, only a subset of images transfers to the showcase listing on the production site.
-    *   **Attempted fixes:** The agent implemented a robust fix by removing the brittle  check and adding a try-except block for file copying. This was thoroughly tested in the preview environment, including with the testing agent, where it worked correctly.
-    *   **Status:** USER VERIFICATION PENDING (Needs to be tested on the user's production deployment).
+*   **Issue 2: Public Lead Form Submission Fails (404 Error)**
+    *   **Description:** The Post button on the public lead capture forms (for both Buy and Sell) triggers a  request to , which results in a 404 Not Found error.
+    *   **Attempted fixes:** The agent correctly identified that the backend route is  and fixed the endpoint URL in .
+    *   **Next debug checklist:** Test the form submission again to confirm the 404 error is resolved and the request reaches the backend.
+    *   **Why fix this issue and what will be achieved with the fix?** This bug makes the primary lead capture mechanism on the public website completely non-functional.
+    *   **Status:** TESTING PENDING
     *   **Is recurring issue?** N
-*   **Issue 3: Critical Data Loss - Bookings**
-    *   **Description:** User's booking data was previously wiped. The root cause is unknown.
-    *   **Status:** NOT STARTED
+    *   **Should Test frontend/backend/both after fix?** both
+*   **Issue 3: Telnyx Phone Verification Flow is Broken**
+    *   **Description:** The phone verification on public forms is failing. Users enter the 5-digit code from Telnyx, but the UI (which was initially expecting 6 digits) shows an error, and the backend returns a wrong code or  error. The user is extremely frustrated with this.
+    *   **Attempted fixes:** The agent first adjusted the frontend to accept 5 digits but failed to fix the underlying validation logic. The agent then identified a CORS issue, fixed it, and then diagnosed a  error caused by a mismatched/incomplete . The agent provided the correct ID to the user to update in the production settings. The final state is still not working.
+    *   **Next debug checklist:**
+        1.  Verify the user has updated the  in the production settings.
+        2.  Trace the entire flow:  request ->  request.
+        3.  Check the backend logic in  in the  endpoint. Ensure the payload format matches what Telnyx API expects and what the frontend sends.
+        4.  Confirm the  and  are being correctly passed and validated.
+    *   **Why fix this issue and what will be achieved with the fix?** This functionality is required to validate leads from the public site. Fixing it is a prerequisite for launching the new forms.
+    *   **Status:** BLOCKED (on user re-testing after updating credentials, but likely still has code issues)
     *   **Is recurring issue?** Y
-*   **Issue 4: Unreliable Production Deployments**
-    *   **Description:** The manual deployment process is error-prone.
-    *   **Status:** NOT STARTED
-    *   **Is recurring issue?** Y
-*   **Issue 5: Contact Import Inconsistencies**
-    *   **Description:** User has repeatedly reported inconsistent import counts. The logic was rewritten, but user trust is low.
-    *   **Status:** USER VERIFICATION PENDING
-    *   **Is recurring issue?** Y
-*   **Issue 6: Partial Image Rendering**
-    *   **Description:** Some uploaded images appear as broken placeholders. A fix for HEIC formats was implemented, but the root cause may be different.
-    *   **Status:** USER VERIFICATION PENDING
-    *   **Is recurring issue?** Y
-*   **Issue 7: Smart List Email Not Received on Production**
-    *   **Description:** User reports emails are not being received on their deployed site.
-    *   **Status:** BLOCKED (on user to test diagnostic endpoint on production)
-    *   **Is recurring issue?** Y
-*   **Issue 8: Web Scrapers are Fragile**
-    *   **Description:** Web scrapers are unreliable and have been deprioritized in favor of the MLS integration.
-    *   **Status:** NOT STARTED
-    *   **Is recurring issue?** Y
-*   **Issue 9: iDrive e2 Storage Credentials Invalid**
-    *   **Description:**  S3 client is failing.
+    *   **Should Test frontend/backend/both after fix?** both
+*   **Issue 4: Incomplete Automated Expired Listings Flow**
+    *   **Description:** After running the Test Now flow, the user reported multiple failures: the generated lead does not appear in the Property Leads section, the property landing page link is broken, and no brochure was created.
+    *   **Attempted fixes:** The agent created the basic structure for the automation task in  and connected it to a Test Now button.
+    *   **Next debug checklist:**
+        1.  **Lead Creation:** Ensure the  function is called and correctly saves the lead to the  collection.
+        2.  **Landing Page:** Fix the URL generation for the landing page to be a valid, routable link.
+        3.  **Brochure Generation:** Implement the placeholder or actual logic for brochure creation and attachment within the automation flow.
+    *   **Why fix this issue and what will be achieved with the fix?** This is a core, high-value feature for the user. Completing it will automate a key marketing and lead generation process.
+    *   **Status:** IN PROGRESS
+    *   **Is recurring issue?** N
+    *   **Should Test frontend/backend/both after fix?** backend
+*   **Issue 5: Avatar Video Generation Not Working**
+    *   **Description:** The automated flow is not generating the AI avatar video with the specified script and property image background. It uses a placeholder.
+    *   **Attempted fixes:** The agent received the script and clarified requirements. Logic was added to  to prepare the dynamic script and call the . However, it's not fully functional.
+    *   **Next debug checklist:**
+        1.  Debug the  call. Check the payload, API key, and response.
+        2.  Implement the logic to select the primary outside image and use it as the background for the video.
+        3.  Ensure the generated video URL is correctly saved to the property lead.
+    *   **Why fix this issue and what will be achieved with the fix?** This is a key part of the automated marketing sequence.
+    *   **Status:** IN PROGRESS
+    *   **Is recurring issue?** N
+    *   **Should Test frontend/backend/both after fix?** backend
+*   **Issue 6: Transparent Modals Site-Wide**
+    *   **Description:** User reported that all modals across the application have transparent backgrounds, making them unusable.
+    *   **Attempted fixes:** Agent applied a fix to  to add a background color () to shadcn modal components.
+    *   **Next debug checklist:** Take screenshots of various modals (e.g., login, lead details, settings) to confirm the fix is comprehensive and has no side effects.
+    *   **Why fix this issue and what will be achieved with the fix?** This is a major UI bug that affects usability across the entire application.
+    *   **Status:** TESTING PENDING
+    *   **Is recurring issue?** N
+    *   **Should Test frontend/backend/both after fix?** frontend
+*   **Issue 7: Incomplete Voice Cloning for Avatar**
+    *   **Description:** User requested to use a cloned voice for the avatar video, providing an audio file.
+    *   **Attempted fixes:** Agent identified ElevenLabs as the service, got user confirmation, and called the  to get the integration plan.
+    *   **Next debug checklist:**
+        1.  Implement the ElevenLabs integration using the provided playbook.
+        2.  Create a service to upload the audio file () and create a voice clone.
+        3.  Integrate the cloned voice ID into the avatar video generation script.
+    *   **Why fix this issue and what will be achieved with the fix?** Personalizes the AI-generated marketing materials.
     *   **Status:** NOT STARTED
     *   **Is recurring issue?** N
+    *   **Should Test frontend/backend/both after fix?** backend
 
 **In progress Task List**:
-*   **Task 1: Withdrawn Listings Prospecting Tool (P0)**
-    *   **Where to resume:** Building out the frontend pages in . The backend routes and services are already in place.
-    *   **What will be achieved with this?** A complete end-to-end workflow for finding and converting withdrawn MLS listings into CRM leads.
-    *   **Status:** IN PROGRESS
+*   **Task 1: Complete Telnyx Integration (P0)**
+    *   **Where to resume:** The basic file structure from the user-provided  has been integrated, and credentials have been added to the  files. The next step is to fix the critical verification bug (Issue #3) and then ensure the Dialer, Messages, and Call History pages are fully functional and connected to the backend APIs.
+    *   **What will be achieved with this?** A fully working telephony and messaging system integrated into the CRM.
+    *   **Status:** BLOCKED
     *   **Should Test frontend/backend/both after fix?** both
-    *   **Blocked on something:** None
+    *   **Blocked on something:** Issue 3: Telnyx Phone Verification Flow is Broken.
+
+*   **Task 2: Complete Automated Expired Listings Marketing Flow (P0)**
+    *   **Where to resume:** The background task is set up, but the core logic within  is incomplete. The agent needs to fix lead creation, landing page generation, brochure creation, and video generation.
+    *   **What will be achieved with this?** A fully automated, daily lead generation and marketing engine.
+    *   **Status:** IN PROGRESS
+    *   **Should Test frontend/backend/both after fix?** backend
+    *   **Blocked on something:** Issues 4 & 5.
 
 **Upcoming and Future Tasks**
 *   **Upcoming Tasks:**
-    *   **P1:** Build Buyer Lead Page.
-    *   **P1:** Add Canceled listings to the prospecting tools, similar to Expired and Withdrawn.
+    *   **P1:** Add Canceled listings to the prospecting tools.
+    *   **P1:** Build a custom analytics system for email tracking (opens, clicks).
+    *   **P2:** Make the  for the daily automation run configurable in the UI.
 *   **Future Tasks:**
-    *   Refactor the  component (currently >2900 lines).
+    *   Refactor the MLS moderation pages (, , ) into a single reusable component.
+    *   Refactor the  component.
+    *   Build Buyer Lead Page.
     *   Implement TMS Integration.
     *   Build an advanced Lead Management system (auction/bidding).
     *   Develop Advanced Reporting & Analytics dashboards.
     *   Implement Booking Notifications (email, SMS, desktop).
-    *   Refactor the new MLS moderation pages (, , ) into a single reusable component to reduce code duplication.
 
 **Completed work in this session**
-- **Image Transfer Bug Fix (DONE & TESTED):** Fixed a critical bug where not all images were copied during lead-to-listing conversion. The new logic is more resilient and was verified by the testing agent.
-- **MLS Integration with Bridge API (DONE):** Successfully connected to the Stellar MLS via Bridge API, identified the specific agent's listings, and built a service to fetch and transform property data.
-- **MLS Hub Dashboard (DONE):** Created a new, dedicated MLS Hub in the admin section with its own layout, sidebar, and pages for pulling and moderating the agent's own listings.
-- **Expired Listings Prospecting Tool (DONE):** Built a complete workflow to search the MLS for expired listings, moderate them, and convert them into property leads in the CRM, automatically tagging them as expired.
-- **OAuth & Site URL Configuration (DONE):** Added  and  to the backend  file for future integrations.
+- **MLS Hub UI/UX Improvments:**
+  - Implemented auto-minimizing main sidebar on the MLS dashboard.
+  - Restructured the MLS sidebar into My Listings and Prospecting Tools accordions.
+- **New MLS Search Feature:** Built a new, comprehensive MLS Search page with filters, restricted it to Admin/Superusers, and added it to the main sidebar.
+- **Sold Filter:** Added a Sold status filter to the Moderate Listings page.
+- **Automation Flow Foundation:**
+  - Created the backend structure for the automated expired listings workflow ().
+  - Added a Test Now button to the UI to trigger the flow manually for one lead.
+  - Set the daily scheduled run to process all matching listings.
+- **Telnyx Integration Started:**
+  - Extracted user-provided  and integrated the file structure.
+  - Added Telnyx credentials to backend and frontend  files.
+  - Created new sidebar menus for Dialer, Messages, and Call History.
+- **Public Form Verification:** Added UI and backend endpoints for email and phone number verification on the public Buy/Sell forms.
+- **Bug Fix:** Resolved a 404 error on the public lead submission form by correcting the API endpoint URL.
 
 **Earlier issues found/mentioned but not fixed**
-- The critical P0 issues regarding **Bookings data loss** and **unreliable production deployments** remain unaddressed due to user-driven prioritization of feature development.
+- **Critical Data Loss - Bookings:** User's booking data was previously wiped. The root cause is unknown. Status: NOT STARTED.
+- **Unreliable Production Deployments:** The manual deployment process is error-prone. Status: NOT STARTED.
+- **iDrive e2 Storage Credentials Invalid:**  S3 client is failing. Status: NOT STARTED.
 
 **Known issue recurrence from previous fork**
-- **Database Synchronization / Data Loss:** This critical issue persists and is the likely cause of the lost booking data. Recurrence count: 6. Status: NOT STARTED.
-- **Unreliable Web Scraping:** This problem persists but is low priority. Recurrence count: 6. Status: BLOCKED.
+- **Database Synchronization / Data Loss:** This critical issue persists and is the likely cause of the lost booking data. Recurrence count: 6+. Status: NOT STARTED.
+- **Unreliable Web Scraping:** This problem persists but is low priority. Recurrence count: 6+. Status: BLOCKED.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-*   **External API Integration (Bridge API):** Authenticating with a REST API using a Bearer token and parsing RESO standard data.
-*   **Stateful Data Synchronization:** Implementing a pull -> moderate -> convert workflow for external data, using a local MongoDB collection () as a staging area.
-*   **Deduplication/Blacklisting:** Using a  collection to store processed MLS IDs to prevent re-importing, ensuring data integrity.
-*   **Modular Frontend Architecture:** Creating dedicated layouts () and nested routes for new feature areas (MLS Hub) to keep the UI organized.
-*   **Dynamic UI:** Using an accordion-style sidebar in the MLS Hub to neatly organize multiple prospecting tools.
+*   **Third-Party Integration (Telnyx):** Integrating Voice (WebRTC), SMS, and Phone Verification APIs.
+*   **Background Tasks (APScheduler):** Using a scheduler to run an automated workflow at a specified time (7 am EST).
+*   **AI Service Integration (SkyReels, ElevenLabs):** Generating dynamic, scripted avatar videos and preparing for voice cloning.
+*   **Complex Frontend State:** Managing multi-step form state for lead capture with verification.
+*   **CORS & API Security:** Ongoing need to manage Cross-Origin Resource Sharing policies and secure endpoints.
+*   **Modular Code Integration:** Incorporating a large, pre-existing code module () into the application.
 
 **key DB schema**
-*   **property_leads:** Added  (array of strings) to identify source (e.g., 'expired', 'withdrawn').
-*   **mls_listings:** **[New]** Stores raw/pending listings pulled from MLS for moderation. Contains , , and a local .
-*   **mls_dead_leads:** **[New]** Stores a list of  (string, unique) for listings that have already been processed to prevent duplicates.
-*   **mls_service_config:** **[New]** Stores persistent configuration for the MLS service, such as the .
+*   **automation_settings:** **[New]** Stores configuration for automation tasks, like the criteria for the expired listings search.
+*   **property_leads:** Modified to include  (Buyer or Seller).
+*   : a  field was added.
 
 **changes in tech stack**
-*   None.
+*   **Backend:** , , 
+*   **Frontend:** 
 
 **All files of reference**
-*   : Backend logic for the current task.
-*   : Backend logic for the critical deduplication feature.
-*   : Core logic for all Bridge API communication.
-*   : The main UI container for all new MLS tools.
-*   : Directory containing the frontend files to be built.
-*   : A reference for how the Withdrawn tool should be built.
+*   : Core logic for the main feature under development.
+*   : Backend for the broken verification flow.
+*   : Location of the lead type and 404 bugs.
+*   : UI for the broken verification flow.
+*   : File changed to fix the transparent modal issue.
+*   : Contains the  endpoint for lead submission.
 
 **Areas that need refactoring**:
-*   The new moderation pages (, , and the upcoming ) share significant UI and logic. They should be refactored to use a reusable  component to reduce duplication.
-*    is still over 2900 lines and is a high-risk file to modify.
+*   The phone/email verification logic is currently inside . This should be extracted into a reusable hook or component to be used across any form needing verification.
+*   The  and MLS moderation pages still need refactoring as noted in the previous handoff.
 
 **key api endpoints**
-*   : **[New]** Pulls the agent's own listings from MLS.
-*   : **[New]** Searches for expired listings.
-*   : **[New]** Searches for withdrawn listings.
-*   : **[New]** Converts an expired listing to a  and adds it to the dead list.
-*   : **[New, In Progress]** Converts a withdrawn listing to a .
-*   : **[Fixed & Tested]** Robustly handles image file transfers.
+*   : **[FIXED]** Endpoint for public lead capture forms.
+*   : **[New]** Triggers a single run of the automation.
+*   : **[New]** Sends a verification code via SMS.
+*   : **[New & BUGGY]** Verifies the SMS code.
+*   : **[New]**
+*   : **[New]**
+*   : **[New]** Gets a token for the WebRTC client.
 
 **Critical Info for New Agent**
-*   The immediate priority is to complete the Withdrawn Listings feature. Follow the pattern established by the Expired Listings tool. The most critical part is ensuring the dead lead list is correctly implemented and used by both workflows to prevent data duplication.
-*   The user is highly focused on building out prospecting tools using the new MLS integration. Be prepared for follow-up requests to add more off-market search types (e.g., Canceled).
-*   The Bridge API feed provides both historical data (, ) and  listings for the specific agent ID . This distinction is important for fetching the correct data for different tools.
+*   **User is extremely frustrated.** Multiple core features deployed recently are broken (lead capture, verification), and the user is very vocal about it and concerned about credit usage. Your first priority is to fix the user-facing bugs with extreme prejudice.
+*   **Prioritize Fixes over Features:**
+    1.  Fix the **Buyer/Seller lead miscategorization**.
+    2.  Fix the **Telnyx phone verification flow**. This is a major blocker and source of frustration.
+    3.  Fix the **transparent modal UI bug** completely.
+*   **Communicate Clearly and Test Thoroughly:** Do not claim something is fixed until you have tested it yourself. The user has lost trust after finding multiple bugs in completed work. Explain what you fixed and how you tested it.
+*   The Telnyx integration was from a user-provided zip. Be aware that the code may not follow existing patterns and might require careful adaptation.
 
 **documents and test reports created in this job**
 *    (Updated)
-*   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Requested the Withdrawn listings tool, dead lead list, and tagging for converted leads. (Status: **In Progress**)
-2.  **User:** Asked about access to withdrawn unconditional listings. (Status: **Completed**)
-3.  **User:** Requested the Expired listings tool with the full search->moderate->convert workflow. (Status: **Completed**)
-4.  **User:** Confirmed the Stellar MLS API endpoint. (Status: **Completed**)
-5.  **User:** Specified that the MLS feed should include listings for Sheila Desautels. (Status: **Completed**)
-6.  **User:** Provided Bridge API documentation and clarified the provided keys were for it. (Status: **Completed**)
-7.  **User:** Provided API credentials (Client ID, Secret, Server/Browser Tokens). (Status: **Completed**)
-8.  **User:** Asked for boilerplate text explaining how the app uses API data for an application form. (Status: **Completed**)
-9.  **User:** Asked if the OAuth redirect URL was already configured. (Status: **Completed**)
-10. **User:** Asked what the OAuth Redirect URL should be. (Status: **Completed**)
+1.  **User:** Requested to use a cloned voice from an uploaded AMR file for the AI avatar. (Status: **In Progress**)
+2.  **User:** Provided the script for the AI avatar video. (Status: **In Progress**)
+3.  **User:** Reported the automated flow is not generating the avatar video correctly. (Status: **Pending Fix**)
+4.  **User:** Filled out a buyer form and reported it came in as a seller lead, expressing extreme frustration about credits. (Status: **In Progress - Last working item**)
+5.  **User:** Reported the Post button on the lead form was leading to a 404 error. (Status: **Fix Applied, Testing Pending**)
+6.  **User:** Reported the Telnyx verification is failing with a wrong code error, despite entering the correct code. Provided console logs showing CORS and 400 errors. (Status: **Pending Fix**)
+7.  **User:** Reported Telnyx is sending 5-digit codes while the UI was asking for 6. (Status: **Partially Addressed, still failing**)
+8.  **User:** Requested adding phone/email verification to the public buy/sell forms. (Status: **Implemented, but Buggy**)
+9.  **User:** Requested Telnyx integration for phone/SMS/verification using a provided zip file and API keys. (Status: **In Progress**)
+10. **User:** Reported that after running the automation test, the created lead didn't show up, the landing page was a broken link, and the brochure wasn't created. (Status: **Pending Fix**)
 
 **Project Health Check:**
 *   **Broken:**
-    *   **Bookings Data:** Collection remains empty. Root cause is unknown.
-    *   **Deployment Workflow:** Unreliable, manual process.
-    *   **Web Scrapers:** Non-functional (deprioritized).
-    *   **iDrive e2 Integration:** Invalid credentials.
+    *   **Public Lead Capture:** The entire flow is broken due to the lead type miscategorization and previously a 404 error.
+    *   **Phone Number Verification:** The Telnyx verification system is non-functional.
+    *   **Automated Marketing Flow:** Several key steps (lead visibility, landing page, brochure) are failing.
+    *   **Bookings Data:** Collection remains empty from a previous critical issue.
+    *   **Deployment Workflow:** Still an unreliable, manual process.
 *   **Mocked:**
+    *   Brochure Generator (in the new automation flow).
     *   Jacquie Lawson Service.
     *   Social Media Service.
-*   **Pending User Verification (Production):**
-    *   **Image Conversion Fix:** The fix was tested in preview but needs to be confirmed on the user's production site.
-    *   Contact Import consistency.
-    *   Smart List Email delivery.
-    *   Partial Image Rendering on upload.
 
 **3rd Party Integrations**
-*   **Bridge API (Stellar MLS):** **[Active & Core]** Used for all property data and prospecting tools.
-*   **emergentintegrations:** Used for LLM chat completions (AI description generation).
-*   **Playwright:** For browser automation (Jacquie Lawson service - not started).
-*   **APIFree.ai (SkyReels V3):** For AI avatar video generation.
+*   **Bridge API (Stellar MLS):** [Active & Core]
+*   **Telnyx:** [New & Partially Integrated/Broken] For SMS, Voice (WebRTC), and Phone Verification.
+*   **SkyReels V3:** [Integrated] For AI avatar video generation.
+*   **ElevenLabs:** [Pending Integration] For voice cloning.
+*   **emergentintegrations:** For LLM chat completions.
 *   **boto3:** S3 client (failing due to credentials).
-*   **FRED API:** For automated mortgage rate updates.
+*   **FRED API:** For mortgage rate updates.
 
 **Testing status**
-*   **Testing agent used after significant changes:** YES (For the image transfer bug fix).
+*   **Testing agent used after significant changes:** NO
 *   **Troubleshoot agent used after agent stuck in loop:** NO
 *   **Test files created:** []
-*   **Known regressions:** The critical regression of lost booking data from a previous session remains unresolved.
+*   **Known regressions:** The lead capture form, which previously worked, is now broken due to recent feature additions (verification, lead type logic). The UI has a new major bug (transparent modals).
 
 **Credentials to test flow:**
 *   **Role:** Super User
@@ -208,4 +261,6 @@ A feature-rich full-stack application with JWT authentication, a deal pipeline, 
 *   **Password:** 
 
 **What agent forgot to execute**
-*   The agent has successfully followed all user requests in this session. No tasks were overlooked.</analysis>
+*   The agent consistently failed to perform end-to-end testing after making changes, leading to the user discovering multiple bugs in rapid succession (transparent modals, 404 error, verification code length mismatch, lead type miscategorization). This has severely damaged user trust.
+*   The agent did not initially investigate the Telnyx code length mismatch properly, causing a frustrating loop for the user.
+*   The agent did not fully implement all parts of the automated marketing flow (landing page, brochure, lead visibility) before allowing the user to test it.</analysis>

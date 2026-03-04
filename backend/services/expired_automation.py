@@ -36,8 +36,7 @@ DEFAULT_EXPIRED_CRITERIA = {
 DEFAULT_TEST_MAX_LEADS = 1
 
 DEFAULT_RECIPIENTS = [
-    "mel@a2gdesigns.com",
-    "tampabay@tampabay.rr.com"
+    "mel@a2gdesigns.com"
 ]
 
 VIDEO_PLACEHOLDER_URL = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
@@ -71,6 +70,11 @@ async def get_expired_automation_settings() -> dict:
         now = datetime.now(timezone.utc).isoformat()
         if not settings.get("avatar_url"):
             updates["avatar_url"] = SAMPLE_AGENT_AVATAR_URL
+        recipients = settings.get("recipient_emails", [])
+        if not recipients:
+            updates["recipient_emails"] = DEFAULT_RECIPIENTS
+        elif any(r.lower() == "tampabay@tampabay.rr.com" for r in recipients):
+            updates["recipient_emails"] = [r for r in recipients if r.lower() != "tampabay@tampabay.rr.com"]
         if settings.get("test_max_leads") is None:
             updates["test_max_leads"] = DEFAULT_TEST_MAX_LEADS
         if not settings.get("script_template"):
