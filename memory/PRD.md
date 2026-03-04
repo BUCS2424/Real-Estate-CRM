@@ -2144,3 +2144,14 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 
 ### Tests & Verification
 - Playwright: landing form renders after phone code update ✅
+
+
+---
+
+## Update: March 04, 2026 - Phone Verification 5-Digit Validation Fix
+
+### Completed
+- Updated phone verification validation + error message to 5-digit (matches Telnyx codes)
+
+### Tests & Verification
+- Auto frontend testing agent: 5-digit copy + validation confirmed ✅
