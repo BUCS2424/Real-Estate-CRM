@@ -70,7 +70,9 @@ async def send_phone_code(request: PhoneVerificationRequest):
 
     headers = {"Authorization": f"Bearer {credentials['api_key']}"}
     async with httpx.AsyncClient(timeout=20) as client:
-        response = await client.post(f"{TELNYX_API_BASE}/verifications", headers=headers, json=payload)
+        response = await client.post(f"{TELNYX_API_BASE}/verifications/sms", headers=headers, json=payload)
+        if response.status_code == 404:
+            response = await client.post(f"{TELNYX_API_BASE}/verifications", headers=headers, json=payload)
 
     if response.status_code >= 400:
         detail = response.json().get("errors", [{"detail": "Verification start failed"}])[0].get("detail")
@@ -95,16 +97,41 @@ async def verify_phone_code(request: PhoneVerifyCodeRequest):
     if not credentials.get("api_key") or not credentials.get("verify_profile_id"):
         raise HTTPException(status_code=400, detail="Telnyx Verify not configured")
 
+    normalized_phone = normalize_phone(request.phone_number)
     payload = {
-        "phone_number": normalize_phone(request.phone_number),
+        "phone_number": normalized_phone,
         "verify_profile_id": credentials["verify_profile_id"],
         "code": request.code
     }
 
+    latest = await db.phone_verifications.find_one(
+        {"phone_number": normalized_phone},
+        sort=[("created_at", -1)],
+        projection={"_id": 0}
+    )
+    verification_id = latest.get("verification_id") if latest else None
+
     headers = {"Authorization": f"Bearer {credentials['api_key']}"}
     async with httpx.AsyncClient(timeout=20) as client:
-        response = await client.post(f"{TELNYX_API_BASE}/verifications/actions/verify", headers=headers, json=payload)
+        if verification_id:
+            response = await client.post(
+                f"{TELNYX_API_BASE}/verifications/{verification_id}/actions/verify",
+                headers=headers,
+                json=payload
+            )
+        else:
+            response = await client.post(
+                f"{TELNYX_API_BASE}/verifications/actions/verify",
+                headers=headers,
+                json=payload
+            )
 
+        if response.status_code == 404 and verification_id:
+            response = await client.post(
+                f"{TELNYX_API_BASE}/verifications/actions/verify",
+                headers=headers,
+                json=payload
+            )
     if response.status_code >= 400:
         detail = response.json().get("errors", [{"detail": "Verification failed"}])[0].get("detail")
         raise HTTPException(status_code=400, detail=detail)
@@ -112,10 +139,10 @@ async def verify_phone_code(request: PhoneVerifyCodeRequest):
     now = datetime.now(timezone.utc).isoformat()
     await db.phone_verifications.update_many(
         {"phone_number": payload["phone_number"]},
-        {"$set": {"status": "verified", "verified_at": now}}
+        {"$set": {"status": "verified", "verified_at": now, "telnyx_status": response.json().get("data", {}).get("status")}}
     )
 
-    return {"message": "Phone verified"}
+    return {"message": "Phone verified", "status": response.json().get("data", {}).get("status")}
 
 
 @router.get("/phone/check/{phone_number}")

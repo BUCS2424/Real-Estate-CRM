@@ -2167,3 +2167,15 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 
 ### Tests & Verification
 - Curl (local backend) with Origin=https://hiddenhavenrealty.com returns Access-Control-Allow-Origin ✅
+
+
+---
+
+## Update: March 04, 2026 - Telnyx Verify Endpoint Fix
+
+### Completed
+- Phone verification now verifies using Telnyx verification_id endpoint (/verifications/{id}/actions/verify) with fallback to legacy path
+- Verification send uses /verifications/sms with fallback to /verifications
+
+### Tests & Verification
+- Backend: /api/phone/check returns 200 ✅
