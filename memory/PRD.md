@@ -2237,3 +2237,22 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 
 ### Notes
 - **MOCKED/PARTIAL:** SkyReels avatar generation remains partially mocked (placeholder path still used when async video is not available immediately).
+
+
+---
+
+## Update: March 04, 2026 - Landing Hero Uses Property Lead Main Photo
+
+### Completed
+- Updated listing creation/backfill logic so `lead.primary_photo` (then `background_image_url`) is always prioritized as `listing.images[0]`
+- Added regression-safe merge for existing listings: lead main image is forced to first position without losing other listing photos
+- Added public landing endpoint normalization fallback so hero image still resolves correctly even if legacy image data is malformed
+- Updated frontend landing page hero image source handling to normalize string/object images and fallback to `hero_image_url/primary_photo`
+
+### Tests & Verification
+- Self-test: automation + public landing payload check confirmed `listing.images[0].url == lead.primary_photo` ✅
+- Screenshot smoke: public landing hero renders expected main property image ✅
+- Testing agent report: `/app/test_reports/iteration_17.json` passed 6/6 for exact hero URL mapping and regression behavior ✅
+
+### Notes
+- **MOCKED/PARTIAL:** SkyReels avatar generation remains partial mock in broader flow (unrelated to hero mapping).
