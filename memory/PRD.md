@@ -2179,3 +2179,15 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 
 ### Tests & Verification
 - Backend: /api/phone/check returns 200 ✅
+
+
+---
+
+## Update: March 04, 2026 - Public Lead Submission Endpoint
+
+### Completed
+- Added /api/public/leads endpoint for landing page buyer lead submissions
+- Stores leads in db.leads with verification flags and consent fields
+
+### Tests & Verification
+- POST /api/public/leads returns 200 ✅

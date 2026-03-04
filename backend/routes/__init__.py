@@ -43,6 +43,7 @@ from .email_samples import router as email_samples_router
 from .analytics import router as analytics_router
 from .telnyx import router as telnyx_router
 from .verification import router as verification_router
+from .public_leads import router as public_leads_router
 
 # Include all sub-routers
 api_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
@@ -83,6 +84,7 @@ api_router.include_router(email_samples_router, prefix="/email", tags=["Email Sa
 api_router.include_router(analytics_router, tags=["Analytics"])
 api_router.include_router(telnyx_router)
 api_router.include_router(verification_router)
+api_router.include_router(public_leads_router)
 @api_router.get("/")
 async def root():
     return {"message": "Hidden Haven Realty CRM API", "version": "2.0.0"}
