@@ -32,6 +32,84 @@ def get_site_url() -> str:
 def build_landing_page_url(slug: str) -> str:
     return f"{get_site_url()}/landing/{slug}"
 
+
+def _collect_lead_image_urls(lead: dict) -> List[str]:
+    urls: List[str] = []
+
+    def add_url(value: Optional[str]):
+        if not value:
+            return
+        clean = str(value).strip()
+        if clean and clean not in urls:
+            urls.append(clean)
+
+    # Priority order for hero image
+    add_url(lead.get("primary_photo"))
+    add_url(lead.get("background_image_url"))
+
+    for image in lead.get("gallery_images") or []:
+        if isinstance(image, dict):
+            add_url(image.get("url"))
+        elif isinstance(image, str):
+            add_url(image)
+
+    for image in lead.get("photos") or []:
+        if isinstance(image, str):
+            add_url(image)
+
+    return urls
+
+
+def _normalize_listing_images(images: Optional[List]) -> List[dict]:
+    normalized: List[dict] = []
+    for item in images or []:
+        if isinstance(item, str):
+            url = item.strip()
+            if not url:
+                continue
+            normalized.append({
+                "id": str(uuid.uuid4()),
+                "url": url,
+                "caption": "Property Photo"
+            })
+            continue
+
+        if isinstance(item, dict):
+            url = str(item.get("url") or "").strip()
+            if not url:
+                continue
+            normalized_item = {**item}
+            normalized_item["url"] = url
+            normalized_item.setdefault("id", str(uuid.uuid4()))
+            normalized_item.setdefault("caption", "Property Photo")
+            normalized.append(normalized_item)
+
+    return normalized
+
+
+def _build_listing_images_from_urls(urls: List[str], preserved_items: Optional[List[dict]] = None) -> List[dict]:
+    preserved_by_url = {}
+    for item in preserved_items or []:
+        url = str(item.get("url") or "").strip()
+        if url and url not in preserved_by_url:
+            preserved_by_url[url] = item
+
+    listing_images: List[dict] = []
+    for idx, url in enumerate(urls):
+        if url in preserved_by_url:
+            image_item = {**preserved_by_url[url]}
+        else:
+            image_item = {
+                "id": str(uuid.uuid4()),
+                "url": url,
+                "caption": "Main Property Photo" if idx == 0 else "Property Photo"
+            }
+        image_item["order"] = idx
+        image_item["is_primary"] = idx == 0
+        listing_images.append(image_item)
+
+    return listing_images
+
 router = APIRouter()
 
 
@@ -364,11 +442,38 @@ async def create_listing_from_lead(
     lead = await db.property_leads.find_one({"id": lead_id}, {"_id": 0})
     if not lead:
         raise HTTPException(status_code=404, detail="Property lead not found")
+
+    lead_image_urls = _collect_lead_image_urls(lead)
     
     # Check if listing already exists
     if lead.get("listing_id"):
         existing = await db.properties.find_one({"id": lead["listing_id"]}, {"_id": 0})
         if existing:
+            existing_images = _normalize_listing_images(existing.get("images") or [])
+            existing_urls = [item.get("url") for item in existing_images if item.get("url")]
+            merged_urls: List[str] = []
+            for url in lead_image_urls + existing_urls:
+                if url and url not in merged_urls:
+                    merged_urls.append(url)
+
+            now = datetime.now(timezone.utc).isoformat()
+            if merged_urls:
+                merged_images = _build_listing_images_from_urls(merged_urls, preserved_items=existing_images)
+                await db.properties.update_one(
+                    {"id": existing["id"]},
+                    {
+                        "$set": {
+                            "images": merged_images,
+                            "hero_image_url": merged_urls[0],
+                            "primary_photo": merged_urls[0],
+                            "updated_at": now
+                        }
+                    }
+                )
+                existing["images"] = merged_images
+                existing["hero_image_url"] = merged_urls[0]
+                existing["primary_photo"] = merged_urls[0]
+
             result = {
                 "message": "Listing already exists for this lead",
                 "listing": existing,
@@ -465,6 +570,8 @@ async def create_listing_from_lead(
     
     now = datetime.now(timezone.utc).isoformat()
     listing_id = str(uuid.uuid4())
+    listing_images = _build_listing_images_from_urls(lead_image_urls)
+    hero_image_url = listing_images[0]["url"] if listing_images else None
     
     # Create listing from lead data
     listing = {
@@ -485,7 +592,9 @@ async def create_listing_from_lead(
         "year_built": lead.get("year_built"),
         "description": request.custom_description or f"Beautiful property located at {lead.get('address', '')} in {lead.get('city', '')}.",
         "features": [],
-        "images": [],
+        "images": listing_images,
+        "hero_image_url": hero_image_url,
+        "primary_photo": hero_image_url,
         "status": "active",
         "mls_number": "",
         "source": "property_lead",

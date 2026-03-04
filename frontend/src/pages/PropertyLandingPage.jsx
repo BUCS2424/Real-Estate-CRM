@@ -176,7 +176,27 @@ export const PropertyLandingPage = () => {
 
   const { listing, theme } = pageData;
   const isLuxury = theme === 'luxury';
-  const allImages = [...(listing?.images || []), ...(pageData.additional_images || [])];
+  const normalizedListingImages = (listing?.images || [])
+    .map((image, idx) => {
+      if (typeof image === 'string') {
+        return { id: `listing-image-${idx}`, url: image, caption: 'Property Photo', order: idx, is_primary: idx === 0 };
+      }
+      return image;
+    })
+    .filter((image) => image?.url);
+  const normalizedAdditionalImages = (pageData.additional_images || [])
+    .map((image, idx) => {
+      if (typeof image === 'string') {
+        return { id: `additional-image-${idx}`, url: image };
+      }
+      return image;
+    })
+    .filter((image) => image?.url);
+  const fallbackHeroImage = listing?.hero_image_url || listing?.primary_photo;
+  const allImages = [...normalizedListingImages, ...normalizedAdditionalImages];
+  if (allImages.length === 0 && fallbackHeroImage) {
+    allImages.push({ id: 'hero-fallback-image', url: fallbackHeroImage, caption: 'Main Property Photo', is_primary: true, order: 0 });
+  }
 
   // Luxury Dark Theme
   if (isLuxury) {
@@ -190,6 +210,7 @@ export const PropertyLandingPage = () => {
                 src={allImages[activeImage]?.url} 
                 alt={listing?.address}
                 className="w-full h-full object-cover"
+                data-testid="landing-hero-main-image"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628] via-[#0a1628]/30 to-transparent" />
               

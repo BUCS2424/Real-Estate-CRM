@@ -1,0 +1,70 @@
+{
+  "summary": "Tested hero image mapping feature - lead primary_photo correctly becomes listing.images[0] for landing page hero. All 6 tests passed.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "test_existing_lead_first_image_matches_primary_photo - listing.images[0].url == lead.primary_photo",
+    "test_public_landing_page_returns_correct_hero - GET /api/landing-pages/public/{slug} returns correct hero",
+    "test_create_listing_regression_preserves_first_image - Calling create-listing again preserves first image",
+    "test_url_exact_equality_in_public_endpoint - URL equality: lead.primary_photo == public listing first image",
+    "test_images_have_correct_order_attribute - First image has order=0 and is_primary=true",
+    "test_public_endpoint_normalizes_images - Public endpoint returns properly structured image objects"
+  ],
+  "features_verified": {
+    "create_listing_from_lead": "POST /api/property-leads/{lead_id}/create-listing correctly maps lead.primary_photo to listing.images[0]",
+    "public_landing_page": "GET /api/landing-pages/public/{slug} returns listing with images[0].url matching lead.primary_photo",
+    "hero_image_url_field": "Public landing page response includes hero_image_url matching first image",
+    "image_normalization": "Images are normalized with id, url, caption, order, is_primary fields",
+    "regression_backfill": "Existing listings get images reordered with lead's main photo first",
+    "frontend_display": "PropertyLandingPage.jsx displays allImages[0] as hero background via data-testid='landing-hero-main-image'"
+  },
+  "test_data_verified": {
+    "lead_id": "2b2a3bd5-a28d-43c1-9650-7ca09f73b202",
+    "listing_id": "ec42098b-a22c-49a2-8846-6cedd259b5df",
+    "landing_page_slug": "2913-n-shoreview-place-tampa-fl",
+    "lead_primary_photo": "https://dvvjkgh94f2v6.cloudfront.net/735d922b/514212558/83dcefb7.jpeg",
+    "listing_first_image_url": "https://dvvjkgh94f2v6.cloudfront.net/735d922b/514212558/83dcefb7.jpeg",
+    "public_landing_hero_url": "https://dvvjkgh94f2v6.cloudfront.net/735d922b/514212558/83dcefb7.jpeg",
+    "url_match_verified": true
+  },
+  "code_review_notes": [
+    "_collect_lead_image_urls() correctly prioritizes primary_photo then background_image_url before gallery_images",
+    "_build_listing_images_from_urls() sets is_primary=True and order=0 for first image",
+    "Public landing page endpoint normalizes images from DB and sets hero_image_url from first image",
+    "Frontend PropertyLandingPage.jsx uses allImages[activeImage].url for hero src attribute"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_hero_image_mapping.py",
+    "/app/test_reports/pytest/hero_image_mapping_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_hero_image_mapping.py"
+  ],
+  "success_rate": {
+    "backend": "100% (6/6 tests passed)",
+    "frontend": "Visual verification passed - hero image displays correctly"
+  },
+  "test_credentials": {
+    "email": "mel@a2gdesigns.com",
+    "password": "BigDaddy2016!!"
+  },
+  "seed_data_creation": "Used existing lead 2b2a3bd5-a28d-43c1-9650-7ca09f73b202 with primary_photo already set",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Hero image mapping feature is working correctly. When automation/create-listing runs for a property lead, listing.images[0] matches lead.primary_photo. Public landing page endpoint returns correct hero_image_url. Frontend displays the first image as hero background. Test file: /app/backend/tests/test_hero_image_mapping.py",
+  "mocked_apis": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": [
+      "SkyReels avatar video generation (partial mock - not related to this feature)"
+    ]
+  }
+}

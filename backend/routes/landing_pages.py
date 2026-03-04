@@ -409,6 +409,63 @@ async def get_public_landing_page(slug: str):
         raise HTTPException(status_code=404, detail="Page not found")
     
     listing = await db.properties.find_one({"id": page["listing_id"]}, {"_id": 0})
+    if listing:
+        raw_images = listing.get("images") or []
+        normalized_images = []
+        for item in raw_images:
+            if isinstance(item, dict) and item.get("url"):
+                normalized_images.append(item)
+            elif isinstance(item, str) and item.strip():
+                normalized_images.append({
+                    "id": str(uuid.uuid4()),
+                    "url": item.strip(),
+                    "caption": "Property Photo"
+                })
+
+        if not normalized_images and listing.get("source_lead_id"):
+            source_lead = await db.property_leads.find_one(
+                {"id": listing["source_lead_id"]},
+                {"_id": 0, "primary_photo": 1, "background_image_url": 1, "gallery_images": 1, "photos": 1}
+            )
+            if source_lead:
+                lead_urls = []
+
+                def add_url(value):
+                    if not value:
+                        return
+                    clean = str(value).strip()
+                    if clean and clean not in lead_urls:
+                        lead_urls.append(clean)
+
+                add_url(source_lead.get("primary_photo"))
+                add_url(source_lead.get("background_image_url"))
+
+                for image in source_lead.get("gallery_images") or []:
+                    if isinstance(image, dict):
+                        add_url(image.get("url"))
+                    elif isinstance(image, str):
+                        add_url(image)
+
+                for image in source_lead.get("photos") or []:
+                    if isinstance(image, str):
+                        add_url(image)
+
+                if lead_urls:
+                    normalized_images = [
+                        {
+                            "id": str(uuid.uuid4()),
+                            "url": url,
+                            "caption": "Main Property Photo" if idx == 0 else "Property Photo",
+                            "order": idx,
+                            "is_primary": idx == 0
+                        }
+                        for idx, url in enumerate(lead_urls)
+                    ]
+
+        if normalized_images:
+            listing["images"] = normalized_images
+            listing["hero_image_url"] = normalized_images[0].get("url")
+
     page["listing"] = listing
     
     return page
