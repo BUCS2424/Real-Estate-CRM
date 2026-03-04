@@ -25,7 +25,10 @@ import {
   Wrench,
   Video,
   Share2,
-  Database
+  Database,
+  Phone,
+  MessageSquare,
+  PhoneCall
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
@@ -53,6 +56,9 @@ const toolsItems = [
 // Main nav items (excluding nested items)
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/dialer', icon: Phone, label: 'Dialer' },
+  { path: '/messages', icon: MessageSquare, label: 'Messages' },
+  { path: '/call-history', icon: PhoneCall, label: 'Call History' },
   { path: '/contacts', icon: Users, label: 'Contacts' },
   { type: 'sales', icon: DollarSign, label: 'Sales' },
   { path: '/listings', icon: Home, label: 'Showcase Listings' },

@@ -33,6 +33,10 @@ import { NewsletterArchivePage } from './pages/NewsletterArchivePage';
 import { AboutPage } from './pages/AboutPage';
 import { LandingPagesPage } from './pages/LandingPagesPage';
 import { PropertyLandingPage } from './pages/PropertyLandingPage';
+import DialerPage from './pages/phone/DialerPage';
+import DialerPopup from './pages/phone/DialerPopup';
+import MessagesPage from './pages/phone/MessagesPage';
+import CallHistoryPage from './pages/phone/CallHistoryPage';
 import { MortgageCalculatorPage } from './pages/MortgageCalculatorPage';
 import { MediaLibraryPage } from './pages/MediaLibraryPage';
 import { PropertyLookupPage } from './pages/PropertyLookupPage';
@@ -120,6 +124,11 @@ function App() {
             {/* Protected Routes */}
             <Route element={<MainLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/dialer" element={<DialerPage />} />
+              <Route path="/dialer-popup" element={<DialerPopup />} />
+              <Route path="/messages" element={<MessagesPage />} />
+              <Route path="/messages/:phone" element={<MessagesPage />} />
+              <Route path="/call-history" element={<CallHistoryPage />} />
               <Route path="/contacts" element={<ContactsPage />} />
               <Route path="/contacts/:id" element={<ContactsPage />} />
               <Route path="/deals" element={<DealsPage />} />
