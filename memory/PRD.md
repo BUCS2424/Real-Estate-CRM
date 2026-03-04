@@ -2155,3 +2155,15 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 
 ### Tests & Verification
 - Auto frontend testing agent: 5-digit copy + validation confirmed ✅
+
+
+---
+
+## Update: March 04, 2026 - CORS for Verification Fix
+
+### Completed
+- CORS middleware now ignores wildcard origin and uses explicit CORS_ORIGINS + SITE_URL
+- Updated backend env to include hiddenhavenrealty.com in CORS_ORIGINS
+
+### Tests & Verification
+- Curl (local backend) with Origin=https://hiddenhavenrealty.com returns Access-Control-Allow-Origin ✅

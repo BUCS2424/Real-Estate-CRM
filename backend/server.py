@@ -448,10 +448,22 @@ app.include_router(api_router)
 app.mount("/api/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # CORS Middleware
+cors_origins = []
+origins_env = os.environ.get('CORS_ORIGINS')
+if origins_env:
+    cors_origins = [origin.strip() for origin in origins_env.split(',') if origin.strip() and origin.strip() != '*']
+
+site_url = os.environ.get('SITE_URL')
+if site_url and site_url not in cors_origins:
+    cors_origins.append(site_url)
+
+if not cors_origins:
+    raise RuntimeError("CORS_ORIGINS or SITE_URL must be configured")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
