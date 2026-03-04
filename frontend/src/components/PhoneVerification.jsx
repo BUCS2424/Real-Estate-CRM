@@ -99,6 +99,8 @@ export const PhoneVerification = ({
             placeholder="+1 (555) 123-4567"
             className={`${inputClasses} ${step === 'verified' ? 'border-green-500' : ''}`}
             disabled={step === 'verify'}
+            required={required}
+            data-testid={darkMode ? "landing-phone-input" : "phone-verification-input"}
           />
         </div>
         
@@ -109,6 +111,7 @@ export const PhoneVerification = ({
             onClick={handleSendCode}
             disabled={loading}
             className={`shrink-0 ${darkMode ? 'border-amber-400/50 text-amber-400 hover:bg-amber-400 hover:text-black' : ''}`}
+            data-testid={darkMode ? "landing-phone-verify-button" : "phone-verify-button"}
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -135,12 +138,14 @@ export const PhoneVerification = ({
               placeholder="Enter 6-digit code"
               maxLength={6}
               className={`font-mono text-center tracking-widest ${inputClasses}`}
+              data-testid={darkMode ? "landing-phone-code-input" : "phone-code-input"}
             />
             <Button 
               type="button" 
               onClick={handleVerifyCode}
               disabled={loading || code.length !== 6}
               className={darkMode ? 'bg-amber-400 text-black hover:bg-amber-300' : ''}
+              data-testid={darkMode ? "landing-phone-confirm-button" : "phone-confirm-button"}
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm'}
             </Button>
@@ -149,6 +154,7 @@ export const PhoneVerification = ({
             type="button"
             onClick={handleResend}
             className={`text-xs hover:underline ${darkMode ? 'text-amber-400' : 'text-primary'}`}
+            data-testid={darkMode ? "landing-phone-resend" : "phone-resend"}
           >
             Didn't receive code? Resend
           </button>

@@ -100,6 +100,7 @@ export const EmailVerification = ({
             className={`${inputClasses} ${step === 'verified' ? 'border-green-500' : ''}`}
             disabled={step === 'verify'}
             required={required}
+            data-testid={darkMode ? "landing-email-input" : "email-verification-input"}
           />
         </div>
         
@@ -110,6 +111,7 @@ export const EmailVerification = ({
             onClick={handleSendCode}
             disabled={loading}
             className={`shrink-0 ${darkMode ? 'border-amber-400/50 text-amber-400 hover:bg-amber-400 hover:text-black' : ''}`}
+            data-testid={darkMode ? "landing-email-verify-button" : "email-verify-button"}
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -136,12 +138,14 @@ export const EmailVerification = ({
               placeholder="Enter 6-digit code"
               maxLength={6}
               className={`font-mono text-center tracking-widest ${inputClasses}`}
+              data-testid={darkMode ? "landing-email-code-input" : "email-code-input"}
             />
             <Button 
               type="button" 
               onClick={handleVerifyCode}
               disabled={loading || code.length !== 6}
               className={darkMode ? 'bg-amber-400 text-black hover:bg-amber-300' : ''}
+              data-testid={darkMode ? "landing-email-confirm-button" : "email-confirm-button"}
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm'}
             </Button>
@@ -150,6 +154,7 @@ export const EmailVerification = ({
             type="button"
             onClick={handleResend}
             className={`text-xs hover:underline ${darkMode ? 'text-amber-400' : 'text-primary'}`}
+            data-testid={darkMode ? "landing-email-resend" : "email-resend"}
           >
             Didn't receive code? Resend
           </button>

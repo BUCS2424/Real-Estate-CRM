@@ -549,8 +549,8 @@ export const LandingPage = () => {
           
           <form onSubmit={async (e) => {
             e.preventDefault();
-            if (!name || !email) {
-              toast.error('Please enter your name and email');
+            if (!name || !email || !phone) {
+              toast.error('Please enter your name, email, and phone');
               return;
             }
             setSubmitting(true);
@@ -561,7 +561,7 @@ export const LandingPage = () => {
                 setSubmitting(false);
                 return;
               }
-              if (phone && !phoneVerified) {
+              if (!phoneVerified) {
                 toast.error('Please verify your phone number');
                 setSubmitting(false);
                 return;
@@ -642,6 +642,7 @@ export const LandingPage = () => {
               onChange={setPhone}
               onVerified={() => setPhoneVerified(true)}
               label={null}
+              required
               darkMode
             />
             
