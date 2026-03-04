@@ -8,7 +8,9 @@ import {
   DollarSign,
   Home,
   Bed,
-  AlertCircle
+  AlertCircle,
+  CheckCircle,
+  ExternalLink
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
@@ -23,6 +25,7 @@ export const SearchExpired = () => {
   const [searching, setSearching] = useState(false);
   const [runningAutomation, setRunningAutomation] = useState(false);
   const [result, setResult] = useState(null);
+  const [automationResult, setAutomationResult] = useState(null);
   const [stats, setStats] = useState(null);
   const [searchParams, setSearchParams] = useState({
     city: '',
@@ -86,14 +89,18 @@ export const SearchExpired = () => {
 
   const handleTestNow = async () => {
     setRunningAutomation(true);
+    setAutomationResult(null);
     try {
       const response = await api.post('/expired-listings/automation/run', {});
+      setAutomationResult(response.data || null);
       const converted = response.data?.converted_leads?.length || 0;
       const errors = response.data?.conversion_errors || [];
+      const firstLead = response.data?.lead_results?.[0];
       if (errors.length > 0) {
         toast.error(`Automation finished with ${errors.length} error(s). Check email/landing page settings.`);
       } else {
-        toast.success(`Automation run complete. Converted ${converted} leads.`);
+        const brochureState = firstLead?.brochure_status || 'unknown';
+        toast.success(`Automation run complete. Converted ${converted} lead(s). Brochure: ${brochureState}.`);
       }
     } catch (error) {
       console.error('Automation run failed:', error);
@@ -366,6 +373,87 @@ export const SearchExpired = () => {
                 Search Again
               </Button>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {automationResult && (
+        <Card className="border-amber-500/30" data-testid="expired-test-now-results-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-amber-500" />
+              Test Now Results
+            </CardTitle>
+            <CardDescription>
+              Most recent automation execution details
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3 rounded-lg bg-muted/40" data-testid="expired-test-now-converted-count">
+                <p className="text-xs text-muted-foreground">Converted Leads</p>
+                <p className="text-xl font-semibold">{automationResult.converted_leads?.length || 0}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/40" data-testid="expired-test-now-errors-count">
+                <p className="text-xs text-muted-foreground">Errors</p>
+                <p className="text-xl font-semibold">{automationResult.conversion_errors?.length || 0}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/40" data-testid="expired-test-now-matched-count">
+                <p className="text-xs text-muted-foreground">Matched Listings</p>
+                <p className="text-xl font-semibold">{automationResult.search_result?.matched_listing_ids?.length || 0}</p>
+              </div>
+            </div>
+
+            {(automationResult.lead_results || []).map((leadResult) => (
+              <div
+                key={leadResult.lead_id}
+                className="p-3 border rounded-lg space-y-2"
+                data-testid={`expired-test-now-lead-result-${leadResult.lead_id}`}
+              >
+                <p className="text-sm font-medium">Lead ID: {leadResult.lead_id}</p>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <a
+                    href={`/property-leads/${leadResult.lead_id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-500 hover:underline inline-flex items-center gap-1"
+                    data-testid={`expired-test-now-lead-link-${leadResult.lead_id}`}
+                  >
+                    Open Lead Detail
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <p data-testid={`expired-test-now-lead-visible-${leadResult.lead_id}`}>
+                    Visible in Property Leads: {leadResult.visible_in_property_leads ? 'Yes' : 'No'}
+                  </p>
+                  <p data-testid={`expired-test-now-brochure-status-${leadResult.lead_id}`}>
+                    Brochure Status: {leadResult.brochure_status || 'unknown'}
+                  </p>
+                  {leadResult.brochure_url && (
+                    <a
+                      href={leadResult.brochure_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-500 hover:underline inline-flex items-center gap-1"
+                      data-testid={`expired-test-now-brochure-link-${leadResult.lead_id}`}
+                    >
+                      Open Generated Brochure
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                  {leadResult.landing_page_url && (
+                    <a
+                      href={leadResult.landing_page_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-500 hover:underline block"
+                      data-testid={`expired-test-now-landing-link-${leadResult.lead_id}`}
+                    >
+                      {leadResult.landing_page_url}
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
       )}

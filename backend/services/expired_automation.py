@@ -219,6 +219,29 @@ async def _compose_avatar_background(background_url: str, avatar_url: str, lead_
     return f"{_get_site_url()}/api/static/automation/{filename}"
 
 
+def _slugify_filename(value: str) -> str:
+    text = (value or "").strip().lower()
+    text = re.sub(r"[^a-z0-9\s-]", "", text)
+    text = re.sub(r"[\s_-]+", "-", text)
+    return text.strip("-") or "brochure"
+
+
+async def _persist_brochure_pdf(lead_id: str, source_filename: str, pdf_buffer: io.BytesIO) -> str:
+    output_dir = "/app/backend/static/automation/brochures"
+    os.makedirs(output_dir, exist_ok=True)
+
+    base_name = os.path.splitext(source_filename or "brochure.pdf")[0]
+    safe_name = _slugify_filename(base_name)
+    stored_name = f"{safe_name}-{lead_id[:8]}-{str(uuid.uuid4())[:8]}.pdf"
+    output_path = os.path.join(output_dir, stored_name)
+
+    pdf_buffer.seek(0)
+    with open(output_path, "wb") as f:
+        f.write(pdf_buffer.read())
+
+    return f"{_get_site_url()}/api/static/automation/brochures/{stored_name}"
+
+
 
 async def _send_tracked_email(lead: dict, recipient_email: str, brochure_pdf, brochure_filename: str, landing_page_url: str, tracking_id: str, agent_info: dict):
     settings = await db.smtp_settings.find_one({}, {"_id": 0})
@@ -296,8 +319,7 @@ async def run_marketing_flow_for_lead(lead_id: str, recipient_emails: List[str],
     if not lead:
         raise ValueError("Lead not found")
 
-    if not recipient_emails:
-        return {"recipients": [], "landing_page_url": None}
+    recipient_emails = recipient_emails or []
 
     settings = await get_expired_automation_settings()
     branding = await db.settings.find_one({"type": "branding"}, {"_id": 0})
@@ -346,6 +368,21 @@ async def run_marketing_flow_for_lead(lead_id: str, recipient_emails: List[str],
     if not landing_page_url:
         landing_page_url = _get_site_url()
 
+    lead_updates = {"landing_page_url": landing_page_url}
+    if landing_page and landing_page.get("preview_url") != landing_page_url:
+        await db.landing_pages.update_one(
+            {"id": landing_page["id"]},
+            {"$set": {"preview_url": landing_page_url, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+
+    lead_updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.property_leads.update_one(
+        {"id": lead_id},
+        {"$set": lead_updates}
+    )
+
+    lead = await db.property_leads.find_one({"id": lead_id}, {"_id": 0})
+
     # Add placeholder video once
     if lead and not lead.get("videos"):
         await upload_video_to_lead(
@@ -392,37 +429,140 @@ async def run_marketing_flow_for_lead(lead_id: str, recipient_emails: List[str],
     except Exception:
         pass
 
-    pdf_buffer, filename = await generate_brochure(
-        lead=lead,
-        agent_info=agent_info,
-        template="luxury",
-        landing_page_url=landing_page_url
-    )
+    brochure_status = "failed"
+    brochure_error = None
+    brochure_url = None
+    brochure_filename = None
+    pdf_buffer = None
 
-    sent_to = []
-    for recipient in recipient_emails:
-        pdf_buffer.seek(0)
-        tracking_id = await _create_tracking_record(lead_id, recipient, landing_page_url)
-        await _send_tracked_email(lead, recipient, pdf_buffer, filename, landing_page_url, tracking_id, agent_info)
-        sent_to.append(recipient)
-
-    await db.property_leads.update_one(
-        {"id": lead_id},
-        {"$push": {
-            "activity": {
-                "type": "automation_email_sent",
-                "description": f"Automation email sent to {', '.join(sent_to)}",
-                "user": current_user.get("name", "System"),
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "data": {
-                    "recipients": sent_to,
-                    "landing_page_url": landing_page_url
+    try:
+        pdf_buffer, brochure_filename = await generate_brochure(
+            lead=lead,
+            agent_info=agent_info,
+            template="luxury",
+            landing_page_url=landing_page_url
+        )
+        brochure_url = await _persist_brochure_pdf(lead_id, brochure_filename, pdf_buffer)
+        brochure_status = "generated"
+        now = datetime.now(timezone.utc).isoformat()
+        await db.property_leads.update_one(
+            {"id": lead_id},
+            {
+                "$set": {
+                    "brochure_status": brochure_status,
+                    "brochure_url": brochure_url,
+                    "brochure_filename": brochure_filename,
+                    "brochure_generated_at": now,
+                    "automation_last_run_at": now,
+                    "updated_at": now
+                },
+                "$push": {
+                    "activity": {
+                        "type": "brochure_generated",
+                        "description": "Automation brochure generated",
+                        "user": current_user.get("name", "System"),
+                        "timestamp": now,
+                        "data": {
+                            "brochure_url": brochure_url,
+                            "landing_page_url": landing_page_url
+                        }
+                    }
                 }
             }
-        }}
-    )
+        )
+    except Exception as exc:
+        brochure_error = str(exc)
+        now = datetime.now(timezone.utc).isoformat()
+        await db.property_leads.update_one(
+            {"id": lead_id},
+            {
+                "$set": {
+                    "brochure_status": brochure_status,
+                    "brochure_error": brochure_error,
+                    "automation_last_run_at": now,
+                    "updated_at": now
+                },
+                "$push": {
+                    "activity": {
+                        "type": "brochure_generation_failed",
+                        "description": f"Automation brochure failed: {brochure_error}",
+                        "user": current_user.get("name", "System"),
+                        "timestamp": now
+                    }
+                }
+            }
+        )
 
-    return {"recipients": sent_to, "landing_page_url": landing_page_url}
+    sent_to = []
+    email_errors = []
+    if brochure_status == "generated" and pdf_buffer and brochure_filename:
+        for recipient in recipient_emails:
+            try:
+                pdf_buffer.seek(0)
+                tracking_id = await _create_tracking_record(lead_id, recipient, landing_page_url)
+                await _send_tracked_email(lead, recipient, pdf_buffer, brochure_filename, landing_page_url, tracking_id, agent_info)
+                sent_to.append(recipient)
+            except Exception as exc:
+                email_errors.append({"recipient": recipient, "error": str(exc)})
+
+    now = datetime.now(timezone.utc).isoformat()
+    if sent_to:
+        await db.property_leads.update_one(
+            {"id": lead_id},
+            {
+                "$set": {"updated_at": now},
+                "$push": {
+                    "activity": {
+                        "type": "automation_email_sent",
+                        "description": f"Automation email sent to {', '.join(sent_to)}",
+                        "user": current_user.get("name", "System"),
+                        "timestamp": now,
+                        "data": {
+                            "recipients": sent_to,
+                            "landing_page_url": landing_page_url,
+                            "brochure_url": brochure_url
+                        }
+                    }
+                }
+            }
+        )
+
+    if email_errors:
+        await db.property_leads.update_one(
+            {"id": lead_id},
+            {
+                "$set": {"updated_at": now},
+                "$push": {
+                    "activity": {
+                        "type": "automation_email_failed",
+                        "description": "Automation email failed for one or more recipients",
+                        "user": current_user.get("name", "System"),
+                        "timestamp": now,
+                        "data": {"errors": email_errors}
+                    }
+                }
+            }
+        )
+
+    if not recipient_emails:
+        email_status = "skipped"
+    elif sent_to:
+        email_status = "sent"
+    elif email_errors:
+        email_status = "failed"
+    else:
+        email_status = "skipped"
+
+    return {
+        "recipients": sent_to,
+        "landing_page_url": landing_page_url,
+        "brochure_status": brochure_status,
+        "brochure_url": brochure_url,
+        "brochure_filename": brochure_filename,
+        "brochure_error": brochure_error,
+        "email_status": email_status,
+        "email_errors": email_errors
+    }
 
 
 async def run_expired_automation(test_emails: Optional[List[str]] = None, manual_trigger: bool = False) -> dict:
@@ -452,12 +592,25 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
     search_result = await search_expired(request=search_request, current_user=current_user)
     matched_ids = [mls_id for mls_id in search_result.get("matched_listing_ids", []) if mls_id]
 
+    if matched_ids:
+        active_candidates = await db.expired_listings.find(
+            {
+                "mls_id": {"$in": matched_ids},
+                "sync_status": {"$ne": "converted"}
+            },
+            {"_id": 0, "mls_id": 1}
+        ).to_list(len(matched_ids))
+        active_ids = [doc.get("mls_id") for doc in active_candidates if doc.get("mls_id")]
+        remaining_ids = [mls_id for mls_id in matched_ids if mls_id not in set(active_ids)]
+        matched_ids = active_ids + remaining_ids
+
     if manual_trigger:
         test_max = settings.get("test_max_leads", DEFAULT_TEST_MAX_LEADS)
         if test_max and test_max > 0:
             matched_ids = matched_ids[:test_max]
 
     converted_leads = []
+    lead_results = []
     conversion_errors = []
 
     for mls_id in matched_ids:
@@ -465,10 +618,46 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
             result = await convert_to_lead(listing_id=mls_id, current_user=current_user)
             lead_id = result.get("lead_id")
             if lead_id:
-                converted_leads.append(lead_id)
-                await run_marketing_flow_for_lead(lead_id, recipients, current_user, avatar_url=avatar_url)
+                if lead_id not in converted_leads:
+                    converted_leads.append(lead_id)
+                marketing_result = await run_marketing_flow_for_lead(lead_id, recipients, current_user, avatar_url=avatar_url)
+                lead_results.append({
+                    "mls_id": mls_id,
+                    "lead_id": lead_id,
+                    "reused_existing_lead": result.get("message") == "Already converted to lead",
+                    "landing_page_url": marketing_result.get("landing_page_url"),
+                    "brochure_status": marketing_result.get("brochure_status"),
+                    "brochure_url": marketing_result.get("brochure_url"),
+                    "email_status": marketing_result.get("email_status"),
+                    "email_errors": marketing_result.get("email_errors", []),
+                    "visible_in_property_leads": True
+                })
         except Exception as exc:
-            conversion_errors.append({"mls_id": mls_id, "error": str(exc)})
+            error_text = str(exc)
+            if "already exists for this property" in error_text.lower():
+                existing = await db.property_leads.find_one({"mls_id": mls_id}, {"_id": 0, "id": 1})
+                if existing and existing.get("id"):
+                    try:
+                        lead_id = existing["id"]
+                        if lead_id not in converted_leads:
+                            converted_leads.append(lead_id)
+                        marketing_result = await run_marketing_flow_for_lead(lead_id, recipients, current_user, avatar_url=avatar_url)
+                        lead_results.append({
+                            "mls_id": mls_id,
+                            "lead_id": lead_id,
+                            "reused_existing_lead": True,
+                            "landing_page_url": marketing_result.get("landing_page_url"),
+                            "brochure_status": marketing_result.get("brochure_status"),
+                            "brochure_url": marketing_result.get("brochure_url"),
+                            "email_status": marketing_result.get("email_status"),
+                            "email_errors": marketing_result.get("email_errors", []),
+                            "visible_in_property_leads": True
+                        })
+                        continue
+                    except Exception as retry_exc:
+                        conversion_errors.append({"mls_id": mls_id, "error": str(retry_exc)})
+                        continue
+            conversion_errors.append({"mls_id": mls_id, "error": error_text})
 
     run_log = {
         "id": str(uuid.uuid4()),
@@ -478,6 +667,7 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
         "criteria": criteria,
         "matched_count": len(matched_ids),
         "converted_count": len(converted_leads),
+        "lead_results": lead_results,
         "conversion_errors": conversion_errors,
         "recipients": recipients,
         "avatar_url": avatar_url,
@@ -488,6 +678,7 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
     return {
         "search_result": search_result,
         "converted_leads": converted_leads,
+        "lead_results": lead_results,
         "conversion_errors": conversion_errors,
         "recipients": recipients,
         "avatar_url": avatar_url,

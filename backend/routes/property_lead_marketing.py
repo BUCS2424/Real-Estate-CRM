@@ -369,11 +369,99 @@ async def create_listing_from_lead(
     if lead.get("listing_id"):
         existing = await db.properties.find_one({"id": lead["listing_id"]}, {"_id": 0})
         if existing:
-            return {
+            result = {
                 "message": "Listing already exists for this lead",
                 "listing": existing,
                 "listing_id": lead["listing_id"]
             }
+
+            if request.create_landing_page:
+                existing_landing = None
+                if lead.get("landing_page_id"):
+                    existing_landing = await db.landing_pages.find_one({"id": lead["landing_page_id"]}, {"_id": 0})
+
+                if existing_landing:
+                    canonical_url = build_landing_page_url(existing_landing["slug"])
+                    updates = {}
+                    if lead.get("landing_page_url") != canonical_url:
+                        updates["landing_page_url"] = canonical_url
+                    if existing_landing.get("preview_url") != canonical_url:
+                        await db.landing_pages.update_one(
+                            {"id": existing_landing["id"]},
+                            {"$set": {"preview_url": canonical_url, "updated_at": datetime.now(timezone.utc).isoformat()}}
+                        )
+                    if updates:
+                        await db.property_leads.update_one({"id": lead_id}, {"$set": updates})
+
+                    result["landing_page_id"] = existing_landing["id"]
+                    result["landing_page_url"] = canonical_url
+                    result["landing_page"] = existing_landing
+                else:
+                    import re
+
+                    full_address = f"{existing.get('address', '')} {existing.get('city', '')} {existing.get('state', '')}"
+                    slug = re.sub(r'[^a-z0-9\s-]', '', full_address.lower())
+                    slug = re.sub(r'[\s]+', '-', slug)
+                    slug = re.sub(r'-+', '-', slug).strip('-') or f"lead-{lead_id[:8]}"
+
+                    slug_exists = await db.landing_pages.find_one({"slug": slug})
+                    if slug_exists:
+                        slug = f"{slug}-{str(uuid.uuid4())[:8]}"
+
+                    settings = await db.settings.find_one({"type": "agent"}, {"_id": 0})
+                    now = datetime.now(timezone.utc).isoformat()
+                    landing_page_id = str(uuid.uuid4())
+                    landing_page = {
+                        "id": landing_page_id,
+                        "listing_id": lead["listing_id"],
+                        "slug": slug,
+                        "custom_headline": request.custom_headline or existing.get("title") or existing.get("address") or "Property Listing",
+                        "custom_description": request.custom_description or existing.get("description") or "",
+                        "videos": [],
+                        "additional_images": [],
+                        "virtual_tour_url": "",
+                        "show_map": True,
+                        "show_contact_form": True,
+                        "agent_name": settings.get("agent_name", "") if settings else "",
+                        "agent_phone": settings.get("agent_phone", "") if settings else "",
+                        "agent_email": settings.get("agent_email", "") if settings else "",
+                        "agent_photo": settings.get("agent_photo", "") if settings else "",
+                        "theme": request.theme,
+                        "status": "draft",
+                        "preview_url": build_landing_page_url(slug),
+                        "created_at": now,
+                        "updated_at": now
+                    }
+
+                    await db.landing_pages.insert_one(landing_page)
+                    await db.property_leads.update_one(
+                        {"id": lead_id},
+                        {
+                            "$set": {
+                                "landing_page_id": landing_page_id,
+                                "landing_page_url": build_landing_page_url(slug),
+                                "updated_at": now
+                            },
+                            "$push": {
+                                "activity": {
+                                    "type": "landing_page_created",
+                                    "description": f"Landing page created by {current_user['name']}",
+                                    "user": current_user["name"],
+                                    "timestamp": now,
+                                    "data": {
+                                        "landing_page_id": landing_page_id,
+                                        "slug": slug
+                                    }
+                                }
+                            }
+                        }
+                    )
+
+                    result["landing_page_id"] = landing_page_id
+                    result["landing_page_url"] = build_landing_page_url(slug)
+                    result["landing_page"] = landing_page
+
+            return result
     
     now = datetime.now(timezone.utc).isoformat()
     listing_id = str(uuid.uuid4())

@@ -1,0 +1,75 @@
+{
+  "summary": "Tested Expired 'Test Now' automation flow. Backend API works perfectly (10/10 tests passed). Frontend UI loads correctly with Test Now button visible. External preview environment has 502 timeout issues during automation call, but backend services work fine internally.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Test Now automation",
+        "issue": "External preview URL times out (502) after ~60s during automation call. Backend works fine internally.",
+        "affected_selectors": ["expired-test-now-button"]
+      }
+    ],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "POST /api/expired-listings/automation/run returns 200 for admin",
+    "Automation returns lead_results array with converted leads",
+    "lead_results includes: lead_id, landing_page_url, brochure_status, visible_in_property_leads",
+    "Returned lead fetchable via GET /api/property-leads/{lead_id}",
+    "Lead contains landing_page_url, brochure_status, brochure_url after automation",
+    "Landing page URL format is /landing/{slug} as expected",
+    "Landing page route is reachable (returns 200 with HTML)",
+    "Brochure URL is reachable and serves PDF (application/pdf)",
+    "Lead appears at position 1 in Property Leads first-page response (ordered by updated_at DESC)",
+    "Automation requires authentication (returns 401/403 without token)"
+  ],
+  "features_verified": {
+    "automation_endpoint": "POST /api/expired-listings/automation/run - works correctly for admin users",
+    "lead_data_persistence": "Lead gets landing_page_id, landing_page_url, brochure_status, brochure_url, automation_last_run_at",
+    "landing_page_url_format": "Uses format /landing/2913-n-shoreview-place-tampa-fl (correct)",
+    "brochure_generation": "PDF brochures generated and stored in /app/backend/static/automation/brochures/",
+    "brochure_url_accessibility": "Brochure URLs serve application/pdf content",
+    "lead_visibility": "Converted leads appear at top of GET /api/property-leads response",
+    "frontend_ui": "Search Expired page loads with stats (106 Total, 12 Pending, 94 Converted) and Test Now button"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_expired_automation.py",
+    "/app/test_reports/pytest/expired_automation_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_expired_automation.py"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 tests passed)",
+    "frontend": "UI loads correctly, automation call times out on external preview"
+  },
+  "test_credentials": {
+    "email": "mel@a2gdesigns.com",
+    "password": "BigDaddy2016!!"
+  },
+  "test_data_verified": {
+    "lead_id": "2b2a3bd5-a28d-43c1-9650-7ca09f73b202",
+    "address": "2913 N SHOREVIEW PLACE",
+    "landing_page_url": "https://luxury-realty-52.preview.emergentagent.com/landing/2913-n-shoreview-place-tampa-fl",
+    "brochure_url": "https://luxury-realty-52.preview.emergentagent.com/api/static/automation/brochures/brochure-2913-n-shoreview-place-luxury-2b2a3bd5-999d7350.pdf",
+    "brochure_status": "generated"
+  },
+  "seed_data_creation": "None - used existing data from automation runs",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Expired automation 'Test Now' feature fully tested. Backend API works correctly (10/10 tests). The automation flow: 1) Searches expired listings, 2) Converts to property lead, 3) Creates landing page, 4) Generates PDF brochure, 5) Updates lead with all URLs. External preview environment has timeout issues (502) on long-running automation calls, but internal backend works fine. Test file: /app/backend/tests/test_expired_automation.py",
+  "mocked_apis": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": [
+      "Jacquie Lawson service (unrelated to this test)",
+      "Social media service (unrelated to this test)",
+      "SkyReels avatar video generation (partial mock - video placeholder used)"
+    ]
+  }
+}

@@ -263,7 +263,7 @@ async def get_property_leads(
         query["city"] = {"$regex": city, "$options": "i"}
     
     total = await db.property_leads.count_documents(query)
-    leads = await db.property_leads.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    leads = await db.property_leads.find(query, {"_id": 0}).sort("updated_at", -1).skip(skip).limit(limit).to_list(limit)
     
     return {
         "leads": leads,
