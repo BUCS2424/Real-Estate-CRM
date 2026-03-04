@@ -2104,3 +2104,19 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 ### Tests & Verification
 - Playwright: /landing/test-slug renders public PropertyLandingPage (not gated) ✅
 - Auto frontend testing agent: landing links format /landing/{slug} confirmed ✅
+
+
+---
+
+## Update: March 04, 2026 - Telnyx Dialer + SMS + Verification
+
+### Completed
+- Integrated Telnyx backend routes for SMS, voice (WebRTC), call history, and phone verification
+- Added Dialer, Messages, Call History pages and routes, wired to Telnyx endpoints
+- Added Dev Settings → Telnyx configuration UI with all required fields and Verify module
+- Added sidebar menu items: Dialer, Messages, Call History under Dashboard
+- Stored Telnyx credentials in DB (encrypted) and configured preview for testing
+
+### Tests & Verification
+- Playwright: Dialer/Messages/Call History/Telnyx Settings render ✅
+- Auto frontend testing agent: all Telnyx UI verified ✅
