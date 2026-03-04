@@ -7,11 +7,16 @@ from typing import List, Optional
 from urllib.parse import quote
 import os
 import uuid
+import asyncio
+import io
+import re
 
+import httpx
+from PIL import Image
 from database import db
 from models.user import UserRole
 from services.brochure_generator import generate_brochure
-from services.skyreels_service import generate_property_video
+from services.skyreels_service import generate_property_video, get_skyreels_service
 from routes.property_lead_marketing import CreateListingFromLeadRequest, create_listing_from_lead, publish_lead_landing_page, upload_video_to_lead
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -39,6 +44,14 @@ VIDEO_PLACEHOLDER_URL = "https://storage.googleapis.com/gtv-videos-bucket/sample
 VIDEO_PLACEHOLDER_TITLE = "Agent Intro (Placeholder)"
 SAMPLE_AGENT_AVATAR_URL = "https://customer-assets.emergentagent.com/job_86aec819-c311-4278-9c10-e6f793ce5e8f/artifacts/knqrnpef_62e3c47e-2d5d-4360-98c5-8f0b3968a3f4-removebg-preview.png"
 
+DEFAULT_SCRIPT_TEMPLATE = """Hook (0–5s): "Hi [Name], I’m [Your Name] with [Brokerage]. I was just looking at the architectural gallery for your home on [Street Name], and I felt compelled to reach out because, frankly, a home with that kind of [Feature] should already be sold."
+
+The Problem (5–15s): "When a luxury property like yours expires, it’s rarely the house that’s the issue—it’s the exposure. In this tier, you aren't just selling square footage; you’re selling a lifestyle. If the previous marketing didn't make a buyer feel what it’s like to host a gala in that grand foyer, they won't make an offer."
+
+The Solution (15–25s): "I’m bringing a fresh, high-intensity approach to luxury marketing—using cinematic storytelling and targeted digital placement to find the specific buyer your home deserves. I have a custom 'Visual Launch' plan ready for this exact floor plan."
+
+The Call to Action (25–30s): "I’d love to send over my digital portfolio or stop by for 10 minutes to show you how we can reboot this listing. Are you open to a new perspective?"""
+
 
 def _get_site_url() -> str:
     site_url = os.environ.get("SITE_URL")
@@ -60,6 +73,8 @@ async def get_expired_automation_settings() -> dict:
             updates["avatar_url"] = SAMPLE_AGENT_AVATAR_URL
         if settings.get("test_max_leads") is None:
             updates["test_max_leads"] = DEFAULT_TEST_MAX_LEADS
+        if not settings.get("script_template"):
+            updates["script_template"] = DEFAULT_SCRIPT_TEMPLATE
         if updates:
             updates["updated_at"] = now
             await db.automation_settings.update_one(
@@ -76,6 +91,7 @@ async def get_expired_automation_settings() -> dict:
         "recipient_emails": DEFAULT_RECIPIENTS,
         "avatar_url": SAMPLE_AGENT_AVATAR_URL,
         "test_max_leads": DEFAULT_TEST_MAX_LEADS,
+        "script_template": DEFAULT_SCRIPT_TEMPLATE,
         "created_at": now,
         "updated_at": now
     }
@@ -119,6 +135,85 @@ async def _create_tracking_record(lead_id: str, recipient_email: str, landing_pa
     })
 
     return tracking_id
+
+
+def _extract_feature(description: Optional[str]) -> str:
+    if not description:
+        return "architectural details"
+    text = description.lower()
+    feature_map = [
+        ("infinity-edge pool", ["infinity", "pool"]),
+        ("soaring vaulted ceilings", ["vaulted", "cathedral"]),
+        ("waterfront views", ["waterfront", "water view", "bay"]),
+        ("gourmet kitchen", ["gourmet", "chef", "kitchen"]),
+        ("private dock", ["dock", "boat"]),
+        ("outdoor kitchen", ["outdoor kitchen"]),
+        ("smart home tech", ["smart", "automation"]),
+        ("grand foyer", ["foyer", "grand entry"])
+    ]
+    for label, keys in feature_map:
+        if all(k in text for k in keys):
+            return label
+    return "architectural details"
+
+
+def _build_avatar_script(template: str, lead: dict, agent_info: dict, brokerage: str) -> str:
+    address = lead.get("address", "your property")
+    street_name = address.split(',')[0] if address else "your property"
+    homeowner = lead.get("owner_name", "Homeowner")
+    feature = _extract_feature(lead.get("description"))
+
+    script = template
+    replacements = {
+        "[Name]": homeowner,
+        "[Your Name]": agent_info.get("name", "Your Agent"),
+        "[Brokerage]": brokerage,
+        "[Street Name]": street_name,
+        "[Feature]": feature
+    }
+
+    for key, value in replacements.items():
+        script = script.replace(key, value)
+
+    return script
+
+
+async def _compose_avatar_background(background_url: str, avatar_url: str, lead_id: str) -> Optional[str]:
+    if not background_url or not avatar_url:
+        return None
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        bg_response = await client.get(background_url)
+        avatar_response = await client.get(avatar_url)
+
+    if bg_response.status_code >= 400 or avatar_response.status_code >= 400:
+        return None
+
+    bg_image = Image.open(io.BytesIO(bg_response.content)).convert("RGBA")
+    avatar_image = Image.open(io.BytesIO(avatar_response.content)).convert("RGBA")
+
+    # Resize avatar to fit 70% of background height
+    target_height = int(bg_image.height * 0.75)
+    ratio = target_height / avatar_image.height
+    target_width = int(avatar_image.width * ratio)
+    avatar_resized = avatar_image.resize((target_width, target_height))
+
+    # Position avatar bottom right with margin
+    margin_x = int(bg_image.width * 0.04)
+    margin_y = int(bg_image.height * 0.02)
+    position = (bg_image.width - target_width - margin_x, bg_image.height - target_height - margin_y)
+
+    composite = bg_image.copy()
+    composite.alpha_composite(avatar_resized, position)
+
+    output_dir = "/app/backend/static/automation"
+    os.makedirs(output_dir, exist_ok=True)
+    filename = f"avatar_composite_{lead_id}.png"
+    output_path = os.path.join(output_dir, filename)
+    composite.save(output_path, format="PNG")
+
+    return f"{_get_site_url()}/api/static/automation/{filename}"
+
 
 
 async def _send_tracked_email(lead: dict, recipient_email: str, brochure_pdf, brochure_filename: str, landing_page_url: str, tracking_id: str, agent_info: dict):
@@ -200,6 +295,10 @@ async def run_marketing_flow_for_lead(lead_id: str, recipient_emails: List[str],
     if not recipient_emails:
         return {"recipients": [], "landing_page_url": None}
 
+    settings = await get_expired_automation_settings()
+    branding = await db.settings.find_one({"type": "branding"}, {"_id": 0})
+    brokerage = branding.get("siteName", "Hidden Haven Realty") if branding else "Hidden Haven Realty"
+
     agent_info = await _get_agent_info(current_user)
     background_image_url = lead.get("background_image_url") or lead.get("primary_photo")
     if not background_image_url:
@@ -212,6 +311,15 @@ async def run_marketing_flow_for_lead(lead_id: str, recipient_emails: List[str],
             {"id": lead_id},
             {"$set": {"background_image_url": background_image_url}}
         )
+
+    script_template = settings.get("script_template", DEFAULT_SCRIPT_TEMPLATE)
+    script = _build_avatar_script(script_template, lead, agent_info, brokerage)
+
+    composite_url = await _compose_avatar_background(
+        background_url=background_image_url,
+        avatar_url=avatar_url or agent_info.get("image_url") or SAMPLE_AGENT_AVATAR_URL,
+        lead_id=lead_id
+    )
 
     listing_result = await create_listing_from_lead(
         lead_id=lead_id,
@@ -245,11 +353,38 @@ async def run_marketing_flow_for_lead(lead_id: str, recipient_emails: List[str],
 
     # Kick off avatar video generation (async placeholder for now)
     try:
-        await generate_property_video(
+        avatar_image_url = composite_url or avatar_url or agent_info.get("image_url") or SAMPLE_AGENT_AVATAR_URL
+        video_result = await generate_property_video(
             property_address=lead.get("address", "Property"),
-            agent_image_url=avatar_url or agent_info.get("image_url") or SAMPLE_AGENT_AVATAR_URL,
-            agent_name=agent_info.get("name", "Agent")
+            agent_image_url=avatar_image_url,
+            agent_name=agent_info.get("name", "Agent"),
+            custom_script=script
         )
+        if video_result.get("success") and video_result.get("request_id"):
+            request_id = video_result["request_id"]
+            await db.property_leads.update_one(
+                {"id": lead_id},
+                {"$push": {"activity": {
+                    "type": "avatar_video_requested",
+                    "description": "Avatar video generation requested",
+                    "user": current_user.get("name", "System"),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "data": {"request_id": request_id}
+                }}}
+            )
+            skyreels = get_skyreels_service()
+            for _ in range(6):
+                await asyncio.sleep(10)
+                status = await skyreels.check_task_status(request_id)
+                video_url = status.get("video_url") if status else None
+                if video_url:
+                    await upload_video_to_lead(
+                        lead_id=lead_id,
+                        video_url=video_url,
+                        video_title="Agent Intro (SkyReels)",
+                        current_user=current_user
+                    )
+                    break
     except Exception:
         pass
 

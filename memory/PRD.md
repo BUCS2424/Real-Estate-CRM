@@ -2203,3 +2203,16 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 
 ### Tests b Verification
 - POST /api/public/leads with leadType=Buyer returns 200 ✅
+
+
+---
+
+## Update: March 04, 2026 - Avatar Video Script + Background Composite
+
+### Completed
+- Added avatar script template with dynamic placeholders (name, address, feature, brokerage)
+- Composited avatar PNG over property primary photo and used composite as SkyReels first frame
+- Passed custom script into SkyReels prompt and added polling to attach generated video to the lead
+
+### Tests & Verification
+- Backend: composite image generated successfully via _compose_avatar_background ✅

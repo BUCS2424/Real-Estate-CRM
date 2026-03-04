@@ -225,7 +225,7 @@ async def generate_property_video(
         The agent is speaking confidently and warmly, making eye contact with the camera.
         Natural hand gestures, professional attire, friendly smile."""
     else:
-        prompt = custom_script
+        prompt = f"Agent speaking this script verbatim: {custom_script}"
     
     result = await service.generate_avatar_video(
         image_url=agent_image_url,
