@@ -4,7 +4,7 @@ from typing import Optional, List
 import uuid
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, root_validator
 
 from database import db
 
@@ -16,6 +16,8 @@ class PublicLeadSubmit(BaseModel):
     email: EmailStr
     phone: Optional[str] = None
     lead_type: str = "buyer"
+    leadType: Optional[str] = None
+    type: Optional[str] = None
     source: Optional[str] = "landing_page"
     email_verified: bool = False
     phone_verified: bool = False
@@ -23,6 +25,18 @@ class PublicLeadSubmit(BaseModel):
     areas_of_interest: Optional[str] = None
     consent_email: Optional[bool] = False
     consent_sms: Optional[bool] = False
+
+    @root_validator(pre=True)
+    def normalize_lead_type(cls, values):
+        raw = values.get("lead_type") or values.get("leadType") or values.get("type") or "buyer"
+        raw_str = str(raw).lower().strip()
+        if raw_str in ["buyer", "buy", "buyer_lead", "buyerlead", "b"]:
+            values["lead_type"] = "buyer"
+        elif raw_str in ["seller", "sell", "seller_lead", "sellerlead", "s"]:
+            values["lead_type"] = "seller"
+        else:
+            values["lead_type"] = "buyer"
+        return values
 
 
 @router.post("/leads")

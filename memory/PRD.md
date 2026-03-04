@@ -2191,3 +2191,15 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 
 ### Tests & Verification
 - POST /api/public/leads returns 200 ✅
+
+
+---
+
+## Update: March 04, 2026 - Buyer/Seller Lead Type Mapping Fix
+
+### Completed
+- Normalized public lead submissions to map buyer/seller reliably (accepts lead_type, leadType, type in any case)
+- Frontend buyer submission now passes lead type explicitly in multiple fields for robustness
+
+### Tests b Verification
+- POST /api/public/leads with leadType=Buyer returns 200 ✅

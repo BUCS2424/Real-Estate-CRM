@@ -571,7 +571,9 @@ export const LandingPage = () => {
                 // Submit buyer lead
                 const leadData = {
                   name, email, phone,
-                  lead_type: 'buyer',
+                  lead_type: leadType.toLowerCase(),
+                  leadType: leadType.toLowerCase(),
+                  type: leadType.toLowerCase(),
                   source: 'landing_page',
                   email_verified: emailVerified,
                   phone_verified: phoneVerified,
