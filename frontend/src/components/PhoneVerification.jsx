@@ -42,8 +42,8 @@ export const PhoneVerification = ({
   };
 
   const handleVerifyCode = async () => {
-    if (!code || code.length !== 6) {
-      toast.error('Please enter the 6-digit code');
+    if (!code || code.length !== 5) {
+      toast.error('Please enter the 5-digit code');
       return;
     }
 
@@ -128,7 +128,7 @@ export const PhoneVerification = ({
       {step === 'verify' && (
         <div className={`space-y-2 p-3 rounded-lg border animate-fade-in ${darkMode ? 'bg-[#071020] border-amber-400/20' : 'bg-muted/50'}`}>
           <p className={`text-sm ${darkMode ? 'text-white/70' : 'text-muted-foreground'}`}>
-            Enter the 6-digit code sent to {value}
+            Enter the 5-digit code sent to {value}
           </p>
           <div className="flex gap-2">
             <Input
