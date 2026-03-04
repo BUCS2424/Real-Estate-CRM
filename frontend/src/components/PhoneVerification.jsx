@@ -134,16 +134,16 @@ export const PhoneVerification = ({
             <Input
               type="text"
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              placeholder="Enter 6-digit code"
-              maxLength={6}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+              placeholder="Enter 5-digit code"
+              maxLength={5}
               className={`font-mono text-center tracking-widest ${inputClasses}`}
               data-testid={darkMode ? "landing-phone-code-input" : "phone-code-input"}
             />
             <Button 
               type="button" 
               onClick={handleVerifyCode}
-              disabled={loading || code.length !== 6}
+              disabled={loading || code.length !== 5}
               className={darkMode ? 'bg-amber-400 text-black hover:bg-amber-300' : ''}
               data-testid={darkMode ? "landing-phone-confirm-button" : "phone-confirm-button"}
             >
