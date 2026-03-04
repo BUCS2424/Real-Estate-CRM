@@ -2216,3 +2216,24 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 
 ### Tests & Verification
 - Backend: composite image generated successfully via _compose_avatar_background ✅
+
+
+---
+
+## Update: March 04, 2026 - Expired “Test Now” Critical Outputs Stabilized
+
+### Completed
+- Fixed automation marketing flow to always persist canonical `landing_page_url` on property leads
+- Added brochure artifact persistence to static storage and lead fields: `brochure_status`, `brochure_url`, `brochure_filename`, `brochure_generated_at`
+- Added resilient automation response contract with per-lead `lead_results` (landing URL, brochure status, email status, visibility flag)
+- Updated property leads list ordering to `updated_at DESC` so freshly-processed automation leads surface immediately in Property Leads view
+- Enhanced Expired Search UI with a new **Test Now Results** card showing converted count, brochure status, landing/brochure links, and direct lead detail link
+
+### Tests & Verification
+- Backend manual smoke (localhost): `/api/expired-listings/automation/run` returns enriched `lead_results` with valid landing + brochure URLs ✅
+- Backend checks: brochure static URL serves PDF (200), landing route path resolves, lead data updated with status fields ✅
+- Testing agent report: `/app/test_reports/iteration_16.json` confirms backend pass (10/10) and feature verification ✅
+- Deep backend/UI testing agent confirms all requested Expired Test Now outputs are working ✅
+
+### Notes
+- **MOCKED/PARTIAL:** SkyReels avatar generation remains partially mocked (placeholder path still used when async video is not available immediately).
