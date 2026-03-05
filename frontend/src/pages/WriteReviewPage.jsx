@@ -11,6 +11,7 @@ import { useBranding } from '../contexts/BrandingContext';
 
 const WriteReviewPage = () => {
   const { branding } = useBranding();
+  const headerLogoUrl = branding.logoUrl || branding.headerLogoUrl;
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [rating, setRating] = useState(5);
@@ -111,8 +112,8 @@ const WriteReviewPage = () => {
       <header className="py-6 px-6 border-b border-white/10">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
-            {branding.headerLogoUrl ? (
-              <img src={branding.headerLogoUrl} alt={branding.siteName} className="h-10" />
+            {headerLogoUrl ? (
+              <img src={headerLogoUrl} alt={branding.siteName} className="h-10 object-contain" data-testid="write-review-header-logo" />
             ) : (
               <span className="text-2xl font-serif text-white">{branding.siteName || 'Hidden Haven Realty'}</span>
             )}

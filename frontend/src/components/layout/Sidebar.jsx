@@ -73,6 +73,7 @@ const navItems = [
 export const Sidebar = ({ collapsed, onToggle }) => {
   const location = useLocation();
   const { branding } = useBranding();
+  const adminLogoUrl = branding.logoUrl || branding.dashboardLogoUrl;
   
   // Check if current path is a sales item to auto-expand
   const isSalesPath = salesItems.some(item => 
@@ -191,9 +192,9 @@ export const Sidebar = ({ collapsed, onToggle }) => {
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
         <Link to={branding.dashboardLogoLinkUrl || '/dashboard'} className="flex items-center gap-3">
-          {branding.dashboardLogoUrl ? (
+          {adminLogoUrl ? (
             <img 
-              src={branding.dashboardLogoUrl} 
+              src={adminLogoUrl}
               alt={branding.siteName || 'Logo'} 
               className="w-9 h-9 object-contain rounded-lg"
               onError={(e) => {
@@ -205,15 +206,17 @@ export const Sidebar = ({ collapsed, onToggle }) => {
           <div 
             className={cn(
               "w-9 h-9 bg-primary rounded-lg items-center justify-center",
-              branding.dashboardLogoUrl ? "hidden" : "flex"
+              adminLogoUrl ? "hidden" : "flex"
             )}
           >
             <Building2 className="w-5 h-5 text-primary-foreground" />
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="font-serif font-semibold text-sidebar-foreground">Fusion</span>
-              <span className="text-xs text-muted-foreground -mt-1">Builder CRM</span>
+              <span className="font-serif font-semibold text-sidebar-foreground leading-tight">
+                {branding.siteName || 'Hidden Haven Realty'}
+              </span>
+              <span className="text-xs text-muted-foreground -mt-1">CRM</span>
             </div>
           )}
         </Link>

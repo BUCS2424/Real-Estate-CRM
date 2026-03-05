@@ -268,7 +268,7 @@ const EditorToolbar = ({ editor }) => {
 // Main Component
 export const SystemMessages = () => {
   const [messages, setMessages] = useState([
-    { id: 1, key: 'welcome_message', title: 'Welcome Message', category: 'Onboarding', content: '<h2>Welcome to Fusion Builder CRM!</h2><p>We\'re excited to have you on board. Let\'s get started by exploring the dashboard.</p>' },
+    { id: 1, key: 'welcome_message', title: 'Welcome Message', category: 'Onboarding', content: '<h2>Welcome to Hidden Haven Realty CRM!</h2><p>We\'re excited to have you on board. Let\'s get started by exploring the dashboard.</p>' },
     { id: 2, key: 'password_reset', title: 'Password Reset Email', category: 'Authentication', content: '<p>Hi <strong>{user_name}</strong>,</p><p>You requested a password reset. Click the link below to reset your password.</p>' },
     { id: 3, key: 'deal_won', title: 'Deal Won Notification', category: 'Deals', content: '<h3>Congratulations! 🎉</h3><p>The deal <strong>{deal_name}</strong> has been marked as won!</p>' },
     { id: 4, key: 'task_reminder', title: 'Task Reminder', category: 'Tasks', content: '<p>Reminder: You have a task due soon.</p><p><strong>{task_title}</strong></p><p>Due: {due_date}</p>' },

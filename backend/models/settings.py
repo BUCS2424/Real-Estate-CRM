@@ -14,7 +14,7 @@ class SettingsResponse(BaseModel):
     theme: str
 
 class GeneralSettingsModel(BaseModel):
-    siteName: str = "Fusion Luxury Estates"
+    siteName: str = "Hidden Haven Realty"
     siteUrl: str = ""
     supportEmail: str = ""
     timezone: str = "America/New_York"

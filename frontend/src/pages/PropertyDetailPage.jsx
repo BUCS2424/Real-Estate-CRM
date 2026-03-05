@@ -460,8 +460,14 @@ export const PropertyDetailPage = () => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
-              <Home className="w-5 h-5 text-amber-400" />
-              <span className="font-serif text-white">Fusion Luxury Estates</span>
+              {branding.logoUrl ? (
+                <img src={branding.logoUrl} alt={branding.siteName || 'Hidden Haven Realty'} className="h-8 object-contain" data-testid="property-detail-footer-logo" />
+              ) : (
+                <>
+                  <Home className="w-5 h-5 text-amber-400" />
+                  <span className="font-serif text-white">{branding.siteName || 'Hidden Haven Realty'}</span>
+                </>
+              )}
             </div>
             <div className="flex gap-6 text-sm text-white/50">
               <Link to="/showcase" className="hover:text-amber-400 transition-colors">Listing Showcase</Link>

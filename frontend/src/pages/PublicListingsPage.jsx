@@ -46,6 +46,7 @@ import {
   SheetTrigger,
 } from '../components/ui/sheet';
 import { Slider } from '../components/ui/slider';
+import { useBranding } from '../contexts/BrandingContext';
 
 // Badge configuration with icons and colors
 const BADGE_CONFIG = {
@@ -95,6 +96,7 @@ const FLORIDA_CITIES = [
 ];
 
 export const PublicListingsPage = () => {
+  const { branding } = useBranding();
   const [searchParams, setSearchParams] = useSearchParams();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -323,8 +325,14 @@ export const PublicListingsPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2">
-              <Home className="w-6 h-6 text-amber-400" />
-              <span className="font-serif text-xl text-white">Fusion Luxury Estates</span>
+              {branding.logoUrl ? (
+                <img src={branding.logoUrl} alt={branding.siteName || 'Hidden Haven Realty'} className="h-10 object-contain" data-testid="showcase-header-logo" />
+              ) : (
+                <>
+                  <Home className="w-6 h-6 text-amber-400" />
+                  <span className="font-serif text-xl text-white">{branding.siteName || 'Hidden Haven Realty'}</span>
+                </>
+              )}
             </Link>
             <nav className="hidden md:flex items-center gap-8">
               <Link to="/" className="text-sm text-white/70 hover:text-amber-400 transition-colors">HOME</Link>
@@ -623,8 +631,14 @@ export const PublicListingsPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
-              <Home className="w-5 h-5 text-amber-400" />
-              <span className="font-serif text-white">Fusion Luxury Estates</span>
+              {branding.logoUrl ? (
+                <img src={branding.logoUrl} alt={branding.siteName || 'Hidden Haven Realty'} className="h-8 object-contain" data-testid="showcase-footer-logo" />
+              ) : (
+                <>
+                  <Home className="w-5 h-5 text-amber-400" />
+                  <span className="font-serif text-white">{branding.siteName || 'Hidden Haven Realty'}</span>
+                </>
+              )}
             </div>
             <div className="flex gap-6 text-sm text-white/50">
               <Link to="/newsletter-archive" className="hover:text-amber-400 transition-colors">Newsletter Archive</Link>

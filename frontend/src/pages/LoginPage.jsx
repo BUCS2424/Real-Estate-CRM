@@ -17,6 +17,7 @@ export const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { login, user } = useAuth();
   const { branding } = useBranding();
+  const authLogoUrl = branding.logoUrl || branding.dashboardLogoUrl;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -90,9 +91,9 @@ export const LoginPage = () => {
             {/* Logo with decorative frame */}
             <div className="relative mx-auto">
               <div className="absolute -inset-3 bg-gradient-to-br from-amber-400/20 to-amber-600/20 rounded-2xl blur-sm"></div>
-              {branding.dashboardLogoUrl ? (
+              {authLogoUrl ? (
                 <img 
-                  src={branding.dashboardLogoUrl} 
+                  src={authLogoUrl}
                   alt={branding.siteName || 'Logo'} 
                   className="relative w-16 h-16 object-contain rounded-xl"
                   onError={(e) => {
@@ -101,7 +102,7 @@ export const LoginPage = () => {
                   }}
                 />
               ) : null}
-              <div className={`relative w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl items-center justify-center shadow-lg shadow-amber-400/30 ${branding.dashboardLogoUrl ? 'hidden' : 'flex'}`}>
+              <div className={`relative w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl items-center justify-center shadow-lg shadow-amber-400/30 ${authLogoUrl ? 'hidden' : 'flex'}`}>
                 <span className="font-serif text-black font-bold text-2xl">H</span>
               </div>
             </div>

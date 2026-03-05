@@ -1,5 +1,5 @@
 """
-Fusion Builder CRM API - Main Server
+Hidden Haven Realty CRM API - Main Server
 Refactored modular architecture
 """
 import os
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Fusion Builder CRM API",
+    title="Hidden Haven Realty CRM API",
     description="Real Estate CRM Platform API",
     version="2.0.0"
 )

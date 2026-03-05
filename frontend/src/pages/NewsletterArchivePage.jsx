@@ -4,8 +4,10 @@ import { newsletterAPI } from '../lib/api';
 import { Mail, Calendar, Users, ArrowLeft, Home, Loader2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
+import { useBranding } from '../contexts/BrandingContext';
 
 export const NewsletterArchivePage = () => {
+  const { branding } = useBranding();
   const [newsletters, setNewsletters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedNewsletter, setSelectedNewsletter] = useState(null);
@@ -38,8 +40,14 @@ export const NewsletterArchivePage = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2">
-              <Home className="w-6 h-6 text-amber-400" />
-              <span className="font-serif text-xl text-white">Fusion Luxury Estates</span>
+              {branding.logoUrl ? (
+                <img src={branding.logoUrl} alt={branding.siteName || 'Hidden Haven Realty'} className="h-10 object-contain" data-testid="newsletter-header-logo" />
+              ) : (
+                <>
+                  <Home className="w-6 h-6 text-amber-400" />
+                  <span className="font-serif text-xl text-white">{branding.siteName || 'Hidden Haven Realty'}</span>
+                </>
+              )}
             </Link>
             <Link to="/">
               <Button variant="outline" size="sm" className="border-amber-400/50 text-amber-400 hover:bg-amber-400 hover:text-black">
@@ -155,8 +163,14 @@ export const NewsletterArchivePage = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
-              <Home className="w-5 h-5 text-amber-400" />
-              <span className="font-serif text-white">Fusion Luxury Estates</span>
+              {branding.logoUrl ? (
+                <img src={branding.logoUrl} alt={branding.siteName || 'Hidden Haven Realty'} className="h-8 object-contain" data-testid="newsletter-footer-logo" />
+              ) : (
+                <>
+                  <Home className="w-5 h-5 text-amber-400" />
+                  <span className="font-serif text-white">{branding.siteName || 'Hidden Haven Realty'}</span>
+                </>
+              )}
             </div>
             <div className="flex gap-6 text-sm text-white/50">
               <Link to="/showcase" className="hover:text-amber-400 transition-colors">Listing Showcase</Link>

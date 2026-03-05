@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 
 export const CustomCode = () => {
   const [code, setCode] = useState({
-    headerJs: '// Add your custom JavaScript here\nconsole.log("Fusion Builder CRM loaded");',
+    headerJs: '// Add your custom JavaScript here\nconsole.log("Hidden Haven Realty CRM loaded");',
     footerJs: '// Footer scripts',
     css: '/* Custom CSS styles */\n.custom-class {\n  /* your styles */\n}',
     headerHtml: '<!-- Custom header HTML -->\n<!-- e.g., Google Analytics, Meta Pixel -->',

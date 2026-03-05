@@ -11,15 +11,15 @@ import { toast } from 'sonner';
 export const MetaInformation = () => {
   const [meta, setMeta] = useState({
     global: {
-      title: 'Fusion Builder CRM | Real Estate CRM Platform',
+      title: 'Hidden Haven Realty | Real Estate CRM Platform',
       description: 'Powerful all-in-one CRM for real estate professionals. Manage contacts, deals, tasks, and AI-powered content generation.',
       keywords: 'real estate, CRM, property management, lead management, AI content',
       ogImage: 'https://example.com/og-image.jpg',
     },
     pages: [
-      { path: '/dashboard', title: 'Dashboard | Fusion Builder', description: 'Overview of your real estate business' },
-      { path: '/contacts', title: 'Contacts | Fusion Builder', description: 'Manage your leads and contacts' },
-      { path: '/deals', title: 'Deal Pipeline | Fusion Builder', description: 'Track deals through your sales pipeline' },
+      { path: '/dashboard', title: 'Dashboard | Hidden Haven Realty', description: 'Overview of your real estate business' },
+      { path: '/contacts', title: 'Contacts | Hidden Haven Realty', description: 'Manage your leads and contacts' },
+      { path: '/deals', title: 'Deal Pipeline | Hidden Haven Realty', description: 'Track deals through your sales pipeline' },
     ]
   });
 

@@ -14,8 +14,11 @@ import {
   Handshake
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import { useBranding } from '../contexts/BrandingContext';
 
 export const AboutPage = () => {
+  const { branding } = useBranding();
+
   return (
     <div className="min-h-screen bg-[#0a1628]">
       {/* Header */}
@@ -23,8 +26,14 @@ export const AboutPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2">
-              <Home className="w-6 h-6 text-amber-400" />
-              <span className="font-serif text-xl text-white">Fusion Luxury Estates</span>
+              {branding.logoUrl ? (
+                <img src={branding.logoUrl} alt={branding.siteName || 'Hidden Haven Realty'} className="h-10 object-contain" data-testid="about-header-logo" />
+              ) : (
+                <>
+                  <Home className="w-6 h-6 text-amber-400" />
+                  <span className="font-serif text-xl text-white">{branding.siteName || 'Hidden Haven Realty'}</span>
+                </>
+              )}
             </Link>
             <nav className="hidden md:flex items-center gap-8">
               <Link to="/" className="text-sm text-white/70 hover:text-amber-400 transition-colors">HOME</Link>
@@ -289,8 +298,14 @@ export const AboutPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
-              <Home className="w-5 h-5 text-amber-400" />
-              <span className="font-serif text-white">Fusion Luxury Estates</span>
+              {branding.logoUrl ? (
+                <img src={branding.logoUrl} alt={branding.siteName || 'Hidden Haven Realty'} className="h-8 object-contain" data-testid="about-footer-logo" />
+              ) : (
+                <>
+                  <Home className="w-5 h-5 text-amber-400" />
+                  <span className="font-serif text-white">{branding.siteName || 'Hidden Haven Realty'}</span>
+                </>
+              )}
             </div>
             <div className="flex gap-6 text-sm text-white/50">
               <Link to="/newsletter-archive" className="hover:text-amber-400 transition-colors">Newsletter Archive</Link>

@@ -251,7 +251,7 @@ export const BookingPage = () => {
       // Build video link
       let videoLink = null;
       if (newBooking.video_platform === 'saysme') {
-        const roomId = `fusion-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const roomId = `hiddenhaven-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         videoLink = `https://meet.saysme.org/${roomId}`;
       } else if (newBooking.video_platform === 'zoom' && newBooking.zoom_link) {
         videoLink = newBooking.zoom_link;
