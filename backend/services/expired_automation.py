@@ -79,6 +79,8 @@ async def get_expired_automation_settings() -> dict:
             updates["test_max_leads"] = DEFAULT_TEST_MAX_LEADS
         if not settings.get("script_template"):
             updates["script_template"] = DEFAULT_SCRIPT_TEMPLATE
+        if settings.get("enabled") is None:
+            updates["enabled"] = True
         if updates:
             updates["updated_at"] = now
             await db.automation_settings.update_one(
@@ -95,6 +97,7 @@ async def get_expired_automation_settings() -> dict:
         "recipient_emails": DEFAULT_RECIPIENTS,
         "avatar_url": SAMPLE_AGENT_AVATAR_URL,
         "test_max_leads": DEFAULT_TEST_MAX_LEADS,
+        "enabled": True,
         "script_template": DEFAULT_SCRIPT_TEMPLATE,
         "created_at": now,
         "updated_at": now
@@ -570,6 +573,29 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
     criteria = settings.get("criteria", DEFAULT_EXPIRED_CRITERIA)
     recipients = test_emails or settings.get("recipient_emails", DEFAULT_RECIPIENTS)
     avatar_url = settings.get("avatar_url") or SAMPLE_AGENT_AVATAR_URL
+
+    if settings.get("enabled") is False:
+        return {
+            "paused": True,
+            "message": "Expired listings automation is paused.",
+            "search_result": {
+                "message": "Automation paused",
+                "new_listings": 0,
+                "updated_listings": 0,
+                "skipped_dead_leads": 0,
+                "filtered_out": 0,
+                "total_found": 0,
+                "new_listing_ids": [],
+                "matched_listing_ids": [],
+                "search_criteria": criteria
+            },
+            "converted_leads": [],
+            "lead_results": [],
+            "conversion_errors": [],
+            "recipients": recipients,
+            "avatar_url": avatar_url,
+            "test_max_leads": settings.get("test_max_leads", DEFAULT_TEST_MAX_LEADS) if manual_trigger else None
+        }
 
     current_user = await get_admin_user()
     if not current_user:
