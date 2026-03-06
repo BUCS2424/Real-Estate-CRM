@@ -26,6 +26,7 @@ class SearchExpiredRequest(BaseModel):
     property_type: Optional[str] = None
     exclude_rentals: bool = True
     exclude_commercial: bool = True
+    hours_expired_max: Optional[int] = 18  # Strict recency window
     days_expired: Optional[int] = 90  # Default: expired in last 90 days
     required_year: Optional[int] = 2026
     limit: int = 50
@@ -141,7 +142,12 @@ def _extract_recent_reference_date(listing: dict) -> Optional[datetime]:
     return None
 
 
-def _listing_matches_recent_year(listing: dict, days_expired: Optional[int], required_year: Optional[int]) -> bool:
+def _listing_matches_recent_year(
+    listing: dict,
+    days_expired: Optional[int],
+    required_year: Optional[int],
+    hours_expired_max: Optional[int]
+) -> bool:
     reference_date = _extract_recent_reference_date(listing)
     if not reference_date:
         return False
@@ -152,6 +158,11 @@ def _listing_matches_recent_year(listing: dict, days_expired: Optional[int], req
     if days_expired and days_expired > 0:
         cutoff = datetime.now(timezone.utc) - timedelta(days=days_expired)
         if reference_date < cutoff:
+            return False
+
+    if hours_expired_max and hours_expired_max > 0:
+        hours_cutoff = datetime.now(timezone.utc) - timedelta(hours=hours_expired_max)
+        if reference_date < hours_cutoff:
             return False
 
     return True
@@ -297,7 +308,8 @@ async def search_expired(
         ) and _listing_matches_recent_year(
             listing,
             request.days_expired,
-            request.required_year or RECENT_EXPIRED_YEAR
+            request.required_year or RECENT_EXPIRED_YEAR,
+            request.hours_expired_max
         )
     ]
     filtered_out = len(listings) - len(filtered_listings)
@@ -392,6 +404,7 @@ async def search_expired(
             "property_type": request.property_type,
             "exclude_rentals": request.exclude_rentals,
             "exclude_commercial": request.exclude_commercial,
+            "hours_expired_max": request.hours_expired_max,
             "days_expired": request.days_expired,
             "required_year": request.required_year or RECENT_EXPIRED_YEAR
         }

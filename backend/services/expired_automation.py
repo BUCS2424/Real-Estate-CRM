@@ -30,6 +30,7 @@ DEFAULT_EXPIRED_CRITERIA = {
     "exclude_rentals": True,
     "exclude_commercial": True,
     "status": "Expired",
+    "hours_expired_max": 18,
     "days_expired": 90,
     "required_year": 2026,
     "limit": 50
@@ -86,6 +87,8 @@ async def get_expired_automation_settings() -> dict:
 
         criteria = settings.get("criteria") or {}
         criteria_updates = {}
+        if criteria.get("hours_expired_max") is None:
+            criteria_updates["hours_expired_max"] = DEFAULT_EXPIRED_CRITERIA["hours_expired_max"]
         if criteria.get("days_expired") is None:
             criteria_updates["days_expired"] = DEFAULT_EXPIRED_CRITERIA["days_expired"]
         if criteria.get("required_year") is None:
@@ -587,10 +590,10 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
     recipients = test_emails or settings.get("recipient_emails", DEFAULT_RECIPIENTS)
     avatar_url = settings.get("avatar_url") or SAMPLE_AGENT_AVATAR_URL
 
-    if settings.get("enabled") is False:
+    if settings.get("enabled") is False and not manual_trigger:
         return {
             "paused": True,
-            "message": "Expired listings automation is paused.",
+            "message": "Expired listings daily automation is paused. Manual test runs are still allowed.",
             "search_result": {
                 "message": "Automation paused",
                 "new_listings": 0,
@@ -625,6 +628,7 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
         property_type=criteria.get("property_type"),
         exclude_rentals=criteria.get("exclude_rentals", True),
         exclude_commercial=criteria.get("exclude_commercial", True),
+        hours_expired_max=criteria.get("hours_expired_max", DEFAULT_EXPIRED_CRITERIA["hours_expired_max"]),
         days_expired=criteria.get("days_expired", DEFAULT_EXPIRED_CRITERIA["days_expired"]),
         required_year=criteria.get("required_year", DEFAULT_EXPIRED_CRITERIA["required_year"]),
         limit=criteria.get("limit", 50)
