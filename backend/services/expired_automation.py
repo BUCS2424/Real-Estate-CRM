@@ -30,6 +30,8 @@ DEFAULT_EXPIRED_CRITERIA = {
     "exclude_rentals": True,
     "exclude_commercial": True,
     "status": "Expired",
+    "days_expired": 90,
+    "required_year": 2026,
     "limit": 50
 }
 
@@ -81,6 +83,17 @@ async def get_expired_automation_settings() -> dict:
             updates["script_template"] = DEFAULT_SCRIPT_TEMPLATE
         if settings.get("enabled") is None:
             updates["enabled"] = True
+
+        criteria = settings.get("criteria") or {}
+        criteria_updates = {}
+        if criteria.get("days_expired") is None:
+            criteria_updates["days_expired"] = DEFAULT_EXPIRED_CRITERIA["days_expired"]
+        if criteria.get("required_year") is None:
+            criteria_updates["required_year"] = DEFAULT_EXPIRED_CRITERIA["required_year"]
+        if criteria_updates:
+            updated_criteria = {**criteria, **criteria_updates}
+            updates["criteria"] = updated_criteria
+
         if updates:
             updates["updated_at"] = now
             await db.automation_settings.update_one(
@@ -612,6 +625,8 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
         property_type=criteria.get("property_type"),
         exclude_rentals=criteria.get("exclude_rentals", True),
         exclude_commercial=criteria.get("exclude_commercial", True),
+        days_expired=criteria.get("days_expired", DEFAULT_EXPIRED_CRITERIA["days_expired"]),
+        required_year=criteria.get("required_year", DEFAULT_EXPIRED_CRITERIA["required_year"]),
         limit=criteria.get("limit", 50)
     )
 

@@ -4,7 +4,7 @@ Search, moderate, and convert expired MLS listings to Property Leads
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional, List
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel
 import uuid
 from utils.auth import get_current_user
@@ -27,7 +27,11 @@ class SearchExpiredRequest(BaseModel):
     exclude_rentals: bool = True
     exclude_commercial: bool = True
     days_expired: Optional[int] = 90  # Default: expired in last 90 days
+    required_year: Optional[int] = 2026
     limit: int = 50
+
+
+RECENT_EXPIRED_YEAR = 2026
 
 
 def _normalize_zip_codes(request: SearchExpiredRequest) -> List[str]:
@@ -56,6 +60,99 @@ def _listing_matches_filters(listing: dict, property_type: Optional[str], exclud
 
     if exclude_commercial and "commercial" in property_values:
         return False
+
+    return True
+
+
+def _parse_listing_date(value) -> Optional[datetime]:
+    if value is None:
+        return None
+
+    if isinstance(value, datetime):
+        dt = value
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+
+    if isinstance(value, (int, float)):
+        try:
+            ts = float(value)
+            if ts > 1_000_000_000_000:
+                ts = ts / 1000.0
+            return datetime.fromtimestamp(ts, tz=timezone.utc)
+        except Exception:
+            return None
+
+    if not isinstance(value, str):
+        return None
+
+    raw = value.strip()
+    if not raw:
+        return None
+
+    # Handle /Date(1704067200000)/ format
+    if raw.startswith("/Date(") and raw.endswith(")/"):
+        try:
+            ts = float(raw[6:-2]) / 1000.0
+            return datetime.fromtimestamp(ts, tz=timezone.utc)
+        except Exception:
+            return None
+
+    normalized = raw.replace("Z", "+00:00")
+    try:
+        dt = datetime.fromisoformat(normalized)
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+    except Exception:
+        pass
+
+    for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%Y/%m/%d"):
+        try:
+            dt = datetime.strptime(raw, fmt)
+            return dt.replace(tzinfo=timezone.utc)
+        except Exception:
+            continue
+
+    return None
+
+
+def _extract_recent_reference_date(listing: dict) -> Optional[datetime]:
+    candidate_keys = [
+        "status_change_timestamp",
+        "listing_status_change_date",
+        "listing_expiration_date",
+        "modification_timestamp",
+        "listing_contract_date",
+    ]
+
+    for key in candidate_keys:
+        parsed = _parse_listing_date(listing.get(key))
+        if parsed:
+            return parsed
+
+    days_on_market = listing.get("days_on_market")
+    if isinstance(days_on_market, (int, float)) and days_on_market >= 0:
+        try:
+            return datetime.now(timezone.utc) - timedelta(days=int(days_on_market))
+        except Exception:
+            return None
+
+    return None
+
+
+def _listing_matches_recent_year(listing: dict, days_expired: Optional[int], required_year: Optional[int]) -> bool:
+    reference_date = _extract_recent_reference_date(listing)
+    if not reference_date:
+        return False
+
+    if required_year and reference_date.year != required_year:
+        return False
+
+    if days_expired and days_expired > 0:
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days_expired)
+        if reference_date < cutoff:
+            return False
 
     return True
 
@@ -197,6 +294,10 @@ async def search_expired(
             request.property_type,
             request.exclude_rentals,
             request.exclude_commercial
+        ) and _listing_matches_recent_year(
+            listing,
+            request.days_expired,
+            request.required_year or RECENT_EXPIRED_YEAR
         )
     ]
     filtered_out = len(listings) - len(filtered_listings)
@@ -220,6 +321,7 @@ async def search_expired(
         
         # Check if already exists
         existing = await db.expired_listings.find_one({"mls_id": mls_id})
+        reference_date = _extract_recent_reference_date(listing)
         
         listing_doc = {
             "mls_id": mls_id,
@@ -240,6 +342,12 @@ async def search_expired(
             "original_list_price": listing.get("original_list_price") or listing.get("list_price"),
             "mls_status": listing.get("status"),
             "days_on_market": listing.get("days_on_market"),
+            "listing_contract_date": listing.get("listing_contract_date"),
+            "listing_expiration_date": listing.get("listing_expiration_date"),
+            "status_change_timestamp": listing.get("status_change_timestamp"),
+            "listing_status_change_date": listing.get("listing_status_change_date"),
+            "modification_timestamp": listing.get("modification_timestamp"),
+            "recent_reference_date": reference_date.isoformat() if reference_date else None,
             "photos": listing.get("photos", []),
             "primary_photo": listing.get("primary_photo"),
             "listing_agent": listing.get("listing_agent"),
@@ -283,7 +391,9 @@ async def search_expired(
             "max_price": request.max_price,
             "property_type": request.property_type,
             "exclude_rentals": request.exclude_rentals,
-            "exclude_commercial": request.exclude_commercial
+            "exclude_commercial": request.exclude_commercial,
+            "days_expired": request.days_expired,
+            "required_year": request.required_year or RECENT_EXPIRED_YEAR
         }
     }
 
