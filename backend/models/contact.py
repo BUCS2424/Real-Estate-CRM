@@ -18,6 +18,9 @@ class ContactCreate(BaseModel):
     name: Optional[str] = None  # Legacy field
     email: Optional[str] = None
     phone: Optional[str] = None
+    mobile_phone: Optional[str] = None
+    home_phone: Optional[str] = None
+    business_phone: Optional[str] = None
     company: Optional[str] = None
     position: Optional[str] = None
     source: Optional[str] = None
