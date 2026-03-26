@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
 from fastapi.responses import StreamingResponse
-from typing import List, Optional
+from typing import List, Optional, Dict, Any, Set
 from datetime import datetime, timezone
 from pydantic import BaseModel
 import uuid
@@ -541,7 +541,7 @@ Hidden Haven Realty
         
         for recipient in recipients:
             if not recipient.get('email'):
-                print(f"[SMART LIST] Skipping recipient without email")
+                print("[SMART LIST] Skipping recipient without email")
                 continue
             
             recipient_name = f"{recipient.get('first_name', '')} {recipient.get('last_name', '')}".strip() or "Valued Client"
@@ -681,10 +681,10 @@ Sent from Hidden Haven Realty CRM
         
     except smtplib.SMTPAuthenticationError as e:
         print(f"[SMART LIST] SMTP Authentication Error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"SMTP authentication failed. Please check your username and password.")
+        raise HTTPException(status_code=500, detail="SMTP authentication failed. Please check your username and password.")
     except smtplib.SMTPConnectError as e:
         print(f"[SMART LIST] SMTP Connection Error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Could not connect to SMTP server. Please check host and port settings.")
+        raise HTTPException(status_code=500, detail="Could not connect to SMTP server. Please check host and port settings.")
     except smtplib.SMTPException as e:
         print(f"[SMART LIST] SMTP Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"SMTP error: {str(e)}")
@@ -953,229 +953,484 @@ async def get_available_properties(
 
 # ============ IMPORT / EXPORT ============
 
+CONTACT_IMPORT_FIELDS = [
+    "id", "first_name", "last_name", "name", "display_name", "nickname",
+    "email", "email_2", "email_3",
+    "phone", "mobile_phone", "home_phone", "business_phone", "pager", "home_fax", "business_fax",
+    "company", "organization", "position", "job_title", "department",
+    "home_street", "home_address_2", "home_city", "home_state", "home_postal_code", "home_country",
+    "business_address", "business_address_2", "business_city", "business_state", "business_postal_code", "business_country",
+    "birthday", "anniversary", "home_purchase_anniversary",
+    "web_page", "web_page_2",
+    "related_name", "categories", "notes",
+    "status", "category", "contact_type", "source", "lead_score", "budget", "property_interest",
+    "tags", "created_at", "updated_at"
+]
+
+CONTACT_FIELD_VARIATIONS = {
+    "email": ["email", "e-mail", "email_address"],
+    "email_2": ["email_2", "email2", "secondary_email", "alternate_email"],
+    "email_3": ["email_3", "email3", "third_email"],
+    "first_name": ["first_name", "first", "firstname", "given_name"],
+    "last_name": ["last_name", "last", "lastname", "family_name", "surname"],
+    "name": ["name", "full_name", "fullname", "display_name"],
+    "mobile_phone": ["mobile_phone", "mobile", "cell", "cell_phone", "mobile number"],
+    "home_phone": ["home_phone", "home", "home number"],
+    "business_phone": ["business_phone", "work_phone", "office_phone", "business number"],
+    "phone": ["phone", "phone_number", "telephone", "tel"],
+    "company": ["company", "organization", "org", "business"],
+    "position": ["position", "title", "job_title"],
+    "notes": ["notes", "note", "comment", "comments"],
+    "tags": ["tags", "tag", "labels"]
+}
+
+PHONE_FIELDS = ["phone", "mobile_phone", "home_phone", "business_phone"]
+
+
+def _clean_text(value: Any) -> str:
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
+def _normalize_phone_key(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+    digits = re.sub(r"\D", "", value)
+    if not digits:
+        return None
+    return digits[-10:] if len(digits) >= 10 else digits
+
+
+def _split_full_name(full_name: str) -> tuple[str, str]:
+    clean = _clean_text(full_name)
+    if not clean:
+        return "", ""
+    parts = clean.split(" ", 1)
+    return parts[0], parts[1] if len(parts) > 1 else ""
+
+
+def _parse_tags(value: Any) -> List[str]:
+    if not value:
+        return []
+    if isinstance(value, list):
+        return [str(v).strip() for v in value if str(v).strip()]
+    if isinstance(value, str):
+        return [v.strip() for v in value.split(",") if v.strip()]
+    return [str(value).strip()] if str(value).strip() else []
+
+
+def _normalize_row(row: Dict[str, Any]) -> Dict[str, str]:
+    normalized: Dict[str, str] = {}
+    for key, value in row.items():
+        key_clean = _clean_text(key).lower()
+        if not key_clean:
+            continue
+        normalized[key_clean] = _clean_text(value)
+    return normalized
+
+
+def _parse_csv_rows_resilient(text: str) -> List[Dict[str, Any]]:
+    try:
+        reader = csv.DictReader(io.StringIO(text, newline=""))
+        rows = [row for row in reader if row]
+        if rows and len(reader.fieldnames or []) > 1:
+            return rows
+    except Exception:
+        pass
+
+    normalized_text = text.replace("\r\n", "\r").replace("\n", "\r")
+    raw_tokens = normalized_text.split("\r")
+    if not raw_tokens:
+        return []
+
+    known_headers = set(h.lower() for h in CONTACT_IMPORT_FIELDS)
+    for variations in CONTACT_FIELD_VARIATIONS.values():
+        for name in variations:
+            known_headers.add(name.lower())
+
+    headers: List[str] = []
+    idx = 0
+    while idx < len(raw_tokens) and not raw_tokens[idx].strip():
+        idx += 1
+
+    while idx < len(raw_tokens):
+        key = raw_tokens[idx].strip().lower()
+        if key in known_headers and key not in headers:
+            headers.append(key)
+            idx += 1
+            continue
+        break
+
+    if len(headers) < 2:
+        raise ValueError("Unsupported CSV structure")
+
+    values = [value.strip() for value in raw_tokens[idx:]]
+    rows: List[Dict[str, Any]] = []
+    width = len(headers)
+    for i in range(0, len(values), width):
+        chunk = values[i:i + width]
+        if len(chunk) < width:
+            chunk.extend([""] * (width - len(chunk)))
+        if any(cell for cell in chunk):
+            rows.append({headers[col_idx]: chunk[col_idx] for col_idx in range(width)})
+
+    return rows
+
+
+def _build_contact_from_csv_row(row: Dict[str, Any]) -> Dict[str, Any]:
+    normalized = _normalize_row(row)
+    contact: Dict[str, Any] = {}
+
+    for field in CONTACT_IMPORT_FIELDS:
+        value = normalized.get(field.lower())
+        if value:
+            contact[field] = value
+
+    for target, variations in CONTACT_FIELD_VARIATIONS.items():
+        if not contact.get(target):
+            for variation in variations:
+                value = normalized.get(variation.lower())
+                if value:
+                    contact[target] = value
+                    break
+
+    if not contact.get("first_name") and not contact.get("last_name"):
+        first, last = _split_full_name(contact.get("name") or "")
+        contact["first_name"] = first
+        contact["last_name"] = last
+
+    full_name = _clean_text(contact.get("name"))
+    if not full_name:
+        full_name = _clean_text(f"{contact.get('first_name', '')} {contact.get('last_name', '')}")
+    if full_name:
+        contact["name"] = full_name
+    if not contact.get("display_name") and full_name:
+        contact["display_name"] = full_name
+
+    email = _clean_text(contact.get("email")).lower()
+    if email:
+        contact["email"] = email
+
+    for phone_field in PHONE_FIELDS:
+        phone_value = _clean_text(contact.get(phone_field))
+        if phone_value:
+            contact[phone_field] = phone_value
+
+    tags = _parse_tags(contact.get("tags"))
+    if tags:
+        contact["tags"] = tags
+
+    lead_score_raw = _clean_text(contact.get("lead_score"))
+    if lead_score_raw:
+        try:
+            contact["lead_score"] = int(float(lead_score_raw))
+        except Exception:
+            contact["lead_score"] = 0
+
+    return contact
+
+
+def _has_importable_data(contact: Dict[str, Any]) -> bool:
+    candidate_fields = [
+        "first_name", "last_name", "name", "display_name", "nickname", "email",
+        "phone", "mobile_phone", "home_phone", "business_phone", "company", "organization", "notes"
+    ]
+    return any(_clean_text(contact.get(field)) for field in candidate_fields)
+
+
+def _contact_name_key(contact: Dict[str, Any]) -> str:
+    first = _clean_text(contact.get("first_name")).lower()
+    last = _clean_text(contact.get("last_name")).lower()
+    if first or last:
+        return f"{first}|{last}"
+    name = _clean_text(contact.get("name")).lower()
+    return f"name|{name}" if name else ""
+
+
+def _contact_phone_keys(contact: Dict[str, Any]) -> Set[str]:
+    keys: Set[str] = set()
+    for field in PHONE_FIELDS:
+        normalized = _normalize_phone_key(_clean_text(contact.get(field)))
+        if normalized:
+            keys.add(normalized)
+    return keys
+
+
+def _prepare_contact_doc(
+    contact: Dict[str, Any],
+    category_override: Optional[str],
+    now: str,
+    created_by: str,
+    for_update: bool = False
+) -> Dict[str, Any]:
+    doc: Dict[str, Any] = {}
+
+    for field in CONTACT_IMPORT_FIELDS:
+        if field in ["id", "updated_at"]:
+            continue
+        value = contact.get(field)
+        if value is None:
+            continue
+        if isinstance(value, str) and not value.strip():
+            continue
+        if field == "tags":
+            parsed_tags = _parse_tags(value)
+            if parsed_tags:
+                doc[field] = parsed_tags
+            continue
+        doc[field] = value
+
+    if category_override:
+        doc["category"] = category_override
+    elif not doc.get("category"):
+        doc["category"] = "buyer"
+
+    if not doc.get("status"):
+        doc["status"] = "active"
+    if not doc.get("source"):
+        doc["source"] = "csv_import"
+
+    if not for_update:
+        doc["id"] = str(uuid.uuid4())
+        doc["created_at"] = doc.get("created_at") or now
+        doc["created_by"] = created_by
+
+    doc["updated_at"] = now
+    return doc
+
+
 @router.post("/import")
 async def import_contacts(
     file: UploadFile = File(...),
     category: Optional[str] = Query(None, description="Category to assign: buyer, seller"),
+    duplicate_mode: str = Query("skip", description="skip | update | create"),
+    dry_run: bool = Query(False, description="Preview only, no DB writes"),
     current_user: dict = Depends(get_current_user)
 ):
     """Import contacts from CSV or vCard (.vcf) file"""
     if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
         raise HTTPException(status_code=403, detail="Admin access required")
-    
+
+    mode = (duplicate_mode or "skip").lower()
+    if mode not in ["skip", "update", "create"]:
+        raise HTTPException(status_code=400, detail="duplicate_mode must be one of: skip, update, create")
+
     content = await file.read()
-    
-    # Detect file type
-    filename = file.filename.lower() if file.filename else ''
-    is_vcard = filename.endswith('.vcf') or filename.endswith('.vcard')
-    
+
+    filename = file.filename.lower() if file.filename else ""
+    is_vcard = filename.endswith(".vcf") or filename.endswith(".vcard")
+
     try:
-        # Decode content
         try:
-            text = content.decode('utf-8')
+            text = content.decode("utf-8")
         except UnicodeDecodeError:
-            text = content.decode('latin-1')
-        
-        contacts_to_import = []
-        skipped_no_data = 0  # Track rows without required fields
-        
+            text = content.decode("latin-1")
+
+        contacts_to_import: List[Dict[str, Any]] = []
+        skipped_no_data = 0
+
         if is_vcard:
-            # Parse vCard format
-            contacts_to_import = parse_vcard(text)
-        else:
-            # Parse CSV format - supports both simple and full export format
-            reader = csv.DictReader(io.StringIO(text))
-            for row in reader:
-                contact = {}
-                
-                # Direct field mapping (matches export format)
-                direct_fields = [
-                    'id', 'first_name', 'last_name', 'name', 'display_name', 'nickname',
-                    'email', 'email_2', 'email_3',
-                    'phone', 'mobile_phone', 'home_phone', 'business_phone', 'pager', 'home_fax', 'business_fax',
-                    'company', 'organization', 'position', 'job_title', 'department',
-                    'home_street', 'home_address_2', 'home_city', 'home_state', 'home_postal_code', 'home_country',
-                    'business_address', 'business_address_2', 'business_city', 'business_state', 'business_postal_code', 'business_country',
-                    'birthday', 'anniversary', 'home_purchase_anniversary',
-                    'web_page', 'web_page_2',
-                    'related_name', 'categories', 'notes',
-                    'status', 'category', 'contact_type', 'source', 'lead_score', 'budget', 'property_interest',
-                    'tags', 'created_at', 'updated_at'
-                ]
-                
-                for field in direct_fields:
-                    if field in row and row[field]:
-                        contact[field] = row[field].strip()
-                
-                # Flexible column mapping for common variations
-                field_variations = {
-                    'email': ['email', 'Email', 'EMAIL', 'e-mail', 'E-mail', 'email_address'],
-                    'first_name': ['first_name', 'First Name', 'FirstName', 'first'],
-                    'last_name': ['last_name', 'Last Name', 'LastName', 'last'],
-                    'phone': ['phone', 'Phone', 'PHONE', 'mobile', 'Mobile', 'phone_number'],
-                    'company': ['company', 'Company', 'COMPANY', 'organization', 'org'],
-                    'position': ['position', 'Position', 'title', 'Title', 'job_title'],
-                    'notes': ['notes', 'Notes', 'NOTE', 'note'],
+            parsed = parse_vcard(text)
+            for vc in parsed:
+                first_name = _clean_text(vc.get("first_name"))
+                last_name = _clean_text(vc.get("last_name"))
+                full_name = _clean_text(vc.get("full_name"))
+                if not first_name and not last_name and full_name:
+                    first_name, last_name = _split_full_name(full_name)
+
+                contact = {
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "name": full_name or _clean_text(f"{first_name} {last_name}"),
+                    "display_name": full_name or _clean_text(f"{first_name} {last_name}"),
+                    "email": _clean_text(vc.get("email")).lower() if _clean_text(vc.get("email")) else "",
+                    "phone": _clean_text(vc.get("phone")),
+                    "company": _clean_text(vc.get("company")),
+                    "position": _clean_text(vc.get("position")),
+                    "notes": _clean_text(vc.get("notes")),
+                    "tags": _parse_tags(vc.get("tags")),
                 }
-                
-                for target, variations in field_variations.items():
-                    if not contact.get(target):
-                        for key in variations:
-                            if key in row and row[key]:
-                                contact[target] = row[key].strip()
-                                break
-                
-                # If we have full name but not first/last, split it
-                if not contact.get('first_name') and not contact.get('last_name'):
-                    for key in ['name', 'Name', 'NAME', 'full_name', 'Full Name']:
-                        if key in row and row[key]:
-                            parts = row[key].strip().split(' ', 1)
-                            contact['first_name'] = parts[0]
-                            contact['last_name'] = parts[1] if len(parts) > 1 else ''
-                            break
-                
-                # Convert tags from comma-separated string to list
-                if isinstance(contact.get('tags'), str):
-                    contact['tags'] = [t.strip() for t in contact['tags'].split(',') if t.strip()]
-                
-                if contact.get('email') or (contact.get('first_name') and contact.get('last_name')):
+                if _has_importable_data(contact):
                     contacts_to_import.append(contact)
                 else:
                     skipped_no_data += 1
-        
-        # STEP 1: Get ALL existing contacts from DB for duplicate checking
-        # This is more reliable than checking one-by-one
-        existing_emails = set()
-        existing_names = set()
-        
-        async for doc in db.contacts.find({}, {"email": 1, "first_name": 1, "last_name": 1}):
-            if doc.get("email"):
-                existing_emails.add(doc["email"].lower().strip())
-            if doc.get("first_name") and doc.get("last_name"):
-                # Create a normalized name key
-                name_key = f"{doc['first_name'].lower().strip()}|{doc['last_name'].lower().strip()}"
-                existing_names.add(name_key)
-        
-        print(f"[IMPORT] Found {len(existing_emails)} existing emails, {len(existing_names)} existing names in DB")
-        
-        # STEP 2: Process imports, checking against our sets
+        else:
+            csv_rows = _parse_csv_rows_resilient(text)
+            for row in csv_rows:
+                contact = _build_contact_from_csv_row(row)
+                if _has_importable_data(contact):
+                    contacts_to_import.append(contact)
+                else:
+                    skipped_no_data += 1
+
+        existing_by_email: Dict[str, Dict[str, Any]] = {}
+        existing_by_name: Dict[str, Dict[str, Any]] = {}
+        existing_by_phone: Dict[str, Dict[str, Any]] = {}
+
+        async for doc in db.contacts.find(
+            {},
+            {
+                "_id": 0,
+                "id": 1,
+                "email": 1,
+                "first_name": 1,
+                "last_name": 1,
+                "name": 1,
+                "phone": 1,
+                "mobile_phone": 1,
+                "home_phone": 1,
+                "business_phone": 1,
+                "tags": 1
+            }
+        ):
+            email = _clean_text(doc.get("email")).lower()
+            if email:
+                existing_by_email[email] = doc
+
+            name_key = _contact_name_key(doc)
+            if name_key:
+                existing_by_name[name_key] = doc
+
+            for phone_key in _contact_phone_keys(doc):
+                existing_by_phone[phone_key] = doc
+
         imported = 0
+        updated = 0
         duplicates = 0
         errors = 0
-        error_details = []
+        error_details: List[str] = []
         now = datetime.now(timezone.utc).isoformat()
-        
-        # Track what we're importing in this batch to avoid duplicates within the file
-        batch_emails = set()
-        batch_names = set()
-        
+        created_by = str(current_user.get("id", current_user.get("_id", "")))
+
+        batch_email_keys: Set[str] = set()
+        batch_name_keys: Set[str] = set()
+        batch_phone_keys: Set[str] = set()
+
+        preview_examples: List[Dict[str, Any]] = []
+
         for contact in contacts_to_import:
             try:
-                email = contact.get('email', '').lower().strip() if contact.get('email') else ''
-                first_name = contact.get('first_name', '').strip() if contact.get('first_name') else ''
-                last_name = contact.get('last_name', '').strip() if contact.get('last_name') else ''
-                name_key = f"{first_name.lower()}|{last_name.lower()}" if first_name and last_name else ''
-                
-                # Check for duplicate
-                is_duplicate = False
-                
-                # Check email against DB and current batch
-                if email:
-                    if email in existing_emails or email in batch_emails:
-                        is_duplicate = True
-                
-                # Check name against DB and current batch (only if no email or email didn't match)
-                if not is_duplicate and name_key:
-                    if name_key in existing_names or name_key in batch_names:
-                        is_duplicate = True
-                
-                if is_duplicate:
+                email_key = _clean_text(contact.get("email")).lower()
+                name_key = _contact_name_key(contact)
+                phone_keys = _contact_phone_keys(contact)
+
+                matched_existing: Optional[Dict[str, Any]] = None
+                match_reason = None
+
+                if email_key and email_key in existing_by_email:
+                    matched_existing = existing_by_email[email_key]
+                    match_reason = "email"
+                elif phone_keys:
+                    for phone_key in phone_keys:
+                        if phone_key in existing_by_phone:
+                            matched_existing = existing_by_phone[phone_key]
+                            match_reason = "phone"
+                            break
+                if not matched_existing and name_key and name_key in existing_by_name:
+                    matched_existing = existing_by_name[name_key]
+                    match_reason = "name"
+
+                in_batch_duplicate = False
+                if mode in ["skip", "update"]:
+                    if email_key and email_key in batch_email_keys:
+                        in_batch_duplicate = True
+                    if not in_batch_duplicate and name_key and name_key in batch_name_keys:
+                        in_batch_duplicate = True
+                    if not in_batch_duplicate and phone_keys and any(p in batch_phone_keys for p in phone_keys):
+                        in_batch_duplicate = True
+
+                if mode == "skip" and (matched_existing or in_batch_duplicate):
                     duplicates += 1
                     continue
-                
-                # Track this contact for batch duplicate checking
-                if email:
-                    batch_emails.add(email)
+
+                if mode == "update" and matched_existing:
+                    update_doc = _prepare_contact_doc(contact, category, now, created_by, for_update=True)
+                    update_doc.pop("id", None)
+                    update_doc.pop("created_at", None)
+
+                    if "tags" in update_doc:
+                        existing_tags = matched_existing.get("tags") if isinstance(matched_existing.get("tags"), list) else []
+                        merged_tags = sorted(set(existing_tags + update_doc.get("tags", [])))
+                        update_doc["tags"] = merged_tags
+
+                    if dry_run:
+                        updated += 1
+                    else:
+                        await db.contacts.update_one(
+                            {"id": matched_existing["id"]},
+                            {"$set": update_doc}
+                        )
+                        updated += 1
+
+                    if len(preview_examples) < 8:
+                        preview_examples.append({
+                            "action": "update",
+                            "match_reason": match_reason,
+                            "target_contact_id": matched_existing.get("id"),
+                            "email": email_key or None,
+                            "name": contact.get("display_name") or contact.get("name")
+                        })
+                else:
+                    if mode == "update" and in_batch_duplicate:
+                        duplicates += 1
+                        continue
+
+                    contact_doc = _prepare_contact_doc(contact, category, now, created_by, for_update=False)
+                    if dry_run:
+                        imported += 1
+                    else:
+                        await db.contacts.insert_one(contact_doc)
+                        imported += 1
+
+                        email_saved = _clean_text(contact_doc.get("email")).lower()
+                        if email_saved:
+                            existing_by_email[email_saved] = {"id": contact_doc["id"], **contact_doc}
+                        name_saved = _contact_name_key(contact_doc)
+                        if name_saved:
+                            existing_by_name[name_saved] = {"id": contact_doc["id"], **contact_doc}
+                        for phone_key in _contact_phone_keys(contact_doc):
+                            existing_by_phone[phone_key] = {"id": contact_doc["id"], **contact_doc}
+
+                    if len(preview_examples) < 8:
+                        preview_examples.append({
+                            "action": "insert",
+                            "email": contact_doc.get("email"),
+                            "name": contact_doc.get("display_name") or contact_doc.get("name")
+                        })
+
+                if email_key:
+                    batch_email_keys.add(email_key)
                 if name_key:
-                    batch_names.add(name_key)
-                
-                # Create contact document with all imported fields
-                contact_doc = {
-                    "id": str(uuid.uuid4()),  # Always generate new ID
-                    "first_name": first_name,
-                    "last_name": last_name,
-                    "name": contact.get('name'),
-                    "display_name": contact.get('display_name'),
-                    "nickname": contact.get('nickname'),
-                    "email": email if email else None,
-                    "email_2": contact.get('email_2'),
-                    "email_3": contact.get('email_3'),
-                    "phone": contact.get('phone'),
-                    "mobile_phone": contact.get('mobile_phone'),
-                    "home_phone": contact.get('home_phone'),
-                    "business_phone": contact.get('business_phone'),
-                    "pager": contact.get('pager'),
-                    "home_fax": contact.get('home_fax'),
-                    "business_fax": contact.get('business_fax'),
-                    "company": contact.get('company'),
-                    "organization": contact.get('organization'),
-                    "position": contact.get('position'),
-                    "job_title": contact.get('job_title'),
-                    "department": contact.get('department'),
-                    "home_street": contact.get('home_street'),
-                    "home_address_2": contact.get('home_address_2'),
-                    "home_city": contact.get('home_city'),
-                    "home_state": contact.get('home_state'),
-                    "home_postal_code": contact.get('home_postal_code'),
-                    "home_country": contact.get('home_country'),
-                    "business_address": contact.get('business_address'),
-                    "business_address_2": contact.get('business_address_2'),
-                    "business_city": contact.get('business_city'),
-                    "business_state": contact.get('business_state'),
-                    "business_postal_code": contact.get('business_postal_code'),
-                    "business_country": contact.get('business_country'),
-                    "birthday": contact.get('birthday'),
-                    "anniversary": contact.get('anniversary'),
-                    "home_purchase_anniversary": contact.get('home_purchase_anniversary'),
-                    "web_page": contact.get('web_page'),
-                    "web_page_2": contact.get('web_page_2'),
-                    "related_name": contact.get('related_name'),
-                    "categories": contact.get('categories'),
-                    "notes": contact.get('notes'),
-                    "status": contact.get('status') or "active",
-                    "category": category or contact.get('category') or 'buyer',
-                    "contact_type": contact.get('contact_type'),
-                    "source": contact.get('source') or "csv_import",
-                    "lead_score": int(contact.get('lead_score', 0)) if contact.get('lead_score') else 0,
-                    "budget": contact.get('budget'),
-                    "property_interest": contact.get('property_interest'),
-                    "tags": contact.get('tags') if isinstance(contact.get('tags'), list) else [],
-                    "created_at": contact.get('created_at') or now,
-                    "updated_at": now
-                }
-                
-                # Remove None values to keep document clean
-                contact_doc = {k: v for k, v in contact_doc.items() if v is not None and v != ''}
-                
-                await db.contacts.insert_one(contact_doc)
-                imported += 1
-                
-            except Exception as e:
+                    batch_name_keys.add(name_key)
+                batch_phone_keys.update(phone_keys)
+
+            except Exception as exc:
                 errors += 1
-                error_details.append(str(e))
-        
-        print(f"[IMPORT] Result: {imported} imported, {duplicates} duplicates, {errors} errors, {skipped_no_data} skipped (no data)")
-        
-        return {
+                error_details.append(str(exc))
+
+        result_payload = {
+            "dry_run": dry_run,
+            "duplicate_mode": mode,
             "total_in_file": len(contacts_to_import) + skipped_no_data,
             "valid_rows": len(contacts_to_import),
-            "imported": imported,
+            "imported": 0 if dry_run else imported,
+            "updated": 0 if dry_run else updated,
+            "would_import": imported if dry_run else 0,
+            "would_update": updated if dry_run else 0,
             "duplicates": duplicates,
             "skipped_no_data": skipped_no_data,
             "errors": errors,
-            "error_details": error_details[:10]
+            "error_details": error_details[:10],
+            "mapped_fields": [
+                "first_name", "last_name", "name", "display_name", "nickname",
+                "email", "mobile_phone", "home_phone", "company"
+            ],
+            "preview_examples": preview_examples
         }
-        
+
+        return result_payload
+
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to parse file: {str(e)}")
 

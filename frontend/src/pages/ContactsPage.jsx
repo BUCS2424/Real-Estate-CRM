@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { Checkbox } from '../components/ui/checkbox';
 import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -1861,6 +1862,8 @@ export const ContactsPage = () => {
   const [importing, setImporting] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [importResult, setImportResult] = useState(null);
+  const [importDuplicateMode, setImportDuplicateMode] = useState('update');
+  const [importDryRun, setImportDryRun] = useState(true);
   
   // Export
   const [exporting, setExporting] = useState(false);
@@ -2018,12 +2021,16 @@ export const ContactsPage = () => {
       const formData = new FormData();
       formData.append('file', importFile);
       
-      // Use the unified import endpoint that handles both CSV and VCF
-      const res = await contactsAPI.importFile(formData);
+      const res = await contactsAPI.importFile(formData, {
+        duplicate_mode: importDuplicateMode,
+        dry_run: importDryRun
+      });
       setImportResult(res.data);
       
-      if (res.data.imported > 0) {
-        toast.success(`Imported ${res.data.imported} contacts`);
+      if (res.data.dry_run) {
+        toast.success(`Dry run complete: ${res.data.would_import || 0} new, ${res.data.would_update || 0} updates`);
+      } else if ((res.data.imported || 0) > 0 || (res.data.updated || 0) > 0) {
+        toast.success(`Import complete: ${res.data.imported || 0} inserted, ${res.data.updated || 0} updated`);
         setPage(0);
         fetchStats();
         fetchContacts();
@@ -2032,7 +2039,7 @@ export const ContactsPage = () => {
       console.error('Import error:', error);
       const errorMsg = error.response?.data?.detail || error.message || 'Import failed';
       toast.error(errorMsg);
-      setImportResult({ imported: 0, skipped: 0, errors: [errorMsg] });
+      setImportResult({ imported: 0, updated: 0, would_import: 0, would_update: 0, duplicates: 0, skipped_no_data: 0, errors: 1, error_details: [errorMsg], dry_run: importDryRun });
     } finally {
       setImporting(false);
     }
@@ -2628,7 +2635,15 @@ export const ContactsPage = () => {
       </Dialog>
 
       {/* Import Contacts Modal */}
-      <Dialog open={showImportModal} onOpenChange={(open) => { setShowImportModal(open); if (!open) { setImportFile(null); setImportResult(null); } }}>
+      <Dialog open={showImportModal} onOpenChange={(open) => {
+        setShowImportModal(open);
+        if (!open) {
+          setImportFile(null);
+          setImportResult(null);
+          setImportDuplicateMode('update');
+          setImportDryRun(true);
+        }
+      }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -2690,24 +2705,65 @@ export const ContactsPage = () => {
               )}
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="import-duplicate-mode">Duplicate Handling</Label>
+                <Select value={importDuplicateMode} onValueChange={setImportDuplicateMode}>
+                  <SelectTrigger id="import-duplicate-mode" data-testid="import-duplicate-mode-select">
+                    <SelectValue placeholder="Select duplicate handling" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="update">Update existing contacts</SelectItem>
+                    <SelectItem value="skip">Skip duplicates</SelectItem>
+                    <SelectItem value="create">Create duplicates</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Safety Mode</Label>
+                <div className="flex items-center gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5">
+                  <Checkbox
+                    checked={importDryRun}
+                    onCheckedChange={(value) => setImportDryRun(Boolean(value))}
+                    data-testid="import-dry-run-checkbox"
+                    id="import-dry-run-checkbox"
+                  />
+                  <Label htmlFor="import-dry-run-checkbox" className="text-sm font-medium cursor-pointer">
+                    Dry run only (no DB writes)
+                  </Label>
+                </div>
+              </div>
+            </div>
+
             {/* Import Result */}
             {importResult && (
-              <div className={`p-4 rounded-lg ${importResult.imported > 0 ? 'bg-green-500/10 border border-green-500/30' : 'bg-yellow-500/10 border border-yellow-500/30'}`}>
+              <div className={`p-4 rounded-lg ${(importResult.imported > 0 || importResult.updated > 0 || importResult.would_import > 0 || importResult.would_update > 0) ? 'bg-green-500/10 border border-green-500/30' : 'bg-yellow-500/10 border border-yellow-500/30'}`} data-testid="contacts-import-result-panel">
                 <div className="flex items-center gap-2 mb-2">
-                  {importResult.imported > 0 ? (
+                  {(importResult.imported > 0 || importResult.updated > 0 || importResult.would_import > 0 || importResult.would_update > 0) ? (
                     <CheckCircle className="w-5 h-5 text-green-500" />
                   ) : (
                     <AlertCircle className="w-5 h-5 text-yellow-500" />
                   )}
-                  <span className="font-medium">Import Complete</span>
+                  <span className="font-medium">{importResult.dry_run ? 'Dry Run Complete' : 'Import Complete'}</span>
                 </div>
                 <div className="text-sm space-y-1">
-                  <p><span className="text-green-600 font-medium">{importResult.imported}</span> contacts imported</p>
+                  {importResult.dry_run ? (
+                    <>
+                      <p><span className="text-green-600 font-medium">{importResult.would_import || 0}</span> contacts would be inserted</p>
+                      <p><span className="text-blue-600 font-medium">{importResult.would_update || 0}</span> contacts would be updated</p>
+                    </>
+                  ) : (
+                    <>
+                      <p><span className="text-green-600 font-medium">{importResult.imported || 0}</span> contacts inserted</p>
+                      <p><span className="text-blue-600 font-medium">{importResult.updated || 0}</span> contacts updated</p>
+                    </>
+                  )}
                   {importResult.duplicates > 0 && (
-                    <p><span className="text-yellow-600">{importResult.duplicates}</span> duplicates skipped (same email)</p>
+                    <p><span className="text-yellow-600">{importResult.duplicates}</span> duplicates skipped</p>
                   )}
                   {importResult.skipped_no_data > 0 && (
-                    <p><span className="text-orange-500">{importResult.skipped_no_data}</span> rows skipped (missing email & name)</p>
+                    <p><span className="text-orange-500">{importResult.skipped_no_data}</span> rows skipped (no mappable contact data)</p>
                   )}
                   {importResult.errors > 0 && (
                     <p><span className="text-red-500">{importResult.errors}</span> errors</p>
@@ -2715,6 +2771,11 @@ export const ContactsPage = () => {
                   {importResult.total_in_file && (
                     <p className="text-xs text-muted-foreground mt-2">
                       Total rows in file: {importResult.total_in_file} | Valid: {importResult.valid_rows}
+                    </p>
+                  )}
+                  {importResult.mapped_fields?.length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Mapped fields: {importResult.mapped_fields.join(', ')}
                     </p>
                   )}
                 </div>
@@ -2738,12 +2799,12 @@ export const ContactsPage = () => {
               {importing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Importing...
+                  {importDryRun ? 'Running Dry Run...' : 'Importing...'}
                 </>
               ) : (
                 <>
                   <Upload className="w-4 h-4 mr-2" />
-                  Import
+                  {importDryRun ? 'Run Dry Run' : 'Import Now'}
                 </>
               )}
             </Button>

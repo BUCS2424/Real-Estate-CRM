@@ -60,9 +60,16 @@ export const contactsAPI = {
   removeProperty: (contactId, propertyLinkId) => api.delete(`/contacts/${contactId}/properties/${propertyLinkId}`),
   getAvailableProperties: (search) => api.get(`/contacts/available-properties/list${search ? `?search=${search}` : ''}`),
   // Import/Export
-  importFile: (formData, category) => api.post(`/contacts/import${category ? `?category=${category}` : ''}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
+  importFile: (formData, options = {}) => {
+    const params = new URLSearchParams();
+    if (options.category) params.append('category', options.category);
+    if (options.duplicate_mode) params.append('duplicate_mode', options.duplicate_mode);
+    if (typeof options.dry_run === 'boolean') params.append('dry_run', String(options.dry_run));
+    const query = params.toString();
+    return api.post(`/contacts/import${query ? `?${query}` : ''}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
   exportCSV: (filters = {}) => {
     const params = new URLSearchParams();
     if (filters.category) params.append('category', filters.category);
