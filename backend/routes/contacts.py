@@ -1102,84 +1102,81 @@ def _parse_csv_rows_resilient(text: str) -> List[Dict[str, Any]]:
     except Exception:
         pass
 
-    normalized_text = text.replace("\r\n", "\r").replace("\n", "\r")
-    raw_tokens = normalized_text.split("\r")
-    if not raw_tokens:
-        return []
+    normalized_text = text.replace("\r\n", "\n").replace("\r", "\n")
+    lines = normalized_text.split("\n")
 
-    known_headers = set(h.lower() for h in CONTACT_IMPORT_FIELDS)
-    for variations in CONTACT_FIELD_VARIATIONS.values():
-        for name in variations:
-            known_headers.add(name.lower())
+    expected_headers = ["first_name", "last_name", "nickname", "email", "mobile_phone", "home_phone", "company"]
+
+    parsed_rows: List[Dict[str, Any]] = []
+
+    # 1) Parse tab-separated blocks (most reliable for this file)
+    i = 0
+    first_tsv_header_index: Optional[int] = None
+    while i < len(lines):
+        line = lines[i]
+        line_lower = line.lower()
+        if "\t" in line and "first_name" in line_lower and "last_name" in line_lower and "mobile_phone" in line_lower and "home_phone" in line_lower:
+            if first_tsv_header_index is None:
+                first_tsv_header_index = i
+            i += 1
+            while i < len(lines):
+                row_line = lines[i]
+                if not row_line.strip():
+                    i += 1
+                    continue
+                if "\t" not in row_line:
+                    break
+
+                parts = [part.strip() for part in row_line.split("\t")]
+                if len(parts) < 7:
+                    parts.extend([""] * (7 - len(parts)))
+                if len(parts) > 7:
+                    parts = parts[:6] + [" ".join(parts[6:]).strip()]
+
+                parsed_rows.append({
+                    "first_name": parts[0],
+                    "last_name": parts[1],
+                    "nickname": parts[2],
+                    "email": parts[3],
+                    "mobile_phone": parts[4],
+                    "home_phone": parts[5],
+                    "company": parts[6],
+                })
+                i += 1
+            continue
+        i += 1
+
+    # 2) Parse pre-TSV vertical one-column section if present
+    vertical_section_lines = lines if first_tsv_header_index is None else lines[:first_tsv_header_index]
+    vertical_values = [line for line in vertical_section_lines if "\t" not in line]
+
+    while vertical_values and not vertical_values[0].strip():
+        vertical_values.pop(0)
 
     headers: List[str] = []
     idx = 0
-    while idx < len(raw_tokens) and not raw_tokens[idx].strip():
-        idx += 1
-
-    while idx < len(raw_tokens):
-        key = raw_tokens[idx].strip().lower()
-        if key in known_headers and key not in headers:
-            headers.append(key)
+    while idx < len(vertical_values):
+        token = vertical_values[idx].strip().lower()
+        if token in expected_headers and token not in headers:
+            headers.append(token)
             idx += 1
             continue
         break
 
-    if len(headers) < 2:
-        raise ValueError("Unsupported CSV structure")
+    if headers == expected_headers:
+        values = [value.strip() for value in vertical_values[idx:]]
+        width = len(headers)
+        for row_idx in range(0, len(values), width):
+            chunk = values[row_idx:row_idx + width]
+            if len(chunk) < width:
+                chunk.extend([""] * (width - len(chunk)))
+            if any(chunk):
+                parsed_rows.append({headers[col_idx]: chunk[col_idx] for col_idx in range(width)})
 
-    values = [value.strip() for value in raw_tokens[idx:]]
-    rows: List[Dict[str, Any]] = []
-    width = len(headers)
+    if parsed_rows:
+        return parsed_rows
 
-    # Special handling for this one-column newline format where company cells may contain extra breaks.
-    if width == 7 and headers == ["first_name", "last_name", "nickname", "email", "mobile_phone", "home_phone", "company"]:
-        i = 0
-        while i < len(values):
-            if i + 5 >= len(values):
-                break
-
-            first = _clean_text(values[i])
-            last = _clean_text(values[i + 1])
-            nickname = _clean_text(values[i + 2])
-            email = _clean_text(values[i + 3])
-            mobile = _clean_text(values[i + 4])
-            home = _clean_text(values[i + 5])
-            i += 6
-
-            company_parts: List[str] = []
-            if i < len(values):
-                company_parts.append(_clean_text(values[i]))
-                i += 1
-
-            while i < len(values):
-                if _row_start_score(values, i) >= 4:
-                    break
-                company_parts.append(_clean_text(values[i]))
-                i += 1
-
-            company = " ".join([part for part in company_parts if part]).strip()
-            if any([first, last, nickname, email, mobile, home, company]):
-                rows.append({
-                    "first_name": first,
-                    "last_name": last,
-                    "nickname": nickname,
-                    "email": email,
-                    "mobile_phone": mobile,
-                    "home_phone": home,
-                    "company": company,
-                })
-
-        return rows
-
-    for i in range(0, len(values), width):
-        chunk = values[i:i + width]
-        if len(chunk) < width:
-            chunk.extend([""] * (width - len(chunk)))
-        if any(cell for cell in chunk):
-            rows.append({headers[col_idx]: chunk[col_idx] for col_idx in range(width)})
-
-    return rows
+    raise ValueError("Unsupported CSV structure")
 
 
 def _build_contact_from_csv_row(row: Dict[str, Any]) -> Dict[str, Any]:
