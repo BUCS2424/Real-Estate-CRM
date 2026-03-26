@@ -993,6 +993,22 @@ def _clean_text(value: Any) -> str:
     return str(value).strip()
 
 
+def _is_valid_email(value: Optional[str]) -> bool:
+    if not value:
+        return False
+    candidate = _clean_text(value).lower()
+    if not candidate:
+        return False
+    return re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", candidate) is not None
+
+
+def _looks_like_phone(value: Optional[str]) -> bool:
+    if not value:
+        return False
+    digits = re.sub(r"\D", "", value)
+    return len(digits) >= 7
+
+
 def _normalize_phone_key(value: Optional[str]) -> Optional[str]:
     if not value:
         return None
@@ -1018,6 +1034,53 @@ def _parse_tags(value: Any) -> List[str]:
     if isinstance(value, str):
         return [v.strip() for v in value.split(",") if v.strip()]
     return [str(value).strip()] if str(value).strip() else []
+
+
+def _row_start_score(tokens: List[str], idx: int) -> int:
+    if idx + 5 >= len(tokens):
+        return -99
+
+    first = _clean_text(tokens[idx])
+    last = _clean_text(tokens[idx + 1])
+    email = _clean_text(tokens[idx + 3]).lower()
+    mobile = _clean_text(tokens[idx + 4])
+    home = _clean_text(tokens[idx + 5])
+
+    score = 0
+    if first:
+        score += 1
+    if last:
+        score += 1
+    if first and not _is_valid_email(first) and not _looks_like_phone(first):
+        score += 1
+    if last and not _is_valid_email(last) and not _looks_like_phone(last):
+        score += 1
+
+    if email:
+        if _is_valid_email(email):
+            score += 2
+        elif _looks_like_phone(email):
+            score -= 2
+    else:
+        score += 1
+
+    if mobile:
+        if _looks_like_phone(mobile):
+            score += 1
+        elif _is_valid_email(mobile):
+            score -= 1
+    else:
+        score += 1
+
+    if home:
+        if _looks_like_phone(home):
+            score += 1
+        elif _is_valid_email(home):
+            score -= 1
+    else:
+        score += 1
+
+    return score
 
 
 def _normalize_row(row: Dict[str, Any]) -> Dict[str, str]:
@@ -1068,6 +1131,47 @@ def _parse_csv_rows_resilient(text: str) -> List[Dict[str, Any]]:
     values = [value.strip() for value in raw_tokens[idx:]]
     rows: List[Dict[str, Any]] = []
     width = len(headers)
+
+    # Special handling for this one-column newline format where company cells may contain extra breaks.
+    if width == 7 and headers == ["first_name", "last_name", "nickname", "email", "mobile_phone", "home_phone", "company"]:
+        i = 0
+        while i < len(values):
+            if i + 5 >= len(values):
+                break
+
+            first = _clean_text(values[i])
+            last = _clean_text(values[i + 1])
+            nickname = _clean_text(values[i + 2])
+            email = _clean_text(values[i + 3])
+            mobile = _clean_text(values[i + 4])
+            home = _clean_text(values[i + 5])
+            i += 6
+
+            company_parts: List[str] = []
+            if i < len(values):
+                company_parts.append(_clean_text(values[i]))
+                i += 1
+
+            while i < len(values):
+                if _row_start_score(values, i) >= 4:
+                    break
+                company_parts.append(_clean_text(values[i]))
+                i += 1
+
+            company = " ".join([part for part in company_parts if part]).strip()
+            if any([first, last, nickname, email, mobile, home, company]):
+                rows.append({
+                    "first_name": first,
+                    "last_name": last,
+                    "nickname": nickname,
+                    "email": email,
+                    "mobile_phone": mobile,
+                    "home_phone": home,
+                    "company": company,
+                })
+
+        return rows
+
     for i in range(0, len(values), width):
         chunk = values[i:i + width]
         if len(chunk) < width:
@@ -1100,14 +1204,6 @@ def _build_contact_from_csv_row(row: Dict[str, Any]) -> Dict[str, Any]:
         contact["first_name"] = first
         contact["last_name"] = last
 
-    full_name = _clean_text(contact.get("name"))
-    if not full_name:
-        full_name = _clean_text(f"{contact.get('first_name', '')} {contact.get('last_name', '')}")
-    if full_name:
-        contact["name"] = full_name
-    if not contact.get("display_name") and full_name:
-        contact["display_name"] = full_name
-
     email = _clean_text(contact.get("email")).lower()
     if email:
         contact["email"] = email
@@ -1116,6 +1212,39 @@ def _build_contact_from_csv_row(row: Dict[str, Any]) -> Dict[str, Any]:
         phone_value = _clean_text(contact.get(phone_field))
         if phone_value:
             contact[phone_field] = phone_value
+
+    # Repair shifted CSV rows where first/last ended up in email/mobile fields
+    if not _clean_text(contact.get("first_name")) and not _clean_text(contact.get("last_name")):
+        email_like_name = _clean_text(contact.get("email"))
+        mobile_like_name = _clean_text(contact.get("mobile_phone"))
+
+        if email_like_name and not _is_valid_email(email_like_name) and not _looks_like_phone(email_like_name):
+            contact["first_name"] = email_like_name.title()
+
+        if mobile_like_name and not _is_valid_email(mobile_like_name) and not _looks_like_phone(mobile_like_name):
+            contact["last_name"] = mobile_like_name
+
+    if not _is_valid_email(contact.get("email")) and _is_valid_email(contact.get("company")):
+        contact["email"] = _clean_text(contact.get("company")).lower()
+
+    # keep company from nickname when nickname appears as organization label
+    if not _clean_text(contact.get("company")) and _clean_text(contact.get("nickname")):
+        contact["company"] = _clean_text(contact.get("nickname"))
+
+    full_name = _clean_text(contact.get("name"))
+    if not full_name:
+        full_name = _clean_text(f"{contact.get('first_name', '')} {contact.get('last_name', '')}")
+    if not full_name:
+        full_name = _clean_text(contact.get("nickname"))
+    if not full_name:
+        full_name = _clean_text(contact.get("email"))
+    if not full_name:
+        full_name = _clean_text(contact.get("company"))
+
+    if full_name:
+        contact["name"] = full_name
+    if not contact.get("display_name") and full_name:
+        contact["display_name"] = full_name
 
     tags = _parse_tags(contact.get("tags"))
     if tags:
@@ -1190,6 +1319,22 @@ def _prepare_contact_doc(
         doc["status"] = "active"
     if not doc.get("source"):
         doc["source"] = "csv_import"
+
+    if not doc.get("name"):
+        candidate_name = _clean_text(f"{doc.get('first_name', '')} {doc.get('last_name', '')}")
+        if not candidate_name:
+            candidate_name = _clean_text(doc.get("display_name"))
+        if not candidate_name:
+            candidate_name = _clean_text(doc.get("nickname"))
+        if not candidate_name:
+            candidate_name = _clean_text(doc.get("email"))
+        if not candidate_name:
+            candidate_name = _clean_text(doc.get("company"))
+        if candidate_name:
+            doc["name"] = candidate_name
+
+    if not doc.get("display_name") and doc.get("name"):
+        doc["display_name"] = doc.get("name")
 
     if not for_update:
         doc["id"] = str(uuid.uuid4())
