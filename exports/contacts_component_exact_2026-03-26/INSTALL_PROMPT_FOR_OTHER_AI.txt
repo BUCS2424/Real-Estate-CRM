@@ -1,0 +1,32 @@
+Install this exact Contacts module into the target app with no endpoint or field renames.
+
+SOURCE FILES TO COPY
+Frontend:
+- frontend/pages/ContactsPage.jsx -> src/pages/ContactsPage.jsx
+- frontend/components/SmartListModal.jsx -> src/components/SmartListModal.jsx
+- frontend/components/EmailComposerModal.jsx -> src/components/EmailComposerModal.jsx
+- Merge contactsAPI from frontend/lib/api.full.js into src/lib/api.js
+- Add routes from frontend/routes/App.full.js:
+  - /contacts
+  - /contacts/:id
+
+Backend:
+- backend/models/contact.py -> backend/models/contact.py
+- backend/routes/contacts.py -> backend/routes/contacts.py
+- Register contacts router at /api/contacts using backend/integration-snippets/routes__init__.py
+
+DEPENDENCIES
+- Frontend: react, react-router-dom, sonner, lucide-react, shadcn/ui components
+- Backend: fastapi, pydantic, motor/pymongo stack, telnyx (optional for SMS)
+
+REQUIRED AUTH/ROLE WIRING
+- utils.auth.get_current_user
+- utils.auth.require_role
+- models.user.UserRole
+
+VALIDATION
+1) Login and open /contacts
+2) Verify list loads
+3) Verify Add Contact works (POST /api/contacts)
+4) Verify Import modal opens and dry-run import works
+5) Verify contact update/delete actions succeed
