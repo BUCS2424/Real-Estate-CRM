@@ -13,6 +13,16 @@ router = APIRouter()
 AGENT_RULES_PATH = Path("/app/AGENT_RULES.md")
 
 
+def _sanitize_for_json(value: Any):
+    if isinstance(value, dict):
+        return {k: _sanitize_for_json(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_sanitize_for_json(v) for v in value]
+    if type(value).__name__ == "ObjectId":
+        return str(value)
+    return value
+
+
 def _extract_rules_from_markdown(markdown_text: str) -> List[str]:
     rules: List[str] = []
     for raw_line in (markdown_text or "").splitlines():
@@ -76,7 +86,7 @@ async def get_ai_rules(current_user: dict = Depends(get_current_user)):
 
     doc = await db.settings.find_one({"type": "ai_rules"}, {"_id": 0})
     if doc and isinstance(doc.get("rules"), list) and doc.get("rules"):
-        return doc
+        return _sanitize_for_json(doc)
 
     source_rules: List[str] = []
     if AGENT_RULES_PATH.exists():
@@ -91,7 +101,7 @@ async def get_ai_rules(current_user: dict = Depends(get_current_user)):
         "rules": source_rules,
         "source_file": str(AGENT_RULES_PATH),
         "updated_at": now,
-        "updated_by": current_user["id"]
+        "updated_by": str(current_user.get("id", ""))
     }
 
     await db.settings.update_one(
@@ -116,7 +126,7 @@ async def update_ai_rules(payload: dict, current_user: dict = Depends(get_curren
         "rules": rules,
         "source_file": str(AGENT_RULES_PATH),
         "updated_at": now,
-        "updated_by": current_user["id"]
+        "updated_by": str(current_user.get("id", ""))
     }
 
     await db.settings.update_one(
@@ -126,7 +136,7 @@ async def update_ai_rules(payload: dict, current_user: dict = Depends(get_curren
     )
 
     AGENT_RULES_PATH.write_text(_serialize_rules_markdown(rules), encoding="utf-8")
-    return {"message": "AI rules saved", **update_doc}
+    return _sanitize_for_json({"message": "AI rules saved", **update_doc})
 
 
 @router.get("/ai-rules/file")
