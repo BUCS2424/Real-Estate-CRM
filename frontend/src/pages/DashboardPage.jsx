@@ -65,9 +65,22 @@ export const DashboardPage = () => {
           contactsAPI.list(),
           tasksAPI.list()
         ]);
-        setStats(statsRes.data);
-        setRecentContacts(contactsRes.data.slice(0, 5));
-        setRecentTasks(tasksRes.data.filter(t => t.status !== 'done').slice(0, 5));
+
+        const statsData = statsRes?.data || {};
+
+        const contactsPayload = contactsRes?.data;
+        const contactsList = Array.isArray(contactsPayload)
+          ? contactsPayload
+          : (contactsPayload && Array.isArray(contactsPayload.contacts) ? contactsPayload.contacts : []);
+
+        const tasksPayload = tasksRes?.data;
+        const tasksList = Array.isArray(tasksPayload)
+          ? tasksPayload
+          : (tasksPayload && Array.isArray(tasksPayload.tasks) ? tasksPayload.tasks : []);
+
+        setStats(statsData);
+        setRecentContacts(contactsList.slice(0, 5));
+        setRecentTasks(tasksList.filter((t) => t?.status !== 'done').slice(0, 5));
       } catch (error) {
         toast.error('Failed to load dashboard data');
       } finally {

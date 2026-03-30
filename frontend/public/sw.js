@@ -34,6 +34,9 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (event.request.method !== 'GET') return;
 
+  // Skip cross-origin requests so external script failures don't become synthetic 503s
+  if (!event.request.url.startsWith(self.location.origin)) return;
+
   // Chrome request edge-case for cross-origin only-if-cached
   if (event.request.cache === 'only-if-cached' && event.request.mode !== 'same-origin') return;
   
