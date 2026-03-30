@@ -519,14 +519,14 @@ frontend:
 
 metadata:
   created_by: "testing_agent"
-  version: "2.2"
-  test_sequence: 13
+  version: "2.3"
+  test_sequence: 14
   run_ui: true
   test_date: "2025-03-30"
 
 test_plan:
   current_focus:
-    - "Public header logo size and transparency consistency"
+    - "Public-page SEO and menu standards verification"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -588,3 +588,6 @@ agent_communication:
 
   - agent: "testing"
     message: "2025-03-30: Completed comprehensive backend verification for SEO/security/audit changes. TEST RESULTS: ✅ ALL 6 TESTS PASSED. (1) SEO Sitemap XML: GET /api/seo/sitemap.xml returns HTTP 200 with proper XML content containing all required public routes (/, /showcase, /about, /mortgage-calculator, /newsletter-archive, /write-review). (2) SEO Robots.txt: GET /api/seo/robots.txt returns HTTP 200 with text/plain content containing sitemap URL reference. (3) Backend Health: Internal health endpoint at localhost:8001/health returns HTTP 200 with healthy status (external /health routed to frontend by ingress). (4) Monthly Audit Report: File exists at /app/memory/monthly_audit_report.md with valid compliance audit content showing 20 checks passed, 0 failed. (5) Authentication: Successfully authenticated with mel@a2gdesigns.com credentials. (6) MLS My Listings Regression: GET /api/mls/my-listings returns HTTP 200 with valid response structure. All SEO/security/audit enhancements working correctly. Backend is production-ready."
+  
+  - agent: "testing"
+    message: "2025-03-30: Completed comprehensive verification of public-page SEO and menu standards after latest implementation. TEST RESULTS: ✅ 8/9 ROUTES FULLY COMPLIANT. TESTED ROUTES: /, /showcase, /about, /property/705-w-amelia-ave-tampa-fl, /mortgage-calculator, /newsletter-archive, /write-review, /book/sample, /landing/2913-n-shoreview-place-tampa-fl. CHECK 1 - Head Script (id='ZwSg9rf6GA'): ✅ 9/9 PASS - All routes have analytics script from https://a2ganalytics.com/js/script.js correctly loaded in head. CHECK 2 - Canonical Link Tag: ✅ 9/9 PASS - All routes have canonical link tag in head with correct URLs. CHECK 3 - Desktop Menu (4 items in order): ✅ 8/9 PASS - All routes except /book/sample display 4 menu items in correct order: LISTING SHOWCASE, ABOUT, CONTACT, AGENT LOGIN. /book/sample shows 'Booking Page Not Found' error state without header (expected behavior for invalid agent code). CHECK 4 - Mobile Menu (right drawer + logo): ✅ 8/9 PASS - All routes except /book/sample have mobile menu that opens as right-side drawer with logo placeholder at top. Mobile menu contains all 4 items in correct order. NOTE: Initial testing showed mobile logo placeholder missing due to stale frontend build. After restarting frontend service (sudo supervisorctl restart frontend), all tests passed. CHECK 5 - Render Regressions: ✅ 9/9 PASS - No obvious render regressions detected on any route. All pages load successfully with HTTP 200 status. SPECIAL CASE: /book/sample route shows 'Booking Page Not Found' error (expected for invalid agent code 'sample'). Page shell validated successfully with head script and canonical link present. Per review request instructions: 'if not available, just validate page shell where possible' - this requirement is met. All public pages are production-ready and fully compliant with SEO and menu standards."
