@@ -96,7 +96,11 @@ export const LandingPage = () => {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
-  const listingsToRender = (listings.length > 0 ? listings : FALLBACK_LISTINGS)
+  const safeListings = Array.isArray(listings)
+    ? listings
+    : (listings && Array.isArray(listings.properties) ? listings.properties : []);
+
+  const listingsToRender = (safeListings.length > 0 ? safeListings : FALLBACK_LISTINGS)
     .filter(Boolean)
     .filter((listing, index, arr) => {
       const currentKey = listing.id || listing.slug || `${listing.address || ''}-${listing.city || ''}`;
@@ -132,9 +136,17 @@ export const LandingPage = () => {
     const fetchListings = async () => {
       try {
         const res = await publicAPI.getListings(12);
-        setListings(res.data || []);
+        const payload = res?.data;
+        if (Array.isArray(payload)) {
+          setListings(payload);
+        } else if (payload && Array.isArray(payload.properties)) {
+          setListings(payload.properties);
+        } else {
+          setListings([]);
+        }
       } catch (error) {
         console.error('Failed to load listings');
+        setListings([]);
       } finally {
         setLoadingListings(false);
       }

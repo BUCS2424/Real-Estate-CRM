@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hidden-haven-crm-v2';
+const CACHE_NAME = 'hidden-haven-crm-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -33,24 +33,44 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (event.request.method !== 'GET') return;
+
+  // Chrome request edge-case for cross-origin only-if-cached
+  if (event.request.cache === 'only-if-cached' && event.request.mode !== 'same-origin') return;
   
   // Skip API calls - always fetch from network
   if (event.request.url.includes('/api/')) return;
   
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Clone the response before caching
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseClone);
-        });
+    (async () => {
+      try {
+        const response = await fetch(event.request);
+
+        // Clone and cache successful same-origin responses
+        if (response && response.ok && event.request.url.startsWith(self.location.origin)) {
+          const responseClone = response.clone();
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(event.request, responseClone);
+        }
+
         return response;
-      })
-      .catch(() => {
-        // Fallback to cache if network fails
-        return caches.match(event.request);
-      })
+      } catch (error) {
+        const cached = await caches.match(event.request);
+        if (cached) {
+          return cached;
+        }
+
+        if (event.request.mode === 'navigate') {
+          const appShell = await caches.match('/index.html');
+          if (appShell) return appShell;
+        }
+
+        return new Response('Offline', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: { 'Content-Type': 'text/plain' }
+        });
+      }
+    })()
   );
 });
 
