@@ -13,3 +13,4 @@
 9. **Analytics script must exist on all public pages**, including generated listing pages:
 10. **Security baseline checks are required**:
 11. **Before large refactors**, list duplicate code/redundancy and consolidate safely.
+12. Public menu behavior standard: top menu must scroll away with page content (non-fixed). Do not pin/sticky/fix public top nav unless explicitly requested.

@@ -11,7 +11,7 @@ export const PublicSiteHeader = ({ activePage = '', contactHref = '/#contact', v
   const isOverlay = variant === 'overlay';
   const shellClass = isOverlay
     ? 'absolute top-0 left-0 right-0 z-50'
-    : 'fixed top-0 left-0 right-0 z-50 bg-transparent border-none';
+    : 'relative z-50 bg-transparent border-none';
 
   const navLinkClass = (isActive) =>
     `text-sm tracking-wide transition-colors ${isActive ? 'text-amber-400 border-b border-amber-400' : 'text-white/70 hover:text-amber-400'}`;
