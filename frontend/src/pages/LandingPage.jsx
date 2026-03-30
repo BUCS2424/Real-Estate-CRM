@@ -430,17 +430,20 @@ export const LandingPage = () => {
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
-                name: 'Davis Island',
-                desc: 'Waterfront luxury homes with private docks, skyline views, and quick access to downtown Tampa.',
+                title: 'Davis Island',
+                subtitle: 'Waterfront luxury Homes',
+                desc: 'With private docks, skyline views, and quick access to downtown Tampa.',
                 image: 'https://images.unsplash.com/photo-1578439297699-eb414262c2de?w=600&q=80'
               },
               {
-                name: 'Historic Hyde Park and Spanish Town',
+                title: 'Historic Hyde Park',
+                subtitle: '& Spanish Town',
                 desc: 'Charming historic architecture, walkable streets, boutique dining, and timeless luxury residences.',
                 image: 'https://images.unsplash.com/photo-1607142426460-0185c446f1d7?w=600&q=80'
               },
               {
-                name: 'Westshore and Beach Park',
+                title: 'Westshore',
+                subtitle: '& Beach Park',
                 desc: 'Executive estates and modern homes near top business districts, fine shopping, and Tampa Bay access.',
                 image: 'https://images.unsplash.com/photo-1623701675999-9406ece2d150?w=600&q=80'
               }
@@ -448,12 +451,13 @@ export const LandingPage = () => {
               <div key={i} className="relative group overflow-hidden rounded-lg aspect-[3/4] cursor-pointer">
                 <img 
                   src={market.image} 
-                  alt={market.name}
+                  alt={market.title}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628] via-[#0a1628]/30 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <h3 className="text-2xl font-serif mb-1">{market.name}</h3>
+                  <h3 className="text-2xl font-serif mb-0.5">{market.title}</h3>
+                  <p className="text-amber-300/90 text-sm mb-2">{market.subtitle}</p>
                   <p className="text-white/60 text-sm">{market.desc}</p>
                 </div>
               </div>
