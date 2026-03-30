@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fusion-crm-v1';
+const CACHE_NAME = 'hidden-haven-crm-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -57,7 +57,7 @@ self.addEventListener('fetch', (event) => {
 // Push notification event
 self.addEventListener('push', (event) => {
   const options = {
-    body: event.data ? event.data.text() : 'New notification from Fusion CRM',
+    body: event.data ? event.data.text() : 'New notification from Hidden Haven Realty',
     icon: '/icons/icon-192x192.png',
     badge: '/icons/icon-72x72.png',
     vibrate: [100, 50, 100],
@@ -72,7 +72,7 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification('Fusion CRM', options)
+    self.registration.showNotification('Hidden Haven Realty', options)
   );
 });
 

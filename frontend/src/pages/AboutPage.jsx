@@ -66,7 +66,7 @@ export const AboutPage = () => {
                   
                   {/* Image */}
                   <img 
-                    src="https://customer-assets.emergentagent.com/job_fusion-estates/artifacts/sojktbhq_Sheila-Desautels.jpg"
+                    src="/images/sheila-desautels.jpg"
                     alt="Sheila Desautels - Luxury Real Estate Agent"
                     className="relative rounded-xl w-64 h-80 object-cover object-top shadow-2xl"
                   />
