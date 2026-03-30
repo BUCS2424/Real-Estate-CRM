@@ -37,6 +37,8 @@ const formatPrice = (price) => {
   }).format(price);
 };
 
+const MORTGAGE_CALCULATOR_LIMIT = 2000000;
+
 export const PropertyDetailPage = () => {
   const { slug } = useParams();  // Changed from id to slug
   const { branding } = useBranding();
@@ -324,14 +326,23 @@ export const PropertyDetailPage = () => {
               </div>
 
               {/* Mortgage Calculator */}
-              <div className="bg-[#0d1f3c]/80 border border-amber-400/20 rounded-2xl p-6 relative overflow-hidden">
-                <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-400/5 rounded-full blur-2xl"></div>
-                <MortgageCalculator 
-                  propertyPrice={property.price}
-                  propertyAddress={`${property.address}, ${property.city}, ${property.state}`}
-                  embedded={true}
-                />
-              </div>
+              {Number(property.price || 0) < MORTGAGE_CALCULATOR_LIMIT ? (
+                <div className="bg-[#0d1f3c]/80 border border-amber-400/20 rounded-2xl p-6 relative overflow-hidden" data-testid="property-mortgage-calculator-container">
+                  <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-400/5 rounded-full blur-2xl"></div>
+                  <MortgageCalculator 
+                    propertyPrice={property.price}
+                    propertyAddress={`${property.address}, ${property.city}, ${property.state}`}
+                    embedded={true}
+                  />
+                </div>
+              ) : (
+                <div className="bg-[#0d1f3c]/80 border border-amber-400/20 rounded-2xl p-6" data-testid="property-mortgage-calculator-unavailable">
+                  <h3 className="text-xl font-serif text-amber-400 mb-2">Mortgage Calculator Unavailable</h3>
+                  <p className="text-white/70 text-sm">
+                    The payment calculator is available for listings priced under $2,000,000.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Sidebar */}

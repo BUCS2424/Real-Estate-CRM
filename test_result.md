@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Verify email/phone verification UI on the public landing form"
+user_problem_statement: "Verify mortgage calculator threshold behavior on property pages and standalone calculator page"
 
 backend:
   - task: "Withdrawn Listings API endpoints"
@@ -391,6 +391,18 @@ frontend:
         agent: "testing"
         comment: "2025-03-04: Phone verification 5-digit code update verified and bug fixed. TESTING COMPLETED: (1) Opened homepage (/) and scrolled to 'Access Exclusive Auctions' form successfully, (2) Entered phone number (8135559876) to trigger verification step, (3) VERIFIED: Helper text correctly displays 'Enter the 5-digit code sent to {phone}', (4) VERIFIED: Input placeholder says 'Enter 5-digit code', (5) VERIFIED: Input maxLength attribute is 5, (6) VERIFIED: Input accepts exactly 5 digits and prevents entering more, (7) VERIFIED: Confirm button is enabled when exactly 5 digits are entered, (8) VERIFIED: Confirm button is disabled when less than 5 digits are entered, (9) BUG FOUND AND FIXED: Validation error message in handleVerifyCode function (line 45-46 of PhoneVerification.jsx) was still checking for 6 digits and showing 'Please enter the 6-digit code' error. Fixed to check for 5 digits and show 'Please enter the 5-digit code' error. All phone verification copy now consistently says '5-digit' throughout the UI. No other UI issues detected. Feature working correctly and production-ready."
 
+  - task: "Mortgage calculator threshold behavior on property pages and standalone calculator"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/MortgageCalculator.jsx, /app/frontend/src/pages/PropertyDetailPage.jsx, /app/frontend/src/pages/MortgageCalculatorPage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "2025-03-30: Mortgage calculator threshold behavior fully functional and working correctly. COMPREHENSIVE TESTING COMPLETED: TEST 1 - Property >= $2,000,000 (123 Palm Beach Blvd): ✅ PASS - (1) Mortgage calculator unavailable container found with data-testid='property-mortgage-calculator-unavailable', (2) Unavailable message displays correctly: 'Mortgage Calculator Unavailable - The payment calculator is available for listings priced under $2,000,000.', (3) Calculator container correctly NOT present for properties priced at or above $2,000,000. TEST 2 - Property < $2,000,000 (705 W Amelia Ave Tampa): ✅ PASS - (1) Mortgage calculator container found and visible with data-testid='property-mortgage-calculator-container', (2) Mortgage Calculator title and component render correctly, (3) Unavailable message correctly NOT present for properties under $2,000,000. TEST 3 - /mortgage-calculator page value clamping: ✅ PASS - (1) Navigated to /mortgage-calculator page successfully, (2) Entered 3,000,000 in home price input (data-testid='mortgage-home-price-input'), (3) Value correctly clamped to 1,999,999 (MORTGAGE_PRICE_MAX_ALLOWED = MORTGAGE_PRICE_LIMIT - 1), (4) Price limit note displays correctly with data-testid='mortgage-price-limit-note': 'Eligible calculator range: under $2,000,000'. Implementation verified: MORTGAGE_PRICE_LIMIT = 2000000, MORTGAGE_PRICE_MAX_ALLOWED = 1999999, normalizeHomePrice function correctly clamps values >= 2,000,000 to 1,999,999. All three test cases passed. No console errors detected. Feature is production-ready and working as designed."
+
   - task: "Expired Test Now automation enhancements"
     implemented: true
     working: true
@@ -405,10 +417,10 @@ frontend:
 
 metadata:
   created_by: "testing_agent"
-  version: "2.0"
-  test_sequence: 11
+  version: "2.1"
+  test_sequence: 12
   run_ui: true
-  test_date: "2025-03-04"
+  test_date: "2025-03-30"
 
 test_plan:
   current_focus: []
@@ -449,6 +461,9 @@ agent_communication:
 
   - agent: "testing"
     message: "Completed comprehensive testing of Expired Test Now enhancements on 2025-03-04. TEST RESULTS: ✅ ALL CORE REQUIREMENTS PASSED. BACKEND TESTING: (1) Login with mel@a2gdesigns.com / BigDaddy2016!! successful as superuser, (2) POST /api/expired-listings/automation/run executed successfully via localhost:8001 (external URL had 502 issues but internal API working perfectly), (3) VERIFIED: Response contains ALL required fields in lead_results: lead_id, landing_page_url (/landing/{slug} format), brochure_status, brochure_url, visible_in_property_leads, (4) VERIFIED: GET /api/property-leads/{lead_id} contains all required fields (landing_page_url, brochure_status, brochure_url), (5) VERIFIED: Brochure URL returns HTTP 200 with content-type: application/pdf (PDF accessible and valid), (6) VERIFIED: Lead appears in GET /api/property-leads first page (50 leads total, target lead found), (7) Automation generated 1 lead from 94 matched expired listings with brochure_status='generated', email_status='sent', visible_in_property_leads=true. FRONTEND TESTING: (8) /mls/expired/search page accessible, (9) Test Now button present in SearchExpired.jsx component with data-testid='expired-test-now-button' (React SPA - not in static HTML), (10) Test Now Results card implemented with data-testid='expired-test-now-results-card' and renders after API call. All automation workflow components working correctly - expired search, lead conversion, brochure generation, email sending, landing page creation. Feature is production-ready."
+
+  - agent: "testing"
+    message: "Completed verification of mortgage calculator threshold behavior on 2025-03-30. TEST RESULTS: ✅ ALL THREE TEST CASES PASSED. (1) Property page with price >= $2,000,000 (123 Palm Beach Blvd, Palm Beach, FL 33480): VERIFIED - Mortgage calculator section is NOT shown, unavailable message displays correctly stating 'The payment calculator is available for listings priced under $2,000,000.' Container with data-testid='property-mortgage-calculator-unavailable' found, calculator container correctly absent. (2) Property page with price < $2,000,000 (705 W Amelia Ave, Tampa, FL): VERIFIED - Mortgage calculator section is visible and functional. Container with data-testid='property-mortgage-calculator-container' found, calculator component renders with all inputs and controls. Unavailable message correctly NOT present. (3) Standalone /mortgage-calculator page: VERIFIED - Entered home price value of 3,000,000 in input field (data-testid='mortgage-home-price-input'), value correctly clamped to 1,999,999 (MORTGAGE_PRICE_MAX_ALLOWED = MORTGAGE_PRICE_LIMIT - 1 = 1,999,999). Price limit note (data-testid='mortgage-price-limit-note') displays: 'Eligible calculator range: under $2,000,000'. Implementation working as designed with proper threshold enforcement at $2,000,000. No console errors detected. All UI elements properly styled and functional. Feature is production-ready."
 
 
 

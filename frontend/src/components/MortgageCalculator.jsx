@@ -25,6 +25,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+const MORTGAGE_PRICE_LIMIT = 2000000;
+const MORTGAGE_PRICE_MAX_ALLOWED = MORTGAGE_PRICE_LIMIT - 1;
+
 // Loan type configurations
 const LOAN_TYPES = {
   conventional: {
@@ -111,6 +114,14 @@ export const MortgageCalculator = ({
   const [compareMode, setCompareMode] = useState(false);
   const [scenarios, setScenarios] = useState([]);
 
+  const normalizeHomePrice = (rawValue) => {
+    const parsed = parseInt(String(rawValue || '0').replace(/[^0-9]/g, ''), 10) || 0;
+    if (parsed >= MORTGAGE_PRICE_LIMIT) {
+      return MORTGAGE_PRICE_MAX_ALLOWED;
+    }
+    return parsed;
+  };
+
   // Fetch rates from backend on mount
   useEffect(() => {
     const fetchRates = async () => {
@@ -145,7 +156,7 @@ export const MortgageCalculator = ({
   // Update home price when property price changes
   useEffect(() => {
     if (propertyPrice > 0) {
-      setHomePrice(propertyPrice);
+      setHomePrice(normalizeHomePrice(propertyPrice));
     }
   }, [propertyPrice]);
 
@@ -411,10 +422,14 @@ export const MortgageCalculator = ({
             <Input
               type="text"
               value={homePrice.toLocaleString()}
-              onChange={(e) => setHomePrice(parseInt(e.target.value.replace(/,/g, '')) || 0)}
+              onChange={(e) => setHomePrice(normalizeHomePrice(e.target.value))}
               className="pl-10 text-lg font-semibold"
+              data-testid="mortgage-home-price-input"
             />
           </div>
+          <p className="text-xs text-muted-foreground mt-2" data-testid="mortgage-price-limit-note">
+            Eligible calculator range: under $2,000,000
+          </p>
         </div>
 
         {/* Down Payment */}
