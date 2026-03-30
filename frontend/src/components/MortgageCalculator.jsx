@@ -107,6 +107,8 @@ export const MortgageCalculator = ({
   const [annualPropertyTax, setAnnualPropertyTax] = useState(0);
   const [annualInsurance, setAnnualInsurance] = useState(0);
   const [monthlyHOA, setMonthlyHOA] = useState(0);
+  const [isCustomPropertyTax, setIsCustomPropertyTax] = useState(false);
+  const [isCustomInsurance, setIsCustomInsurance] = useState(false);
   
   // UI state
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -164,11 +166,27 @@ export const MortgageCalculator = ({
   useEffect(() => {
     const taxRate = ratesConfig?.property_tax_rate || propertyTaxRate;
     const insuranceRate = ratesConfig?.insurance_rate || 0.35;
-    // Estimate property tax
+
+    if (!isCustomPropertyTax) {
+      setAnnualPropertyTax(Math.round(homePrice * (taxRate / 100)));
+    }
+
+    if (!isCustomInsurance) {
+      setAnnualInsurance(Math.round(homePrice * (insuranceRate / 100)));
+    }
+  }, [homePrice, propertyTaxRate, ratesConfig, isCustomPropertyTax, isCustomInsurance]);
+
+  const resetPropertyTaxToEstimate = () => {
+    const taxRate = ratesConfig?.property_tax_rate || propertyTaxRate;
     setAnnualPropertyTax(Math.round(homePrice * (taxRate / 100)));
-    // Estimate homeowners insurance
+    setIsCustomPropertyTax(false);
+  };
+
+  const resetInsuranceToEstimate = () => {
+    const insuranceRate = ratesConfig?.insurance_rate || 0.35;
     setAnnualInsurance(Math.round(homePrice * (insuranceRate / 100)));
-  }, [homePrice, propertyTaxRate, ratesConfig]);
+    setIsCustomInsurance(false);
+  };
 
   // Set default down payment based on loan type
   useEffect(() => {
@@ -508,26 +526,54 @@ export const MortgageCalculator = ({
           <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label className="text-xs">Annual Property Tax</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Annual Property Tax</Label>
+                  <button
+                    type="button"
+                    className="text-[11px] text-amber-500 hover:text-amber-400"
+                    onClick={resetPropertyTaxToEstimate}
+                    data-testid="mortgage-reset-tax-estimate"
+                  >
+                    {isCustomPropertyTax ? 'Reset to estimate' : 'Using estimate'}
+                  </button>
+                </div>
                 <div className="relative mt-1">
                   <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
                   <Input
                     type="number"
                     value={annualPropertyTax}
-                    onChange={(e) => setAnnualPropertyTax(parseInt(e.target.value) || 0)}
+                    onChange={(e) => {
+                      setAnnualPropertyTax(parseInt(e.target.value) || 0);
+                      setIsCustomPropertyTax(true);
+                    }}
                     className="pl-7 text-sm"
+                    data-testid="mortgage-annual-tax-input"
                   />
                 </div>
               </div>
               <div>
-                <Label className="text-xs">Annual Insurance</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Annual Insurance</Label>
+                  <button
+                    type="button"
+                    className="text-[11px] text-amber-500 hover:text-amber-400"
+                    onClick={resetInsuranceToEstimate}
+                    data-testid="mortgage-reset-insurance-estimate"
+                  >
+                    {isCustomInsurance ? 'Reset to estimate' : 'Using estimate'}
+                  </button>
+                </div>
                 <div className="relative mt-1">
                   <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
                   <Input
                     type="number"
                     value={annualInsurance}
-                    onChange={(e) => setAnnualInsurance(parseInt(e.target.value) || 0)}
+                    onChange={(e) => {
+                      setAnnualInsurance(parseInt(e.target.value) || 0);
+                      setIsCustomInsurance(true);
+                    }}
                     className="pl-7 text-sm"
+                    data-testid="mortgage-annual-insurance-input"
                   />
                 </div>
               </div>
@@ -540,6 +586,7 @@ export const MortgageCalculator = ({
                     value={monthlyHOA}
                     onChange={(e) => setMonthlyHOA(parseInt(e.target.value) || 0)}
                     className="pl-7 text-sm"
+                    data-testid="mortgage-monthly-hoa-input"
                   />
                 </div>
               </div>
