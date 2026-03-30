@@ -16,12 +16,24 @@ import {
 import { Button } from '../components/ui/button';
 import { useBranding } from '../contexts/BrandingContext';
 import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
+import { PublicSeoHead } from '../components/public/PublicSeoHead';
 
 export const AboutPage = () => {
   const { branding } = useBranding();
 
   return (
     <div className="min-h-screen bg-[#0a1628]">
+      <PublicSeoHead
+        title="About"
+        description="Meet the Hidden Haven Realty team and learn about our proven luxury real estate process."
+        urlPath="/about"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "RealEstateAgent",
+          name: "Hidden Haven Realty",
+          url: typeof window !== 'undefined' ? `${window.location.origin}/about` : '/about'
+        }}
+      />
       <PublicSiteHeader activePage="about" contactHref="/#contact" />
 
       {/* Hero Section */}

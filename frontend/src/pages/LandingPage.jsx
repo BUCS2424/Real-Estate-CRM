@@ -30,6 +30,7 @@ import TestimonialsCarousel from '../components/TestimonialsCarousel';
 import { toast } from 'sonner';
 import { useBranding } from '../contexts/BrandingContext';
 import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
+import { PublicSeoHead } from '../components/public/PublicSeoHead';
 
 // Badge configuration for display
 const BADGE_CONFIG = {
@@ -160,6 +161,22 @@ export const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-[#0a1628] text-white">
+      <PublicSeoHead
+        title="Luxury Real Estate Listings"
+        description="Discover luxury properties, private auctions, and off-market opportunities with Hidden Haven Realty."
+        urlPath="/"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Hidden Haven Realty",
+          url: typeof window !== 'undefined' ? `${window.location.origin}/` : '/',
+          potentialAction: {
+            "@type": "SearchAction",
+            target: typeof window !== 'undefined' ? `${window.location.origin}/showcase` : '/showcase',
+            "query-input": "required name=search_term_string"
+          }
+        }}
+      />
       <PublicSiteHeader variant="overlay" contactHref="#contact" />
 
       {/* Hero Section */}

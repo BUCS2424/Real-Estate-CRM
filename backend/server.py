@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -39,6 +40,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.cron import CronTrigger
 from zoneinfo import ZoneInfo
+from services.monthly_audit_service import run_monthly_audit
+from security.guards import has_suspicious_injection_pattern
 
 scheduler = AsyncIOScheduler()
 
@@ -62,6 +65,16 @@ async def scheduled_expired_automation():
         logger.info("Expired listings automation run complete.")
     except Exception as exc:
         logger.error(f"Expired listings automation failed: {exc}")
+
+
+async def scheduled_monthly_audit_job():
+    """Monthly compliance/security audit job"""
+    logger.info("Running scheduled 30-day compliance audit...")
+    try:
+        report_path = await run_monthly_audit()
+        logger.info(f"Monthly audit complete. Report: {report_path}")
+    except Exception as exc:
+        logger.error(f"Monthly audit failed: {exc}")
 
 @app.on_event("startup")
 async def start_scheduler():
@@ -92,6 +105,16 @@ async def start_scheduler():
     )
     jobs_added = True
 
+    # Schedule compliance/security audit every 30 days
+    scheduler.add_job(
+        scheduled_monthly_audit_job,
+        IntervalTrigger(days=30),
+        id="monthly_compliance_audit",
+        name="Monthly Compliance & Security Audit",
+        replace_existing=True
+    )
+    jobs_added = True
+
     if jobs_added and not scheduler.running:
         scheduler.start()
         logger.info("Background scheduler started.")
@@ -102,6 +125,26 @@ async def start_scheduler():
         if not rates or not rates.get("auto_updated"):
             logger.info("No FRED rates found, running initial fetch...")
             await scheduled_mortgage_rate_update()
+
+    # Keep latest audit report fresh at startup
+    await scheduled_monthly_audit_job()
+
+
+@app.middleware("http")
+async def security_guard_middleware(request: Request, call_next):
+    """Lightweight request hardening for common injection patterns + security headers."""
+    path = str(request.url.path or "")
+    query = str(request.url.query or "")
+
+    if has_suspicious_injection_pattern(path) or has_suspicious_injection_pattern(query):
+        return JSONResponse(status_code=400, content={"detail": "Suspicious request blocked"})
+
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    return response
 
 # Import and include all routers
 from routes import api_router

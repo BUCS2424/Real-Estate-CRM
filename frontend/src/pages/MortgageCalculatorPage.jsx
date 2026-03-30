@@ -3,10 +3,23 @@ import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { MortgageCalculator } from '../components/MortgageCalculator';
 import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
+import { PublicSeoHead } from '../components/public/PublicSeoHead';
 
 export const MortgageCalculatorPage = () => {
   return (
     <div className="min-h-screen bg-[#0a1628]">
+      <PublicSeoHead
+        title="Mortgage Calculator"
+        description="Estimate monthly payments with editable HOA, tax, and insurance assumptions."
+        urlPath="/mortgage-calculator"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "WebApplication",
+          name: "Hidden Haven Mortgage Calculator",
+          applicationCategory: "FinanceApplication",
+          operatingSystem: "Any"
+        }}
+      />
       <PublicSiteHeader contactHref="/#contact" />
 
       {/* Main Content */}

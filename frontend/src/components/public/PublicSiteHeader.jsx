@@ -78,8 +78,17 @@ export const PublicSiteHeader = ({ activePage = '', contactHref = '/#contact', v
             className="fixed top-0 right-0 h-full w-[82vw] max-w-sm bg-[#0a1628] border-l border-amber-400/20 z-[70] p-6"
             data-testid="public-menu-mobile-drawer"
           >
-            <div className="flex items-center justify-between mb-8">
-              <span className="text-sm tracking-[0.25em] text-amber-400">MENU</span>
+            <div className="flex items-start justify-between mb-8">
+              <div className="flex items-center gap-3" data-testid="public-mobile-menu-logo-placeholder">
+                {branding.logoUrl ? (
+                  <img src={branding.logoUrl} alt={branding.siteName || 'Hidden Haven Realty'} className="h-12 object-contain" />
+                ) : (
+                  <>
+                    <Home className="w-5 h-5 text-amber-400" />
+                    <span className="text-sm text-white">{branding.siteName || 'Hidden Haven Realty'}</span>
+                  </>
+                )}
+              </div>
               <button
                 onClick={closeMobileMenu}
                 className="text-white hover:text-amber-400"

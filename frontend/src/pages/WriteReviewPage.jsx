@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { toast } from 'sonner';
 import { useBranding } from '../contexts/BrandingContext';
 import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
+import { PublicSeoHead } from '../components/public/PublicSeoHead';
 
 const WriteReviewPage = () => {
   const { branding } = useBranding();
@@ -108,6 +109,19 @@ const WriteReviewPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a1628] to-[#071020]">
+      <PublicSeoHead
+        title="Write a Review"
+        description="Share your experience with Hidden Haven Realty."
+        urlPath="/write-review"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Review",
+          itemReviewed: {
+            "@type": "RealEstateAgent",
+            name: "Hidden Haven Realty"
+          }
+        }}
+      />
       <PublicSiteHeader contactHref="/#contact" />
 
       {/* Main Content */}

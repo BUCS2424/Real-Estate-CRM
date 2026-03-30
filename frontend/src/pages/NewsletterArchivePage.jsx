@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { useBranding } from '../contexts/BrandingContext';
 import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
+import { PublicSeoHead } from '../components/public/PublicSeoHead';
 
 export const NewsletterArchivePage = () => {
   const { branding } = useBranding();
@@ -36,6 +37,17 @@ export const NewsletterArchivePage = () => {
 
   return (
     <div className="min-h-screen bg-[#0a1628]">
+      <PublicSeoHead
+        title="Newsletter Archive"
+        description="Read our latest market updates, local insights, and luxury real estate guidance."
+        urlPath="/newsletter-archive"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Blog",
+          name: "Hidden Haven Realty Newsletter Archive",
+          url: typeof window !== 'undefined' ? `${window.location.origin}/newsletter-archive` : '/newsletter-archive'
+        }}
+      />
       <PublicSiteHeader contactHref="/#contact" />
 
       {/* Main Content */}

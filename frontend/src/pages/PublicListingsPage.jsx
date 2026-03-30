@@ -48,6 +48,7 @@ import {
 import { Slider } from '../components/ui/slider';
 import { useBranding } from '../contexts/BrandingContext';
 import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
+import { PublicSeoHead } from '../components/public/PublicSeoHead';
 
 // Badge configuration with icons and colors
 const BADGE_CONFIG = {
@@ -321,6 +322,18 @@ export const PublicListingsPage = () => {
 
   return (
     <div className="min-h-screen bg-[#0a1628]">
+      <PublicSeoHead
+        title="Listing Showcase"
+        description="Browse curated listings, featured homes, and new opportunities from Hidden Haven Realty."
+        urlPath="/showcase"
+        type="website"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Hidden Haven Realty Listing Showcase",
+          url: typeof window !== 'undefined' ? `${window.location.origin}/showcase` : '/showcase'
+        }}
+      />
       <PublicSiteHeader activePage="showcase" contactHref="/#contact" />
 
       {/* Hero */}

@@ -23,6 +23,8 @@ import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
+import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
+import { PublicSeoHead } from '../components/public/PublicSeoHead';
 
 export const PropertyLandingPage = () => {
   const { slug } = useParams();
@@ -198,10 +200,22 @@ export const PropertyLandingPage = () => {
     allImages.push({ id: 'hero-fallback-image', url: fallbackHeroImage, caption: 'Main Property Photo', is_primary: true, order: 0 });
   }
 
+  const seoTitle = pageData?.custom_headline || listing?.address || 'Property Landing Page';
+  const seoDescription = pageData?.custom_description || listing?.description || 'View this property and request more details.';
+  const seoImage = allImages?.[0]?.url;
+
   // Luxury Dark Theme
   if (isLuxury) {
     return (
       <div className="min-h-screen bg-[#0a1628] text-white">
+        <PublicSeoHead
+          title={seoTitle}
+          description={seoDescription}
+          image={seoImage}
+          urlPath={`/landing/${slug}`}
+          type="article"
+        />
+        <PublicSiteHeader variant="overlay" contactHref="/#contact" />
         {/* Hero Section */}
         <div className="relative h-[70vh] overflow-hidden">
           {allImages.length > 0 && (
@@ -553,6 +567,14 @@ export const PropertyLandingPage = () => {
   // Modern Light Theme (default)
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
+      <PublicSeoHead
+        title={seoTitle}
+        description={seoDescription}
+        image={seoImage}
+        urlPath={`/landing/${slug}`}
+        type="article"
+      />
+      <PublicSiteHeader variant="overlay" contactHref="/#contact" />
       {/* Hero */}
       <div className="relative h-[60vh] bg-gray-200">
         {allImages.length > 0 && (

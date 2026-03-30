@@ -27,6 +27,7 @@ import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner';
 import { MortgageCalculator } from '../components/MortgageCalculator';
 import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
+import { PublicSeoHead } from '../components/public/PublicSeoHead';
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('en-US', { 
@@ -140,8 +141,38 @@ export const PropertyDetailPage = () => {
     ? property.images.map(img => typeof img === 'string' ? { url: img } : img)
     : [{ url: 'https://images.unsplash.com/photo-1578439297699-eb414262c2de?w=1200&q=80' }];
 
+  const seoTitle = property?.address ? `${property.address}, ${property.city || ''}`.trim() : 'Property Details';
+  const seoDescription = property?.description || 'Explore this property listed by Hidden Haven Realty.';
+  const seoImage = images?.[0]?.url;
+
   return (
     <div className="min-h-screen bg-[#0a1628] text-white">
+      <PublicSeoHead
+        title={seoTitle}
+        description={seoDescription}
+        image={seoImage}
+        urlPath={`/property/${slug}`}
+        type="article"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "SingleFamilyResidence",
+          name: seoTitle,
+          description: seoDescription,
+          image: images.map((img) => img?.url).filter(Boolean),
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: property?.address || '',
+            addressLocality: property?.city || '',
+            addressRegion: property?.state || '',
+            postalCode: property?.zip_code || ''
+          },
+          offers: {
+            "@type": "Offer",
+            priceCurrency: "USD",
+            price: property?.price || 0
+          }
+        }}
+      />
       <PublicSiteHeader contactHref="/#contact" />
 
       {/* Image Gallery */}

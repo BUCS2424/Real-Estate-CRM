@@ -22,6 +22,8 @@ import { Badge } from '../components/ui/badge';
 import { Calendar } from '../components/ui/calendar';
 import { PhoneVerification } from '../components/PhoneVerification';
 import { toast } from 'sonner';
+import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
+import { PublicSeoHead } from '../components/public/PublicSeoHead';
 
 export const PublicBookingPage = () => {
   const { agentCode } = useParams();
@@ -139,6 +141,7 @@ export const PublicBookingPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
+        <PublicSeoHead title="Book a Showing" description="Book a private showing with Hidden Haven Realty." urlPath={`/book/${agentCode || ''}`} />
         <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
       </div>
     );
@@ -147,6 +150,7 @@ export const PublicBookingPage = () => {
   if (!agentInfo) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
+        <PublicSeoHead title="Book a Showing" description="Book a private showing with Hidden Haven Realty." urlPath={`/book/${agentCode || ''}`} />
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
             <CalendarIcon className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
@@ -160,7 +164,21 @@ export const PublicBookingPage = () => {
 
   return (
     <div className="min-h-screen bg-background py-8 px-4" data-testid="public-booking-page">
-      <div className="max-w-4xl mx-auto">
+      <PublicSeoHead
+        title={`Book with ${agentInfo?.agent_name || 'Our Team'}`}
+        description="Schedule your private consultation or property showing."
+        urlPath={`/book/${agentCode || ''}`}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Reservation",
+          reservationFor: {
+            "@type": "Service",
+            name: "Real Estate Consultation"
+          }
+        }}
+      />
+      <PublicSiteHeader contactHref="/#contact" />
+      <div className="max-w-4xl mx-auto pt-24">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center mx-auto mb-4">
