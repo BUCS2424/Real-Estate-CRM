@@ -456,8 +456,11 @@ export const LandingPage = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628] via-[#0a1628]/30 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <h3 className="text-2xl font-serif mb-0.5">{market.title}</h3>
-                  <p className="text-amber-300/90 text-sm mb-2">{market.subtitle}</p>
+                  <div className="min-h-[72px]">
+                    <h3 className="text-2xl font-serif mb-0.5">{market.title}</h3>
+                    <p className="text-amber-300/90 text-sm">{market.subtitle}</p>
+                  </div>
+                  {i < 2 && <div className="h-4" aria-hidden="true" />}
                   <p className="text-white/60 text-sm">{market.desc}</p>
                 </div>
               </div>
