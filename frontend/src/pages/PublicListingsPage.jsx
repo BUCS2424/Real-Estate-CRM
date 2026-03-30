@@ -47,6 +47,7 @@ import {
 } from '../components/ui/sheet';
 import { Slider } from '../components/ui/slider';
 import { useBranding } from '../contexts/BrandingContext';
+import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
 
 // Badge configuration with icons and colors
 const BADGE_CONFIG = {
@@ -320,37 +321,10 @@ export const PublicListingsPage = () => {
 
   return (
     <div className="min-h-screen bg-[#0a1628]">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#0a1628]/95 backdrop-blur-md border-b border-amber-400/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              {branding.logoUrl ? (
-                <img src={branding.logoUrl} alt={branding.siteName || 'Hidden Haven Realty'} className="h-10 object-contain" data-testid="showcase-header-logo" />
-              ) : (
-                <>
-                  <Home className="w-6 h-6 text-amber-400" />
-                  <span className="font-serif text-xl text-white">{branding.siteName || 'Hidden Haven Realty'}</span>
-                </>
-              )}
-            </Link>
-            <nav className="hidden md:flex items-center gap-8">
-              <Link to="/" className="text-sm text-white/70 hover:text-amber-400 transition-colors">HOME</Link>
-              <Link to="/showcase" className="text-sm text-amber-400 border-b border-amber-400">LISTING SHOWCASE</Link>
-              <a href="/#about" className="text-sm text-white/70 hover:text-amber-400 transition-colors">ABOUT</a>
-              <a href="/#contact" className="text-sm text-white/70 hover:text-amber-400 transition-colors">CONTACT</a>
-            </nav>
-            <Link to="/login">
-              <Button variant="outline" className="border-amber-400/50 text-amber-400 hover:bg-amber-400 hover:text-black">
-                Agent Login
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <PublicSiteHeader activePage="showcase" contactHref="/#contact" />
 
       {/* Hero */}
-      <div className="pt-16 bg-gradient-to-b from-[#0a1628] via-[#0d1f3c] to-[#0a1628] relative overflow-hidden">
+      <div className="pt-24 bg-gradient-to-b from-[#0a1628] via-[#0d1f3c] to-[#0a1628] relative overflow-hidden">
         {/* Decorative Elements */}
         <div className="absolute top-20 left-10 w-64 h-64 bg-amber-400/5 rounded-full blur-3xl"></div>
         <div className="absolute top-40 right-20 w-96 h-96 bg-amber-400/3 rounded-full blur-3xl"></div>

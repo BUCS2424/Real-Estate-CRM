@@ -8,10 +8,10 @@ import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
 import { useBranding } from '../contexts/BrandingContext';
+import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
 
 const WriteReviewPage = () => {
   const { branding } = useBranding();
-  const headerLogoUrl = branding.logoUrl || branding.headerLogoUrl;
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [rating, setRating] = useState(5);
@@ -108,27 +108,10 @@ const WriteReviewPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a1628] to-[#071020]">
-      {/* Header */}
-      <header className="py-6 px-6 border-b border-white/10">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            {headerLogoUrl ? (
-              <img src={headerLogoUrl} alt={branding.siteName} className="h-10 object-contain" data-testid="write-review-header-logo" />
-            ) : (
-              <span className="text-2xl font-serif text-white">{branding.siteName || 'Hidden Haven Realty'}</span>
-            )}
-          </Link>
-          <Link to="/">
-            <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
-            </Button>
-          </Link>
-        </div>
-      </header>
+      <PublicSiteHeader contactHref="/#contact" />
 
       {/* Main Content */}
-      <main className="py-16 px-4">
+      <main className="pt-28 pb-16 px-4">
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">

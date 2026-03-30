@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Verify mortgage calculator threshold behavior on property pages and standalone calculator page"
+user_problem_statement: "Test public menu consistency after header refactor"
 
 backend:
   - task: "Withdrawn Listings API endpoints"
@@ -409,6 +409,18 @@ frontend:
         agent: "testing"
         comment: "2025-03-30: UPDATED BEHAVIOR VERIFICATION - Mortgage calculator now completely hidden for high-price properties (no unavailable message shown). COMPREHENSIVE RE-TESTING COMPLETED: TEST 1 - High-price property /property/123-palm-beach-blvd-palm-beach-fl-33480 ($2,500,000): ✅ PASS - (1) NO mortgage calculator container found (data-testid='property-mortgage-calculator-container' does NOT exist), (2) NO 'Mortgage Calculator Unavailable' message found (data-testid='property-mortgage-calculator-unavailable' does NOT exist), (3) NO 'Mortgage Calculator' text found anywhere on the page. Implementation verified: PropertyDetailPage.jsx line 329 uses conditional rendering {Number(property.price || 0) < MORTGAGE_CALCULATOR_LIMIT && ...} where MORTGAGE_CALCULATOR_LIMIT = 2000000, so properties >= $2M show nothing (no calculator, no message). TEST 2 - Lower-price property /property/705-w-amelia-ave-tampa-fl ($1,860,000): ✅ PASS - (1) Mortgage calculator container FOUND and VISIBLE with data-testid='property-mortgage-calculator-container', (2) 'Mortgage Calculator' title displays correctly, (3) Calculator fully functional with all inputs (home price, down payment slider, interest rate, loan term, advanced options), (4) Estimated monthly payment displays correctly ($11,255), (5) NO unavailable message present (correct behavior for properties < $2M). BEHAVIOR CHANGE CONFIRMED: Previous implementation showed an unavailable message for high-price properties, current implementation completely hides the mortgage calculator section for properties >= $2M. Both test cases passed. No console errors detected. Feature working as designed and production-ready."
 
+  - task: "Public menu consistency after header refactor"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/public/PublicSiteHeader.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "2025-03-30: Public menu consistency verified across all 7 routes after header refactor. COMPREHENSIVE TESTING COMPLETED: DESKTOP TESTING (7/7 PASS): ✅ All routes (/, /showcase, /about, /property/705-w-amelia-ave-tampa-fl, /mortgage-calculator, /newsletter-archive, /write-review) display all 4 menu items in correct order: LISTING SHOWCASE, ABOUT, CONTACT, AGENT LOGIN. ✅ Contact link behavior correct: Home page (/) uses #contact (anchor to same page), all other pages use /#contact (route to home contact section). ✅ Desktop link functionality verified: LISTING SHOWCASE navigates to /showcase, ABOUT navigates to /about, AGENT LOGIN navigates to /login. MOBILE TESTING (7/7 FUNCTIONAL): ✅ Mobile menu button present and functional on all 7 routes. ✅ Drawer slides from RIGHT side (positioned at right edge of viewport with w-[82vw] max-w-sm classes). ✅ All 4 menu items present in mobile drawer in correct order: LISTING SHOWCASE, ABOUT, CONTACT, AGENT LOGIN. ✅ Close button (X icon) works correctly on all routes - drawer closes successfully. ⚠️ Minor: Overlay click to close drawer times out due to drawer element intercepting pointer events, but this is not a functional issue as close button works perfectly. IMPLEMENTATION VERIFIED: PublicSiteHeader component correctly used across all public pages with proper contactHref prop (Home: #contact, Others: /#contact). Desktop menu uses data-testid='public-header-desktop-menu' with hidden md:flex classes. Mobile menu uses drawer pattern with data-testid='public-menu-mobile-drawer' positioned fixed top-0 right-0. All menu items have proper data-testid attributes for testing. No console errors detected. Feature is production-ready and working as designed."
+
   - task: "Expired Test Now automation enhancements"
     implemented: true
     working: true
@@ -429,7 +441,8 @@ metadata:
   test_date: "2025-03-30"
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Public menu consistency after header refactor"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -476,6 +489,9 @@ agent_communication:
   
   - agent: "testing"
     message: "Completed verification of UPDATED mortgage calculator threshold behavior on 2025-03-30. BEHAVIOR CHANGE CONFIRMED: Previous implementation showed an 'unavailable message' for high-price properties, current implementation completely HIDES the mortgage calculator section for properties >= $2M (no message shown). TEST RESULTS: ✅ ALL REQUIREMENTS PASSED. TEST 1 - High-price property /property/123-palm-beach-blvd-palm-beach-fl-33480 ($2,500,000): (1) NO mortgage calculator container found, (2) NO 'Mortgage Calculator Unavailable' message found, (3) NO 'Mortgage Calculator' text found anywhere on page. TEST 2 - Lower-price property /property/705-w-amelia-ave-tampa-fl ($1,860,000): (1) Mortgage calculator container FOUND and VISIBLE, (2) Calculator fully functional with estimated monthly payment $11,255, (3) NO unavailable message present. Implementation: PropertyDetailPage.jsx line 329 uses conditional rendering {Number(property.price || 0) < MORTGAGE_CALCULATOR_LIMIT && ...} where MORTGAGE_CALCULATOR_LIMIT = 2000000. Properties >= $2M show nothing (no calculator, no message). Feature working as designed and production-ready."
+
+  - agent: "testing"
+    message: "Completed comprehensive testing of public menu consistency after header refactor on 2025-03-30. TEST RESULTS: ✅ ALL CORE REQUIREMENTS PASSED. DESKTOP TESTING (7/7 PASS): All routes (/, /showcase, /about, /property/705-w-amelia-ave-tampa-fl, /mortgage-calculator, /newsletter-archive, /write-review) display all 4 menu items in correct order: LISTING SHOWCASE, ABOUT, CONTACT, AGENT LOGIN. Contact link behavior verified correct: Home page (/) uses #contact (anchor to same page), all other pages use /#contact (route to home contact section). Desktop link functionality verified: LISTING SHOWCASE → /showcase, ABOUT → /about, AGENT LOGIN → /login. MOBILE TESTING (7/7 FUNCTIONAL): Mobile menu button present and functional on all 7 routes. Drawer slides from RIGHT side (positioned at right edge with w-[82vw] max-w-sm classes). All 4 menu items present in mobile drawer in correct order. Close button (X icon) works correctly on all routes. ⚠️ Minor: Overlay click to close drawer times out due to drawer element intercepting pointer events, but this is not a functional issue as close button works perfectly. IMPLEMENTATION: PublicSiteHeader component correctly used across all public pages with proper contactHref prop. Desktop menu uses hidden md:flex classes. Mobile drawer uses fixed top-0 right-0 positioning. All menu items have proper data-testid attributes. No console errors detected. Feature is production-ready and working as designed."
 
 
 

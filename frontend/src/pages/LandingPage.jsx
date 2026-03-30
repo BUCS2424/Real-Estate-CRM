@@ -12,8 +12,6 @@ import {
   Mail,
   ArrowRight,
   Play,
-  Menu,
-  X,
   Loader2,
   Star,
   CheckCircle,
@@ -31,6 +29,7 @@ import { PhoneVerification } from '../components/PhoneVerification';
 import TestimonialsCarousel from '../components/TestimonialsCarousel';
 import { toast } from 'sonner';
 import { useBranding } from '../contexts/BrandingContext';
+import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
 
 // Badge configuration for display
 const BADGE_CONFIG = {
@@ -70,7 +69,6 @@ const formatPrice = (price) => {
 export const LandingPage = () => {
   const navigate = useNavigate();
   const { branding } = useBranding();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -162,70 +160,7 @@ export const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-[#0a1628] text-white">
-      {/* Navigation */}
-      <nav className="absolute top-0 left-0 right-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <Link to={branding.logoLinkUrl || "/"} className="flex items-center gap-3">
-              {branding.logoUrl ? (
-                <img 
-                  src={branding.logoUrl} 
-                  alt={branding.siteName || 'Hidden Haven Realty'} 
-                  className="h-20 object-contain"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex';
-                  }}
-                />
-              ) : (
-                <>
-                  <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded flex items-center justify-center">
-                    <span className="font-serif text-black font-bold text-xl">H</span>
-                  </div>
-                  <div>
-                    <h1 className="text-xl font-serif tracking-wide">HIDDEN HAVEN</h1>
-                    <p className="text-[10px] tracking-[0.3em] text-amber-400/80">REALTY</p>
-                  </div>
-                </>
-              )}
-            </Link>
-            
-            <div className="hidden md:flex items-center gap-8">
-              <Link to="/showcase" className="text-sm tracking-wide hover:text-amber-400 transition-colors">LISTING SHOWCASE</Link>
-              <Link to="/about" className="text-sm tracking-wide hover:text-amber-400 transition-colors">ABOUT</Link>
-              <a href="#contact" className="text-sm tracking-wide hover:text-amber-400 transition-colors">CONTACT</a>
-              <Link to="/login">
-                <Button variant="outline" className="border-amber-400/50 text-amber-400 hover:bg-amber-400 hover:text-black">
-                  AGENT LOGIN
-                </Button>
-              </Link>
-            </div>
-
-            <button 
-              className="md:hidden text-white"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-[#0a1628]/98 backdrop-blur-lg border-t border-amber-400/10">
-            <div className="px-6 py-4 space-y-4">
-              <Link to="/showcase" className="block text-sm tracking-wide hover:text-amber-400">LISTING SHOWCASE</Link>
-              <Link to="/about" className="block text-sm tracking-wide hover:text-amber-400">ABOUT</Link>
-              <a href="#contact" className="block text-sm tracking-wide hover:text-amber-400">CONTACT</a>
-              <Link to="/login" className="block">
-                <Button variant="outline" className="w-full border-amber-400/50 text-amber-400">
-                  AGENT LOGIN
-                </Button>
-              </Link>
-            </div>
-          </div>
-        )}
-      </nav>
+      <PublicSiteHeader variant="overlay" contactHref="#contact" />
 
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">

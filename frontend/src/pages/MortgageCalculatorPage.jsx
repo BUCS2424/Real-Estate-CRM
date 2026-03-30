@@ -1,28 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Calculator } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { MortgageCalculator } from '../components/MortgageCalculator';
+import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
 
 export const MortgageCalculatorPage = () => {
   return (
     <div className="min-h-screen bg-[#0a1628]">
-      {/* Header */}
-      <header className="bg-[#0d1f3c]/80 border-b border-amber-400/20">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-amber-400 hover:text-amber-300 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </Link>
-          <div className="flex items-center gap-2">
-            <Calculator className="w-6 h-6 text-amber-400" />
-            <span className="text-xl font-serif text-white">Payment Calculator</span>
-          </div>
-        </div>
-      </header>
+      <PublicSiteHeader contactHref="/#contact" />
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-6 py-12">
+      <main className="max-w-4xl mx-auto px-6 pt-24 pb-12">
         <div className="text-center mb-10">
           <p className="text-amber-400 tracking-[0.2em] text-sm mb-2">FINANCIAL TOOLS</p>
           <h1 className="text-4xl md:text-5xl font-serif text-white mb-4">Mortgage Calculator</h1>

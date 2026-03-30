@@ -15,12 +15,9 @@ import {
   Phone,
   Mail,
   ArrowLeft,
-  Heart,
-  Share2,
   X,
   Loader2,
-  Check,
-  Calculator
+  Check
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -28,6 +25,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner';
 import { MortgageCalculator } from '../components/MortgageCalculator';
+import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('en-US', { 
@@ -142,40 +140,7 @@ export const PropertyDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-[#0a1628] text-white">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#0a1628]/95 backdrop-blur-sm border-b border-amber-400/10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            {branding.logoUrl ? (
-              <img src={branding.logoUrl} alt={branding.siteName} className="h-12 object-contain" />
-            ) : (
-              <>
-                <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded flex items-center justify-center">
-                  <span className="font-serif text-black font-bold text-xl">H</span>
-                </div>
-                <div>
-                  <h1 className="text-xl font-serif tracking-wide">HIDDEN HAVEN</h1>
-                  <p className="text-[10px] tracking-[0.3em] text-amber-400/80">REALTY</p>
-                </div>
-              </>
-            )}
-          </Link>
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="text-white hover:text-amber-400">
-              <Heart className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="text-white hover:text-amber-400">
-              <Share2 className="w-5 h-5" />
-            </Button>
-            <Button 
-              onClick={() => setShowInquiryForm(true)}
-              className="bg-amber-400 text-black hover:bg-amber-300"
-            >
-              Request Showing
-            </Button>
-          </div>
-        </div>
-      </header>
+      <PublicSiteHeader contactHref="/#contact" />
 
       {/* Image Gallery */}
       <section className="pt-20">

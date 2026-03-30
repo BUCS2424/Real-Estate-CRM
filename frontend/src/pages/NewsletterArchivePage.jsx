@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { newsletterAPI } from '../lib/api';
-import { Mail, Calendar, Users, ArrowLeft, Home, Loader2 } from 'lucide-react';
+import { Mail, Calendar, Users, Home, Loader2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { useBranding } from '../contexts/BrandingContext';
+import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
 
 export const NewsletterArchivePage = () => {
   const { branding } = useBranding();
@@ -35,29 +36,7 @@ export const NewsletterArchivePage = () => {
 
   return (
     <div className="min-h-screen bg-[#0a1628]">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#0a1628]/95 backdrop-blur-md border-b border-amber-400/10">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              {branding.logoUrl ? (
-                <img src={branding.logoUrl} alt={branding.siteName || 'Hidden Haven Realty'} className="h-10 object-contain" data-testid="newsletter-header-logo" />
-              ) : (
-                <>
-                  <Home className="w-6 h-6 text-amber-400" />
-                  <span className="font-serif text-xl text-white">{branding.siteName || 'Hidden Haven Realty'}</span>
-                </>
-              )}
-            </Link>
-            <Link to="/">
-              <Button variant="outline" size="sm" className="border-amber-400/50 text-amber-400 hover:bg-amber-400 hover:text-black">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Home
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <PublicSiteHeader contactHref="/#contact" />
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
