@@ -429,9 +429,21 @@ export const LandingPage = () => {
 
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { name: 'Palm Beach', desc: 'Island Estates & Oceanfront', image: 'https://images.unsplash.com/photo-1578439297699-eb414262c2de?w=600&q=80' },
-              { name: 'Miami Beach', desc: 'Star Island & Fisher Island', image: 'https://images.unsplash.com/photo-1607142426460-0185c446f1d7?w=600&q=80' },
-              { name: 'Naples', desc: 'Port Royal & Gulf Shore', image: 'https://images.unsplash.com/photo-1623701675999-9406ece2d150?w=600&q=80' }
+              {
+                name: 'Davis Island',
+                desc: 'Waterfront luxury homes with private docks, skyline views, and quick access to downtown Tampa.',
+                image: 'https://images.unsplash.com/photo-1578439297699-eb414262c2de?w=600&q=80'
+              },
+              {
+                name: 'Historic Hyde Park and Spanish Town',
+                desc: 'Charming historic architecture, walkable streets, boutique dining, and timeless luxury residences.',
+                image: 'https://images.unsplash.com/photo-1607142426460-0185c446f1d7?w=600&q=80'
+              },
+              {
+                name: 'Westshore and Beach Park',
+                desc: 'Executive estates and modern homes near top business districts, fine shopping, and Tampa Bay access.',
+                image: 'https://images.unsplash.com/photo-1623701675999-9406ece2d150?w=600&q=80'
+              }
             ].map((market, i) => (
               <div key={i} className="relative group overflow-hidden rounded-lg aspect-[3/4] cursor-pointer">
                 <img 
