@@ -73,7 +73,11 @@ const navItems = [
 export const Sidebar = ({ collapsed, onToggle }) => {
   const location = useLocation();
   const { branding } = useBranding();
-  const adminLogoUrl = branding.logoUrl || branding.dashboardLogoUrl;
+  const adminLogoUrl =
+    branding.pwaIconUrl ||
+    branding.faviconUrl ||
+    branding.dashboardLogoUrl ||
+    branding.logoUrl;
   
   // Check if current path is a sales item to auto-expand
   const isSalesPath = salesItems.some(item => 

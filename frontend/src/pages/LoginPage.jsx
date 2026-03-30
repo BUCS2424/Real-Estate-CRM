@@ -17,7 +17,11 @@ export const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { login, user } = useAuth();
   const { branding } = useBranding();
-  const authLogoUrl = branding.logoUrl || branding.dashboardLogoUrl;
+  const authLogoUrl =
+    branding.pwaIconUrl ||
+    branding.faviconUrl ||
+    branding.dashboardLogoUrl ||
+    branding.logoUrl;
   const navigate = useNavigate();
 
   useEffect(() => {
