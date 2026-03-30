@@ -11,7 +11,7 @@ export const PublicSiteHeader = ({ activePage = '', contactHref = '/#contact', v
   const isOverlay = variant === 'overlay';
   const shellClass = isOverlay
     ? 'absolute top-0 left-0 right-0 z-50'
-    : 'fixed top-0 left-0 right-0 z-50 bg-[#0a1628]/95 backdrop-blur-md border-b border-amber-400/10';
+    : 'fixed top-0 left-0 right-0 z-50 bg-transparent border-none';
 
   const navLinkClass = (isActive) =>
     `text-sm tracking-wide transition-colors ${isActive ? 'text-amber-400 border-b border-amber-400' : 'text-white/70 hover:text-amber-400'}`;
@@ -20,7 +20,7 @@ export const PublicSiteHeader = ({ activePage = '', contactHref = '/#contact', v
 
   return (
     <header className={shellClass} data-testid="public-site-header">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
         <div className="flex items-center justify-between gap-4">
           <Link
             to={branding.logoLinkUrl || '/'}
@@ -29,7 +29,7 @@ export const PublicSiteHeader = ({ activePage = '', contactHref = '/#contact', v
             onClick={closeMobileMenu}
           >
             {branding.logoUrl ? (
-              <img src={branding.logoUrl} alt={branding.siteName || 'Hidden Haven Realty'} className="h-10 object-contain" data-testid="public-header-logo-image" />
+              <img src={branding.logoUrl} alt={branding.siteName || 'Hidden Haven Realty'} className="h-20 object-contain" data-testid="public-header-logo-image" />
             ) : (
               <>
                 <Home className="w-6 h-6 text-amber-400" />

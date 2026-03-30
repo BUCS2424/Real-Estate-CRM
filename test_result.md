@@ -433,6 +433,18 @@ frontend:
         agent: "testing"
         comment: "2025-03-30: MLS image sync and public gallery enhancement fully functional and production-ready. COMPREHENSIVE TESTING COMPLETED: ADMIN SIDE TESTING: (1) /mls/moderate page - ✅ Login successful with mel@a2gdesigns.com, ✅ Found 50 photo count labels displaying 'X photos available' format (e.g., '1 photos available'), ✅ Photo count labels use Image icon and amber color styling, ✅ Labels positioned correctly below property stats on each listing card (lines 341-344 of ModerateListings.jsx). (2) /mls/converted page - ✅ Found 1 photo count label displaying 'X photos synced' format (e.g., '21 photos synced'), ✅ Photo count labels use Image icon and amber color styling, ✅ Labels positioned correctly below converted date on each listing card (lines 164-167 of ConvertedListings.jsx). PUBLIC PROPERTY PAGE TESTING (/property/2203-glenwood-tampa-fl-33602): (3) Photo count badge - ✅ Badge visible in top-right corner of hero image displaying '21 Photos' with Images icon (data-testid='property-photo-count-badge'), ✅ Badge styled with black background and amber border (lines 184-187 of PropertyDetailPage.jsx). (4) Thumbnail strip - ✅ Thumbnail gallery strip visible below hero image with 22 thumbnails (data-testid='property-thumbnail-gallery-strip'), ✅ Thumbnails clickable and switch main hero image successfully, ✅ Active thumbnail highlighted with amber border and ring effect. (5) Gallery lightbox - ✅ 'View Full Gallery' button found and functional (data-testid='property-open-gallery-button'), ✅ Lightbox opens successfully with full-screen black overlay (data-testid='property-gallery-lightbox'), ✅ Prev/Next controls present and functional (data-testid='property-gallery-lightbox-prev' and 'property-gallery-lightbox-next'), ✅ 21 thumbnails at bottom of lightbox clickable and switch images correctly (data-testid='property-gallery-lightbox-thumb-{idx}'), ✅ Close button works successfully (data-testid='property-gallery-lightbox-close'). REGRESSION TESTING: (6) Property details render correctly - ✅ Property price visible, ✅ Property stats (bedrooms/bathrooms/sqft/garage) displayed in stat cards, ✅ Property description and features visible. (7) Inquiry form modal - ✅ 'Schedule Private Viewing' button found and functional, ✅ Inquiry form modal opens successfully with 'Request a Viewing' title, ✅ All form fields present (Name, Email, Phone, Message, Submit button). ⚠️ Minor: Close button click timed out due to modal overlay interception (common Playwright issue), but modal opens/closes functionality confirmed working. No console errors detected. All photo count labels display correct format and styling. Gallery features fully functional with smooth navigation. Feature is production-ready and working as designed."
 
+  - task: "Public header logo size and transparency consistency"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/public/PublicSiteHeader.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "2025-03-30: Public header logo size and transparency validation completed successfully across all 7 public routes. COMPREHENSIVE TESTING RESULTS: ✅ ALL REQUIREMENTS MET. (1) Logo Size Consistency: PASS - All 7 routes (/, /about, /showcase, /property/705-w-amelia-ave-tampa-fl, /mortgage-calculator, /newsletter-archive, /write-review) display logo with h-20 class (80px height). Logo image uses data-testid='public-header-logo-image' with className='h-20 object-contain' (line 32 of PublicSiteHeader.jsx). Computed height verified at 80px across all routes. (2) Header Transparency: PASS - All 7 routes have transparent header background (rgba(0, 0, 0, 0)). Home page (/) uses variant='overlay' with classes 'absolute top-0 left-0 right-0 z-50'. All other pages use default variant with classes 'fixed top-0 left-0 right-0 z-50 bg-transparent border-none' (lines 11-14 of PublicSiteHeader.jsx). (3) Menu Items: PASS - All 7 routes display exactly 4 menu items in correct order: LISTING SHOWCASE, ABOUT, CONTACT, AGENT LOGIN. Desktop menu uses data-testid='public-header-desktop-menu' (lines 41-56). NOTE: Initial test showed failures due to stale frontend build. After restarting frontend service (sudo supervisorctl restart frontend), all tests passed. No console errors detected. Feature is production-ready and working as designed."
+
   - task: "Expired Test Now automation enhancements"
     implemented: true
     working: true
@@ -454,12 +466,14 @@ metadata:
 
 test_plan:
   current_focus:
-    - "MLS image sync and public gallery enhancement"
+    - "Public header logo size and transparency consistency"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
+  - agent: "testing"
+    message: "Completed comprehensive testing of public header logo size and transparency consistency on 2025-03-30. TEST RESULTS: ✅ ALL REQUIREMENTS MET. Validated across all 7 public routes (/, /about, /showcase, /property/705-w-amelia-ave-tampa-fl, /mortgage-calculator, /newsletter-archive, /write-review). (1) Logo Size: PASS - All routes display logo with h-20 class (80px height) consistently. (2) Header Transparency: PASS - All routes have transparent header background (rgba(0, 0, 0, 0)). Home page uses variant='overlay', other pages use default variant with bg-transparent class. (3) Menu Items: PASS - All routes display exactly 4 menu items (LISTING SHOWCASE, ABOUT, CONTACT, AGENT LOGIN). NOTE: Initial test showed failures due to stale frontend build. After restarting frontend service, all tests passed. No console errors detected. Feature is production-ready and working as designed."
   - agent: "testing"
     message: "Completed comprehensive testing of Withdrawn Listings UI feature in MLS Hub. All core functionality working as expected. Login successful with provided credentials. Accordion appears correctly in sidebar beneath Expired Listings. All three subpages (Search Withdrawn, Moderate Withdrawn, Converted to Leads) render with required UI elements. Navigation between pages works smoothly. Minor HTML structure issue found in ModerateWithdrawn.jsx where Badge component creates nested div inside p tag causing React hydration warning - should use span wrapper instead. Feature is production-ready with this minor fix recommended."
   - agent: "testing"
