@@ -12,10 +12,31 @@ from models.user import UserRole
 from database import db
 from services.mls_service import mls_service
 import os
+import re
 
 router = APIRouter(prefix="/mls-listings", tags=["MLS Listings Management"])
 
 AGENT_MLS_ID = os.environ.get("AGENT_MLS_ID", "261507429")
+
+
+def _build_property_images(photo_urls: Optional[List[str]]) -> List[dict]:
+    images: List[dict] = []
+    seen = set()
+    for url in photo_urls or []:
+        clean = str(url).strip() if url else ""
+        if not clean or clean in seen:
+            continue
+        seen.add(clean)
+        images.append({"url": clean, "id": str(uuid.uuid4())})
+    return images
+
+
+def _generate_property_slug(address: Optional[str], city: Optional[str], state: Optional[str], zip_code: Optional[str]) -> str:
+    raw = f"{address or ''} {city or ''} {state or ''} {zip_code or ''}".strip().lower()
+    slug = re.sub(r"[^a-z0-9\s-]", "", raw)
+    slug = re.sub(r"\s+", "-", slug)
+    slug = re.sub(r"-+", "-", slug).strip("-")
+    return slug or str(uuid.uuid4())[:8]
 
 
 class PullListingsRequest(BaseModel):
@@ -122,6 +143,8 @@ async def pull_listings(
         mls_id = listing.get("mls_id")
         if not mls_id:
             continue
+
+        now = datetime.now(timezone.utc).isoformat()
         
         # Check if already exists
         existing = await db.mls_listings.find_one({"mls_id": mls_id})
@@ -144,12 +167,13 @@ async def pull_listings(
             "mls_status": listing.get("status"),
             "days_on_market": listing.get("days_on_market"),
             "photos": listing.get("photos", []),
+            "photo_count": len(listing.get("photos", []) or []),
             "primary_photo": listing.get("primary_photo"),
             "listing_agent": listing.get("listing_agent"),
             "listing_office": listing.get("listing_office"),
             "description": listing.get("description"),
-            "last_pulled_at": datetime.now(timezone.utc).isoformat(),
-            "updated_at": datetime.now(timezone.utc).isoformat()
+            "last_pulled_at": now,
+            "updated_at": now
         }
         
         if existing:
@@ -158,13 +182,30 @@ async def pull_listings(
                 {"mls_id": mls_id},
                 {"$set": listing_doc}
             )
+
+            # If listing is already converted, keep showcase images in sync automatically.
+            if existing.get("sync_status") == "converted":
+                property_update = {
+                    "images": _build_property_images(listing_doc.get("photos", [])),
+                    "updated_at": now,
+                    "last_mls_sync": now,
+                    "mls_synced": True
+                }
+                if listing_doc.get("primary_photo"):
+                    property_update["hero_image_url"] = listing_doc.get("primary_photo")
+
+                await db.properties.update_one(
+                    {"mls_id": mls_id},
+                    {"$set": property_update}
+                )
+
             updated_count += 1
         else:
             # Create new
             listing_doc["id"] = str(uuid.uuid4())
             listing_doc["sync_status"] = "pending"  # Needs moderation
             listing_doc["notes"] = []
-            listing_doc["pulled_at"] = datetime.now(timezone.utc).isoformat()
+            listing_doc["pulled_at"] = now
             listing_doc["pulled_by"] = current_user["id"]
             await db.mls_listings.insert_one(listing_doc)
             new_count += 1
@@ -238,16 +279,6 @@ async def convert_to_showcase(
     if not mls_listing:
         raise HTTPException(status_code=404, detail="MLS listing not found")
     
-    # Check if already converted
-    if mls_listing.get("sync_status") == "converted":
-        existing = await db.properties.find_one({"mls_id": mls_listing["mls_id"]})
-        if existing:
-            return {
-                "message": "Already converted",
-                "property_id": existing.get("id"),
-                "slug": existing.get("slug")
-            }
-    
     # Check if showcase listing already exists for this MLS ID
     existing_showcase = await db.properties.find_one({"mls_id": mls_listing["mls_id"]})
     
@@ -265,7 +296,7 @@ async def convert_to_showcase(
             "property_type": mls_listing.get("property_type"),
             "year_built": mls_listing.get("year_built"),
             "description": mls_listing.get("description"),
-            "images": [{"url": p, "id": str(uuid.uuid4())} for p in mls_listing.get("photos", []) if p],
+            "images": _build_property_images(mls_listing.get("photos", [])),
             "mls_synced": True,
             "last_mls_sync": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat()
@@ -297,10 +328,8 @@ async def convert_to_showcase(
         }
     
     # Create new showcase listing
-    from utils.slugify import generate_slug
-    
     property_id = str(uuid.uuid4())
-    slug = generate_slug(
+    slug = _generate_property_slug(
         mls_listing.get("address"),
         mls_listing.get("city"),
         mls_listing.get("state"),
@@ -324,7 +353,7 @@ async def convert_to_showcase(
         "property_type": mls_listing.get("property_type"),
         "year_built": mls_listing.get("year_built"),
         "description": mls_listing.get("description"),
-        "images": [{"url": p, "id": str(uuid.uuid4())} for p in mls_listing.get("photos", []) if p],
+        "images": _build_property_images(mls_listing.get("photos", [])),
         "status": "active",
         "is_featured": False,
         "mls_synced": True,

@@ -17,7 +17,8 @@ import {
   ArrowLeft,
   X,
   Loader2,
-  Check
+  Check,
+  Images
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -43,6 +44,7 @@ export const PropertyDetailPage = () => {
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showGalleryLightbox, setShowGalleryLightbox] = useState(false);
   const [showInquiryForm, setShowInquiryForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -179,8 +181,112 @@ export const PropertyDetailPage = () => {
           )}
 
           <Badge className="absolute top-24 left-6 bg-amber-400 text-black">OFF MARKET</Badge>
+          <Badge className="absolute top-24 right-6 bg-black/70 text-white border border-amber-400/40" data-testid="property-photo-count-badge">
+            <Images className="w-3.5 h-3.5 mr-1.5" />
+            {images.length} Photos
+          </Badge>
+
+          <Button
+            variant="outline"
+            className="absolute bottom-6 right-6 border-white/40 bg-black/50 text-white hover:bg-white hover:text-black"
+            onClick={() => setShowGalleryLightbox(true)}
+            data-testid="property-open-gallery-button"
+          >
+            <Images className="w-4 h-4 mr-2" />
+            View Full Gallery
+          </Button>
         </div>
+
+        {images.length > 1 && (
+          <div className="max-w-7xl mx-auto px-6 mt-5" data-testid="property-thumbnail-gallery-strip">
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {images.map((img, i) => (
+                <button
+                  key={`${img.url || 'img'}-${i}`}
+                  onClick={() => setCurrentImageIndex(i)}
+                  className={`relative shrink-0 w-28 h-20 rounded-xl overflow-hidden border transition-all ${
+                    i === currentImageIndex ? 'border-amber-400 ring-2 ring-amber-400/30' : 'border-white/20 hover:border-amber-400/40'
+                  }`}
+                  data-testid={`property-thumbnail-${i}`}
+                >
+                  <img src={img.url} alt={`Property photo ${i + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
+
+      {showGalleryLightbox && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          onClick={() => setShowGalleryLightbox(false)}
+          data-testid="property-gallery-lightbox"
+        >
+          <button
+            className="absolute top-5 right-5 text-white/80 hover:text-white"
+            onClick={() => setShowGalleryLightbox(false)}
+            data-testid="property-gallery-lightbox-close"
+            aria-label="Close gallery"
+          >
+            <X className="w-8 h-8" />
+          </button>
+
+          {images.length > 1 && (
+            <button
+              className="absolute left-5 p-3 bg-white/10 rounded-full hover:bg-white/20"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentImageIndex((idx) => (idx > 0 ? idx - 1 : images.length - 1));
+              }}
+              data-testid="property-gallery-lightbox-prev"
+              aria-label="Previous photo"
+            >
+              <ChevronLeft className="w-6 h-6 text-white" />
+            </button>
+          )}
+
+          <img
+            src={images[currentImageIndex]?.url}
+            alt={`Property image ${currentImageIndex + 1}`}
+            className="max-w-[92vw] max-h-[82vh] object-contain"
+            onClick={(e) => e.stopPropagation()}
+            data-testid="property-gallery-lightbox-image"
+          />
+
+          {images.length > 1 && (
+            <button
+              className="absolute right-5 p-3 bg-white/10 rounded-full hover:bg-white/20"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentImageIndex((idx) => (idx < images.length - 1 ? idx + 1 : 0));
+              }}
+              data-testid="property-gallery-lightbox-next"
+              aria-label="Next photo"
+            >
+              <ChevronRight className="w-6 h-6 text-white" />
+            </button>
+          )}
+
+          {images.length > 1 && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex max-w-[92vw] gap-2 overflow-x-auto p-1">
+              {images.map((img, idx) => (
+                <button
+                  key={`lightbox-thumb-${idx}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex(idx);
+                  }}
+                  className={`shrink-0 w-16 h-12 rounded-md overflow-hidden border ${idx === currentImageIndex ? 'border-amber-400' : 'border-white/20'}`}
+                  data-testid={`property-gallery-lightbox-thumb-${idx}`}
+                >
+                  <img src={img.url} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Property Details */}
       <section className="py-12 md:py-20 relative">

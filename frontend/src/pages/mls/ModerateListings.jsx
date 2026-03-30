@@ -12,7 +12,8 @@ import {
   MapPin,
   DollarSign,
   Filter,
-  CheckCheck
+  CheckCheck,
+  Image
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -335,6 +336,11 @@ export const ModerateListings = () => {
                     <Square className="w-4 h-4" />
                     {listing.sqft?.toLocaleString() || '-'} sqft
                   </span>
+                </div>
+
+                <div className="flex items-center gap-1 text-xs text-amber-500 mb-3" data-testid={`moderate-listing-photo-count-${listing.mls_id}`}>
+                  <Image className="w-3.5 h-3.5" />
+                  {(listing.photo_count ?? listing.photos?.length ?? 0).toLocaleString()} photos available
                 </div>
 
                 {/* Actions */}

@@ -10,7 +10,8 @@ import {
   Square,
   MapPin,
   DollarSign,
-  Calendar
+  Calendar,
+  Image
 } from 'lucide-react';
 import { Card, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -158,6 +159,11 @@ export const ConvertedListings = () => {
                 <div className="text-xs text-muted-foreground mb-3 flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
                   Converted: {formatDate(listing.converted_at)}
+                </div>
+
+                <div className="text-xs text-amber-500 mb-3 flex items-center gap-1" data-testid={`converted-listing-photo-count-${listing.mls_id}`}>
+                  <Image className="w-3 h-3" />
+                  {(listing.photo_count ?? listing.photos?.length ?? 0).toLocaleString()} photos synced
                 </div>
 
                 {/* Actions */}

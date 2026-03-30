@@ -166,7 +166,7 @@ class MLSService:
                 
                 if response.status_code == 200:
                     data = response.json()
-                    properties = self._transform_listings(data.get("value", []))
+                    properties = self._transform_listings(data.get("value", []), photo_limit=10)
                     return {
                         "properties": properties,
                         "total": data.get("@odata.count", len(properties)),
@@ -228,7 +228,8 @@ class MLSService:
                 
                 if response.status_code == 200:
                     data = response.json()
-                    listings = self._transform_listings(data.get("value", []))
+                    # My Listings should keep full media set for moderation/conversion workflows.
+                    listings = self._transform_listings(data.get("value", []), photo_limit=None)
                     return {
                         "listings": listings,
                         "total": len(listings),
@@ -275,10 +276,25 @@ class MLSService:
         except Exception as e:
             return {"error": f"Bridge API connection error: {str(e)}"}
     
-    def _transform_listings(self, listings: List[Dict]) -> List[Dict]:
+    def _extract_media_urls(self, media_items: Optional[List[Dict]], photo_limit: Optional[int] = 10) -> List[str]:
+        urls: List[str] = []
+        for media in media_items or []:
+            url = media.get("MediaURL") if isinstance(media, dict) else None
+            if not url:
+                continue
+            clean_url = str(url).strip()
+            if not clean_url or clean_url in urls:
+                continue
+            urls.append(clean_url)
+            if photo_limit is not None and len(urls) >= photo_limit:
+                break
+        return urls
+
+    def _transform_listings(self, listings: List[Dict], photo_limit: Optional[int] = 10) -> List[Dict]:
         """Transform Bridge API listing data to our format"""
         transformed = []
         for listing in listings:
+            photos = self._extract_media_urls(listing.get("Media", []), photo_limit=photo_limit)
             transformed.append({
                 "mls_id": listing.get("ListingId"),
                 "address": listing.get("UnparsedAddress"),
@@ -301,8 +317,9 @@ class MLSService:
                 "status_change_timestamp": listing.get("StatusChangeTimestamp"),
                 "listing_status_change_date": listing.get("ListingStatusChangeDate"),
                 "modification_timestamp": listing.get("ModificationTimestamp"),
-                "photos": [p.get("MediaURL") for p in listing.get("Media", [])[:10]] if listing.get("Media") else [],
-                "primary_photo": listing.get("Media", [{}])[0].get("MediaURL") if listing.get("Media") else None,
+                "photos": photos,
+                "photo_count": len(photos),
+                "primary_photo": photos[0] if photos else None,
                 "listing_agent": listing.get("ListAgentFullName"),
                 "listing_office": listing.get("ListOfficeName"),
                 "description": listing.get("PublicRemarks"),
@@ -311,7 +328,7 @@ class MLSService:
     
     def _transform_listing_detail(self, listing: Dict) -> Dict:
         """Transform full listing detail"""
-        base = self._transform_listings([listing])[0]
+        base = self._transform_listings([listing], photo_limit=None)[0]
         
         # Helper to handle fields that could be strings or lists
         def to_list(value):
@@ -334,7 +351,7 @@ class MLSService:
             "tax_amount": listing.get("TaxAnnualAmount"),
             "tax_year": listing.get("TaxYear"),
             "virtual_tour_url": listing.get("VirtualTourURLUnbranded"),
-            "all_photos": [p.get("MediaURL") for p in listing.get("Media", [])] if listing.get("Media") else [],
+            "all_photos": self._extract_media_urls(listing.get("Media", []), photo_limit=None),
             "latitude": listing.get("Latitude"),
             "longitude": listing.get("Longitude"),
             "subdivision": listing.get("SubdivisionName"),
