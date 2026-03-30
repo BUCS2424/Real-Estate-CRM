@@ -59,12 +59,27 @@ const FALLBACK_LISTINGS = [
   }
 ];
 
+const toNumber = (value) => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value === 'string') {
+    const cleaned = value.replace(/[^0-9.-]/g, '');
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
 const formatPrice = (price) => {
-  return new Intl.NumberFormat('en-US', { 
-    style: 'currency', 
-    currency: 'USD', 
-    maximumFractionDigits: 0 
-  }).format(price);
+  const numericPrice = toNumber(price);
+  if (!numericPrice || numericPrice <= 0) {
+    return 'Price Upon Request';
+  }
+
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0
+  }).format(numericPrice);
 };
 
 export const LandingPage = () => {
@@ -80,6 +95,13 @@ export const LandingPage = () => {
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const listingsToRender = (listings.length > 0 ? listings : FALLBACK_LISTINGS)
+    .filter(Boolean)
+    .filter((listing, index, arr) => {
+      const currentKey = listing.id || listing.slug || `${listing.address || ''}-${listing.city || ''}`;
+      return arr.findIndex((item) => (item.id || item.slug || `${item.address || ''}-${item.city || ''}`) === currentKey) === index;
+    });
 
   // Buyer-specific fields
   const [buyerBudget, setBuyerBudget] = useState('');
@@ -287,16 +309,21 @@ export const LandingPage = () => {
               <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
             </div>
           ) : (
-            [...(listings.length > 0 ? listings : FALLBACK_LISTINGS), ...(listings.length > 0 ? listings : FALLBACK_LISTINGS)].map((listing, index) => (
+            listingsToRender.map((listing, index) => (
               <div 
-                key={`${listing.id}-${index}`}
+                key={`${listing.id || listing.slug || 'listing'}-${index}`}
                 className="flex-shrink-0 w-[350px] md:w-[400px] group cursor-pointer"
-                onClick={() => navigate(`/property/${listing.slug || listing.id}`)}
+                onClick={() => {
+                  const routeKey = listing.slug || listing.id;
+                  if (routeKey) {
+                    navigate(`/property/${routeKey}`);
+                  }
+                }}
               >
                 <div className="relative overflow-hidden rounded-lg mb-4">
                   <img 
                     src={typeof listing.images?.[0] === 'string' ? listing.images[0] : (listing.images?.[0]?.url || 'https://images.unsplash.com/photo-1578439297699-eb414262c2de?w=800&q=80')} 
-                    alt={listing.address}
+                    alt={listing.address || 'Property listing'}
                     className="w-full h-[280px] object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628] via-transparent to-transparent" />
@@ -332,19 +359,19 @@ export const LandingPage = () => {
                   
                   <div className="absolute bottom-4 left-4 right-4">
                     <p className="text-2xl font-serif mb-1">{formatPrice(listing.price)}</p>
-                    <p className="text-white/70 text-sm">{listing.address}</p>
-                    <p className="text-white/50 text-sm">{listing.city}, {listing.state}</p>
+                    <p className="text-white/70 text-sm">{listing.address || 'Private Listing'}</p>
+                    <p className="text-white/50 text-sm">{[listing.city, listing.state].filter(Boolean).join(', ') || 'Florida'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-6 text-sm text-white/60">
                   <span className="flex items-center gap-1">
-                    <Bed className="w-4 h-4" /> {listing.bedrooms} Beds
+                    <Bed className="w-4 h-4" /> {toNumber(listing.bedrooms) || '—'} Beds
                   </span>
                   <span className="flex items-center gap-1">
-                    <Bath className="w-4 h-4" /> {listing.bathrooms} Baths
+                    <Bath className="w-4 h-4" /> {toNumber(listing.bathrooms) || '—'} Baths
                   </span>
                   <span className="flex items-center gap-1">
-                    <Square className="w-4 h-4" /> {listing.sqft?.toLocaleString()} SF
+                    <Square className="w-4 h-4" /> {toNumber(listing.sqft) ? toNumber(listing.sqft).toLocaleString() : '—'} SF
                   </span>
                 </div>
               </div>

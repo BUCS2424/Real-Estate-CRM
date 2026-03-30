@@ -505,6 +505,18 @@ frontend:
         agent: "testing"
         comment: "2025-03-30: Public header logo size and transparency validation completed successfully across all 7 public routes. COMPREHENSIVE TESTING RESULTS: ✅ ALL REQUIREMENTS MET. (1) Logo Size Consistency: PASS - All 7 routes (/, /about, /showcase, /property/705-w-amelia-ave-tampa-fl, /mortgage-calculator, /newsletter-archive, /write-review) display logo with h-20 class (80px height). Logo image uses data-testid='public-header-logo-image' with className='h-20 object-contain' (line 32 of PublicSiteHeader.jsx). Computed height verified at 80px across all routes. (2) Header Transparency: PASS - All 7 routes have transparent header background (rgba(0, 0, 0, 0)). Home page (/) uses variant='overlay' with classes 'absolute top-0 left-0 right-0 z-50'. All other pages use default variant with classes 'fixed top-0 left-0 right-0 z-50 bg-transparent border-none' (lines 11-14 of PublicSiteHeader.jsx). (3) Menu Items: PASS - All 7 routes display exactly 4 menu items in correct order: LISTING SHOWCASE, ABOUT, CONTACT, AGENT LOGIN. Desktop menu uses data-testid='public-header-desktop-menu' (lines 41-56). NOTE: Initial test showed failures due to stale frontend build. After restarting frontend service (sudo supervisorctl restart frontend), all tests passed. No console errors detected. Feature is production-ready and working as designed."
 
+  - task: "Homepage listing carousel NaN fix and fallback handling"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/LandingPage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "2025-03-30: Focused regression validation for homepage listing carousel fix completed successfully. COMPREHENSIVE TESTING RESULTS: ✅ ALL 5 REGRESSION TESTS PASSED. (1) Section Navigation: Successfully scrolled to 'Off-Market Estates' section on homepage (/) - section heading found and visible. (2) No NaN in Prices: VERIFIED - Tested all 12 listing cards, no 'NaN' or '$NaN' found in any price display. All prices show valid currency format ranging from $450,000 to $3,999,999. formatPrice() function (lines 72-83) correctly handles invalid prices by returning 'Price Upon Request'. (3) Sane Fallbacks for Missing Data: VERIFIED - Cards with missing sqft data correctly display '—' instead of NaN (Cards 1 and 2 show '5 Beds 4 Baths — SF'). toNumber() function (lines 62-70) properly returns null for invalid values, and UI displays '—' for null values (lines 368, 371, 374). All bedrooms, bathrooms, and sqft stats display properly formatted or show fallback dashes. (4) No Artificial Duplication: VERIFIED - All 12 cards are unique with distinct addresses (123 Palm Beach Boulevard, 456 Ocean Drive, 2201 N GLENWOOD Drive, etc.). Deduplication logic (lines 99-104) using findIndex correctly prevents duplicate cards from rendering. (5) Card Click Navigation: VERIFIED - Clicking first card successfully navigated to /property/123-palm-beach-blvd-palm-beach-fl-33480. Navigation logic (lines 316-321) correctly uses listing.slug or listing.id for routing. No console errors detected. All carousel functionality working as designed and production-ready."
+
   - task: "Expired Test Now automation enhancements"
     implemented: true
     working: true
@@ -526,7 +538,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Public header scroll behavior verification"
+    - "Homepage listing carousel regression validation"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -534,6 +546,8 @@ test_plan:
 agent_communication:
   - agent: "testing"
     message: "Completed comprehensive testing of public header logo size and transparency consistency on 2025-03-30. TEST RESULTS: ✅ ALL REQUIREMENTS MET. Validated across all 7 public routes (/, /about, /showcase, /property/705-w-amelia-ave-tampa-fl, /mortgage-calculator, /newsletter-archive, /write-review). (1) Logo Size: PASS - All routes display logo with h-20 class (80px height) consistently. (2) Header Transparency: PASS - All routes have transparent header background (rgba(0, 0, 0, 0)). Home page uses variant='overlay', other pages use default variant with bg-transparent class. (3) Menu Items: PASS - All routes display exactly 4 menu items (LISTING SHOWCASE, ABOUT, CONTACT, AGENT LOGIN). NOTE: Initial test showed failures due to stale frontend build. After restarting frontend service, all tests passed. No console errors detected. Feature is production-ready and working as designed."
+  - agent: "testing"
+    message: "Completed focused regression validation for homepage listing carousel fix on 2025-03-30. TEST RESULTS: ✅ ALL 5 REGRESSION TESTS PASSED. (1) Successfully scrolled to 'Off-Market Estates' section on homepage (/), (2) VERIFIED: No 'NaN' or '$NaN' in any of the 12 listing card prices - all prices display valid currency format ($450,000 to $3,999,999), (3) VERIFIED: Sane fallbacks working correctly - Cards with missing sqft data show '—' instead of NaN (e.g., Cards 1 and 2 show '— SF'), all other stats display properly, (4) VERIFIED: No artificial duplication - All 12 cards are unique with distinct addresses, deduplication logic working correctly, (5) VERIFIED: Card click navigation working - Clicking first card successfully navigated to /property/123-palm-beach-blvd-palm-beach-fl-33480. No console errors detected. formatPrice() function correctly returns 'Price Upon Request' for invalid prices. toNumber() function properly handles numeric conversions. listingsToRender deduplication logic prevents duplicate cards. All carousel functionality working as designed and production-ready."
   - agent: "testing"
     message: "Completed comprehensive testing of Withdrawn Listings UI feature in MLS Hub. All core functionality working as expected. Login successful with provided credentials. Accordion appears correctly in sidebar beneath Expired Listings. All three subpages (Search Withdrawn, Moderate Withdrawn, Converted to Leads) render with required UI elements. Navigation between pages works smoothly. Minor HTML structure issue found in ModerateWithdrawn.jsx where Badge component creates nested div inside p tag causing React hydration warning - should use span wrapper instead. Feature is production-ready with this minor fix recommended."
   - agent: "testing"
