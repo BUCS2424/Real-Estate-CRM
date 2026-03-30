@@ -460,8 +460,8 @@ export const LandingPage = () => {
                     <h3 className="text-2xl font-serif mb-0.5">{market.title}</h3>
                     <p className="text-amber-300/90 text-sm">{market.subtitle}</p>
                   </div>
-                  {i < 2 && <div className="h-4" aria-hidden="true" />}
                   <p className="text-white/60 text-sm">{market.desc}</p>
+                  {i < 2 && <div className="h-4" aria-hidden="true" />}
                 </div>
               </div>
             ))}
