@@ -129,6 +129,8 @@ export const aiAPI = {
 export const settingsAPI = {
   get: () => api.get('/settings'),
   update: (data) => api.put('/settings', data),
+  getAiRules: () => api.get('/settings/ai-rules'),
+  updateAiRules: (data) => api.put('/settings/ai-rules', data),
 };
 
 // Booking

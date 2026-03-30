@@ -45,6 +45,7 @@ const settingsMenu = [
       { path: '/settings/developer/mls', label: 'MLS Integration', icon: Building2 },
       { path: '/settings/developer/lead-scoring', label: 'Lead Scoring', icon: Target },
       { path: '/settings/developer/custom-code', label: 'Custom Code', icon: Code },
+      { path: '/settings/developer/ai-rules', label: 'Ai Rules', icon: FileText },
       { path: '/settings/developer/system-messages', label: 'System Messages', icon: MessageSquare },
       { path: '/settings/developer/pwa', label: 'PWA Settings', icon: Smartphone },
     ]

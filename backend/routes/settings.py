@@ -1,11 +1,140 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, List
 from database import db
 from models.settings import SettingsUpdate, SettingsResponse, GeneralSettingsModel
 from models.user import UserRole
 from utils.auth import get_current_user
+from security.guards import scrub_text, has_suspicious_injection_pattern
 
 router = APIRouter()
+
+AGENT_RULES_PATH = Path("/app/AGENT_RULES.md")
+
+
+def _extract_rules_from_markdown(markdown_text: str) -> List[str]:
+    rules: List[str] = []
+    for raw_line in (markdown_text or "").splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if line.startswith("#"):
+            continue
+        if line.startswith("```"):
+            continue
+
+        # numbered rules
+        if ". " in line and line[0].isdigit():
+            parts = line.split(". ", 1)
+            if len(parts) == 2 and parts[1].strip():
+                rules.append(parts[1].strip())
+
+    return rules
+
+
+def _serialize_rules_markdown(rules: List[str]) -> str:
+    lines = [
+        "# AGENT_RULES.md",
+        "",
+        "## Critical Rules for Any Agent Working in This Codebase",
+        "",
+    ]
+    for index, rule in enumerate(rules, start=1):
+        lines.append(f"{index}. {rule}")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _clean_rules_payload(raw_rules: Any) -> List[str]:
+    if not isinstance(raw_rules, list):
+        raise HTTPException(status_code=400, detail="rules must be a list")
+
+    cleaned_rules: List[str] = []
+    for item in raw_rules:
+        if not isinstance(item, str):
+            continue
+        clean = scrub_text(item)
+        clean = clean.strip()
+        if not clean:
+            continue
+        if has_suspicious_injection_pattern(clean):
+            raise HTTPException(status_code=400, detail="Suspicious rule content blocked")
+        cleaned_rules.append(clean)
+
+    if not cleaned_rules:
+        raise HTTPException(status_code=400, detail="At least one rule is required")
+
+    return cleaned_rules
+
+
+@router.get("/ai-rules")
+async def get_ai_rules(current_user: dict = Depends(get_current_user)):
+    """Get editable AI rules list for developer settings."""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    doc = await db.settings.find_one({"type": "ai_rules"}, {"_id": 0})
+    if doc and isinstance(doc.get("rules"), list) and doc.get("rules"):
+        return doc
+
+    source_rules: List[str] = []
+    if AGENT_RULES_PATH.exists():
+        source_rules = _extract_rules_from_markdown(AGENT_RULES_PATH.read_text(encoding="utf-8", errors="ignore"))
+
+    if not source_rules:
+        source_rules = ["Only make requested changes."]
+
+    now = datetime.now(timezone.utc).isoformat()
+    bootstrap_doc = {
+        "type": "ai_rules",
+        "rules": source_rules,
+        "source_file": str(AGENT_RULES_PATH),
+        "updated_at": now,
+        "updated_by": current_user["id"]
+    }
+
+    await db.settings.update_one(
+        {"type": "ai_rules"},
+        {"$set": bootstrap_doc},
+        upsert=True
+    )
+    return bootstrap_doc
+
+
+@router.put("/ai-rules")
+async def update_ai_rules(payload: dict, current_user: dict = Depends(get_current_user)):
+    """Save editable AI rules and sync AGENT_RULES.md"""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    rules = _clean_rules_payload(payload.get("rules"))
+    now = datetime.now(timezone.utc).isoformat()
+
+    update_doc = {
+        "type": "ai_rules",
+        "rules": rules,
+        "source_file": str(AGENT_RULES_PATH),
+        "updated_at": now,
+        "updated_by": current_user["id"]
+    }
+
+    await db.settings.update_one(
+        {"type": "ai_rules"},
+        {"$set": update_doc},
+        upsert=True
+    )
+
+    AGENT_RULES_PATH.write_text(_serialize_rules_markdown(rules), encoding="utf-8")
+    return {"message": "AI rules saved", **update_doc}
+
+
+@router.get("/ai-rules/file")
+async def get_ai_rules_file():
+    """Public read-only AGENT_RULES.md text endpoint for quick developer reference."""
+    if not AGENT_RULES_PATH.exists():
+        return Response(content="# AGENT_RULES.md\n\nNo rules file found.\n", media_type="text/markdown")
+    return Response(content=AGENT_RULES_PATH.read_text(encoding="utf-8", errors="ignore"), media_type="text/markdown")
 
 @router.get("", response_model=SettingsResponse)
 async def get_settings(current_user: dict = Depends(get_current_user)):
@@ -345,7 +474,7 @@ async def get_mortgage_rates_status(current_user: dict = Depends(get_current_use
         from server import scheduler
         from services.mortgage_rates_service import get_next_update_time
         next_update = get_next_update_time(scheduler)
-    except:
+    except Exception:
         pass
     
     return {

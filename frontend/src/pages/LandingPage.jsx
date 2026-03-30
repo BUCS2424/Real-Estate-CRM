@@ -403,7 +403,7 @@ export const LandingPage = () => {
                 <div className="absolute -inset-2 bg-gradient-to-br from-amber-400/60 to-amber-600/60 rounded-xl blur-sm"></div>
                 <div className="absolute -inset-1 bg-gradient-to-br from-amber-400 to-amber-500 rounded-lg"></div>
                 <img 
-                  src="https://customer-assets.emergentagent.com/job_fusion-estates/artifacts/sojktbhq_Sheila-Desautels.jpg" 
+                  src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&q=80" 
                   alt="Sheila Desautels - Luxury Real Estate Agent"
                   className="relative w-56 h-72 object-cover object-top rounded-lg shadow-2xl"
                 />

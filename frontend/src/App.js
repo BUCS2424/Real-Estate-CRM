@@ -61,6 +61,7 @@ import { GeneralSettings } from './pages/settings/developer/GeneralSettings';
 import { EmailSettings } from './pages/settings/developer/EmailSettings';
 import { TelnyxSettings } from './pages/settings/developer/TelnyxSettings';
 import { CustomCode } from './pages/settings/developer/CustomCode';
+import { AiRules } from './pages/settings/developer/AiRules';
 import { SystemMessages } from './pages/settings/developer/SystemMessages';
 import { PWASettings } from './pages/settings/developer/PWASettings';
 import { LeadScoringSettings } from './pages/settings/developer/LeadScoringSettings';
@@ -221,6 +222,7 @@ function App() {
                 <Route path="developer/lead-scoring" element={<LeadScoringSettings />} />
                 <Route path="developer/mls" element={<MLSSettings />} />
                 <Route path="developer/custom-code" element={<CustomCode />} />
+                <Route path="developer/ai-rules" element={<AiRules />} />
                 <Route path="developer/system-messages" element={<SystemMessages />} />
                 <Route path="developer/pwa" element={<PWASettings />} />
                 

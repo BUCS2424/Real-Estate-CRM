@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-JWT_SECRET = os.environ.get('JWT_SECRET', 'fusion-builder-secret-key-2024')
+JWT_SECRET = os.environ.get('JWT_SECRET', 'hidden-haven-secret-key-2026')
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24
 

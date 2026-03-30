@@ -519,14 +519,14 @@ frontend:
 
 metadata:
   created_by: "testing_agent"
-  version: "2.3"
-  test_sequence: 14
+  version: "2.4"
+  test_sequence: 15
   run_ui: true
   test_date: "2025-03-30"
 
 test_plan:
   current_focus:
-    - "Public-page SEO and menu standards verification"
+    - "Fusion branding removal and AI Rules page verification"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -591,3 +591,6 @@ agent_communication:
   
   - agent: "testing"
     message: "2025-03-30: Completed comprehensive verification of public-page SEO and menu standards after latest implementation. TEST RESULTS: ✅ 8/9 ROUTES FULLY COMPLIANT. TESTED ROUTES: /, /showcase, /about, /property/705-w-amelia-ave-tampa-fl, /mortgage-calculator, /newsletter-archive, /write-review, /book/sample, /landing/2913-n-shoreview-place-tampa-fl. CHECK 1 - Head Script (id='ZwSg9rf6GA'): ✅ 9/9 PASS - All routes have analytics script from https://a2ganalytics.com/js/script.js correctly loaded in head. CHECK 2 - Canonical Link Tag: ✅ 9/9 PASS - All routes have canonical link tag in head with correct URLs. CHECK 3 - Desktop Menu (4 items in order): ✅ 8/9 PASS - All routes except /book/sample display 4 menu items in correct order: LISTING SHOWCASE, ABOUT, CONTACT, AGENT LOGIN. /book/sample shows 'Booking Page Not Found' error state without header (expected behavior for invalid agent code). CHECK 4 - Mobile Menu (right drawer + logo): ✅ 8/9 PASS - All routes except /book/sample have mobile menu that opens as right-side drawer with logo placeholder at top. Mobile menu contains all 4 items in correct order. NOTE: Initial testing showed mobile logo placeholder missing due to stale frontend build. After restarting frontend service (sudo supervisorctl restart frontend), all tests passed. CHECK 5 - Render Regressions: ✅ 9/9 PASS - No obvious render regressions detected on any route. All pages load successfully with HTTP 200 status. SPECIAL CASE: /book/sample route shows 'Booking Page Not Found' error (expected for invalid agent code 'sample'). Page shell validated successfully with head script and canonical link present. Per review request instructions: 'if not available, just validate page shell where possible' - this requirement is met. All public pages are production-ready and fully compliant with SEO and menu standards."
+  
+  - agent: "testing"
+    message: "2025-03-30: Completed comprehensive testing of Fusion branding removal and AI Rules page functionality. TEST RESULTS: ✅ ALL REQUIREMENTS PASSED. FUSION BRANDING REMOVAL: (1) PUBLIC PAGES - Tested 5 pages (/, /showcase, /about, /property/705-w-amelia-ave-tampa-fl, /mortgage-calculator): ✅ NO 'Fusion' text found on any public page, ✅ Logo alt text shows 'Hidden Haven Realty' on all pages, ✅ 'Hidden Haven Realty' branding visible on Home and Mortgage Calculator pages. (2) ADMIN PAGES - Tested 2 pages (/dashboard, /settings/developer/general): ✅ NO 'Fusion' text found on any admin page, ✅ Sidebar shows 'Hidden Haven Realty CRM' branding, ✅ 'Hidden Haven Realty' text found in body content on both pages. AI RULES PAGE (/settings/developer/ai-rules): (3) ✅ Page accessible and loads successfully with data-testid='ai-rules-page', (4) ✅ 'Ai Rules' menu item found in settings sidebar (data-testid='settings-nav-ai-rules') and is active/highlighted with blue background, (5) ✅ Rules list loaded successfully with 11 rules, (6) ✅ Rules are editable in input fields - tested editing rule 0 successfully, (7) ✅ Add rule functionality works - added test rule, count increased from 11 to 12, (8) ✅ Save functionality works - clicked save button, received 'AI rules saved' success toast, (9) ✅ 'Open AGENT_RULES.md' link found (data-testid='ai-rules-open-file-link') with href='/api/settings/ai-rules/file', (10) ✅ AGENT_RULES.md file is accessible at /api/settings/ai-rules/file - returns HTTP 200 with 1056 characters of readable markdown content showing all 12 rules. CLEANUP: Test rule successfully removed and changes saved, restoring original 11 rules. No console errors detected. All branding correctly shows 'Hidden Haven Realty' with no 'Fusion' references anywhere. AI Rules page fully functional and production-ready."
