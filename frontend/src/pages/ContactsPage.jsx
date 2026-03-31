@@ -1934,8 +1934,12 @@ export const ContactsPage = () => {
   const fetchStats = async () => {
     try {
       const res = await contactsAPI.getStats();
-      setStats(res.data);
-      setLetterCounts(res.data.by_letter || {});
+      const payload = res?.data;
+      const safeStats = payload && typeof payload === 'object' && !Array.isArray(payload)
+        ? payload
+        : { total: 0, buyers: 0, sellers: 0, new: 0, qualified: 0, by_letter: {} };
+      setStats(safeStats);
+      setLetterCounts(safeStats.by_letter || {});
     } catch (error) {
       console.error('Failed to load stats');
     }
