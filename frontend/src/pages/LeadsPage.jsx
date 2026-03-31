@@ -81,9 +81,14 @@ export const LeadsPage = () => {
       const leadType = activeTab === 'all' ? null : activeTab;
       const status = statusFilter === 'all' ? null : statusFilter;
       const res = await leadsAPI.list(leadType, status);
-      setLeads(res.data || []);
+      const payload = res?.data;
+      const normalizedLeads = Array.isArray(payload)
+        ? payload
+        : (payload && Array.isArray(payload.leads) ? payload.leads : []);
+      setLeads(normalizedLeads);
     } catch (error) {
       toast.error('Failed to load leads');
+      setLeads([]);
     } finally {
       setLoading(false);
     }
@@ -149,15 +154,17 @@ export const LeadsPage = () => {
     setIsDetailOpen(true);
   };
 
-  const filteredLeads = leads.filter(lead => 
+  const safeLeads = Array.isArray(leads) ? leads : [];
+
+  const filteredLeads = safeLeads.filter(lead => 
     lead.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     lead.phone?.includes(searchTerm)
   );
 
-  const buyerCount = leads.filter(l => l.lead_type === 'buyer').length;
-  const sellerCount = leads.filter(l => l.lead_type === 'seller').length;
-  const newCount = leads.filter(l => l.status === 'new').length;
+  const buyerCount = safeLeads.filter(l => l.lead_type === 'buyer').length;
+  const sellerCount = safeLeads.filter(l => l.lead_type === 'seller').length;
+  const newCount = safeLeads.filter(l => l.status === 'new').length;
 
   const formatDate = (dateStr) => {
     return new Date(dateStr).toLocaleDateString('en-US', { 
@@ -190,7 +197,7 @@ export const LeadsPage = () => {
               <Users className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{leads.length}</p>
+              <p className="text-2xl font-bold">{safeLeads.length}</p>
               <p className="text-sm text-muted-foreground">Total Leads</p>
             </div>
           </CardContent>

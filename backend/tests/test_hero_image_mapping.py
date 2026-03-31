@@ -19,7 +19,7 @@ if os.path.exists(env_path):
                 key, value = line.split('=', 1)
                 os.environ.setdefault(key, value.strip('"'))
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://luxury-realty-52.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://haven-realty-admin-1.preview.emergentagent.com').rstrip('/')
 
 
 class TestHeroImageMapping:

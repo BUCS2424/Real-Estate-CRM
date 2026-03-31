@@ -14,7 +14,7 @@ import os
 import uuid
 import shutil
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://luxury-realty-52.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://haven-realty-admin-1.preview.emergentagent.com')
 PROPERTY_IMAGES_DIR = "/app/backend/static/property-images"
 LISTING_IMAGES_DIR = "/app/backend/static/listing-images"
 

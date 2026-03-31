@@ -56,8 +56,8 @@
   "test_data_verified": {
     "lead_id": "2b2a3bd5-a28d-43c1-9650-7ca09f73b202",
     "address": "2913 N SHOREVIEW PLACE",
-    "landing_page_url": "https://luxury-realty-52.preview.emergentagent.com/landing/2913-n-shoreview-place-tampa-fl",
-    "brochure_url": "https://luxury-realty-52.preview.emergentagent.com/api/static/automation/brochures/brochure-2913-n-shoreview-place-luxury-2b2a3bd5-999d7350.pdf",
+    "landing_page_url": "https://haven-realty-admin-1.preview.emergentagent.com/landing/2913-n-shoreview-place-tampa-fl",
+    "brochure_url": "https://haven-realty-admin-1.preview.emergentagent.com/api/static/automation/brochures/brochure-2913-n-shoreview-place-luxury-2b2a3bd5-999d7350.pdf",
     "brochure_status": "generated"
   },
   "seed_data_creation": "None - used existing data from automation runs",
