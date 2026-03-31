@@ -93,6 +93,7 @@ import { MLSOverview, PullListings, ModerateListings, ConvertedListings, MLSSear
 import { SearchExpired, ModerateExpired, ConvertedExpired } from './pages/mls/expired';
 import { SearchWithdrawn, ModerateWithdrawn, ConvertedWithdrawn } from './pages/mls/withdrawn';
 
+import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
 
 function App() {
@@ -108,7 +109,7 @@ function App() {
           <BrowserRouter>
             <Routes>
               {/* Public Routes */}
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={<ErrorBoundary><LandingPage /></ErrorBoundary>} />
             <Route path="/property/:slug" element={<PropertyDetailPage />} />
             <Route path="/listing/:slug" element={<PropertyDetailPage />} />  {/* Backwards compatibility */}
             <Route path="/showcase" element={<PublicListingsPage />} />
@@ -124,34 +125,34 @@ function App() {
 
             {/* Protected Routes */}
             <Route element={<MainLayout />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/dialer" element={<DialerPage />} />
-              <Route path="/dialer-popup" element={<DialerPopup />} />
-              <Route path="/messages" element={<MessagesPage />} />
-              <Route path="/messages/:phone" element={<MessagesPage />} />
-              <Route path="/call-history" element={<CallHistoryPage />} />
-              <Route path="/contacts" element={<ContactsPage />} />
-              <Route path="/contacts/:id" element={<ContactsPage />} />
-              <Route path="/deals" element={<DealsPage />} />
-              <Route path="/tasks" element={<TasksPage />} />
-              <Route path="/bookings" element={<BookingPage />} />
-              <Route path="/listings" element={<ListingsPage />} />
-              <Route path="/listings/:id" element={<ListingDetailPage />} />
-              <Route path="/leads" element={<LeadsPage />} />
-              <Route path="/property-submissions" element={<PropertySubmissionsPage />} />
-              <Route path="/landing-pages" element={<LandingPagesPage />} />
-              <Route path="/media" element={<MediaLibraryPage />} />
-              <Route path="/property-lookup" element={<PropertyLookupPage />} />
-              <Route path="/reviews" element={<ReviewsManagementPage />} />
-              <Route path="/property-leads" element={<PropertyLeadsPage />} />
-              <Route path="/property-leads/:id" element={<PropertyLeadDetailPage />} />
-              <Route path="/seller-leads" element={<SellerLeadsPage />} />
-              <Route path="/seller-leads/:id" element={<SellerLeadDetailPage />} />
-              <Route path="/writer" element={<AIWriterPage />} />
-              <Route path="/video-generator" element={<VideoGeneratorPage />} />
-              <Route path="/newsletter" element={<NewsletterPage />} />
-              <Route path="/mailing-lists" element={<MailingListsPage />} />
-              <Route path="/admin/users" element={<AdminUsersPage />} />
+              <Route path="/dashboard" element={<ErrorBoundary><DashboardPage /></ErrorBoundary>} />
+              <Route path="/dialer" element={<ErrorBoundary><DialerPage /></ErrorBoundary>} />
+              <Route path="/dialer-popup" element={<ErrorBoundary><DialerPopup /></ErrorBoundary>} />
+              <Route path="/messages" element={<ErrorBoundary><MessagesPage /></ErrorBoundary>} />
+              <Route path="/messages/:phone" element={<ErrorBoundary><MessagesPage /></ErrorBoundary>} />
+              <Route path="/call-history" element={<ErrorBoundary><CallHistoryPage /></ErrorBoundary>} />
+              <Route path="/contacts" element={<ErrorBoundary><ContactsPage /></ErrorBoundary>} />
+              <Route path="/contacts/:id" element={<ErrorBoundary><ContactsPage /></ErrorBoundary>} />
+              <Route path="/deals" element={<ErrorBoundary><DealsPage /></ErrorBoundary>} />
+              <Route path="/tasks" element={<ErrorBoundary><TasksPage /></ErrorBoundary>} />
+              <Route path="/bookings" element={<ErrorBoundary><BookingPage /></ErrorBoundary>} />
+              <Route path="/listings" element={<ErrorBoundary><ListingsPage /></ErrorBoundary>} />
+              <Route path="/listings/:id" element={<ErrorBoundary><ListingDetailPage /></ErrorBoundary>} />
+              <Route path="/leads" element={<ErrorBoundary><LeadsPage /></ErrorBoundary>} />
+              <Route path="/property-submissions" element={<ErrorBoundary><PropertySubmissionsPage /></ErrorBoundary>} />
+              <Route path="/landing-pages" element={<ErrorBoundary><LandingPagesPage /></ErrorBoundary>} />
+              <Route path="/media" element={<ErrorBoundary><MediaLibraryPage /></ErrorBoundary>} />
+              <Route path="/property-lookup" element={<ErrorBoundary><PropertyLookupPage /></ErrorBoundary>} />
+              <Route path="/reviews" element={<ErrorBoundary><ReviewsManagementPage /></ErrorBoundary>} />
+              <Route path="/property-leads" element={<ErrorBoundary><PropertyLeadsPage /></ErrorBoundary>} />
+              <Route path="/property-leads/:id" element={<ErrorBoundary><PropertyLeadDetailPage /></ErrorBoundary>} />
+              <Route path="/seller-leads" element={<ErrorBoundary><SellerLeadsPage /></ErrorBoundary>} />
+              <Route path="/seller-leads/:id" element={<ErrorBoundary><SellerLeadDetailPage /></ErrorBoundary>} />
+              <Route path="/writer" element={<ErrorBoundary><AIWriterPage /></ErrorBoundary>} />
+              <Route path="/video-generator" element={<ErrorBoundary><VideoGeneratorPage /></ErrorBoundary>} />
+              <Route path="/newsletter" element={<ErrorBoundary><NewsletterPage /></ErrorBoundary>} />
+              <Route path="/mailing-lists" element={<ErrorBoundary><MailingListsPage /></ErrorBoundary>} />
+              <Route path="/admin/users" element={<ErrorBoundary><AdminUsersPage /></ErrorBoundary>} />
               <Route path="/admin" element={<Navigate to="/admin/users" replace />} />
               <Route path="/profile" element={<Navigate to="/settings" replace />} />
 

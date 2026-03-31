@@ -111,9 +111,12 @@ export const BookingPage = () => {
         contactsAPI.list()
       ]);
       setBookingSettings(settingsRes.data);
-      setBookings(bookingsRes.data);
-      setBlockedDates(blockedRes.data);
-      setContacts(contactsRes.data || []);
+      const bookingsPayload = bookingsRes?.data;
+      setBookings(Array.isArray(bookingsPayload) ? bookingsPayload : (bookingsPayload?.bookings || []));
+      const blockedPayload = blockedRes?.data;
+      setBlockedDates(Array.isArray(blockedPayload) ? blockedPayload : (blockedPayload?.blocked_dates || []));
+      const contactsPayload = contactsRes?.data;
+      setContacts(Array.isArray(contactsPayload) ? contactsPayload : (contactsPayload?.contacts || []));
     } catch (error) {
       toast.error('Failed to load booking data');
     } finally {

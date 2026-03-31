@@ -88,7 +88,8 @@ export const MailingListsPage = () => {
   const fetchLists = async () => {
     try {
       const res = await mailingListAPI.getLists();
-      setLists(res.data);
+      const listsPayload = res?.data;
+      setLists(Array.isArray(listsPayload) ? listsPayload : (listsPayload?.lists || []));
     } catch (error) {
       toast.error('Failed to load mailing lists');
     } finally {

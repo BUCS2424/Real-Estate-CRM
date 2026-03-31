@@ -53,7 +53,8 @@ export const AdminUsersPage = () => {
   const fetchUsers = async () => {
     try {
       const response = await usersAPI.list();
-      setUsers(response.data);
+      const usersPayload = response?.data;
+      setUsers(Array.isArray(usersPayload) ? usersPayload : (usersPayload?.users || []));
     } catch (error) {
       toast.error('Failed to load users');
     } finally {

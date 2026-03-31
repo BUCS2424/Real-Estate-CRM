@@ -262,8 +262,10 @@ export const TasksPage = () => {
         tasksAPI.list(),
         contactsAPI.list()
       ]);
-      setTasks(tasksRes.data);
-      setContacts(contactsRes.data);
+      const tasksPayload = tasksRes?.data;
+      setTasks(Array.isArray(tasksPayload) ? tasksPayload : (tasksPayload?.tasks || []));
+      const contactsPayload = contactsRes?.data;
+      setContacts(Array.isArray(contactsPayload) ? contactsPayload : (contactsPayload?.contacts || []));
     } catch (error) {
       toast.error('Failed to load tasks');
     } finally {

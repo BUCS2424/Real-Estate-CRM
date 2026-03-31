@@ -8,6 +8,16 @@ from utils.auth import get_current_user
 
 router = APIRouter()
 
+def _serialize_lead(doc):
+    """Ensure lead always has an id field."""
+    if doc is None:
+        return None
+    if "id" not in doc and "_id" in doc:
+        doc["id"] = str(doc.pop("_id"))
+    elif "_id" in doc:
+        doc.pop("_id", None)
+    return doc
+
 @router.get("")
 async def get_leads(lead_type: Optional[str] = None, status: Optional[str] = None, current_user: dict = Depends(get_current_user)):
     if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
@@ -19,15 +29,15 @@ async def get_leads(lead_type: Optional[str] = None, status: Optional[str] = Non
     if status:
         query["status"] = status
     
-    leads = await db.leads.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
-    return leads
+    leads = await db.leads.find(query).sort("created_at", -1).to_list(1000)
+    return [_serialize_lead(lead) for lead in leads]
 
 @router.get("/{lead_id}")
 async def get_lead(lead_id: str, current_user: dict = Depends(get_current_user)):
-    lead = await db.leads.find_one({"id": lead_id}, {"_id": 0})
+    lead = await db.leads.find_one({"id": lead_id})
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
-    return lead
+    return _serialize_lead(lead)
 
 @router.patch("/{lead_id}")
 async def update_lead(lead_id: str, update_data: dict, current_user: dict = Depends(get_current_user)):
@@ -39,8 +49,8 @@ async def update_lead(lead_id: str, update_data: dict, current_user: dict = Depe
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Lead not found")
     
-    updated = await db.leads.find_one({"id": lead_id}, {"_id": 0})
-    return updated
+    updated = await db.leads.find_one({"id": lead_id})
+    return _serialize_lead(updated)
 
 @router.post("/{lead_id}/convert")
 async def convert_lead_to_contact(lead_id: str, current_user: dict = Depends(get_current_user)):
@@ -48,9 +58,10 @@ async def convert_lead_to_contact(lead_id: str, current_user: dict = Depends(get
     if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
         raise HTTPException(status_code=403, detail="Admin access required")
     
-    lead = await db.leads.find_one({"id": lead_id}, {"_id": 0})
+    lead = await db.leads.find_one({"id": lead_id})
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
+    lead = _serialize_lead(lead)
     
     # Check if contact already exists with this email
     existing_contact = await db.contacts.find_one({"email": lead.get("email")})

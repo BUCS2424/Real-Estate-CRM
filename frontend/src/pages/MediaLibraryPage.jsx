@@ -107,10 +107,11 @@ export const MediaLibraryPage = () => {
   const fetchFolders = async () => {
     try {
       const res = await mediaAPI.getFolders();
-      setFolders(res.data);
+      const foldersPayload = res?.data;
+      setFolders(Array.isArray(foldersPayload) ? foldersPayload : (foldersPayload?.folders || []));
       
-      if (res.data.length > 0 && !selectedProperty) {
-        setSelectedProperty(res.data[0]);
+      if (foldersPayload && (Array.isArray(foldersPayload) ? foldersPayload.length > 0 : false) && !selectedProperty) {
+        setSelectedProperty(foldersPayload[0]);
       }
     } catch (error) {
       toast.error('Failed to load folders');

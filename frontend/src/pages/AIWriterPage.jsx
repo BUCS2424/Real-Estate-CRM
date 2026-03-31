@@ -71,8 +71,10 @@ export const AIWriterPage = () => {
         contactsAPI.list(),
         articlesAPI.list()
       ]);
-      setContacts(contactsRes.data);
-      setArticles(articlesRes.data);
+      const contactsPayload = contactsRes?.data;
+      setContacts(Array.isArray(contactsPayload) ? contactsPayload : (contactsPayload?.contacts || []));
+      const articlesPayload = articlesRes?.data;
+      setArticles(Array.isArray(articlesPayload) ? articlesPayload : (articlesPayload?.articles || []));
     } catch (error) {
       toast.error('Failed to load data');
     } finally {

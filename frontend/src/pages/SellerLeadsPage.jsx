@@ -101,7 +101,8 @@ const SellerLeadsPage = () => {
     setLoading(true);
     try {
       const res = await api.get('/seller-leads');
-      setLeads(res.data);
+      const leadsPayload = res?.data;
+      setLeads(Array.isArray(leadsPayload) ? leadsPayload : (leadsPayload?.leads || []));
     } catch (error) {
       toast.error('Failed to load seller leads');
     } finally {

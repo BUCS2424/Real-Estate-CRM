@@ -95,8 +95,10 @@ export const LandingPagesPage = () => {
         landingPagesAPI.getAll(),
         landingPagesAPI.getAvailableListings()
       ]);
-      setLandingPages(pagesRes.data);
-      setAvailableListings(listingsRes.data);
+      const pagesPayload = pagesRes?.data;
+      setLandingPages(Array.isArray(pagesPayload) ? pagesPayload : (pagesPayload?.pages || []));
+      const listingsPayload = listingsRes?.data;
+      setAvailableListings(Array.isArray(listingsPayload) ? listingsPayload : (listingsPayload?.listings || []));
     } catch (error) {
       toast.error('Failed to load data');
     } finally {

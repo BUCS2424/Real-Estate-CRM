@@ -378,8 +378,10 @@ export const DealsPage = () => {
         dealsAPI.list(),
         contactsAPI.list()
       ]);
-      setDeals(dealsRes.data);
-      setContacts(contactsRes.data);
+      const dealsPayload = dealsRes?.data;
+      setDeals(Array.isArray(dealsPayload) ? dealsPayload : (dealsPayload?.deals || []));
+      const contactsPayload = contactsRes?.data;
+      setContacts(Array.isArray(contactsPayload) ? contactsPayload : (contactsPayload?.contacts || []));
     } catch (error) {
       toast.error('Failed to load deals');
     } finally {

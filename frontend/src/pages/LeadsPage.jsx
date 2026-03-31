@@ -99,7 +99,7 @@ export const LeadsPage = () => {
     setConverting(true);
     try {
       const res = await leadsAPI.convertToContact(leadId);
-      toast.success(`Lead converted to ${res.data.category} contact!`);
+      toast.success(`Lead converted to ${res.data?.contact?.category || res.data?.category || 'new'} contact!`);
       setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: 'converted' } : l));
       setIsDetailOpen(false);
       // Navigate to contacts page
@@ -162,8 +162,10 @@ export const LeadsPage = () => {
     lead.phone?.includes(searchTerm)
   );
 
-  const buyerCount = safeLeads.filter(l => l.lead_type === 'buyer').length;
-  const sellerCount = safeLeads.filter(l => l.lead_type === 'seller').length;
+  const getLeadType = (lead) => lead.lead_type || lead.type || 'seller';
+
+  const buyerCount = safeLeads.filter(l => getLeadType(l) === 'buyer').length;
+  const sellerCount = safeLeads.filter(l => getLeadType(l) === 'seller').length;
   const newCount = safeLeads.filter(l => l.status === 'new').length;
 
   const formatDate = (dateStr) => {
@@ -320,12 +322,12 @@ export const LeadsPage = () => {
                         )}
                       </td>
                       <td className="p-4">
-                        <Badge variant={lead.lead_type === 'buyer' ? 'default' : 'secondary'}>
-                          {lead.lead_type === 'buyer' ? 'Buyer' : 'Seller'}
+                        <Badge variant={getLeadType(lead) === 'buyer' ? 'default' : 'secondary'}>
+                          {getLeadType(lead) === 'buyer' ? 'Buyer' : 'Seller'}
                         </Badge>
                       </td>
                       <td className="p-4 text-sm">
-                        {lead.lead_type === 'buyer' ? (
+                        {getLeadType(lead) === 'buyer' ? (
                           <>
                             {lead.budget && <p><DollarSign className="w-3 h-3 inline" /> {lead.budget}</p>}
                             {lead.areas_of_interest && <p className="text-muted-foreground">{lead.areas_of_interest}</p>}
@@ -353,7 +355,7 @@ export const LeadsPage = () => {
                           <DropdownMenuContent align="end">
                             {lead.status !== 'converted' && (
                               <DropdownMenuItem 
-                                onClick={(e) => { e.stopPropagation(); handleConvertToContact(lead.id, lead.lead_type); }}
+                                onClick={(e) => { e.stopPropagation(); handleConvertToContact(lead.id, getLeadType(lead)); }}
                                 className="text-green-600"
                               >
                                 <UserCheck className="w-4 h-4 mr-2" />
@@ -394,11 +396,11 @@ export const LeadsPage = () => {
             <>
               <DialogHeader>
                 <DialogTitle className="font-serif flex items-center gap-2">
-                  {selectedLead.lead_type === 'buyer' ? <UserPlus className="w-5 h-5" /> : <Home className="w-5 h-5" />}
+                  {getLeadType(selectedLead) === 'buyer' ? <UserPlus className="w-5 h-5" /> : <Home className="w-5 h-5" />}
                   {selectedLead.name}
                 </DialogTitle>
                 <DialogDescription>
-                  {selectedLead.lead_type === 'buyer' ? 'Buyer Lead' : 'Seller Lead'} • {formatDate(selectedLead.created_at)}
+                  {getLeadType(selectedLead) === 'buyer' ? 'Buyer Lead' : 'Seller Lead'} • {formatDate(selectedLead.created_at)}
                 </DialogDescription>
               </DialogHeader>
 
@@ -418,7 +420,7 @@ export const LeadsPage = () => {
                   </div>
                 </div>
 
-                {selectedLead.lead_type === 'buyer' && (
+                {getLeadType(selectedLead) === 'buyer' && (
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Budget</p>
@@ -431,7 +433,7 @@ export const LeadsPage = () => {
                   </div>
                 )}
 
-                {selectedLead.lead_type === 'seller' && (
+                {getLeadType(selectedLead) === 'seller' && (
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Property Address</p>
@@ -486,12 +488,12 @@ export const LeadsPage = () => {
                 </Button>
                 {selectedLead.status !== 'converted' && (
                   <Button 
-                    onClick={() => handleConvertToContact(selectedLead.id, selectedLead.lead_type)}
+                    onClick={() => handleConvertToContact(selectedLead.id, getLeadType(selectedLead))}
                     disabled={converting}
                     className="bg-green-600 hover:bg-green-700"
                   >
                     {converting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <UserCheck className="w-4 h-4 mr-2" />}
-                    Convert to {selectedLead.lead_type === 'buyer' ? 'Buyer' : 'Seller'} Contact
+                    Convert to {getLeadType(selectedLead) === 'buyer' ? 'Buyer' : 'Seller'} Contact
                   </Button>
                 )}
               </DialogFooter>
