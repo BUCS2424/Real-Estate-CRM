@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { Link } from 'react-router-dom';
 import { newsletterAPI } from '../lib/api';
 import { Mail, Calendar, Users, Home, Loader2 } from 'lucide-react';
@@ -140,7 +141,7 @@ export const NewsletterArchivePage = () => {
                 <h2 className="text-2xl font-serif">{selectedNewsletter.subject}</h2>
                 <p className="text-muted-foreground text-sm mt-1">{formatDate(selectedNewsletter.sent_at)}</p>
               </div>
-              <div className="p-6 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: selectedNewsletter.content || '<p>Content not available</p>' }} />
+              <div className="p-6 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedNewsletter.content || '<p>Content not available</p>') }} />
               <div className="p-4 border-t text-right">
                 <Button onClick={() => setSelectedNewsletter(null)}>Close</Button>
               </div>

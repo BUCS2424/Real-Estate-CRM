@@ -627,7 +627,7 @@ const PropertyLeadDetailPage = () => {
             <div className="flex flex-wrap gap-2">
               {lead.tags?.length > 0 ? (
                 lead.tags.map((tag, idx) => (
-                  <Badge key={idx} variant="outline">{tag}</Badge>
+                  <Badge key={`tag-${tag}-${idx}`} variant="outline">{tag}</Badge>
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground">No tags</p>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -381,7 +382,7 @@ export const MortgageCalculator = ({
     `;
     
     const printWindow = window.open('', '_blank');
-    printWindow.document.write(flyerContent);
+    printWindow.document.write(DOMPurify.sanitize(flyerContent, { WHOLE_DOCUMENT: true, ADD_TAGS: ['html', 'head', 'body', 'style', 'meta', 'title'] }));
     printWindow.document.close();
     printWindow.print();
   };

@@ -2294,3 +2294,23 @@ All CRM admin pages were "showing for a sec then going blank" due to a cascade o
 - `/app/frontend/src/pages/LandingPagesPage.jsx` — Array.isArray guard
 - `/app/frontend/src/pages/MediaLibraryPage.jsx` — Array.isArray guard
 - `/app/backend/routes/leads.py` — id serialization fix
+
+---
+
+## Update: March 31, 2026 - Code Quality Review Fixes
+
+### Security Fixes Applied
+- **XSS Prevention**: Added DOMPurify sanitization to all `dangerouslySetInnerHTML` usages (SignatureSettings, NewsletterPage, NewsletterArchivePage, MortgageCalculator). Replaced `innerHTML` assignments with safe DOM API in GeneralSettings and MediaLibraryPage.
+- **Hardcoded Secrets**: Replaced hardcoded test passwords in 8 test files with `os.environ.get("TEST_PASSWORD", ...)`
+- **SSL Verification**: Removed `verify=False` from county_scrapers.py httpx client
+- **Insecure Random**: Replaced `random.randint` with `secrets.randbelow` in verification.py, bookings.py, foldable_brochure.py, property_scraper.py
+
+### Architecture Fixes
+- **Circular Import**: Extracted `SearchExpiredRequest` model from routes/expired_listings.py into models/expired_listing_models.py to break circular dependency with services/expired_automation.py
+- **Gitignore Cleanup**: Fixed corrupted .gitignore with malformed `-e` entries and duplicate patterns. Removed `*.env` pattern that was blocking .env files from deployment (ROOT CAUSE of deployed site blank pages)
+
+### Code Quality Fixes
+- **React Hook Dependencies**: Fixed missing dependency warnings in SocialMediaSettings and SocialMediaDashboard
+- **Array Index Keys**: Fixed index-as-key patterns in PropertyLeadDetailPage and PropertyLandingPage
+- **DOMPurify**: Installed as frontend dependency for HTML sanitization
+

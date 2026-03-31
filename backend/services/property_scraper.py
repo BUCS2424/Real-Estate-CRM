@@ -29,9 +29,9 @@ class PropertyDataScraper:
     
     def _get_headers(self, referer: str = None) -> dict:
         """Get headers with random user agent"""
-        import random
+        import secrets
         headers = {
-            'User-Agent': random.choice(self.user_agents),
+            'User-Agent': secrets.choice(self.user_agents),
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.9',
             'Accept-Encoding': 'gzip, deflate, br',

@@ -320,7 +320,7 @@ export const PropertyLandingPage = () => {
               <h2 className="text-2xl font-serif mb-4 text-amber-400">Features</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {listing.features.map((feature, idx) => (
-                  <div key={idx} className="flex items-center gap-2 p-3 bg-white/5 rounded-lg">
+                  <div key={`feature-${idx}`} className="flex items-center gap-2 p-3 bg-white/5 rounded-lg">
                     <Check className="w-4 h-4 text-amber-400" />
                     <span>{feature}</span>
                   </div>
@@ -659,7 +659,7 @@ export const PropertyLandingPage = () => {
             <h2 className="text-xl font-semibold mb-3">Features</h2>
             <div className="flex flex-wrap gap-2">
               {listing.features.map((feature, idx) => (
-                <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                <span key={`tag-${idx}`} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
                   {feature}
                 </span>
               ))}

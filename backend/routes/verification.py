@@ -1,7 +1,7 @@
 """Email and phone verification routes."""
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-import random
+import secrets
 import re
 
 import httpx
@@ -81,7 +81,7 @@ async def send_phone_code(request: PhoneVerificationRequest):
     data = response.json().get("data", {})
     now = datetime.now(timezone.utc).isoformat()
     await db.phone_verifications.insert_one({
-        "id": data.get("id") or str(random.randint(100000, 999999)),
+        "id": data.get("id") or str(secrets.randbelow(900000) + 100000),
         "verification_id": data.get("id"),
         "phone_number": payload["phone_number"],
         "status": "sent",
@@ -157,7 +157,7 @@ async def check_phone_verified(phone_number: str):
 
 
 def _generate_code() -> str:
-    return f"{random.randint(100000, 999999)}"
+    return f"{secrets.randbelow(900000) + 100000}"
 
 
 async def _send_email_verification(email: str, code: str):
@@ -203,7 +203,7 @@ async def send_email_code(request: EmailVerificationRequest):
     await _send_email_verification(request.email, code)
 
     await db.email_verifications.insert_one({
-        "id": str(random.randint(100000, 999999)),
+        "id": str(secrets.randbelow(900000) + 100000),
         "email": request.email,
         "code": code,
         "status": "sent",

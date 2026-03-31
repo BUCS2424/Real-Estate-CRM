@@ -11,7 +11,7 @@ BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
 # Test credentials
 TEST_EMAIL = "mel@a2gdesigns.com"
-TEST_PASSWORD = "BigDaddy2016!!"
+TEST_PASSWORD = os.environ.get("TEST_PASSWORD", "BigDaddy2016!!")
 
 # Test lead IDs (from existing data)
 CONVERTED_LEAD_ID = "efbd3a4d-b922-4c6f-b4bb-b96d84ab4540"  # 123 New Test Ave - converted

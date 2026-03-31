@@ -86,7 +86,10 @@ export const GeneralSettings = () => {
           className="w-full h-full object-contain"
           onError={(e) => {
             e.target.style.display = 'none';
-            e.target.parentNode.innerHTML = '<div class="w-full h-full flex items-center justify-center text-xs text-destructive">Invalid URL</div>';
+            const fallback = document.createElement('div');
+            fallback.className = 'w-full h-full flex items-center justify-center text-xs text-destructive';
+            fallback.textContent = 'Invalid URL';
+            e.target.parentNode.appendChild(fallback);
           }}
         />
       </div>

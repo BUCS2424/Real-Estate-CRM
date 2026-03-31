@@ -617,7 +617,8 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
     if not current_user:
         raise ValueError("No admin user found to run automation")
 
-    from routes.expired_listings import SearchExpiredRequest, search_expired, convert_to_lead
+    from models.expired_listing_models import SearchExpiredRequest
+    from routes.expired_listings import search_expired, convert_to_lead
 
     search_request = SearchExpiredRequest(
         city=criteria.get("city"),

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { Mail, Save, Loader2, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
@@ -184,7 +185,7 @@ export const SignatureSettings = () => {
           </CardHeader>
           <CardContent>
             <div className="p-4 bg-white rounded border">
-              <div dangerouslySetInnerHTML={{ __html: generateSignatureHtml() }} />
+              <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(generateSignatureHtml()) }} />
             </div>
           </CardContent>
         </Card>

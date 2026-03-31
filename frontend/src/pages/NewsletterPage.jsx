@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import DOMPurify from 'dompurify';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -975,7 +976,7 @@ export const NewsletterPage = () => {
               </DialogHeader>
               <div 
                 className="prose prose-sm max-w-none p-4 bg-white rounded-lg border"
-                dangerouslySetInnerHTML={{ __html: previewContent.content }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewContent.content) }}
               />
             </>
           )}

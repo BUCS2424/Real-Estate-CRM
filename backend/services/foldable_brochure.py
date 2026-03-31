@@ -7,7 +7,7 @@ Page 2: Inside Left + Inside Right - when opened
 import os
 import io
 import uuid
-import random
+import secrets
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 import qrcode
@@ -67,7 +67,7 @@ TAGLINE_TEMPLATES = [
 
 def generate_property_title(address: str) -> str:
     """Generate a catchy title for the property"""
-    template = random.choice(TITLE_TEMPLATES)
+    template = secrets.choice(TITLE_TEMPLATES)
     # Extract just the street address without city/state
     street = address.split(',')[0].strip() if ',' in address else address
     return template.format(address=street.title())
@@ -75,7 +75,7 @@ def generate_property_title(address: str) -> str:
 
 def generate_tagline() -> str:
     """Generate a tagline for the brochure"""
-    return random.choice(TAGLINE_TEMPLATES)
+    return secrets.choice(TAGLINE_TEMPLATES)
 
 
 def generate_qr_code(url: str, size: int = 200) -> io.BytesIO:

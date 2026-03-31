@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional
 from datetime import datetime, timezone, timedelta
 import uuid
-import random
+import secrets
 from database import db
 from models.booking import (
     BookingSettingsCreate, BookingSettingsResponse, BookingCreate, BookingResponse,
@@ -225,7 +225,7 @@ async def remove_blocked_date(blocked_id: str, current_user: dict = Depends(get_
 # Phone verification endpoints
 @router.post("/verify/phone/send")
 async def send_phone_verification(request: PhoneVerificationRequest):
-    code = str(random.randint(100000, 999999))
+    code = str(secrets.randbelow(900000) + 100000)
     verification_codes[request.phone] = {
         "code": code,
         "expires": datetime.now(timezone.utc) + timedelta(minutes=10)
@@ -249,7 +249,7 @@ async def confirm_phone_verification(request: PhoneVerifyCodeRequest):
 # Email verification endpoints
 @router.post("/verify/email/send")
 async def send_email_verification(email: str = Query(...)):
-    code = str(random.randint(100000, 999999))
+    code = str(secrets.randbelow(900000) + 100000)
     verification_codes[email] = {
         "code": code,
         "expires": datetime.now(timezone.utc) + timedelta(minutes=10)

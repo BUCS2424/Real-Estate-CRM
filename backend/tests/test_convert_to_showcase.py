@@ -20,7 +20,7 @@ LISTING_IMAGES_DIR = "/app/backend/static/listing-images"
 
 # Test credentials
 TEST_EMAIL = "mel@a2gdesigns.com"
-TEST_PASSWORD = "BigDaddy2016!!"
+TEST_PASSWORD = os.environ.get("TEST_PASSWORD", "BigDaddy2016!!")
 
 
 @pytest.fixture(scope="module")

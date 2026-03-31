@@ -9,27 +9,12 @@ from pydantic import BaseModel
 import uuid
 from utils.auth import get_current_user
 from models.user import UserRole
+from models.expired_listing_models import SearchExpiredRequest
 from database import db
 from services.mls_service import mls_service
 import os
 
 router = APIRouter(prefix="/expired-listings", tags=["Expired Listings Management"])
-
-
-class SearchExpiredRequest(BaseModel):
-    city: Optional[str] = None
-    zip_code: Optional[str] = None
-    zip_codes: Optional[List[str]] = None
-    min_price: Optional[int] = None
-    max_price: Optional[int] = None
-    bedrooms: Optional[int] = None
-    property_type: Optional[str] = None
-    exclude_rentals: bool = True
-    exclude_commercial: bool = True
-    hours_expired_max: Optional[int] = 18  # Strict recency window
-    days_expired: Optional[int] = 90  # Default: expired in last 90 days
-    required_year: Optional[int] = 2026
-    limit: int = 50
 
 
 RECENT_EXPIRED_YEAR = 2026
