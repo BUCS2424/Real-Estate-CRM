@@ -5,7 +5,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const defaultBranding = {
   siteName: 'Hidden Haven Realty',
-  logoUrl: '',
+  logoUrl: '/images/hidden-haven-logo-full.png',
   logoLinkUrl: '/',
   dashboardLogoUrl: '',
   dashboardLogoLinkUrl: '/dashboard',

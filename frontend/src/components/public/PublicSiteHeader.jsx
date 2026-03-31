@@ -7,6 +7,7 @@ import { useBranding } from '../../contexts/BrandingContext';
 export const PublicSiteHeader = ({ activePage = '', contactHref = '/#contact', variant = 'fixed' }) => {
   const { branding } = useBranding();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const publicLogoSrc = branding.logoUrl || '/images/hidden-haven-logo-full.png';
 
   const isOverlay = variant === 'overlay';
   const shellClass = isOverlay
@@ -28,12 +29,18 @@ export const PublicSiteHeader = ({ activePage = '', contactHref = '/#contact', v
             data-testid="public-header-logo-link"
             onClick={closeMobileMenu}
           >
-            {branding.logoUrl ? (
+            {publicLogoSrc ? (
               <img
-                src={branding.logoUrl}
+                src={publicLogoSrc}
                 alt={branding.siteName || 'Hidden Haven Realty'}
                 className="h-20 w-auto object-contain shrink-0"
                 data-testid="public-header-logo-image"
+                onError={(e) => {
+                  if (e.currentTarget.src.endsWith('/images/hidden-haven-logo-full.png')) {
+                    return;
+                  }
+                  e.currentTarget.src = '/images/hidden-haven-logo-full.png';
+                }}
               />
             ) : (
               <>
@@ -85,8 +92,18 @@ export const PublicSiteHeader = ({ activePage = '', contactHref = '/#contact', v
           >
             <div className="flex items-start justify-between mb-8">
               <div className="flex items-center gap-3" data-testid="public-mobile-menu-logo-placeholder">
-                {branding.logoUrl ? (
-                  <img src={branding.logoUrl} alt={branding.siteName || 'Hidden Haven Realty'} className="h-12 object-contain" />
+                {publicLogoSrc ? (
+                  <img
+                    src={publicLogoSrc}
+                    alt={branding.siteName || 'Hidden Haven Realty'}
+                    className="h-12 object-contain"
+                    onError={(e) => {
+                      if (e.currentTarget.src.endsWith('/images/hidden-haven-logo-full.png')) {
+                        return;
+                      }
+                      e.currentTarget.src = '/images/hidden-haven-logo-full.png';
+                    }}
+                  />
                 ) : (
                   <>
                     <Home className="w-5 h-5 text-amber-400" />
