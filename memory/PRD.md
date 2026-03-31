@@ -2256,3 +2256,41 @@ Implemented SEO-friendly URL slugs for property pages. Instead of `/listing/{uui
 
 ### Notes
 - **MOCKED/PARTIAL:** SkyReels avatar generation remains partial mock in broader flow (unrelated to hero mapping).
+
+
+---
+
+## Update: March 31, 2026 - Critical Blank Page Regression Fix
+
+### Problem
+All CRM admin pages were "showing for a sec then going blank" due to a cascade of issues:
+1. **No Error Boundaries** — any JS error crashed the entire React tree to a white screen with no feedback
+2. **Unsafe data fetching** — 9 pages did `setData(res.data)` without Array.isArray guards, risking `.map()` crashes on non-array responses
+3. **Field mismatch** — Backend returns `type` for leads but frontend used `lead_type`, causing buyer/seller miscategorization
+4. **Missing lead IDs** — Backend `leads.py` excluded `_id` but some leads lacked an explicit `id` field, breaking CRUD
+
+### Fixes Applied
+- **Global ErrorBoundary** — Added `ErrorBoundary.jsx` component wrapping every route in `App.js`. Shows error + retry/dashboard buttons instead of blank page
+- **Array.isArray guards** — Added to: TasksPage, DealsPage, AdminUsersPage, BookingPage, AIWriterPage, SellerLeadsPage, MailingListsPage, LandingPagesPage, MediaLibraryPage
+- **LeadsPage type fix** — Created `getLeadType()` helper that reads both `lead_type` and `type` fields. All 8 references updated
+- **Backend leads serializer** — Added `_serialize_lead()` to `leads.py` that converts `_id` to `id` for leads missing explicit id. Fixed 1 orphan lead in DB
+
+### Test Results
+- Testing agent iteration 19: 20/20 pages PASS, 100% backend, 100% frontend
+- Buyer/Seller categorization verified: 3 Buyers, 2 Sellers correctly displayed
+- No blank pages on any route
+
+### Files Modified
+- `/app/frontend/src/App.js` — ErrorBoundary import + wrapping all routes
+- `/app/frontend/src/components/ErrorBoundary.jsx` — NEW
+- `/app/frontend/src/pages/LeadsPage.jsx` — type/lead_type fix
+- `/app/frontend/src/pages/TasksPage.jsx` — Array.isArray guard
+- `/app/frontend/src/pages/DealsPage.jsx` — Array.isArray guard
+- `/app/frontend/src/pages/AdminUsersPage.jsx` — Array.isArray guard
+- `/app/frontend/src/pages/BookingPage.jsx` — Array.isArray guard
+- `/app/frontend/src/pages/AIWriterPage.jsx` — Array.isArray guard
+- `/app/frontend/src/pages/SellerLeadsPage.jsx` — Array.isArray guard
+- `/app/frontend/src/pages/MailingListsPage.jsx` — Array.isArray guard
+- `/app/frontend/src/pages/LandingPagesPage.jsx` — Array.isArray guard
+- `/app/frontend/src/pages/MediaLibraryPage.jsx` — Array.isArray guard
+- `/app/backend/routes/leads.py` — id serialization fix
