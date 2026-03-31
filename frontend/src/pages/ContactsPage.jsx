@@ -1963,7 +1963,10 @@ export const ContactsPage = () => {
       }
       
       const res = await contactsAPI.list(params);
-      const data = res.data || [];
+      const payload = res?.data;
+      const data = Array.isArray(payload)
+        ? payload
+        : (payload && Array.isArray(payload.contacts) ? payload.contacts : []);
       
       if (page === 0) {
         setContacts(data);
@@ -1971,7 +1974,7 @@ export const ContactsPage = () => {
         setContacts(prev => [...prev, ...data]);
       }
       
-      setHasMore(data.length === LIMIT);
+      setHasMore(Array.isArray(data) && data.length === LIMIT);
     } catch (error) {
       toast.error('Failed to load contacts');
     } finally {
@@ -2128,7 +2131,7 @@ export const ContactsPage = () => {
     
     setSyncImporting(true);
     try {
-      const contactsToImport = syncPreview.contacts
+      const contactsToImport = syncContacts
         .filter(c => selectedSyncContacts.has(c.temp_id))
         .map(c => ({
           temp_id: c.temp_id,
@@ -2172,7 +2175,7 @@ export const ContactsPage = () => {
   const toggleAllNewContacts = () => {
     if (!syncPreview) return;
     
-    const newContacts = syncPreview.contacts.filter(c => !c.is_duplicate);
+    const newContacts = syncContacts.filter(c => !c.is_duplicate);
     const allSelected = newContacts.every(c => selectedSyncContacts.has(c.temp_id));
     
     if (allSelected) {
@@ -2263,7 +2266,9 @@ export const ContactsPage = () => {
   };
 
   // Use contacts directly - filtering is done server-side
-  const filteredContacts = contacts;
+  const filteredContacts = Array.isArray(contacts) ? contacts : [];
+
+  const syncContacts = Array.isArray(syncPreview?.contacts) ? syncPreview.contacts : [];
 
   // Show detail view if contact is selected
   if (selectedContact) {
@@ -2958,7 +2963,7 @@ export const ContactsPage = () => {
                     <Label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={syncPreview.contacts.filter(c => !c.is_duplicate).every(c => selectedSyncContacts.has(c.temp_id))}
+                        checked={syncContacts.filter(c => !c.is_duplicate).every(c => selectedSyncContacts.has(c.temp_id))}
                         onChange={toggleAllNewContacts}
                         className="w-4 h-4 rounded border-gray-300"
                       />
@@ -2972,7 +2977,7 @@ export const ContactsPage = () => {
                 
                 {/* Contact List */}
                 <div className="border rounded-lg max-h-[300px] overflow-y-auto">
-                  {syncPreview.contacts.map((contact) => (
+                  {syncContacts.map((contact) => (
                     <div 
                       key={contact.temp_id}
                       className={`flex items-center gap-3 p-3 border-b last:border-b-0 ${
