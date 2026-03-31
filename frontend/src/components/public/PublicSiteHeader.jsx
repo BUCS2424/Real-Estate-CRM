@@ -24,12 +24,17 @@ export const PublicSiteHeader = ({ activePage = '', contactHref = '/#contact', v
         <div className="flex items-center justify-between gap-4">
           <Link
             to={branding.logoLinkUrl || '/'}
-            className="flex items-center gap-3"
+            className="flex items-center gap-3 shrink-0 min-w-fit"
             data-testid="public-header-logo-link"
             onClick={closeMobileMenu}
           >
             {branding.logoUrl ? (
-              <img src={branding.logoUrl} alt={branding.siteName || 'Hidden Haven Realty'} className="h-20 object-contain" data-testid="public-header-logo-image" />
+              <img
+                src={branding.logoUrl}
+                alt={branding.siteName || 'Hidden Haven Realty'}
+                className="h-20 w-auto object-contain shrink-0"
+                data-testid="public-header-logo-image"
+              />
             ) : (
               <>
                 <Home className="w-6 h-6 text-amber-400" />
@@ -38,7 +43,7 @@ export const PublicSiteHeader = ({ activePage = '', contactHref = '/#contact', v
             )}
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8" data-testid="public-header-desktop-menu">
+          <nav className="hidden md:flex items-center gap-8 ml-auto" data-testid="public-header-desktop-menu">
             <Link to="/showcase" className={navLinkClass(activePage === 'showcase')} data-testid="public-menu-showcase-link">
               LISTING SHOWCASE
             </Link>
