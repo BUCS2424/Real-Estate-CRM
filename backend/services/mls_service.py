@@ -323,6 +323,9 @@ class MLSService:
                 "listing_agent": listing.get("ListAgentFullName"),
                 "listing_office": listing.get("ListOfficeName"),
                 "description": listing.get("PublicRemarks"),
+                "latitude": listing.get("Latitude"),
+                "longitude": listing.get("Longitude"),
+                "subdivision": listing.get("SubdivisionName"),
             })
         return transformed
     
