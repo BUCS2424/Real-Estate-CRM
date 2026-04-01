@@ -484,6 +484,27 @@ async def rename_site_image(filename: str, request: Request, current_user: dict 
     }
 
 
+# Health check endpoint
+@api_router.get("/health")
+async def health_check():
+    try:
+        result = await db.command("ping")
+        contact_count = await db.contacts.count_documents({})
+        return {
+            "status": "healthy",
+            "version": "2.0.0",
+            "database": "connected",
+            "contacts_count": contact_count,
+            "db_name": os.environ.get("DB_NAME", "unknown")
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "version": "2.0.0",
+            "database": "disconnected",
+            "error": str(e)
+        }
+
 # Include main API router
 app.include_router(api_router)
 
@@ -494,19 +515,29 @@ app.mount("/api/static", StaticFiles(directory=STATIC_DIR), name="static")
 cors_origins = []
 origins_env = os.environ.get('CORS_ORIGINS')
 if origins_env:
-    cors_origins = [origin.strip() for origin in origins_env.split(',') if origin.strip() and origin.strip() != '*']
+    if origins_env.strip() == '*':
+        cors_origins = ["*"]
+    else:
+        cors_origins = [origin.strip() for origin in origins_env.split(',') if origin.strip()]
 
 site_url = os.environ.get('SITE_URL')
-if site_url and site_url not in cors_origins:
+if site_url and site_url not in cors_origins and "*" not in cors_origins:
     cors_origins.append(site_url)
 
+# Always allow Emergent deployment domains
+react_url = os.environ.get('REACT_APP_BACKEND_URL', '')
+if react_url and react_url not in cors_origins and "*" not in cors_origins:
+    cors_origins.append(react_url)
+
 if not cors_origins:
-    raise RuntimeError("CORS_ORIGINS or SITE_URL must be configured")
+    cors_origins = ["*"]
+
+allow_all = "*" in cors_origins
 
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=cors_origins,
+    allow_credentials=not allow_all,
+    allow_origins=["*"] if allow_all else cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -518,7 +549,3 @@ async def shutdown_db_client():
         scheduler.shutdown(wait=False)
         logger.info("Background scheduler stopped.")
     close_db()
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy", "version": "2.0.0"}
