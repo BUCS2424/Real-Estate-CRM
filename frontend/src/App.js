@@ -7,6 +7,10 @@ import { Toaster } from './components/ui/sonner';
 import { PWAInstallBanner } from './components/PWAComponents';
 import { registerServiceWorker } from './hooks/usePWA';
 
+import NeighborhoodsListPage from './pages/NeighborhoodsListPage';
+import NeighborhoodPage from './pages/NeighborhoodPage';
+import NeighborhoodsSettingsPage from './pages/NeighborhoodsSettingsPage';
+
 // Layouts
 import { MainLayout } from './components/layout/MainLayout';
 import { SettingsLayout } from './components/layout/SettingsLayout';
@@ -123,6 +127,8 @@ function App() {
             <Route path="/property/:slug" element={<PropertyDetailPage />} />
             <Route path="/listing/:slug" element={<PropertyDetailPage />} />  {/* Backwards compatibility */}
             <Route path="/showcase" element={<PublicListingsPage />} />
+            <Route path="/neighborhoods" element={<NeighborhoodsListPage />} />
+            <Route path="/neighborhoods/:slug" element={<NeighborhoodPage />} />
             <Route path="/mortgage-calculator" element={<MortgageCalculatorPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/newsletter-archive" element={<NewsletterArchivePage />} />
@@ -162,6 +168,7 @@ function App() {
               <Route path="/video-generator" element={<ErrorBoundary><VideoGeneratorPage /></ErrorBoundary>} />
               <Route path="/newsletter" element={<ErrorBoundary><NewsletterPage /></ErrorBoundary>} />
               <Route path="/mailing-lists" element={<ErrorBoundary><MailingListsPage /></ErrorBoundary>} />
+              <Route path="/admin/neighborhoods" element={<ErrorBoundary><NeighborhoodsSettingsPage /></ErrorBoundary>} />
               <Route path="/admin/users" element={<ErrorBoundary><AdminUsersPage /></ErrorBoundary>} />
               <Route path="/admin" element={<Navigate to="/admin/users" replace />} />
               <Route path="/profile" element={<Navigate to="/settings" replace />} />

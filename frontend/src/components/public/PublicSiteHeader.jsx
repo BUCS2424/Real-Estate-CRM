@@ -1,13 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Home } from 'lucide-react';
+import { Menu, X, Home, ChevronDown } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useBranding } from '../../contexts/BrandingContext';
+import axios from 'axios';
+
+const API_URL = (process.env.REACT_APP_BACKEND_URL || '').replace(/\/+$/, '');
 
 export const PublicSiteHeader = ({ activePage = '', contactHref = '/#contact', variant = 'fixed' }) => {
   const { branding } = useBranding();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [neighborhoodsOpen, setNeighborhoodsOpen] = useState(false);
+  const [mobileNeighborhoodsOpen, setMobileNeighborhoodsOpen] = useState(false);
+  const [neighborhoods, setNeighborhoods] = useState([]);
   const publicLogoSrc = branding.logoUrl || '/images/hidden-haven-logo-full.png';
+
+  useEffect(() => {
+    axios.get(`${API_URL}/api/neighborhoods/public/list`)
+      .then(res => setNeighborhoods(Array.isArray(res.data) ? res.data : []))
+      .catch(() => {});
+  }, []);
 
   const isOverlay = variant === 'overlay';
   const shellClass = isOverlay
@@ -54,6 +66,25 @@ export const PublicSiteHeader = ({ activePage = '', contactHref = '/#contact', v
             <Link to="/showcase" className={navLinkClass(activePage === 'showcase')} data-testid="public-menu-showcase-link">
               LISTING SHOWCASE
             </Link>
+            <div className="relative" onMouseEnter={() => setNeighborhoodsOpen(true)} onMouseLeave={() => setNeighborhoodsOpen(false)}>
+              <Link to="/neighborhoods" className={`${navLinkClass(activePage === 'neighborhoods')} flex items-center gap-1`} data-testid="public-menu-neighborhoods-link">
+                NEIGHBORHOODS <ChevronDown className="w-3 h-3" />
+              </Link>
+              {neighborhoodsOpen && neighborhoods.length > 0 && (
+                <div className="absolute top-full left-0 mt-1 w-64 bg-[#0a1628] border border-amber-400/20 rounded-lg shadow-2xl py-2 z-50" data-testid="neighborhoods-dropdown">
+                  {neighborhoods.map(n => (
+                    <Link
+                      key={n.id}
+                      to={`/neighborhoods/${n.slug}`}
+                      className="block px-4 py-2 text-sm text-white/70 hover:text-amber-400 hover:bg-white/5 transition-colors"
+                      onClick={() => setNeighborhoodsOpen(false)}
+                    >
+                      {n.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
             <Link to="/about" className={navLinkClass(activePage === 'about')} data-testid="public-menu-about-link">
               ABOUT
             </Link>
@@ -125,6 +156,29 @@ export const PublicSiteHeader = ({ activePage = '', contactHref = '/#contact', v
               <Link to="/showcase" className="block text-white/90 hover:text-amber-400" onClick={closeMobileMenu} data-testid="public-mobile-showcase-link">
                 LISTING SHOWCASE
               </Link>
+              <div>
+                <button
+                  className="flex items-center gap-2 text-white/90 hover:text-amber-400 w-full text-left"
+                  onClick={() => setMobileNeighborhoodsOpen(!mobileNeighborhoodsOpen)}
+                  data-testid="public-mobile-neighborhoods-toggle"
+                >
+                  NEIGHBORHOODS <ChevronDown className={`w-4 h-4 transition-transform ${mobileNeighborhoodsOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {mobileNeighborhoodsOpen && (
+                  <div className="ml-4 mt-2 space-y-3">
+                    {neighborhoods.map(n => (
+                      <Link
+                        key={n.id}
+                        to={`/neighborhoods/${n.slug}`}
+                        className="block text-white/60 hover:text-amber-400 text-sm"
+                        onClick={closeMobileMenu}
+                      >
+                        {n.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
               <Link to="/about" className="block text-white/90 hover:text-amber-400" onClick={closeMobileMenu} data-testid="public-mobile-about-link">
                 ABOUT
               </Link>
