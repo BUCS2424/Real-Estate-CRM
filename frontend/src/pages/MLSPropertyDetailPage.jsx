@@ -446,6 +446,16 @@ export const MLSPropertyDetailPage = () => {
                 ) : <p className="text-white/40 py-8 text-center">Map not available.</p>}
               </TabsContent>
             </Tabs>
+
+            {/* Payment Calculator - after tabs, before agent info */}
+            {p.list_price && p.list_price < 2000000 && (
+              <Card className="bg-white/5 border-white/10">
+                <CardContent className="p-6">
+                  <SectionTitle icon={DollarSign}>Payment Calculator</SectionTitle>
+                  <PaymentCalculator price={p.list_price} />
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* ── Right Sidebar ── */}
@@ -467,16 +477,6 @@ export const MLSPropertyDetailPage = () => {
                 {p.virtual_tour_url && <a href={p.virtual_tour_url} target="_blank" rel="noopener noreferrer" className="block"><Button variant="outline" className="w-full border-white/20 text-white/70"><Eye className="w-4 h-4 mr-2" /> Virtual Tour</Button></a>}
               </CardContent>
             </Card>
-
-            {/* Payment Calculator */}
-            {p.list_price && p.list_price < 2000000 && (
-              <Card className="bg-white/5 border-white/10">
-                <CardContent className="p-5">
-                  <h3 className="text-base font-serif text-white font-bold mb-4 flex items-center gap-2"><DollarSign className="w-5 h-5 text-amber-400" /> Payment Calculator</h3>
-                  <PaymentCalculator price={p.list_price} />
-                </CardContent>
-              </Card>
-            )}
 
             {/* Listing Agent */}
             {p.listing_agent && (
