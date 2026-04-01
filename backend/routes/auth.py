@@ -52,7 +52,7 @@ async def register(user_data: UserCreate):
         )
     )
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login")
 async def login(credentials: UserLogin):
     user = await db.users.find_one({"email": credentials.email})
     
@@ -68,13 +68,19 @@ async def login(credentials: UserLogin):
     if not verify_password(credentials.password, stored_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    token = create_access_token({"sub": user.get("id", str(user.get("_id", "")))})
+    user_id = user.get("id", str(user.get("_id", "")))
+    token = create_access_token({"sub": user_id})
     
-    return TokenResponse(
-        access_token=token,
-        user=UserResponse(**{k: v for k, v in user.items() if k != "password" and k != "_id"})
-    )
+    user_data = {k: v for k, v in user.items() if k != "password" and k != "_id"}
+    if "id" not in user_data:
+        user_data["id"] = user_id
+    
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": user_data
+    }
 
-@router.get("/me", response_model=UserResponse)
+@router.get("/me")
 async def get_me(current_user: dict = Depends(get_current_user)):
-    return UserResponse(**current_user)
+    return current_user

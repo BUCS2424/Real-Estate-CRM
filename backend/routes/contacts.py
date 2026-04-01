@@ -185,7 +185,7 @@ def generate_vcard(contact: dict) -> str:
 
 # ============ CRUD OPERATIONS ============
 
-@router.post("", response_model=ContactResponse)
+@router.post("")
 async def create_contact(contact: ContactCreate, current_user: dict = Depends(get_current_user)):
     contact_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
@@ -197,9 +197,9 @@ async def create_contact(contact: ContactCreate, current_user: dict = Depends(ge
     }
     await db.contacts.insert_one(contact_doc)
     contact_doc.pop("_id", None)
-    return ContactResponse(**contact_doc)
+    return contact_doc
 
-@router.get("", response_model=List[ContactResponse])
+@router.get("")
 async def get_contacts(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
@@ -256,11 +256,19 @@ async def get_contacts(
     elif len(conditions) == 1:
         query = conditions[0]
     
-    contacts = await db.contacts.find(query, {"_id": 0}).sort([
+    contacts = await db.contacts.find(query).sort([
         ("display_name", 1), ("first_name", 1), ("last_name", 1)
     ]).skip(skip).limit(limit).to_list(limit)
     
-    return [ContactResponse(**c) for c in contacts]
+    # Ensure each contact has an id and no _id
+    result = []
+    for c in contacts:
+        if "id" not in c and "_id" in c:
+            c["id"] = str(c.pop("_id"))
+        else:
+            c.pop("_id", None)
+        result.append(c)
+    return result
 
 
 @router.get("/stats/summary")
@@ -761,12 +769,16 @@ async def export_contacts(
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
-@router.get("/{contact_id}", response_model=ContactResponse)
+@router.get("/{contact_id}")
 async def get_contact(contact_id: str, current_user: dict = Depends(get_current_user)):
-    contact = await db.contacts.find_one({"id": contact_id}, {"_id": 0})
+    contact = await db.contacts.find_one({"id": contact_id})
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
-    return ContactResponse(**contact)
+    if "id" not in contact and "_id" in contact:
+        contact["id"] = str(contact.pop("_id"))
+    else:
+        contact.pop("_id", None)
+    return contact
 
 @router.put("/{contact_id}")
 async def update_contact(contact_id: str, contact: dict, current_user: dict = Depends(get_current_user)):
@@ -803,13 +815,13 @@ async def update_contact(contact_id: str, contact: dict, current_user: dict = De
     updated = await db.contacts.find_one({"id": contact_id}, {"_id": 0})
     return updated
 
-@router.patch("/{contact_id}/score", response_model=ContactResponse)
+@router.patch("/{contact_id}/score")
 async def update_lead_score(contact_id: str, score_update: LeadScoreUpdate, current_user: dict = Depends(get_current_user)):
     result = await db.contacts.update_one({"id": contact_id}, {"$set": {"lead_score": score_update.lead_score}})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Contact not found")
     updated = await db.contacts.find_one({"id": contact_id}, {"_id": 0})
-    return ContactResponse(**updated)
+    return updated
 
 @router.delete("/{contact_id}")
 async def delete_contact(contact_id: str, current_user: dict = Depends(require_role([UserRole.SUPERUSER, UserRole.ADMIN]))):

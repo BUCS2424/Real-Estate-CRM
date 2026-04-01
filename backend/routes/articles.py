@@ -22,10 +22,15 @@ async def create_article(article: ArticleCreate, current_user: dict = Depends(ge
     article_doc.pop("_id", None)
     return ArticleResponse(**article_doc)
 
-@router.get("", response_model=List[ArticleResponse])
+@router.get("")
 async def get_articles(current_user: dict = Depends(get_current_user)):
-    articles = await db.articles.find({}, {"_id": 0}).to_list(1000)
-    return [ArticleResponse(**a) for a in articles]
+    articles = await db.articles.find({}).to_list(1000)
+    for a in articles:
+        if "id" not in a and "_id" in a:
+            a["id"] = str(a.pop("_id"))
+        else:
+            a.pop("_id", None)
+    return articles
 
 @router.put("/{article_id}", response_model=ArticleResponse)
 async def update_article(article_id: str, article: ArticleCreate, current_user: dict = Depends(get_current_user)):

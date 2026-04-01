@@ -76,18 +76,29 @@ async def create_task(task: TaskCreate, current_user: dict = Depends(get_current
     return TaskResponse(**task_doc)
 
 
-@router.get("", response_model=List[TaskResponse])
+@router.get("")
 async def get_tasks(current_user: dict = Depends(get_current_user)):
-    tasks = await db.tasks.find({}, {"_id": 0}).to_list(1000)
-    return [TaskResponse(**t) for t in tasks]
+    tasks = await db.tasks.find({}).to_list(1000)
+    result = []
+    for t in tasks:
+        if "id" not in t and "_id" in t:
+            t["id"] = str(t.pop("_id"))
+        else:
+            t.pop("_id", None)
+        result.append(t)
+    return result
 
 
-@router.get("/{task_id}", response_model=TaskResponse)
+@router.get("/{task_id}")
 async def get_task(task_id: str, current_user: dict = Depends(get_current_user)):
-    task = await db.tasks.find_one({"id": task_id}, {"_id": 0})
+    task = await db.tasks.find_one({"id": task_id})
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    return TaskResponse(**task)
+    if "id" not in task and "_id" in task:
+        task["id"] = str(task.pop("_id"))
+    else:
+        task.pop("_id", None)
+    return task
 
 
 @router.put("/{task_id}", response_model=TaskResponse)

@@ -22,17 +22,28 @@ async def create_deal(deal: DealCreate, current_user: dict = Depends(get_current
     deal_doc.pop("_id", None)
     return DealResponse(**deal_doc)
 
-@router.get("", response_model=List[DealResponse])
+@router.get("")
 async def get_deals(current_user: dict = Depends(get_current_user)):
-    deals = await db.deals.find({}, {"_id": 0}).to_list(1000)
-    return [DealResponse(**d) for d in deals]
+    deals = await db.deals.find({}).to_list(1000)
+    result = []
+    for d in deals:
+        if "id" not in d and "_id" in d:
+            d["id"] = str(d.pop("_id"))
+        else:
+            d.pop("_id", None)
+        result.append(d)
+    return result
 
-@router.get("/{deal_id}", response_model=DealResponse)
+@router.get("/{deal_id}")
 async def get_deal(deal_id: str, current_user: dict = Depends(get_current_user)):
-    deal = await db.deals.find_one({"id": deal_id}, {"_id": 0})
+    deal = await db.deals.find_one({"id": deal_id})
     if not deal:
         raise HTTPException(status_code=404, detail="Deal not found")
-    return DealResponse(**deal)
+    if "id" not in deal and "_id" in deal:
+        deal["id"] = str(deal.pop("_id"))
+    else:
+        deal.pop("_id", None)
+    return deal
 
 @router.patch("/{deal_id}/stage", response_model=DealResponse)
 async def update_deal_stage(deal_id: str, stage_update: StageUpdate, current_user: dict = Depends(get_current_user)):

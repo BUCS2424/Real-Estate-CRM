@@ -6,10 +6,17 @@ from utils.auth import get_current_user, require_role
 
 router = APIRouter()
 
-@router.get("", response_model=List[UserResponse])
+@router.get("")
 async def get_users(current_user: dict = Depends(require_role([UserRole.SUPERUSER]))):
-    users = await db.users.find({}, {"_id": 0, "password": 0}).to_list(100)
-    return [UserResponse(**u) for u in users]
+    users = await db.users.find({}, {"password": 0}).to_list(100)
+    result = []
+    for u in users:
+        if "id" not in u and "_id" in u:
+            u["id"] = str(u.pop("_id"))
+        else:
+            u.pop("_id", None)
+        result.append(u)
+    return result
 
 @router.patch("/{user_id}/role")
 async def update_user_role(user_id: str, role: str, current_user: dict = Depends(require_role([UserRole.SUPERUSER]))):
