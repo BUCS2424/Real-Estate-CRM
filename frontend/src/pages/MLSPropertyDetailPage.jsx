@@ -459,9 +459,10 @@ export const MLSPropertyDetailPage = () => {
           </div>
 
           {/* ── Right Sidebar ── */}
-          <div className="space-y-6">
+          <div className="hidden lg:block">
+            <div className="sticky top-6 space-y-6 max-h-[calc(100vh-3rem)] overflow-y-auto scrollbar-hide">
             {/* Schedule Viewing */}
-            <Card className="bg-white/5 border-white/10 sticky top-6">
+            <Card className="bg-white/5 border-white/10">
               <CardContent className="p-6 space-y-4">
                 <div className="text-center">
                   <h3 className="text-lg font-serif text-white font-bold">Schedule a Private Viewing</h3>
@@ -499,6 +500,25 @@ export const MLSPropertyDetailPage = () => {
                 <DetailRow label="Year Built" value={p.year_built} />
                 <DetailRow label="Subdivision" value={p.subdivision} />
                 <DetailRow label="Flood Zone" value={p.flood_zone} />
+              </CardContent>
+            </Card>
+            </div>
+          </div>
+
+          {/* Mobile-only sidebar content */}
+          <div className="lg:hidden space-y-6">
+            <Card className="bg-white/5 border-white/10">
+              <CardContent className="p-6 space-y-4">
+                <div className="text-center">
+                  <h3 className="text-lg font-serif text-white font-bold">Schedule a Private Viewing</h3>
+                  <p className="text-white/50 text-sm mt-1">See this property in person</p>
+                </div>
+                <Button className="w-full bg-amber-400 hover:bg-amber-500 text-black font-semibold h-12 text-base" onClick={() => navigate('/book/mel')}>
+                  <Calendar className="w-5 h-5 mr-2" /> Schedule Viewing
+                </Button>
+                <Button variant="outline" className="w-full border-amber-400/30 text-amber-400 hover:bg-amber-400/10 h-11" onClick={() => window.location.href = 'tel:+18134540004'}>
+                  <Phone className="w-4 h-4 mr-2" /> Call (813) 454-0004
+                </Button>
               </CardContent>
             </Card>
           </div>
