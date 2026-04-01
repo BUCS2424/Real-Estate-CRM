@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, MapPin, Bed, Bath, Square, DollarSign, Calendar, Home,
@@ -13,11 +13,9 @@ import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Slider } from '../components/ui/slider';
 import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
 import { PublicSeoHead } from '../components/public/PublicSeoHead';
+import { MortgageCalculator } from '../components/MortgageCalculator';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
 
@@ -59,52 +57,6 @@ const FeaturePills = ({ items, label }) => items?.length > 0 ? (
     </div>
   </div>
 ) : null;
-
-// Simple mortgage calculator
-const PaymentCalculator = ({ price }) => {
-  const [downPct, setDownPct] = useState(20);
-  const [rate, setRate] = useState(6.75);
-  const [term, setTerm] = useState(30);
-
-  const calc = useMemo(() => {
-    const dp = price * (downPct / 100);
-    const loan = price - dp;
-    const mr = rate / 100 / 12;
-    const n = term * 12;
-    const monthly = mr > 0 ? loan * (mr * Math.pow(1 + mr, n)) / (Math.pow(1 + mr, n) - 1) : loan / n;
-    const tax = (price * 0.012) / 12; // ~1.2% FL property tax
-    const insurance = 200;
-    return { principal: Math.round(monthly), tax: Math.round(tax), insurance, total: Math.round(monthly + tax + insurance), downPayment: Math.round(dp), loanAmount: Math.round(loan) };
-  }, [price, downPct, rate, term]);
-
-  return (
-    <div className="space-y-4">
-      <div className="text-center p-4 bg-amber-400/10 rounded-lg border border-amber-400/20">
-        <p className="text-white/50 text-sm">Estimated Monthly Payment</p>
-        <p className="text-amber-400 text-3xl font-serif font-bold">{fmt(calc.total)}<span className="text-base text-white/40">/mo</span></p>
-      </div>
-      <div className="space-y-3">
-        <div>
-          <div className="flex justify-between text-sm mb-1"><span className="text-white/50">Down Payment ({downPct}%)</span><span className="text-white">{fmt(calc.downPayment)}</span></div>
-          <Slider value={[downPct]} onValueChange={([v]) => setDownPct(v)} min={0} max={50} step={5} className="py-1" />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div><Label className="text-white/50 text-xs">Interest Rate %</Label><Input type="number" value={rate} onChange={e => setRate(parseFloat(e.target.value) || 0)} step="0.125" className="bg-white/5 border-white/10 text-white h-8 text-sm" /></div>
-          <div><Label className="text-white/50 text-xs">Loan Term</Label>
-            <select value={term} onChange={e => setTerm(Number(e.target.value))} className="w-full h-8 rounded-md bg-white/5 border border-white/10 text-white text-sm px-2">
-              <option value={30}>30 years</option><option value={15}>15 years</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      <div className="space-y-2 pt-2 border-t border-white/10">
-        <div className="flex justify-between text-sm"><span className="text-white/50">Principal & Interest</span><span className="text-white">{fmt(calc.principal)}</span></div>
-        <div className="flex justify-between text-sm"><span className="text-white/50">Est. Property Tax</span><span className="text-white">{fmt(calc.tax)}</span></div>
-        <div className="flex justify-between text-sm"><span className="text-white/50">Est. Insurance</span><span className="text-white">{fmt(calc.insurance)}</span></div>
-      </div>
-    </div>
-  );
-};
 
 export const MLSPropertyDetailPage = () => {
   const { mlsId } = useParams();
@@ -452,7 +404,12 @@ export const MLSPropertyDetailPage = () => {
               <Card className="bg-white/5 border-white/10">
                 <CardContent className="p-6">
                   <SectionTitle icon={DollarSign}>Payment Calculator</SectionTitle>
-                  <PaymentCalculator price={p.list_price} />
+                  <MortgageCalculator 
+                    propertyPrice={p.list_price} 
+                    propertyAddress={`${p.address}, ${p.city}, ${p.state} ${p.zip_code}`}
+                    propertyTaxRate={p.tax_amount && p.list_price ? (p.tax_amount / p.list_price) * 100 : 1.1}
+                    embedded={true}
+                  />
                 </CardContent>
               </Card>
             )}
