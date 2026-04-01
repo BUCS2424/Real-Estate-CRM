@@ -10,6 +10,7 @@ import { registerServiceWorker } from './hooks/usePWA';
 import NeighborhoodsListPage from './pages/NeighborhoodsListPage';
 import NeighborhoodPage from './pages/NeighborhoodPage';
 import NeighborhoodsSettingsPage from './pages/NeighborhoodsSettingsPage';
+import MLSPropertyDetailPage from './pages/MLSPropertyDetailPage';
 
 // Layouts
 import { MainLayout } from './components/layout/MainLayout';
@@ -129,6 +130,7 @@ function App() {
             <Route path="/showcase" element={<PublicListingsPage />} />
             <Route path="/neighborhoods" element={<NeighborhoodsListPage />} />
             <Route path="/neighborhoods/:slug" element={<NeighborhoodPage />} />
+            <Route path="/mls-property/:mlsId" element={<MLSPropertyDetailPage />} />
             <Route path="/mortgage-calculator" element={<MortgageCalculatorPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/newsletter-archive" element={<NewsletterArchivePage />} />

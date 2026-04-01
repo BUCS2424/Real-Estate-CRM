@@ -185,3 +185,17 @@ async def get_public_neighborhood(slug: str):
         "listings": listings,
         "total": len(listings),
     }
+
+
+
+@router.get("/public/property/{mls_id}")
+async def get_public_mls_property(mls_id: str):
+    """Get full property details by MLS ID for the public detail page."""
+    if not mls_service.is_configured():
+        raise HTTPException(status_code=503, detail="MLS service not configured")
+
+    detail = await mls_service.get_property_details(mls_id=mls_id)
+    if detail.get("error"):
+        raise HTTPException(status_code=404, detail=detail["error"])
+
+    return detail

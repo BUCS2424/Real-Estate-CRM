@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { Home, MapPin, Bed, Bath, Square, DollarSign, Search, SlidersHorizontal, X } from 'lucide-react';
@@ -67,6 +68,7 @@ export const MapListingsLayout = ({
   const [sortBy, setSortBy] = useState('newest');
   const [searchText, setSearchText] = useState('');
   const listRef = useRef(null);
+  const navigate = useNavigate();
 
   // Filter listings
   let filtered = [...listings];
@@ -194,6 +196,9 @@ export const MapListingsLayout = ({
                       <p className="font-bold text-amber-600">{formatPrice(listing.list_price)}</p>
                       <p className="font-medium">{listing.address}</p>
                       <p className="text-gray-500">{listing.bedrooms} bd | {listing.bathrooms} ba | {listing.sqft?.toLocaleString()} sqft</p>
+                      {listing.mls_id && (
+                        <a href={`/mls-property/${listing.mls_id}`} className="text-blue-500 text-[11px] mt-1 block hover:underline">View Details</a>
+                      )}
                     </div>
                   </Popup>
                 </Marker>
@@ -231,7 +236,13 @@ export const MapListingsLayout = ({
                   className={`p-4 hover:bg-white/5 cursor-pointer transition-colors ${
                     selectedId === listing.mls_id ? 'bg-amber-400/10 border-l-2 border-amber-400' : ''
                   }`}
-                  onClick={() => setSelectedId(listing.mls_id)}
+                  onClick={() => {
+                    if (listing.mls_id) {
+                      navigate(`/mls-property/${listing.mls_id}`);
+                    } else {
+                      setSelectedId(listing.mls_id);
+                    }
+                  }}
                   data-testid={`listing-card-${listing.mls_id}`}
                 >
                   <div className="flex gap-3">
