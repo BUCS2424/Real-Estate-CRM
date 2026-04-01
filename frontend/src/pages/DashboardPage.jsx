@@ -57,14 +57,27 @@ export const DashboardPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const [debugInfo, setDebugInfo] = useState(null);
+
   useEffect(() => {
     const fetchData = async () => {
+      const apiUrl = process.env.REACT_APP_BACKEND_URL;
+      const token = localStorage.getItem('token');
+      const debugData = { apiUrl, hasToken: !!token, tokenPreview: token ? token.substring(0, 20) + '...' : 'none' };
+      
       try {
         const [statsRes, contactsRes, tasksRes] = await Promise.all([
           dashboardAPI.stats(),
           contactsAPI.list(),
           tasksAPI.list()
         ]);
+
+        debugData.statsStatus = statsRes?.status;
+        debugData.contactsStatus = contactsRes?.status;
+        debugData.contactsType = typeof contactsRes?.data;
+        debugData.contactsIsArray = Array.isArray(contactsRes?.data);
+        debugData.contactsLength = Array.isArray(contactsRes?.data) ? contactsRes.data.length : 'not-array';
+        debugData.contactsPreview = JSON.stringify(contactsRes?.data)?.substring(0, 200);
 
         const statsData = statsRes?.data || {};
 
@@ -82,8 +95,12 @@ export const DashboardPage = () => {
         setRecentContacts(contactsList.slice(0, 5));
         setRecentTasks(tasksList.filter((t) => t?.status !== 'done').slice(0, 5));
       } catch (error) {
+        debugData.error = error?.message;
+        debugData.responseStatus = error?.response?.status;
+        debugData.responseData = JSON.stringify(error?.response?.data)?.substring(0, 200);
         toast.error('Failed to load dashboard data');
       } finally {
+        setDebugInfo(debugData);
         setLoading(false);
       }
     };
@@ -109,6 +126,19 @@ export const DashboardPage = () => {
 
   return (
     <div className="space-y-8 animate-fade-in" data-testid="dashboard-page">
+      {/* Temporary Debug Banner - REMOVE AFTER FIXING */}
+      {debugInfo && (
+        <div className="p-4 bg-yellow-50 border border-yellow-300 rounded-lg text-xs font-mono break-all" data-testid="debug-banner">
+          <strong>API DEBUG (temporary):</strong><br/>
+          API URL: {debugInfo.apiUrl}<br/>
+          Token: {debugInfo.hasToken ? 'YES' : 'NO'}<br/>
+          Contacts Status: {debugInfo.contactsStatus}<br/>
+          Contacts IsArray: {String(debugInfo.contactsIsArray)}<br/>
+          Contacts Length: {debugInfo.contactsLength}<br/>
+          {debugInfo.error && <>Error: {debugInfo.error}<br/>Response Status: {debugInfo.responseStatus}<br/>Response: {debugInfo.responseData}<br/></>}
+          Preview: {debugInfo.contactsPreview}
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
