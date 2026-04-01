@@ -196,9 +196,7 @@ export const MapListingsLayout = ({
                       <p className="font-bold text-amber-600">{formatPrice(listing.list_price)}</p>
                       <p className="font-medium">{listing.address}</p>
                       <p className="text-gray-500">{listing.bedrooms} bd | {listing.bathrooms} ba | {listing.sqft?.toLocaleString()} sqft</p>
-                      {listing.mls_id && (
-                        <a href={`/mls-property/${listing.mls_id}`} className="text-blue-500 text-[11px] mt-1 block hover:underline">View Details</a>
-                      )}
+                      <a href={listing._source === 'showcase' && listing._slug ? `/property/${listing._slug}` : listing.mls_id ? `/mls-property/${listing.mls_id}` : '#'} className="text-blue-500 text-[11px] mt-1 block hover:underline">View Details</a>
                     </div>
                   </Popup>
                 </Marker>
@@ -237,10 +235,12 @@ export const MapListingsLayout = ({
                     selectedId === listing.mls_id ? 'bg-amber-400/10 border-l-2 border-amber-400' : ''
                   }`}
                   onClick={() => {
-                    if (listing.mls_id) {
+                    if (listing._source === 'showcase' && listing._slug) {
+                      navigate(`/property/${listing._slug}`);
+                    } else if (listing._source === 'showcase' && listing._showcase_id) {
+                      navigate(`/property/${listing._showcase_id}`);
+                    } else if (listing.mls_id) {
                       navigate(`/mls-property/${listing.mls_id}`);
-                    } else {
-                      setSelectedId(listing.mls_id);
                     }
                   }}
                   data-testid={`listing-card-${listing.mls_id}`}
