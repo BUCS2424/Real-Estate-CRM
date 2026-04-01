@@ -754,6 +754,97 @@ async def reorder_listing_images(
     return {"message": "Images reordered", "images": reordered}
 
 
+
+@router.post("/listings/{listing_id}/pull-mls-images")
+async def pull_mls_images(
+    listing_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Pull images from MLS for a showcase listing, skipping duplicates."""
+    # Get the listing
+    listing = await db.properties.find_one({"id": listing_id})
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    listing.pop("_id", None)
+
+    existing_urls = set()
+    for img in listing.get("images", []):
+        if isinstance(img, dict) and img.get("url"):
+            existing_urls.add(img["url"])
+        elif isinstance(img, str):
+            existing_urls.add(img)
+
+    # Find linked MLS listing via multiple strategies
+    mls_photos = []
+    source_label = None
+
+    # Strategy 1: Check if listing was converted from an MLS listing
+    mls_listing = await db.mls_listings.find_one({"converted_to_property_id": listing_id})
+
+    # Strategy 2: Match by source_lead_id -> property_lead -> mls_number
+    if not mls_listing and listing.get("source_lead_id"):
+        lead = await db.property_leads.find_one({"id": listing["source_lead_id"]})
+        if lead:
+            mls_num = lead.get("mls_number") or lead.get("mls_id")
+            if mls_num:
+                mls_listing = await db.mls_listings.find_one({"mls_id": mls_num})
+                if not mls_listing:
+                    mls_listing = await db.mls_listings.find_one({"mls_number": mls_num})
+
+    # Strategy 3: Match by address
+    if not mls_listing and listing.get("address"):
+        mls_listing = await db.mls_listings.find_one({
+            "address": {"$regex": listing["address"].split(",")[0].strip(), "$options": "i"}
+        })
+
+    if mls_listing:
+        mls_photos = mls_listing.get("photos", [])
+        source_label = mls_listing.get("mls_id", "MLS")
+    else:
+        # Strategy 4: Try Bridge API live lookup
+        from services.mls_service import mls_service
+        if mls_service.is_configured():
+            address = listing.get("address", "")
+            city = listing.get("city", "")
+            if address:
+                search_result = await mls_service.search_properties(
+                    city=city, status="Active,Closed,Pending", limit=5
+                )
+                for prop in search_result.get("listings", []):
+                    if prop.get("address") and address.lower().split(",")[0].strip() in prop["address"].lower():
+                        mls_photos = prop.get("photos", [])
+                        source_label = prop.get("mls_id", "MLS")
+                        break
+
+    if not mls_photos:
+        raise HTTPException(status_code=404, detail="No MLS listing found for this property. Try searching by MLS ID in the MLS Hub first.")
+
+    # Filter out photos that already exist
+    new_photos = [url for url in mls_photos if url and url not in existing_urls]
+
+    if not new_photos:
+        return {"message": "All MLS images are already in this listing", "added": 0, "total": len(listing.get("images", []))}
+
+    # Add new photos as image objects
+    new_image_objects = [{"id": str(uuid.uuid4()), "url": url, "source": "mls"} for url in new_photos]
+    current_images = listing.get("images", [])
+    updated_images = current_images + new_image_objects
+
+    await db.properties.update_one(
+        {"id": listing_id},
+        {"$set": {"images": updated_images, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+
+    return {
+        "message": f"Pulled {len(new_photos)} new images from {source_label}",
+        "added": len(new_photos),
+        "skipped": len(mls_photos) - len(new_photos),
+        "total": len(updated_images),
+        "images": updated_images
+    }
+
+
+
 @router.post("/listings/import-csv")
 async def import_listings_csv(
     file: UploadFile = File(...),

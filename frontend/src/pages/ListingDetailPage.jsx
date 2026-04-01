@@ -37,7 +37,8 @@ import {
   CheckCircle,
   Clock,
   Upload,
-  GripVertical
+  GripVertical,
+  Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { listingsAPI } from '../lib/api';
@@ -81,6 +82,7 @@ const ListingDetailPage = () => {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [pullingMLS, setPullingMLS] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -170,6 +172,24 @@ const ListingDetailPage = () => {
       setUploadProgress(0);
     }
   };
+
+  const handlePullMLSImages = async () => {
+    setPullingMLS(true);
+    try {
+      const res = await listingsAPI.pullMLSImages(id);
+      if (res.data.added > 0) {
+        toast.success(res.data.message);
+        fetchListing();
+      } else {
+        toast.info(res.data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to pull MLS images');
+    } finally {
+      setPullingMLS(false);
+    }
+  };
+
 
   const handleDeleteImage = async (imageId) => {
     if (!window.confirm('Delete this image?')) return;
@@ -571,18 +591,34 @@ const ListingDetailPage = () => {
                       </CardTitle>
                       <CardDescription>Drag and drop images to upload them to this property</CardDescription>
                     </div>
-                    <label htmlFor="image-upload">
-                      <Button variant="outline" size="sm" asChild disabled={uploadingImages}>
-                        <span className="cursor-pointer">
-                          {uploadingImages ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          ) : (
-                            <Upload className="w-4 h-4 mr-2" />
-                          )}
-                          Upload Images
-                        </span>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handlePullMLSImages}
+                        disabled={pullingMLS || uploadingImages}
+                        data-testid="pull-mls-images-btn"
+                      >
+                        {pullingMLS ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Download className="w-4 h-4 mr-2" />
+                        )}
+                        Pull MLS Images
                       </Button>
-                    </label>
+                      <label htmlFor="image-upload">
+                        <Button variant="outline" size="sm" asChild disabled={uploadingImages}>
+                          <span className="cursor-pointer">
+                            {uploadingImages ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <Upload className="w-4 h-4 mr-2" />
+                            )}
+                            Upload Images
+                          </span>
+                        </Button>
+                      </label>
+                    </div>
                     <input
                       id="image-upload"
                       type="file"
