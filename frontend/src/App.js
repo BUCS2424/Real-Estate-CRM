@@ -97,9 +97,19 @@ import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
 
 function App() {
-  // Register service worker on app load
+  // Force unregister ALL service workers to prevent stale cache issues
   useEffect(() => {
-    registerServiceWorker();
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(reg => reg.unregister());
+      });
+      // Also clear all caches
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          names.forEach(name => caches.delete(name));
+        });
+      }
+    }
   }, []);
 
   return (

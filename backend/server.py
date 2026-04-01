@@ -525,33 +525,11 @@ app.include_router(api_router)
 # Mount static files AFTER api_router to serve at /api/static/site-images/*
 app.mount("/api/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-# CORS Middleware
-cors_origins = []
-origins_env = os.environ.get('CORS_ORIGINS')
-if origins_env:
-    if origins_env.strip() == '*':
-        cors_origins = ["*"]
-    else:
-        cors_origins = [origin.strip() for origin in origins_env.split(',') if origin.strip()]
-
-site_url = os.environ.get('SITE_URL')
-if site_url and site_url not in cors_origins and "*" not in cors_origins:
-    cors_origins.append(site_url)
-
-# Always allow Emergent deployment domains
-react_url = os.environ.get('REACT_APP_BACKEND_URL', '')
-if react_url and react_url not in cors_origins and "*" not in cors_origins:
-    cors_origins.append(react_url)
-
-if not cors_origins:
-    cors_origins = ["*"]
-
-allow_all = "*" in cors_origins
-
+# CORS Middleware - allow all origins for maximum deployment compatibility
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=not allow_all,
-    allow_origins=["*"] if allow_all else cors_origins,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

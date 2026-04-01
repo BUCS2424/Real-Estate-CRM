@@ -53,6 +53,19 @@
         </script>
     </head>
     <body>
+        <script>
+            // Kill ALL service workers immediately before app loads
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(regs) {
+                    for (var i = 0; i < regs.length; i++) { regs[i].unregister(); }
+                });
+            }
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    for (var i = 0; i < names.length; i++) { caches.delete(names[i]); }
+                });
+            }
+        </script>
         <noscript>You need to enable JavaScript to run this app.</noscript>
         <div id="root"></div>
         <!--
