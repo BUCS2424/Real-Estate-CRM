@@ -173,10 +173,10 @@ const ListingDetailPage = () => {
     }
   };
 
-  const handlePullMLSImages = async () => {
+  const handlePullMLSImages = async (mlsId = null) => {
     setPullingMLS(true);
     try {
-      const res = await listingsAPI.pullMLSImages(id);
+      const res = await listingsAPI.pullMLSImages(id, mlsId ? { mls_id: mlsId } : undefined);
       if (res.data.added > 0) {
         toast.success(res.data.message);
         fetchListing();
@@ -184,7 +184,26 @@ const ListingDetailPage = () => {
         toast.info(res.data.message);
       }
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to pull MLS images');
+      const detail = error.response?.data?.detail || '';
+      if (detail.includes('No MLS listing found')) {
+        const manualId = window.prompt('Auto-lookup failed. Enter the MLS # to pull images from:');
+        if (manualId && manualId.trim()) {
+          setPullingMLS(true);
+          try {
+            const res2 = await listingsAPI.pullMLSImages(id, { mls_id: manualId.trim() });
+            if (res2.data.added > 0) {
+              toast.success(res2.data.message);
+              fetchListing();
+            } else {
+              toast.info(res2.data.message);
+            }
+          } catch (err2) {
+            toast.error(err2.response?.data?.detail || 'Failed to pull MLS images');
+          }
+        }
+      } else {
+        toast.error(detail || 'Failed to pull MLS images');
+      }
     } finally {
       setPullingMLS(false);
     }

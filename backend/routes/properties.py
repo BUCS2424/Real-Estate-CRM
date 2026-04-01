@@ -758,10 +758,12 @@ async def reorder_listing_images(
 @router.post("/listings/{listing_id}/pull-mls-images")
 async def pull_mls_images(
     listing_id: str,
+    body: dict = None,
     current_user: dict = Depends(get_current_user)
 ):
-    """Pull images from MLS for a showcase listing, skipping duplicates."""
-    # Get the listing
+    """Pull images from MLS for a showcase listing, skipping duplicates.
+    Optionally pass {"mls_id": "TB1234567"} to search by MLS number directly.
+    """
     listing = await db.properties.find_one({"id": listing_id})
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
@@ -774,58 +776,79 @@ async def pull_mls_images(
         elif isinstance(img, str):
             existing_urls.add(img)
 
-    # Find linked MLS listing via multiple strategies
     mls_photos = []
     source_label = None
+    manual_mls_id = (body or {}).get("mls_id", "").strip() if body else ""
 
-    # Strategy 1: Check if listing was converted from an MLS listing
-    mls_listing = await db.mls_listings.find_one({"converted_to_property_id": listing_id})
+    # Strategy 1: User provided MLS ID — search Bridge API directly
+    if manual_mls_id:
+        from services.mls_service import mls_service
+        if mls_service.is_configured():
+            detail = await mls_service.get_property_details(mls_id=manual_mls_id)
+            if not detail.get("error"):
+                mls_photos = detail.get("all_photos", detail.get("photos", []))
+                source_label = detail.get("mls_id", manual_mls_id)
 
-    # Strategy 2: Match by source_lead_id -> property_lead -> mls_number
-    if not mls_listing and listing.get("source_lead_id"):
+    # Strategy 2: Check if listing was converted from an MLS listing
+    if not mls_photos:
+        mls_listing = await db.mls_listings.find_one({"converted_to_property_id": listing_id})
+        if mls_listing:
+            mls_photos = mls_listing.get("photos", [])
+            source_label = mls_listing.get("mls_id", "MLS")
+
+    # Strategy 3: Match by source_lead_id -> property_lead -> mls_number
+    if not mls_photos and listing.get("source_lead_id"):
         lead = await db.property_leads.find_one({"id": listing["source_lead_id"]})
         if lead:
             mls_num = lead.get("mls_number") or lead.get("mls_id")
             if mls_num:
                 mls_listing = await db.mls_listings.find_one({"mls_id": mls_num})
-                if not mls_listing:
-                    mls_listing = await db.mls_listings.find_one({"mls_number": mls_num})
+                if mls_listing:
+                    mls_photos = mls_listing.get("photos", [])
+                    source_label = mls_num
 
-    # Strategy 3: Match by address
-    if not mls_listing and listing.get("address"):
-        mls_listing = await db.mls_listings.find_one({
-            "address": {"$regex": listing["address"].split(",")[0].strip(), "$options": "i"}
-        })
+    # Strategy 4: Match by address in local mls_listings
+    if not mls_photos and listing.get("address"):
+        addr_query = listing["address"].split(",")[0].strip()
+        if len(addr_query) > 5:
+            mls_listing = await db.mls_listings.find_one({
+                "address": {"$regex": addr_query, "$options": "i"}
+            })
+            if mls_listing:
+                mls_photos = mls_listing.get("photos", [])
+                source_label = mls_listing.get("mls_id", "MLS")
 
-    if mls_listing:
-        mls_photos = mls_listing.get("photos", [])
-        source_label = mls_listing.get("mls_id", "MLS")
-    else:
-        # Strategy 4: Try Bridge API live lookup
+    # Strategy 5: Search Bridge API by address
+    if not mls_photos and listing.get("address"):
         from services.mls_service import mls_service
         if mls_service.is_configured():
-            address = listing.get("address", "")
-            city = listing.get("city", "")
-            if address:
-                search_result = await mls_service.search_properties(
-                    city=city, status="Active,Closed,Pending", limit=5
-                )
-                for prop in search_result.get("listings", []):
-                    if prop.get("address") and address.lower().split(",")[0].strip() in prop["address"].lower():
-                        mls_photos = prop.get("photos", [])
-                        source_label = prop.get("mls_id", "MLS")
-                        break
+            addr_search = listing["address"].split(",")[0].strip()
+            search_result = await mls_service.search_properties(
+                address=addr_search, limit=5
+            )
+            for prop in search_result.get("properties", []):
+                if prop.get("photos"):
+                    mls_photos = prop.get("photos", [])
+                    source_label = prop.get("mls_id", "MLS")
+                    # Also fetch full details for all photos (search only returns 10)
+                    if source_label and len(mls_photos) <= 10:
+                        detail = await mls_service.get_property_details(mls_id=source_label)
+                        if not detail.get("error"):
+                            mls_photos = detail.get("all_photos", mls_photos)
+                    break
 
     if not mls_photos:
-        raise HTTPException(status_code=404, detail="No MLS listing found for this property. Try searching by MLS ID in the MLS Hub first.")
+        raise HTTPException(
+            status_code=404,
+            detail="No MLS listing found. Try entering the MLS # manually."
+        )
 
-    # Filter out photos that already exist
+    # Filter out duplicates
     new_photos = [url for url in mls_photos if url and url not in existing_urls]
 
     if not new_photos:
         return {"message": "All MLS images are already in this listing", "added": 0, "total": len(listing.get("images", []))}
 
-    # Add new photos as image objects
     new_image_objects = [{"id": str(uuid.uuid4()), "url": url, "source": "mls"} for url in new_photos]
     current_images = listing.get("images", [])
     updated_images = current_images + new_image_objects

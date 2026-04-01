@@ -205,7 +205,7 @@ export const listingsAPI = {
   },
   deleteImage: (listingId, imageId) => api.delete(`/listings/${listingId}/images/${imageId}`),
   reorderImages: (id, imageIds) => api.put(`/listings/${id}/images/reorder`, imageIds),
-  pullMLSImages: (id) => api.post(`/listings/${id}/pull-mls-images`),
+  pullMLSImages: (id, body) => api.post(`/listings/${id}/pull-mls-images`, body || {}),
 };
 
 // Property Badge Management
