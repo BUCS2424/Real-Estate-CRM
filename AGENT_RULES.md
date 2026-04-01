@@ -16,3 +16,4 @@
 12. Public menu behavior standard: top menu must scroll away with page content (non-fixed). Do not pin/sticky/fix public top nav unless explicitly requested.
 13. stay focused, do not work on anything else but the command given, dont touch any other code other than the exact code you are creating or fixing
 14. follow your command, then ask to test, get the work done first, before taking 20 min to test
+15. **The mortgage calculator should only be shown for property listed less than 2,000,000**

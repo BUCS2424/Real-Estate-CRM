@@ -125,6 +125,9 @@ class MLSService:
         
         # Build OData filter
         filters = []
+        # Exclude rentals/leases by default — only show for-sale properties
+        filters.append("PropertyType ne 'Residential Lease'")
+        filters.append("PropertyType ne 'Commercial Lease'")
         if city:
             filters.append(f"City eq '{city}'")
         if zip_code:
@@ -211,6 +214,9 @@ class MLSService:
         }
         
         filters = []
+        # Exclude rentals/leases
+        filters.append("PropertyType ne 'Residential Lease'")
+        filters.append("PropertyType ne 'Commercial Lease'")
         if agent:
             filters.append(f"ListAgentMlsId eq '{agent}'")
         if status:

@@ -180,6 +180,10 @@ async def get_public_neighborhood(slug: str):
             )
             listings = result.get("properties", [])
 
+    # Filter out any rentals/leases that slipped through
+    LEASE_TYPES = {'residential lease', 'commercial lease'}
+    listings = [l for l in listings if (l.get('property_type') or '').lower() not in LEASE_TYPES]
+
     return {
         "neighborhood": neighborhood,
         "listings": listings,
