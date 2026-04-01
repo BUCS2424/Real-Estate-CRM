@@ -7,7 +7,7 @@ import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import { propertyLeadsAPI } from '../lib/api';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = (process.env.REACT_APP_BACKEND_URL || '').replace(/\/+$/, '');
 
 const formatSize = (bytes) => {
   if (bytes === 0) return '0 B';

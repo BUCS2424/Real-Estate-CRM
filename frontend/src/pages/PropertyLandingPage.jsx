@@ -91,11 +91,11 @@ export const PropertyLandingPage = () => {
 
       if (navigator.sendBeacon) {
         navigator.sendBeacon(
-          `${process.env.REACT_APP_BACKEND_URL}/api/analytics/session/end`,
+          `${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/+$/, '')}/api/analytics/session/end`,
           new Blob([payload], { type: 'application/json' })
         );
       } else {
-        fetch(`${process.env.REACT_APP_BACKEND_URL}/api/analytics/session/end`, {
+        fetch(`${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/+$/, '')}/api/analytics/session/end`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: payload,

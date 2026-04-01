@@ -129,7 +129,7 @@ export const MortgageCalculator = ({
   useEffect(() => {
     const fetchRates = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/settings/mortgage-rates`);
+        const response = await fetch(`${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/+$/, '')}/api/settings/mortgage-rates`);
         if (response.ok) {
           const data = await response.json();
           setRatesConfig(data);

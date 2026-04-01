@@ -46,7 +46,7 @@ const TestimonialsCarousel = () => {
 
   const fetchReviews = async () => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/reviews/public?homepage_only=true&limit=200`);
+      const res = await fetch(`${(process.env.REACT_APP_BACKEND_URL || '').replace(/\/+$/, '')}/api/reviews/public?homepage_only=true&limit=200`);
       if (res.ok) {
         const data = await res.json();
         if (data.reviews && data.reviews.length > 0) {
