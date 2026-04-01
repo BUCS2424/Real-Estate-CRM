@@ -490,12 +490,26 @@ async def health_check():
     try:
         result = await db.command("ping")
         contact_count = await db.contacts.count_documents({})
+        # Try to actually fetch one contact to verify serialization works
+        sample = await db.contacts.find_one({})
+        sample_has_id = "id" in sample if sample else None
+        sample_keys = list(sample.keys())[:10] if sample else []
+        # Check user too
+        user = await db.users.find_one({"email": "mel@a2gdesigns.com"})
+        user_has_id = "id" in user if user else None
+        user_has_name = "name" in user if user else None
+        user_keys = list(user.keys())[:10] if user else []
         return {
             "status": "healthy",
             "version": "2.0.0",
             "database": "connected",
             "contacts_count": contact_count,
-            "db_name": os.environ.get("DB_NAME", "unknown")
+            "db_name": os.environ.get("DB_NAME", "unknown"),
+            "sample_contact_has_id": sample_has_id,
+            "sample_contact_keys": sample_keys,
+            "user_has_id": user_has_id,
+            "user_has_name": user_has_name,
+            "user_keys": user_keys
         }
     except Exception as e:
         return {

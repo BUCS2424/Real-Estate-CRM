@@ -57,9 +57,17 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid token")
         
-        user = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0})
+        user = await db.users.find_one({"id": user_id})
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
+        
+        # Clean sensitive fields and ensure id exists
+        if "id" not in user and "_id" in user:
+            user["id"] = str(user.pop("_id"))
+        else:
+            user.pop("_id", None)
+        user.pop("password", None)
+        user.pop("password_hash", None)
         return user
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
