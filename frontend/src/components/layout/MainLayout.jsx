@@ -3,6 +3,7 @@ import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { StaffChatDrawer } from '../StaffChatDrawer';
 import { cn } from '../../lib/utils';
 
 export const MainLayout = () => {
@@ -48,6 +49,7 @@ export const MainLayout = () => {
           <Outlet />
         </div>
       </main>
+      <StaffChatDrawer />
     </div>
   );
 };
