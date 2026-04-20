@@ -18,7 +18,7 @@ import subprocess
 from datetime import datetime
 
 # Backend URL from environment
-BACKEND_URL = "https://haven-realty-admin-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://realty-dashboard-34.preview.emergentagent.com/api"
 
 # Test credentials from previous testing
 TEST_EMAIL = "mel@a2gdesigns.com"
