@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, Home, ChevronDown } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -14,6 +14,16 @@ export const PublicSiteHeader = ({ activePage = '', contactHref = '/#contact', v
   const [mobileNeighborhoodsOpen, setMobileNeighborhoodsOpen] = useState(false);
   const [neighborhoods, setNeighborhoods] = useState([]);
   const publicLogoSrc = branding.logoUrl || '/images/hidden-haven-logo-full.png';
+  const closeTimer = useRef(null);
+
+  const openNeighborhoods = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setNeighborhoodsOpen(true);
+  };
+
+  const delayCloseNeighborhoods = () => {
+    closeTimer.current = setTimeout(() => setNeighborhoodsOpen(false), 200);
+  };
 
   useEffect(() => {
     axios.get(`${API_URL}/api/neighborhoods/public/list`)
@@ -66,12 +76,17 @@ export const PublicSiteHeader = ({ activePage = '', contactHref = '/#contact', v
             <Link to="/showcase" className={navLinkClass(activePage === 'showcase')} data-testid="public-menu-showcase-link">
               LISTING SHOWCASE
             </Link>
-            <div className="relative" onMouseEnter={() => setNeighborhoodsOpen(true)} onMouseLeave={() => setNeighborhoodsOpen(false)}>
+            <div className="relative" onMouseEnter={openNeighborhoods} onMouseLeave={delayCloseNeighborhoods}>
               <Link to="/neighborhoods" className={`${navLinkClass(activePage === 'neighborhoods')} flex items-center gap-1`} data-testid="public-menu-neighborhoods-link">
                 NEIGHBORHOODS <ChevronDown className="w-3 h-3" />
               </Link>
               {neighborhoodsOpen && neighborhoods.length > 0 && (
-                <div className="absolute top-full left-0 mt-1 w-64 bg-[#0a1628] border border-amber-400/20 rounded-lg shadow-2xl py-2 z-50" data-testid="neighborhoods-dropdown">
+                <div
+                  className="absolute top-full left-0 mt-1 w-64 bg-[#0a1628] border border-amber-400/20 rounded-lg shadow-2xl py-2 z-50"
+                  data-testid="neighborhoods-dropdown"
+                  onMouseEnter={openNeighborhoods}
+                  onMouseLeave={delayCloseNeighborhoods}
+                >
                   {neighborhoods.map(n => (
                     <Link
                       key={n.id}
