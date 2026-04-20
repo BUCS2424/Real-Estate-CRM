@@ -1027,7 +1027,7 @@ const PropertyLeadDetailPage = () => {
                           </div>
                           <div className="grid grid-cols-4 gap-2">
                             {lead.scraped_images.slice(0, 4).map((img, idx) => (
-                              <div key={idx} className="aspect-video rounded-lg overflow-hidden bg-muted">
+                              <div key={img.url || `scraped-img-${idx}`} className="aspect-video rounded-lg overflow-hidden bg-muted">
                                 <img 
                                   src={img.url} 
                                   alt={`Property ${idx + 1}`}
@@ -1702,7 +1702,7 @@ const PropertyLeadDetailPage = () => {
           
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 py-4">
             {lead?.scraped_images?.map((img, idx) => (
-              <div key={idx} className="relative group">
+              <div key={img.url || `all-img-${idx}`} className="relative group">
                 <div className="aspect-video rounded-lg overflow-hidden bg-muted">
                   <img 
                     src={img.url} 
@@ -1761,3 +1761,4 @@ const PropertyLeadDetailPage = () => {
 };
 
 export default PropertyLeadDetailPage;
+ge;

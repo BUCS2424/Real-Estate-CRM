@@ -388,7 +388,7 @@ export const PropertyLookupPage = () => {
                 <div className="flex flex-wrap gap-2">
                   {recentSearches.map((search, idx) => (
                     <Button
-                      key={idx}
+                      key={search.address || `search-${idx}`}
                       variant="outline"
                       size="sm"
                       onClick={() => handleSearch(search.address)}
@@ -495,7 +495,7 @@ export const PropertyLookupPage = () => {
               <div className="space-y-3 max-h-[500px] overflow-y-auto">
                 {results.map((result, idx) => (
                   <div
-                    key={idx}
+                    key={result.parcel_id || `result-${idx}`}
                     className={`p-4 rounded-lg border cursor-pointer transition-colors ${
                       selectedProperty?.parcel_id === result.parcel_id
                         ? 'border-amber-500 bg-amber-500/10'

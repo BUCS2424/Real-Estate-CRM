@@ -436,16 +436,13 @@ class PropertyDataScraper:
         """Generate Google Street View image URL"""
         full_address = self._normalize_address(address, city, state, zip_code)
         
-        # Google Street View Static API (requires API key for high-res)
-        # For now, generate the embed URL that works without API key
+        # Google Street View Static API
+        # API key is loaded from environment (GOOGLE_MAPS_API_KEY)
+        maps_api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "")
         encoded_address = quote_plus(full_address)
-        
-        # Street View embed URL
-        street_view_url = f"https://www.google.com/maps/embed/v1/streetview?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&location={encoded_address}&heading=0&pitch=0&fov=90"
-        
-        # Alternative: Use the thumbnail approach
-        # This generates a static image URL
-        static_url = f"https://maps.googleapis.com/maps/api/streetview?size=800x600&location={encoded_address}&key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8"
+
+        street_view_url = f"https://www.google.com/maps/embed/v1/streetview?key={maps_api_key}&location={encoded_address}&heading=0&pitch=0&fov=90"
+        static_url = f"https://maps.googleapis.com/maps/api/streetview?size=800x600&location={encoded_address}&key={maps_api_key}"
         
         return {
             "source": "google_street_view",
@@ -509,7 +506,7 @@ class PropertyDataScraper:
         for img in all_images:
             url = img.get("url", "")
             # Create hash of URL to check duplicates
-            url_hash = hashlib.md5(url.encode()).hexdigest()
+            url_hash = hashlib.sha256(url.encode()).hexdigest()
             if url_hash not in seen_urls and url:
                 seen_urls.add(url_hash)
                 unique_images.append(img)

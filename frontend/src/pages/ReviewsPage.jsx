@@ -48,7 +48,7 @@ const ReviewsPage = () => {
       <div className="flex gap-0.5">
         {[...Array(5)].map((_, i) => (
           <Star
-            key={i}
+            key={`star-rating-${i}`}
             className={`w-4 h-4 ${i < rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`}
           />
         ))}

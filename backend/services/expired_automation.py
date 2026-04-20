@@ -618,7 +618,7 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
         raise ValueError("No admin user found to run automation")
 
     from models.expired_listing_models import SearchExpiredRequest
-    from routes.expired_listings import search_expired, convert_to_lead
+    from services.expired_listings_service import perform_expired_search, perform_convert_to_lead
 
     search_request = SearchExpiredRequest(
         city=criteria.get("city"),
@@ -635,7 +635,7 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
         limit=criteria.get("limit", 50)
     )
 
-    search_result = await search_expired(request=search_request, current_user=current_user)
+    search_result = await perform_expired_search(request=search_request, current_user=current_user)
     matched_ids = [mls_id for mls_id in search_result.get("matched_listing_ids", []) if mls_id]
 
     if matched_ids:
@@ -661,7 +661,7 @@ async def run_expired_automation(test_emails: Optional[List[str]] = None, manual
 
     for mls_id in matched_ids:
         try:
-            result = await convert_to_lead(listing_id=mls_id, current_user=current_user)
+            result = await perform_convert_to_lead(listing_id=mls_id, current_user=current_user)
             lead_id = result.get("lead_id")
             if lead_id:
                 if lead_id not in converted_leads:

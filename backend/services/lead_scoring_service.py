@@ -108,10 +108,10 @@ def evaluate_condition(lead_data: dict, condition: dict) -> bool:
         return str(actual_value).lower() not in values_list
     
     elif operator == "is_true":
-        return actual_value is True or actual_value == "true" or actual_value == "True" or actual_value == 1
-    
+        return actual_value == True or actual_value == "true" or actual_value == "True" or actual_value == 1  # noqa: E712
+
     elif operator == "is_false":
-        return actual_value is False or actual_value == "false" or actual_value == "False" or actual_value == 0 or actual_value is None
+        return actual_value == False or actual_value == "false" or actual_value == "False" or actual_value == 0 or actual_value is None  # noqa: E712
     
     return False
 

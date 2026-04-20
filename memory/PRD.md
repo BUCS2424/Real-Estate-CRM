@@ -2314,3 +2314,26 @@ All CRM admin pages were "showing for a sec then going blank" due to a cascade o
 - **Array Index Keys**: Fixed index-as-key patterns in PropertyLeadDetailPage and PropertyLandingPage
 - **DOMPurify**: Installed as frontend dependency for HTML sanitization
 
+
+
+---
+
+## Update: April 20, 2026 - Code Quality Review Fixes (Round 2)
+
+### Critical Backend Fixes
+- **Circular Import Resolved**: Extracted full `search_expired` and `convert_to_lead` business logic into new `services/expired_listings_service.py`. Route handlers are now thin wrappers. `expired_automation.py` imports from the service module (not from routes) — circular dependency fully eliminated.
+- **Hardcoded Google Maps API Key**: Replaced hardcoded key in `services/property_scraper.py` with `os.environ.get("GOOGLE_MAPS_API_KEY", "")` env var reference.
+- **MD5 → SHA-256**: Updated URL deduplication hash in `property_scraper.py` from `hashlib.md5` to `hashlib.sha256`.
+- **Identity Comparison**: Updated `is True/False` to `== True/False` in `lead_scoring_service.py` operators for consistency.
+
+### Frontend Fixes
+- **Array Index Keys**: Fixed `key={idx}` → stable keys using `img.url`, `item.timestamp`, `result.parcel_id`, `search.address` in:
+  - `PropertyLeadDetailPage.jsx` (3 instances)
+  - `PropertyLookupPage.jsx` (2 instances)
+  - `ReviewsPage.jsx` (star rating component — `key={\`star-rating-${i}\`}`)
+
+### Property Detail Tab Enhancement
+- Redesigned tab navigation bar on `MLSPropertyDetailPage.jsx` and `PropertyDetailPage.jsx`
+- Active tab: amber/gold background with dark text + glow shadow
+- Inactive tabs: white/70 text with amber hover; container has 2px amber border
+
