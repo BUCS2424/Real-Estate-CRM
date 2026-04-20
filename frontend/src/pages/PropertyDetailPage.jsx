@@ -190,11 +190,14 @@ export const PropertyDetailPage = () => {
 
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="bg-white/5 border border-white/10 w-full justify-start">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="details">Property Details</TabsTrigger>
-                {p.features?.length > 0 && <TabsTrigger value="features">Features</TabsTrigger>}
-              </TabsList>
+              <div className="relative">
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-amber-500/10 via-transparent to-amber-500/10 pointer-events-none" />
+                <TabsList className="relative w-full justify-start overflow-x-auto bg-[#0b1d38] border-2 border-amber-500/40 rounded-xl p-1.5 h-auto gap-0.5 flex-wrap shadow-lg shadow-amber-500/10">
+                  <TabsTrigger value="overview" className="data-[state=active]:bg-amber-500 data-[state=active]:text-[#0a1628] data-[state=active]:font-bold data-[state=active]:shadow-md data-[state=active]:shadow-amber-500/40 text-white/70 hover:text-amber-300 hover:bg-white/5 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200">Overview</TabsTrigger>
+                  <TabsTrigger value="details" className="data-[state=active]:bg-amber-500 data-[state=active]:text-[#0a1628] data-[state=active]:font-bold data-[state=active]:shadow-md data-[state=active]:shadow-amber-500/40 text-white/70 hover:text-amber-300 hover:bg-white/5 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200">Property Details</TabsTrigger>
+                  {p.features?.length > 0 && <TabsTrigger value="features" className="data-[state=active]:bg-amber-500 data-[state=active]:text-[#0a1628] data-[state=active]:font-bold data-[state=active]:shadow-md data-[state=active]:shadow-amber-500/40 text-white/70 hover:text-amber-300 hover:bg-white/5 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200">Features</TabsTrigger>}
+                </TabsList>
+              </div>
 
               <TabsContent value="overview" className="space-y-8 mt-6">
                 {p.description && (
