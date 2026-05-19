@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { publicAPI } from '../lib/api';
+import { publicAPI, landingPagesAPI } from '../lib/api';
 import { useBranding } from '../contexts/BrandingContext';
 import {
   ChevronLeft, ChevronRight, Bed, Bath, Square, MapPin, Calendar, Car, Home,
@@ -59,7 +59,14 @@ export const PropertyDetailPage = () => {
           const res = await publicAPI.getListing(slug);
           setProperty(res.data);
         } catch (fallbackError) {
-          console.error('Failed to load property');
+          // Last resort: check if this slug belongs to a landing page and redirect
+          try {
+            await landingPagesAPI.getPublicPage(slug);
+            navigate(`/landing/${slug}`, { replace: true });
+            return;
+          } catch {
+            // Truly not found — fall through to "Property Not Found" state
+          }
         }
       } finally {
         setLoading(false);
@@ -67,7 +74,7 @@ export const PropertyDetailPage = () => {
     };
     fetchProperty();
     window.scrollTo(0, 0);
-  }, [slug]);
+  }, [slug, navigate]);
 
   const handleSubmitInquiry = async (e) => {
     e.preventDefault();
