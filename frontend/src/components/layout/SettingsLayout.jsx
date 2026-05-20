@@ -28,7 +28,8 @@ import {
   Heart,
   Mic,
   Calculator,
-  Eye
+  Eye,
+  Link2
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
@@ -48,6 +49,13 @@ const settingsMenu = [
       { path: '/settings/developer/ai-rules', label: 'Ai Rules', icon: FileText },
       { path: '/settings/developer/system-messages', label: 'System Messages', icon: MessageSquare },
       { path: '/settings/developer/pwa', label: 'PWA Settings', icon: Smartphone },
+    ]
+  },
+  {
+    category: 'Integrations',
+    icon: Link2,
+    items: [
+      { path: '/settings/integrations/homelight', label: 'HomeLight', icon: Link2 },
     ]
   },
   {

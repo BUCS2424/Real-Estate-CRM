@@ -48,6 +48,7 @@ from .seo import router as seo_router
 from .neighborhoods import router as neighborhoods_router
 from .staff_chat import router as staff_chat_router
 from .esign import router as esign_router
+from .homelight import router as homelight_router
 
 # Include all sub-routers
 api_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
@@ -93,6 +94,7 @@ api_router.include_router(seo_router, prefix="/seo", tags=["SEO"])
 api_router.include_router(neighborhoods_router, tags=["Neighborhoods"])
 api_router.include_router(staff_chat_router, tags=["Staff Chat"])
 api_router.include_router(esign_router, prefix="/esign", tags=["eSign"])
+api_router.include_router(homelight_router, prefix="/homelight", tags=["HomeLight"])
 @api_router.get("/")
 async def root():
     return {"message": "Hidden Haven Realty CRM API", "version": "2.0.0"}

@@ -72,6 +72,7 @@ import { PWASettings } from './pages/settings/developer/PWASettings';
 import { LeadScoringSettings } from './pages/settings/developer/LeadScoringSettings';
 import { MLSSettings } from './pages/settings/developer/MLSSettings';
 import { JacquieLawsonSettings } from './pages/settings/developer/JacquieLawsonSettings';
+import HomelightSettings from './pages/settings/integrations/HomelightSettings';
 import { ElevenLabsSettings } from './pages/settings/admin/ElevenLabsSettings';
 import { MortgageRatesSettings } from './pages/settings/admin/MortgageRatesSettings';
 import { SamplesSettings } from './pages/settings/admin/SamplesSettings';
@@ -257,6 +258,7 @@ function App() {
                 <Route path="developer/ai-rules" element={<AiRules />} />
                 <Route path="developer/system-messages" element={<SystemMessages />} />
                 <Route path="developer/pwa" element={<PWASettings />} />
+                <Route path="integrations/homelight" element={<HomelightSettings />} />
                 
                 {/* Profile Settings */}
                 <Route path="profile/signature" element={<SignatureSettings />} />
