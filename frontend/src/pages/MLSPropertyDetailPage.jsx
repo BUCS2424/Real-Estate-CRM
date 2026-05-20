@@ -33,6 +33,24 @@ const goldIcon = new L.Icon({
   iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
 });
 
+// HHR branded marker for Sheila's listings
+const hhrIcon = L.divIcon({
+  className: '',
+  html: `<div style="position:relative;display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.55));">
+    <div style="width:42px;height:42px;background:#0a1628;border:2.5px solid #fbbf24;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 0 12px rgba(251,191,36,0.5);">
+      <img src="/icons/icon-96x96.png" style="width:26px;height:26px;border-radius:50%;transform:rotate(45deg);object-fit:contain;" onerror="this.style.display='none'"/>
+    </div>
+  </div>`,
+  iconSize: [42, 52], iconAnchor: [21, 52], popupAnchor: [0, -54],
+});
+
+const isHHRListing = (p) => {
+  const agent  = (p?.listing_agent  || p?.ListAgentFullName  || '').toLowerCase();
+  const office = (p?.listing_office || p?.ListOfficeName     || '').toLowerCase();
+  return agent.includes('desautels') || agent.includes('sheila') ||
+         office.includes('hidden haven') || office.includes('hhr');
+};
+
 const fmt = (p) => p ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(p) : '—';
 const fmtNum = (n) => n ? n.toLocaleString() : '—';
 
@@ -395,7 +413,17 @@ export const MLSPropertyDetailPage = () => {
                   <div className="rounded-xl overflow-hidden h-[400px]">
                     <MapContainer center={[p.latitude, p.longitude]} zoom={15} className="w-full h-full" style={{ background: '#0d1f3c' }}>
                       <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
-                      <Marker position={[p.latitude, p.longitude]} icon={goldIcon}><Popup><strong>{p.address}</strong><br/>{fmt(p.list_price)}</Popup></Marker>
+                      <Marker position={[p.latitude, p.longitude]} icon={isHHRListing(p) ? hhrIcon : goldIcon}>
+                        <Popup>
+                          {isHHRListing(p) && (
+                            <div style={{display:'flex',alignItems:'center',gap:'5px',marginBottom:'4px',padding:'2px 6px',background:'#0a1628',borderRadius:'4px',border:'1px solid #fbbf24'}}>
+                              <img src="/icons/icon-96x96.png" style={{width:'14px',height:'14px',borderRadius:'50%'}} alt="HHR"/>
+                              <span style={{fontSize:'9px',fontWeight:'700',color:'#fbbf24',textTransform:'uppercase'}}>Hidden Haven Realty</span>
+                            </div>
+                          )}
+                          <strong>{p.address}</strong><br/>{fmt(p.list_price)}
+                        </Popup>
+                      </Marker>
                     </MapContainer>
                   </div>
                 ) : <p className="text-white/40 py-8 text-center">Map not available.</p>}

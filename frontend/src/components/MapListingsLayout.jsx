@@ -36,6 +36,83 @@ const activeIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
+// ── HHR branded marker for Sheila's listings ─────────────────────────────
+const hhrIcon = L.divIcon({
+  className: '',
+  html: `
+    <div style="
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      filter:drop-shadow(0 3px 8px rgba(0,0,0,0.55));
+    ">
+      <div style="
+        width:42px; height:42px;
+        background:#0a1628;
+        border:2.5px solid #fbbf24;
+        border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);
+        display:flex; align-items:center; justify-content:center;
+        box-shadow:0 0 12px rgba(251,191,36,0.5);
+      ">
+        <img src="/icons/icon-96x96.png"
+          style="width:26px;height:26px;border-radius:50%;transform:rotate(45deg);object-fit:contain;"
+          onerror="this.style.display='none'"
+        />
+      </div>
+    </div>
+  `,
+  iconSize: [42, 52],
+  iconAnchor: [21, 52],
+  popupAnchor: [0, -54],
+});
+
+// Active version of HHR icon (amber glow pulse)
+const hhrActiveIcon = L.divIcon({
+  className: '',
+  html: `
+    <div style="position:relative;display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 3px 10px rgba(251,191,36,0.7));">
+      <div style="
+        width:46px; height:46px;
+        background:#0a1628;
+        border:3px solid #f59e0b;
+        border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);
+        display:flex; align-items:center; justify-content:center;
+        box-shadow:0 0 18px rgba(251,191,36,0.8), inset 0 0 8px rgba(251,191,36,0.2);
+        animation:hhr-pulse 1.4s ease-in-out infinite;
+      ">
+        <img src="/icons/icon-96x96.png"
+          style="width:28px;height:28px;border-radius:50%;transform:rotate(45deg);object-fit:contain;"
+          onerror="this.style.display='none'"
+        />
+      </div>
+    </div>
+    <style>
+      @keyframes hhr-pulse {
+        0%,100%{box-shadow:0 0 14px rgba(251,191,36,0.7),inset 0 0 6px rgba(251,191,36,0.2)}
+        50%{box-shadow:0 0 24px rgba(251,191,36,1),inset 0 0 10px rgba(251,191,36,0.35)}
+      }
+    </style>
+  `,
+  iconSize: [46, 56],
+  iconAnchor: [23, 56],
+  popupAnchor: [0, -58],
+});
+
+/** Returns true if this listing belongs to Sheila / Hidden Haven Realty */
+function isHHRListing(listing) {
+  const agent  = (listing.listing_agent  || '').toLowerCase();
+  const office = (listing.listing_office || '').toLowerCase();
+  return (
+    agent.includes('desautels') ||
+    agent.includes('sheila') ||
+    office.includes('hidden haven') ||
+    office.includes('hhr')
+  );
+}
+
 const formatPrice = (price) => {
   if (!price) return '';
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(price);
@@ -163,6 +240,27 @@ export const MapListingsLayout = ({
       <div className="flex flex-1 overflow-hidden">
         {/* Map - Left Side */}
         <div className="w-[55%] lg:w-[60%] relative hidden md:block" data-testid="map-container">
+          {/* Map Legend */}
+          <div style={{
+            position:'absolute', bottom:'20px', left:'12px', zIndex:1000,
+            background:'rgba(10,22,40,0.92)', border:'1px solid rgba(251,191,36,0.3)',
+            borderRadius:'10px', padding:'8px 12px', display:'flex', flexDirection:'column',
+            gap:'6px', backdropFilter:'blur(6px)', boxShadow:'0 4px 16px rgba(0,0,0,0.4)'
+          }}>
+            <p style={{fontSize:'9px',fontWeight:'800',color:'rgba(251,191,36,0.8)',textTransform:'uppercase',letterSpacing:'0.08em',margin:'0 0 2px'}}>Map Legend</p>
+            <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+              <div style={{width:'16px',height:'16px',background:'#0a1628',border:'2px solid #fbbf24',borderRadius:'50% 50% 50% 0',transform:'rotate(-45deg)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <img src="/icons/icon-96x96.png" style={{width:'10px',height:'10px',borderRadius:'50%',transform:'rotate(45deg)'}} alt="" onError={e=>e.target.style.display='none'}/>
+              </div>
+              <span style={{fontSize:'11px',color:'rgba(255,255,255,0.8)',fontWeight:'600'}}>Hidden Haven Realty</span>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+              <div style={{width:'10px',height:'16px',background:'#d4a829',borderRadius:'2px 2px 0 0',flexShrink:0,position:'relative'}}>
+                <div style={{position:'absolute',bottom:'-4px',left:'50%',transform:'translateX(-50%)',width:0,height:0,borderLeft:'5px solid transparent',borderRight:'5px solid transparent',borderTop:'5px solid #d4a829'}}/>
+              </div>
+              <span style={{fontSize:'11px',color:'rgba(255,255,255,0.6)'}}>Other Listings</span>
+            </div>
+          </div>
           {loading ? (
             <div className="w-full h-full bg-[#0d1f3c] flex items-center justify-center">
               <div className="animate-spin w-10 h-10 border-2 border-amber-400 border-t-transparent rounded-full" />
@@ -179,28 +277,43 @@ export const MapListingsLayout = ({
                 url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
               />
               {mappable.length > 0 && <FitBounds listings={mappable} />}
-              {mappable.map((listing) => (
+              {mappable.map((listing) => {
+                const isHHR    = isHHRListing(listing);
+                const isActive = selectedId === listing.mls_id;
+                const icon = isActive
+                  ? (isHHR ? hhrActiveIcon : activeIcon)
+                  : (isHHR ? hhrIcon       : goldIcon);
+
+                return (
                 <Marker
                   key={listing.mls_id || listing.address}
                   position={[listing.latitude, listing.longitude]}
-                  icon={selectedId === listing.mls_id ? activeIcon : goldIcon}
+                  icon={icon}
                   eventHandlers={{
                     click: () => scrollToCard(listing.mls_id),
                   }}
                 >
                   <Popup>
-                    <div className="text-xs min-w-[180px]">
+                    <div className="text-xs min-w-[200px]">
                       {listing.primary_photo && (
                         <img src={listing.primary_photo} alt="" className="w-full h-20 object-cover rounded mb-1" />
+                      )}
+                      {isHHR && (
+                        <div style={{display:'flex',alignItems:'center',gap:'5px',marginBottom:'4px',padding:'2px 6px',background:'#0a1628',borderRadius:'4px',border:'1px solid #fbbf24'}}>
+                          <img src="/icons/icon-96x96.png" style={{width:'14px',height:'14px',borderRadius:'50%'}} alt="HHR"/>
+                          <span style={{fontSize:'9px',fontWeight:'700',color:'#fbbf24',textTransform:'uppercase',letterSpacing:'0.05em'}}>Hidden Haven Realty</span>
+                        </div>
                       )}
                       <p className="font-bold text-amber-600">{formatPrice(listing.list_price)}</p>
                       <p className="font-medium">{listing.address}</p>
                       <p className="text-gray-500">{listing.bedrooms} bd | {listing.bathrooms} ba | {listing.sqft?.toLocaleString()} sqft</p>
+                      {listing.listing_agent && <p className="text-gray-400 text-[10px] mt-0.5">Listed by {listing.listing_agent}</p>}
                       <a href={listing._source === 'showcase' && listing._slug ? `/property/${listing._slug}` : listing.mls_id ? `/mls-property/${listing.mls_id}` : '#'} className="text-blue-500 text-[11px] mt-1 block hover:underline">View Details</a>
                     </div>
                   </Popup>
                 </Marker>
-              ))}
+                );
+              })}
             </MapContainer>
           )}
         </div>
