@@ -39,6 +39,7 @@ export const ESignSigningPage = () => {
   const [activeField, setActiveField] = useState(null);
   const [showSigPad, setShowSigPad] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState(null);
   const sigCanvasRef = useRef(null);
   const pdfContainerRef = useRef(null);
 
@@ -56,6 +57,11 @@ export const ESignSigningPage = () => {
           return;
         }
         setData(res.data);
+        // Build PDF URL client-side using the correct external backend URL
+        // (avoids localhost:8001 which browsers can't reach)
+        if (res.data.template_id) {
+          setPdfUrl(`${API}/api/static/esign/templates/${res.data.template_id}/original.pdf`);
+        }
         // Pre-fill known fields
         const prefilled = {};
         res.data.fields?.forEach(f => {
@@ -143,7 +149,7 @@ export const ESignSigningPage = () => {
         {/* Left Panel: PDF Viewer */}
         <div className="flex-1 overflow-auto bg-[#0a1628] p-4" ref={pdfContainerRef}>
           <Document
-            file={data?.pdf_url}
+            file={pdfUrl}
             onLoadSuccess={({ numPages }) => setNumPages(numPages)}
             loading={<div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 text-amber-400 animate-spin" /></div>}
             error={<div className="text-white/60 text-center py-20"><p>Could not load PDF preview.</p><p className="text-xs mt-2">The document will still be processed correctly when you submit.</p></div>}

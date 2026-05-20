@@ -81,12 +81,12 @@ async def list_templates(current_user: dict = Depends(get_current_user)):
 
 
 @router.get("/templates/{template_id}")
-async def get_template(template_id: str, request: Request, current_user: dict = Depends(get_current_user)):
+async def get_template(template_id: str, current_user: dict = Depends(get_current_user)):
     t = await db.esign_templates.find_one({"id": template_id}, {"_id": 0})
     if not t:
         raise HTTPException(status_code=404, detail="Template not found")
-    base_url = str(request.base_url).rstrip("/")
-    t["pdf_url"] = _template_url(template_id, base_url)
+    # Return the path only — frontend constructs the full URL using REACT_APP_BACKEND_URL
+    t["pdf_path"] = f"/api/static/esign/templates/{template_id}/original.pdf"
     return t
 
 
@@ -345,18 +345,16 @@ async def get_ceremony_data(token: str, request: Request):
         )
 
     template = await db.esign_templates.find_one({"id": r["template_id"]}, {"_id": 0})
-    base_url = str(request.base_url).rstrip("/")
-    pdf_url = _template_url(r["template_id"], base_url) if template else None
 
     return {
         "status": "active",
         "signer_name": r.get("signer_name"),
         "signer_email": r.get("signer_email"),
         "template_name": r.get("template_name"),
+        "template_id": r.get("template_id"),
         "message": r.get("message"),
         "sent_by_name": r.get("sent_by_name", "Sheila Desautels"),
         "fields": template.get("fields", []) if template else [],
-        "pdf_url": pdf_url,
         "consent_given": r.get("consent_given", False),
     }
 

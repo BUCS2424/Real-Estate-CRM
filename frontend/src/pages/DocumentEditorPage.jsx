@@ -178,7 +178,7 @@ export const DocumentEditorPage = () => {
         <div className="flex-1 overflow-auto bg-[#060f1e] p-6 relative" onClick={() => setSelectedField(null)}>
           <div ref={pageRef} className="inline-block relative">
             <Document
-              file={template?.pdf_url}
+              file={template?.pdf_path ? `${API}${template.pdf_path}` : null}
               onLoadSuccess={({ numPages }) => setNumPages(numPages)}
               loading={<div className="flex items-center justify-center w-[816px] h-[1056px] bg-white/5 rounded"><Loader2 className="w-8 h-8 text-amber-400 animate-spin" /></div>}
             >
