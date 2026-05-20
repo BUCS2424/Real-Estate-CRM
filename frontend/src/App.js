@@ -85,6 +85,11 @@ import ListingDetailPage from './pages/ListingDetailPage';
 import SellerLeadsPage from './pages/SellerLeadsPage';
 import SellerLeadDetailPage from './pages/SellerLeadDetailPage';
 import VideoGeneratorPage from './pages/VideoGeneratorPage';
+import { ESignPortalPage } from './pages/ESignPortalPage';
+import { ESignSigningPage } from './pages/ESignSigningPage';
+import { ESignCompletePage } from './pages/ESignCompletePage';
+import { DocumentsPage } from './pages/DocumentsPage';
+import { DocumentEditorPage } from './pages/DocumentEditorPage';
 
 // Social Media Pages
 import { SocialMediaLayout } from './components/layout/SocialMediaLayout';
@@ -141,6 +146,11 @@ function App() {
 
             <Route path="/landing/:slug" element={<PropertyLandingPage />} />
 
+            {/* eSign Public Portal */}
+            <Route path="/sign/:token" element={<ESignPortalPage />} />
+            <Route path="/sign/:token/document" element={<ESignSigningPage />} />
+            <Route path="/sign/:token/complete" element={<ESignCompletePage />} />
+
             {/* Protected Routes */}
             <Route element={<MainLayout />}>
               <Route path="/dashboard" element={<ErrorBoundary><DashboardPage /></ErrorBoundary>} />
@@ -168,6 +178,8 @@ function App() {
               <Route path="/seller-leads/:id" element={<ErrorBoundary><SellerLeadDetailPage /></ErrorBoundary>} />
               <Route path="/writer" element={<ErrorBoundary><AIWriterPage /></ErrorBoundary>} />
               <Route path="/video-generator" element={<ErrorBoundary><VideoGeneratorPage /></ErrorBoundary>} />
+              <Route path="/documents" element={<ErrorBoundary><DocumentsPage /></ErrorBoundary>} />
+              <Route path="/documents/editor/:templateId" element={<ErrorBoundary><DocumentEditorPage /></ErrorBoundary>} />
               <Route path="/newsletter" element={<ErrorBoundary><NewsletterPage /></ErrorBoundary>} />
               <Route path="/mailing-lists" element={<ErrorBoundary><MailingListsPage /></ErrorBoundary>} />
               <Route path="/admin/neighborhoods" element={<ErrorBoundary><NeighborhoodsSettingsPage /></ErrorBoundary>} />

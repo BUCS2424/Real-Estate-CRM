@@ -30,7 +30,10 @@ app = FastAPI(
 # Ensure static directories exist
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 SITE_IMAGES_DIR = os.path.join(STATIC_DIR, "site-images")
+ESIGN_DIR = os.path.join(STATIC_DIR, "esign")
 os.makedirs(SITE_IMAGES_DIR, exist_ok=True)
+os.makedirs(os.path.join(ESIGN_DIR, "templates"), exist_ok=True)
+os.makedirs(os.path.join(ESIGN_DIR, "signed"), exist_ok=True)
 
 # Import database
 from database import db, close_db

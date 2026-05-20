@@ -2337,3 +2337,77 @@ All CRM admin pages were "showing for a sec then going blank" due to a cascade o
 - Active tab: amber/gold background with dark text + glow shadow
 - Inactive tabs: white/70 text with amber hover; container has 2px amber border
 
+
+
+---
+
+## Update: May 20, 2026 - eSign Portal System
+
+### New Feature: Complete eSign Document Signing Portal
+
+#### Backend Implementation
+- **Routes:** `/app/backend/routes/esign.py` — full eSign API
+- **Service:** `/app/backend/services/esign_service.py` — PDF overlay/signing using ReportLab + PyPDF2
+- **Models:** `/app/backend/models/esign.py`
+- **Storage:** `/app/backend/static/esign/templates/{id}/original.pdf` and `signed/{request_id}.pdf`
+
+#### API Endpoints
+**Admin (auth required):**
+- `POST /api/esign/templates/upload` — Upload PDF template
+- `GET/PUT/DELETE /api/esign/templates` — Template CRUD
+- `POST /api/esign/requests` — Create signing request (sends invite email + generates token link)
+- `GET /api/esign/requests` — List all requests with status
+- `GET /api/esign/stats` — Stats dashboard
+
+**Public (token-based, no auth):**
+- `GET /api/esign/sign/:token` — Get ceremony data
+- `POST /api/esign/sign/:token/consent` — Record consent
+- `POST /api/esign/sign/:token/submit` — Submit signature + fields → generates signed PDF → emails both parties
+- `POST /api/esign/sign/:token/decline` — Decline to sign
+
+#### Frontend Pages
+- `/sign/:token` — `ESignPortalPage.jsx` — Beautiful signing ceremony landing page
+  - HHR logo header + "Signing Ceremony" title
+  - Welcome message (personalized or "Welcome New Client")  
+  - Sheila Desautels as inviting agent
+  - Personal message from sender
+  - "Legally Speaking" section with E-Records Disclosure
+  - Checkbox consent + disclosure modal (full legal text)
+  - "Let's Get Started ✍" and "Decline" buttons
+  - Decline modal with optional reason
+- `/sign/:token/document` — `ESignSigningPage.jsx` — PDF viewer + signature capture
+  - react-pdf PDF renderer
+  - Draw signature (canvas) + Type signature (3 stylized fonts)
+  - Draggable field overlays for all field types
+  - Fields sidebar with completion tracking
+  - Zoom in/out PDF controls
+- `/sign/:token/complete` — `ESignCompletePage.jsx` — Success confirmation
+- `/documents` — `DocumentsPage.jsx` — Admin template + request management
+  - Stats cards (Templates, Sent, Pending, Signed, Declined)
+  - Templates tab + Signing Requests tab
+  - Upload modal, send for signature modal
+- `/documents/editor/:id` — `DocumentEditorPage.jsx` — PDF field placement editor
+  - Drag-and-drop field placement on PDF
+  - 7 field types: Signature, Initials, Date, Text, Full Name, Email, Checkbox
+  - Field properties panel (label, placeholder, required, auto-fill)
+  - react-rnd for draggable/resizable fields
+
+#### Components
+- `SendForSignatureModal.jsx` — Reusable "send to signer" modal (used from Documents page, and can be added to Contacts/Leads)
+
+#### Sidebar Integration
+- "eSign Documents" added under Tools menu with PenLine icon
+
+#### Signing Flow
+1. Upload PDF template → Place fields in editor
+2. Send to signer (email + clipboard link)
+3. Signer visits `/sign/:token` → consents
+4. Signer fills all fields + draws or types signature
+5. Signed PDF generated server-side (ReportLab overlay on original PDF)
+6. Signed PDF emailed to signer + agent automatically
+7. Signed PDF stored and downloadable from admin
+
+#### Signature Methods
+- **Draw**: react-signature-canvas (canvas-based mouse/touch drawing)
+- **Type**: 3 stylized Google Fonts (Dancing Script, Great Vibes, Pacifico)
+

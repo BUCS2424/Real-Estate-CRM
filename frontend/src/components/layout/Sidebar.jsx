@@ -28,7 +28,8 @@ import {
   Database,
   Phone,
   MessageSquare,
-  PhoneCall
+  PhoneCall,
+  PenLine
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
@@ -46,6 +47,7 @@ const salesItems = [
 const toolsItems = [
   { path: '/media', icon: FolderOpen, label: 'Media Library' },
   { path: '/video-generator', icon: Video, label: 'Video Generator' },
+  { path: '/documents', icon: PenLine, label: 'eSign Documents' },
   { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
   { path: '/bookings', icon: CalendarCheck, label: 'Bookings' },
   { path: '/newsletter', icon: Mail, label: 'Newsletter' },
