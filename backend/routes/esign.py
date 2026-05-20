@@ -90,6 +90,51 @@ async def get_template(template_id: str, current_user: dict = Depends(get_curren
     return t
 
 
+@router.get("/templates/{template_id}/page/{page_num}/image")
+async def get_page_image(template_id: str, page_num: int, scale: float = 2.0):
+    """
+    Render a single PDF page as a high-res PNG image.
+    Public endpoint — used by the form-filler signing page.
+    Cached in static dir for performance.
+    """
+    import fitz
+    from fastapi.responses import Response
+
+    pdf_path = os.path.join(TEMPLATES_DIR, template_id, "original.pdf")
+    if not os.path.exists(pdf_path):
+        raise HTTPException(status_code=404, detail="Template PDF not found")
+
+    # Cache rendered page images
+    cache_dir = os.path.join(TEMPLATES_DIR, template_id, "pages")
+    os.makedirs(cache_dir, exist_ok=True)
+    cache_path = os.path.join(cache_dir, f"page_{page_num}_x{scale:.0f}.png")
+
+    # Regenerate if PDF was modified more recently than cache
+    pdf_mtime = os.path.getmtime(pdf_path)
+    cache_exists = os.path.exists(cache_path)
+    if cache_exists and os.path.getmtime(cache_path) >= pdf_mtime:
+        with open(cache_path, "rb") as f:
+            return Response(content=f.read(), media_type="image/png",
+                            headers={"Cache-Control": "public, max-age=3600"})
+
+    doc = fitz.open(pdf_path)
+    if page_num < 1 or page_num > len(doc):
+        doc.close()
+        raise HTTPException(status_code=400, detail=f"Page {page_num} out of range (1-{len(doc)})")
+
+    page = doc[page_num - 1]
+    mat = fitz.Matrix(scale, scale)
+    pix = page.get_pixmap(matrix=mat, colorspace=fitz.csRGB)
+    png_bytes = pix.tobytes("png")
+    doc.close()
+
+    with open(cache_path, "wb") as f:
+        f.write(png_bytes)
+
+    return Response(content=png_bytes, media_type="image/png",
+                    headers={"Cache-Control": "public, max-age=3600"})
+
+
 @router.put("/templates/{template_id}")
 async def update_template(template_id: str, data: ESignTemplateUpdate, current_user: dict = Depends(get_current_user)):
     update = {"updated_at": datetime.now(timezone.utc).isoformat()}
