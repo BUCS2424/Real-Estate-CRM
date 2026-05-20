@@ -276,6 +276,72 @@ async def get_esign_stats(current_user: dict = Depends(get_current_user)):
     }
 
 
+@router.post("/seed-templates")
+async def seed_esign_templates(current_user: dict = Depends(get_current_user)):
+    """
+    One-time setup endpoint: downloads the Exclusive Right of Sale Listing Agreement PDF
+    and seeds it into the database with all 72 pre-mapped fields.
+    Safe to call multiple times — skips if template already exists.
+    """
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    TEMPLATE_NAME = "Exclusive Right of Sale Listing Agreement"
+    existing = await db.esign_templates.find_one({"name": TEMPLATE_NAME})
+    if existing:
+        return {"message": "Template already exists", "id": existing["id"], "fields": len(existing.get("fields", []))}
+
+    # ── Download PDF ─────────────────────────────────────────────────────────
+    PDF_URL = "https://customer-assets.emergentagent.com/job_982f9385-7b44-495d-a16f-ab9e1bdc0d0d/artifacts/kci73k91_sheila-docs-e-sign.pdf"
+    import aiohttp
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(PDF_URL, timeout=aiohttp.ClientTimeout(total=60)) as resp:
+                if resp.status != 200:
+                    raise HTTPException(status_code=502, detail=f"Could not download PDF (HTTP {resp.status})")
+                pdf_bytes = await resp.read()
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"PDF download failed: {e}")
+
+    # ── Save PDF file ────────────────────────────────────────────────────────
+    template_id = str(uuid.uuid4())
+    template_dir = os.path.join(TEMPLATES_DIR, template_id)
+    os.makedirs(template_dir, exist_ok=True)
+    with open(os.path.join(template_dir, "original.pdf"), "wb") as f:
+        f.write(pdf_bytes)
+
+    # ── Load pre-mapped field definitions ────────────────────────────────────
+    fields_file = os.path.join(ESIGN_DIR, "listing_agreement_fields.json")
+    import json as _json
+    fields = []
+    if os.path.exists(fields_file):
+        with open(fields_file) as f:
+            fields = _json.load(f)
+
+    # ── Create template record ───────────────────────────────────────────────
+    doc = {
+        "id": template_id,
+        "name": TEMPLATE_NAME,
+        "category": "seller",
+        "description": "Florida Realtors Exclusive Right of Sale Listing Agreement + Seller Property Disclosure (10 pages). Pre-mapped with 72 seller-fillable fields.",
+        "filename": "Exclusive_Right_of_Sale_Listing_Agreement.pdf",
+        "fields": fields,
+        "created_by": current_user["id"],
+        "created_by_name": current_user.get("name", ""),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.esign_templates.insert_one(doc)
+
+    return {
+        "message": "Template seeded successfully",
+        "id": template_id,
+        "name": TEMPLATE_NAME,
+        "fields_mapped": len(fields),
+        "pdf_size_kb": round(len(pdf_bytes) / 1024),
+    }
+
+
 # ═══════════════════════════════════════════════════
 # PUBLIC "LIST MY HOME" ENDPOINT (no auth required)
 # ═══════════════════════════════════════════════════
