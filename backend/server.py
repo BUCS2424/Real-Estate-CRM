@@ -132,78 +132,78 @@ async def start_scheduler():
     # Keep latest audit report fresh at startup
     await scheduled_monthly_audit_job()
 
-    # ── Auto-seed eSign templates on first deployment ───────────────────────
-    await _seed_esign_templates_if_missing()
+    # ── Auto-seed eSign templates — runs in background so it never delays startup ──
+    import asyncio as _asyncio
+    _asyncio.create_task(_seed_esign_templates_if_missing())
 
 
 async def _seed_esign_templates_if_missing():
     """
     Automatically creates the Exclusive Right of Sale Listing Agreement template
     if it doesn't exist in the database.
-    Runs on every startup — safe to call multiple times (idempotent).
+    Runs in the background after startup — NEVER blocks or crashes the server.
     """
-    import json as _json
-    import aiohttp
-
-    TEMPLATE_NAME = "Exclusive Right of Sale Listing Agreement"
-    existing = await db.esign_templates.find_one({"name": TEMPLATE_NAME})
-    if existing:
-        logger.info(f"eSign: template already exists ({existing['id']})")
-        return
-
-    logger.info("eSign: seeding Exclusive Right of Sale Listing Agreement...")
-
-    # Load pre-mapped field definitions (bundled with the codebase)
-    fields_file = os.path.join(STATIC_DIR, "esign", "listing_agreement_fields.json")
-    fields = []
-    if os.path.exists(fields_file):
-        with open(fields_file) as f:
-            fields = _json.load(f)
-        logger.info(f"eSign: loaded {len(fields)} field definitions from {fields_file}")
-    else:
-        logger.warning("eSign: listing_agreement_fields.json not found — template will have no fields")
-
-    # Download the PDF
-    PDF_URL = "https://customer-assets.emergentagent.com/job_982f9385-7b44-495d-a16f-ab9e1bdc0d0d/artifacts/kci73k91_sheila-docs-e-sign.pdf"
     try:
+        import json as _json
+        import aiohttp
+        import uuid as _uuid
+        from datetime import datetime, timezone as _tz
+
+        TEMPLATE_NAME = "Exclusive Right of Sale Listing Agreement"
+        existing = await db.esign_templates.find_one({"name": TEMPLATE_NAME})
+        if existing:
+            logger.info(f"eSign: template already exists ({existing['id']})")
+            return
+
+        logger.info("eSign: seeding Exclusive Right of Sale Listing Agreement...")
+
+        # Load pre-mapped field definitions (bundled with the codebase)
+        fields_file = os.path.join(STATIC_DIR, "esign", "listing_agreement_fields.json")
+        fields = []
+        if os.path.exists(fields_file):
+            with open(fields_file) as f:
+                fields = _json.load(f)
+            logger.info(f"eSign: loaded {len(fields)} field definitions")
+
+        # Download the PDF — use a generous timeout
+        PDF_URL = "https://customer-assets.emergentagent.com/job_982f9385-7b44-495d-a16f-ab9e1bdc0d0d/artifacts/kci73k91_sheila-docs-e-sign.pdf"
         async with aiohttp.ClientSession() as session:
-            async with session.get(PDF_URL, timeout=aiohttp.ClientTimeout(total=60)) as resp:
+            async with session.get(PDF_URL, timeout=aiohttp.ClientTimeout(total=90)) as resp:
                 if resp.status != 200:
                     logger.error(f"eSign: PDF download failed (HTTP {resp.status}) — skipping seed")
                     return
                 pdf_bytes = await resp.read()
         logger.info(f"eSign: downloaded PDF ({len(pdf_bytes)//1024} KB)")
+
+        # Save PDF to static storage
+        template_id = str(_uuid.uuid4())
+        esign_dir = os.path.join(STATIC_DIR, "esign", "templates", template_id)
+        os.makedirs(esign_dir, exist_ok=True)
+        with open(os.path.join(esign_dir, "original.pdf"), "wb") as f:
+            f.write(pdf_bytes)
+
+        # Insert template record
+        doc = {
+            "id": template_id,
+            "name": TEMPLATE_NAME,
+            "category": "seller",
+            "description": (
+                "Florida Realtors Exclusive Right of Sale Listing Agreement + "
+                "Seller Property Disclosure (10 pages). 72 pre-mapped fillable fields."
+            ),
+            "filename": "Exclusive_Right_of_Sale_Listing_Agreement.pdf",
+            "fields": fields,
+            "created_by": "system",
+            "created_by_name": "System (auto-seeded)",
+            "created_at": datetime.now(_tz.utc).isoformat(),
+            "updated_at": datetime.now(_tz.utc).isoformat(),
+        }
+        await db.esign_templates.insert_one(doc)
+        logger.info(f"eSign: template seeded successfully (id={template_id}, fields={len(fields)})")
+
     except Exception as e:
-        logger.error(f"eSign: PDF download error — {e}. Skipping seed.")
-        return
-
-    # Save PDF to static storage
-    import uuid as _uuid
-    template_id = str(_uuid.uuid4())
-    esign_dir = os.path.join(STATIC_DIR, "esign", "templates", template_id)
-    os.makedirs(esign_dir, exist_ok=True)
-    with open(os.path.join(esign_dir, "original.pdf"), "wb") as f:
-        f.write(pdf_bytes)
-
-    # Insert template record
-    from datetime import datetime, timezone as _tz
-    doc = {
-        "id": template_id,
-        "name": TEMPLATE_NAME,
-        "category": "seller",
-        "description": (
-            "Florida Realtors Exclusive Right of Sale Listing Agreement + "
-            "Seller Property Disclosure (10 pages). 72 pre-mapped fillable fields."
-        ),
-        "filename": "Exclusive_Right_of_Sale_Listing_Agreement.pdf",
-        "fields": fields,
-        "created_by": "system",
-        "created_by_name": "System (auto-seeded)",
-        "created_at": datetime.now(_tz.utc).isoformat(),
-        "updated_at": datetime.now(_tz.utc).isoformat(),
-    }
-    await db.esign_templates.insert_one(doc)
-    logger.info(f"eSign: template seeded successfully (id={template_id}, fields={len(fields)})")
+        # CRITICAL: never let seed errors crash the server
+        logger.error(f"eSign: seed failed (non-fatal) — {e}")
 
 
 @app.middleware("http")
