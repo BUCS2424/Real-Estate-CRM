@@ -45,6 +45,9 @@ const hhrIcon = L.divIcon({
 });
 
 const isHHRListing = (p) => {
+  // Showcase/CRM listings are always Hidden Haven Realty
+  if (p?._source === 'showcase' || p?.source === 'showcase') return true;
+  // MLS listings: match agent or office name
   const agent  = (p?.listing_agent  || p?.ListAgentFullName  || '').toLowerCase();
   const office = (p?.listing_office || p?.ListOfficeName     || '').toLowerCase();
   return agent.includes('desautels') || agent.includes('sheila') ||

@@ -101,8 +101,14 @@ const hhrActiveIcon = L.divIcon({
   popupAnchor: [0, -58],
 });
 
-/** Returns true if this listing belongs to Sheila / Hidden Haven Realty */
+/** Returns true if this listing is a Hidden Haven Realty / Sheila listing.
+ *  - Any listing stored in the CRM showcase (_source === 'showcase') is HHR by definition.
+ *  - For live MLS results, match on agent name or office name.
+ */
 function isHHRListing(listing) {
+  // CRM-managed showcase listings are always Sheila's
+  if (listing._source === 'showcase') return true;
+  // MLS listings: check agent & office fields
   const agent  = (listing.listing_agent  || '').toLowerCase();
   const office = (listing.listing_office || '').toLowerCase();
   return (
