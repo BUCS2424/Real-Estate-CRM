@@ -146,8 +146,73 @@ async def create_signed_pdf(
             writer.add_page(orig_page)
 
         signed_path = _get_signed_path(request_id)
-        with open(signed_path, "wb") as f:
+
+        # ── Add HHR signing stamp + doc code overlay via PyMuPDF ───────────
+        import hashlib, hmac as _hmac, fitz as _fitz
+
+        HHR_SECRET = b"HiddenHavenRealty2026$SecureKey$"
+
+        # Unique doc code for this signed instance
+        sig_payload = f"{request_id}:{signed_at}".encode()
+        sig_hash = _hmac.new(HHR_SECRET, sig_payload, hashlib.sha256).hexdigest()[:10].upper()
+        signed_doc_code = f"HHR-SIGNED-{sig_hash}"
+
+        tmp_path = signed_path + ".tmp"
+        with open(tmp_path, "wb") as f:
             writer.write(f)
+
+        # Add signing metadata stamp to the first page
+        try:
+            stamp_doc = _fitz.open(tmp_path)
+            pg = stamp_doc[0]
+            # Green "ELECTRONICALLY SIGNED" watermark stamp
+            pg.insert_text(
+                (30, 40),
+                f"✓ ELECTRONICALLY SIGNED — {signed_at[:10]}",
+                fontsize=9,
+                color=(0.05, 0.5, 0.15),
+                fontname="helv",
+            )
+            pg.insert_text(
+                (30, 52),
+                f"Doc Code: {signed_doc_code}  |  Signed by: {signer_name}",
+                fontsize=7,
+                color=(0.2, 0.2, 0.2),
+                fontname="helv",
+            )
+            stamp_doc.save(tmp_path + "2", garbage=4)
+            stamp_doc.close()
+            os.replace(tmp_path + "2", tmp_path)
+        except Exception as stamp_err:
+            print(f"[eSign] Stamp skipped: {stamp_err}")
+
+        # ── AES-256 encrypt ─────────────────────────────────────────────────
+        # Owner pw = HMAC of request_id (only HHR can unprotect/edit)
+        # User pw  = empty (anyone can open & print; editing blocked)
+        owner_pw = _hmac.new(HHR_SECRET, request_id.encode(), hashlib.sha256).hexdigest()[:24]
+
+        try:
+            enc_doc = _fitz.open(tmp_path)
+            enc_doc.save(
+                signed_path,
+                encryption=_fitz.PDF_ENCRYPT_AES_256,
+                owner_pw=owner_pw,
+                user_pw="",
+                permissions=(
+                    _fitz.PDF_PERM_PRINT |
+                    _fitz.PDF_PERM_PRINT_HQ |
+                    _fitz.PDF_PERM_ACCESSIBILITY
+                ),
+                garbage=4,
+                deflate=True,
+            )
+            enc_doc.close()
+            os.remove(tmp_path)
+            print(f"[eSign] AES-256 encrypted: {request_id} — {signed_doc_code}")
+        except Exception as enc_err:
+            print(f"[eSign] Encryption skipped ({enc_err})")
+            import shutil
+            shutil.move(tmp_path, signed_path)
 
         return f"/api/static/esign/signed/{request_id}.pdf"
 

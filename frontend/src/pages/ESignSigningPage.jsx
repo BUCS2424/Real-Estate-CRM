@@ -58,9 +58,9 @@ export const ESignSigningPage = () => {
         }
         setData(res.data);
         // Build PDF URL client-side using the correct external backend URL
-        // (avoids localhost:8001 which browsers can't reach)
+        // ?v= busts any browser/CDN cache when template is updated
         if (res.data.template_id) {
-          setPdfUrl(`${API}/api/static/esign/templates/${res.data.template_id}/original.pdf`);
+          setPdfUrl(`${API}/api/static/esign/templates/${res.data.template_id}/original.pdf?v=${Date.now()}`);
         }
         // Pre-fill known fields
         const prefilled = {};

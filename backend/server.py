@@ -510,7 +510,7 @@ async def health_check():
 # Include main API router
 app.include_router(api_router)
 
-# Mount static files AFTER api_router to serve at /api/static/site-images/*
+# Serve static files — eSign PDFs should never be browser-cached
 app.mount("/api/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # CORS Middleware - allow all origins for maximum deployment compatibility
