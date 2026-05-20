@@ -324,3 +324,19 @@ code, .mono {
 .wf-btn-submit{display:flex;align-items:center;gap:7px;padding:10px 22px;border-radius:9px;border:none;background:#22c55e;color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s}
 .wf-btn-submit:hover{background:#16a34a;box-shadow:0 0 14px rgba(34,197,94,.4)}
 .wf-btn-submit:disabled{opacity:.5;cursor:not-allowed}
+
+/* eSign — additional dynamic form styles */
+.wf-progress-chip{font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.12)}
+.wf-progress-chip.complete{background:rgba(34,197,94,.15);color:#4ade80;border-color:rgba(34,197,94,.3)}
+.wf-auto-tag{font-size:9px;background:rgba(251,191,36,.2);color:#fbbf24;padding:1px 6px;border-radius:10px;margin-left:6px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.wf-autofilled{color:rgba(255,255,255,.55)!important;font-style:italic}
+.wf-disc-list{display:flex;flex-direction:column;gap:0}
+.yn-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.yn-row:last-child{border-bottom:none}
+.yn-label{font-size:13px;color:rgba(255,255,255,.75);flex:1;line-height:1.4}
+.yn-btns{display:flex;gap:6px;flex-shrink:0}
+.yn-btn{padding:5px 12px;border-radius:6px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:rgba(255,255,255,.45);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.yn-btn:hover{border-color:rgba(255,255,255,.3);color:#fff}
+.yn-selected{border-color:#fbbf24!important;color:#fbbf24!important;background:rgba(251,191,36,.1)!important}
+.yn-yes.yn-selected{border-color:#4ade80!important;color:#4ade80!important;background:rgba(74,222,128,.08)!important}
+.yn-no.yn-selected{border-color:#f87171!important;color:#f87171!important;background:rgba(248,113,113,.08)!important}
