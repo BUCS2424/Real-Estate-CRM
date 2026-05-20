@@ -54,40 +54,40 @@ export const SendForSignatureModal = ({
   const set = (key, val) => setForm(p => ({ ...p, [key]: val }));
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-[#0d1f3c] border border-amber-400/20 rounded-2xl p-6 max-w-lg w-full shadow-2xl">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-card border border-border rounded-2xl p-6 max-w-lg w-full shadow-xl">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h3 className="text-white font-bold text-lg">Send for Signature</h3>
-            <p className="text-amber-400/80 text-xs mt-0.5">{template.name}</p>
+            <h3 className="text-foreground font-bold text-lg">Send for Signature</h3>
+            <p className="text-amber-600 text-xs mt-0.5 font-medium">{template.name}</p>
           </div>
-          <button onClick={onClose}><X className="w-5 h-5 text-white/40 hover:text-white" /></button>
+          <button onClick={onClose}><X className="w-5 h-5 text-muted-foreground hover:text-foreground" /></button>
         </div>
 
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-white/50 text-xs mb-1 flex items-center gap-1"><User className="w-3 h-3" /> Signer Name *</label>
-              <Input value={form.signer_name} onChange={e => set('signer_name', e.target.value)} placeholder="Full name" className="bg-white/10 border-white/20 text-white placeholder:text-white/30 h-10" />
+              <label className="text-muted-foreground text-xs mb-1 flex items-center gap-1 font-medium"><User className="w-3 h-3" /> Signer Name *</label>
+              <Input value={form.signer_name} onChange={e => set('signer_name', e.target.value)} placeholder="Full name" className="h-10" />
             </div>
             <div>
-              <label className="text-white/50 text-xs mb-1 flex items-center gap-1"><Phone className="w-3 h-3" /> Phone</label>
-              <Input value={form.signer_phone} onChange={e => set('signer_phone', e.target.value)} placeholder="(813) 000-0000" className="bg-white/10 border-white/20 text-white placeholder:text-white/30 h-10" />
+              <label className="text-muted-foreground text-xs mb-1 flex items-center gap-1 font-medium"><Phone className="w-3 h-3" /> Phone</label>
+              <Input value={form.signer_phone} onChange={e => set('signer_phone', e.target.value)} placeholder="(813) 000-0000" className="h-10" />
             </div>
           </div>
           <div>
-            <label className="text-white/50 text-xs mb-1 flex items-center gap-1"><Mail className="w-3 h-3" /> Email Address *</label>
-            <Input type="email" value={form.signer_email} onChange={e => set('signer_email', e.target.value)} placeholder="signer@email.com" className="bg-white/10 border-white/20 text-white placeholder:text-white/30 h-10" />
+            <label className="text-muted-foreground text-xs mb-1 flex items-center gap-1 font-medium"><Mail className="w-3 h-3" /> Email Address *</label>
+            <Input type="email" value={form.signer_email} onChange={e => set('signer_email', e.target.value)} placeholder="signer@email.com" className="h-10" />
           </div>
           <div>
-            <label className="text-white/50 text-xs mb-1 flex items-center gap-1"><MessageSquare className="w-3 h-3" /> Personal Message (optional)</label>
-            <Textarea value={form.message} onChange={e => set('message', e.target.value)} placeholder="Add a note for the signer..." rows={3} className="bg-white/10 border-white/20 text-white placeholder:text-white/30 resize-none" />
+            <label className="text-muted-foreground text-xs mb-1 flex items-center gap-1 font-medium"><MessageSquare className="w-3 h-3" /> Personal Message (optional)</label>
+            <Textarea value={form.message} onChange={e => set('message', e.target.value)} placeholder="Add a note for the signer..." rows={3} className="resize-none" />
           </div>
           <div>
-            <label className="text-white/50 text-xs mb-1 block">Link Expires In</label>
+            <label className="text-muted-foreground text-xs mb-1 block font-medium">Link Expires In</label>
             <select value={form.expires_in_days} onChange={e => set('expires_in_days', e.target.value)}
-              className="w-full bg-white/10 border border-white/20 rounded-md px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50">
-              {[7,14,30,60,90].map(d => <option key={d} value={d} className="bg-[#0d1f3c]">{d} days</option>)}
+              className="w-full bg-background border border-input rounded-md px-3 py-2 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+              {[7,14,30,60,90].map(d => <option key={d} value={d}>{d} days</option>)}
             </select>
           </div>
         </div>
@@ -96,9 +96,9 @@ export const SendForSignatureModal = ({
           <Button onClick={handleSend} disabled={sending} className="flex-1 bg-amber-500 hover:bg-amber-600 text-black font-semibold gap-2">
             {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Send Request
           </Button>
-          <Button variant="outline" onClick={onClose} className="border-white/20 text-white hover:bg-white/5">Cancel</Button>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
         </div>
-        <p className="text-white/30 text-[10px] text-center mt-3">A secure signing link will be emailed to the signer and copied to your clipboard.</p>
+        <p className="text-muted-foreground text-[10px] text-center mt-3">A secure signing link will be emailed and copied to your clipboard.</p>
       </div>
     </div>
   );
