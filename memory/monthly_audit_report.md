@@ -1,6 +1,6 @@
 # Monthly Agent Compliance Audit
 
-- Timestamp (UTC): 2026-05-20T00:35:32.525714+00:00
+- Timestamp (UTC): 2026-05-20T01:02:05.899808+00:00
 - Checks Passed: 20
 - Checks Failed: 0
 
@@ -27,7 +27,7 @@
 - ✅ **SEO head usage: PropertyLandingPage.jsx** — contains 'PublicSeoHead'
 
 ## Duplicate / Redundancy Notes
-- No major duplication patterns detected in this audit pass.
+- Footer copyright blocks repeated in 2 files; consider shared public footer module.
 
 ## Security Baseline
 - Injection pattern detection utility present.

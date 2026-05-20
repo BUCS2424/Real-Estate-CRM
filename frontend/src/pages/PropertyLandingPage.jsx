@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { MortgageCalculator } from '../components/MortgageCalculator';
 import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
 import { PublicSeoHead } from '../components/public/PublicSeoHead';
+import { ListMyHomeModal } from '../components/ListMyHomeModal';
 
 const fmt = (price) => price ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(price) : '—';
 const fmtNum = (n) => n ? n.toLocaleString() : '—';
@@ -60,6 +61,7 @@ export const PropertyLandingPage = () => {
   const [trackingSessionId, setTrackingSessionId] = useState(null);
   const [trackingStart, setTrackingStart] = useState(null);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
+  const [showListModal, setShowListModal] = useState(false);
 
   // ── Fetch page data ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -416,6 +418,18 @@ export const PropertyLandingPage = () => {
                   <a href="mailto:mel@hiddenhavenrealty.com" className="flex items-center gap-3 text-white/60 hover:text-amber-400 text-sm">
                     <Mail className="w-4 h-4" /> mel@hiddenhavenrealty.com
                   </a>
+                  {/* List My Home CTA */}
+                  <div className="border-t border-white/10 pt-4 mt-2">
+                    <p className="text-white/40 text-[11px] uppercase tracking-wider text-center mb-3">Ready to Sell?</p>
+                    <Button
+                      className="w-full bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-black font-bold h-12 rounded-xl shadow-lg shadow-amber-500/30 text-sm"
+                      onClick={() => setShowListModal(true)}
+                      data-testid="list-my-home-btn"
+                    >
+                      <Home className="w-4 h-4 mr-2" /> List My Home
+                    </Button>
+                    <p className="text-white/30 text-[10px] text-center mt-2">Sign the listing agreement electronically</p>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -451,6 +465,12 @@ export const PropertyLandingPage = () => {
                 </Button>
                 <Button variant="outline" className="w-full border-amber-400/30 text-amber-400 hover:bg-amber-400/10 h-11" onClick={() => window.location.href = 'tel:+18134540004'}>
                   <Phone className="w-4 h-4 mr-2" /> Call (813) 454-0004
+                </Button>
+                <Button
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-400 text-black font-bold h-12 rounded-xl"
+                  onClick={() => setShowListModal(true)}
+                >
+                  <Home className="w-4 h-4 mr-2" /> List My Home
                 </Button>
               </CardContent>
             </Card>
@@ -502,6 +522,14 @@ export const PropertyLandingPage = () => {
             )}
           </div>
         </div>
+      )}
+
+      {/* ── List My Home Modal ── */}
+      {showListModal && (
+        <ListMyHomeModal
+          onClose={() => setShowListModal(false)}
+          propertyAddress={p.address ? `${p.address}${p.city ? ', ' + p.city : ''}${p.state ? ', ' + p.state : ''}` : ''}
+        />
       )}
     </div>
   );

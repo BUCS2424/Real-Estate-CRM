@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { MortgageCalculator } from '../components/MortgageCalculator';
 import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
 import { PublicSeoHead } from '../components/public/PublicSeoHead';
+import { ListMyHomeModal } from '../components/ListMyHomeModal';
 
 const fmt = (price) => price ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(price) : '—';
 const fmtNum = (n) => n ? n.toLocaleString() : '—';
@@ -48,6 +49,7 @@ export const PropertyDetailPage = () => {
   const [showInquiryForm, setShowInquiryForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
+  const [showListModal, setShowListModal] = useState(false);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -288,6 +290,17 @@ export const PropertyDetailPage = () => {
                     <Phone className="w-4 h-4 mr-2" /> Call (813) 454-0004
                   </Button>
                   <a href="mailto:mel@hiddenhavenrealty.com" className="flex items-center gap-3 text-white/60 hover:text-amber-400 text-sm"><Mail className="w-4 h-4" /> mel@hiddenhavenrealty.com</a>
+                  {/* List My Home CTA */}
+                  <div className="border-t border-white/10 pt-4 mt-2">
+                    <p className="text-white/40 text-[11px] uppercase tracking-wider text-center mb-3">Ready to Sell?</p>
+                    <Button
+                      className="w-full bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-black font-bold h-11 rounded-xl shadow-lg shadow-amber-500/25"
+                      onClick={() => setShowListModal(true)}
+                      data-testid="list-my-home-btn"
+                    >
+                      <Home className="w-4 h-4 mr-2" /> List My Home
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -365,6 +378,14 @@ export const PropertyDetailPage = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* List My Home Modal */}
+      {showListModal && (
+        <ListMyHomeModal
+          onClose={() => setShowListModal(false)}
+          propertyAddress={p ? `${p.address || ''}${p.city ? ', ' + p.city : ''}${p.state ? ', ' + p.state : ''}` : ''}
+        />
       )}
     </div>
   );

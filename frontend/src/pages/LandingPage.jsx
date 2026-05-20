@@ -31,6 +31,7 @@ import { toast } from 'sonner';
 import { useBranding } from '../contexts/BrandingContext';
 import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
 import { PublicSeoHead } from '../components/public/PublicSeoHead';
+import { ListMyHomeModal } from '../components/ListMyHomeModal';
 
 // Badge configuration for display
 const BADGE_CONFIG = {
@@ -92,6 +93,7 @@ export const LandingPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [listings, setListings] = useState([]);
   const [loadingListings, setLoadingListings] = useState(true);
+  const [showListModal, setShowListModal] = useState(false);
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -194,6 +196,7 @@ export const LandingPage = () => {
   }, [canScrollRight]);
 
   return (
+    <>
     <div className="min-h-screen bg-[#0a1628] text-white">
       <PublicSeoHead
         title="Luxury Real Estate Listings"
@@ -811,6 +814,22 @@ export const LandingPage = () => {
               {submitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
               {leadType === 'buyer' ? 'REQUEST AUCTION ACCESS' : 'SUBMIT MY PROPERTY'}
             </Button>
+
+            {/* Direct eSign CTA for sellers */}
+            {leadType === 'seller' && (
+              <div className="border-t border-amber-400/20 pt-4 text-center">
+                <p className="text-white/50 text-sm mb-3">— or —</p>
+                <Button
+                  type="button"
+                  onClick={() => setShowListModal(true)}
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-black font-bold h-12 rounded-xl shadow-lg shadow-amber-500/30 text-sm"
+                  data-testid="homepage-list-my-home-btn"
+                >
+                  <Home className="w-4 h-4 mr-2" /> List My Home — Sign Agreement Now
+                </Button>
+                <p className="text-white/30 text-xs mt-2">Go straight to the Exclusive Right of Sale Listing Agreement</p>
+              </div>
+            )}
           </form>
 
           <div className="flex flex-col sm:flex-row gap-8 justify-center items-center text-white/60">
@@ -856,5 +875,17 @@ export const LandingPage = () => {
         </div>
       </footer>
     </div>
+
+    {/* List My Home Modal */}
+    {showListModal && (
+      <ListMyHomeModal
+        onClose={() => setShowListModal(false)}
+        signerName={name}
+        signerEmail={email}
+      />
+    )}
+    </>
   );
 };
+
+export default LandingPage;

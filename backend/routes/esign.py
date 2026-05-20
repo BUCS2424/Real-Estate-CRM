@@ -14,6 +14,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Request
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from database import db
 from utils.auth import get_current_user
 from models.user import UserRole
@@ -228,6 +229,93 @@ async def get_esign_stats(current_user: dict = Depends(get_current_user)):
         "declined": declined,
         "total_templates": templates,
     }
+
+
+# ═══════════════════════════════════════════════════
+# PUBLIC "LIST MY HOME" ENDPOINT (no auth required)
+# ═══════════════════════════════════════════════════
+
+class PublicSigningRequest(BaseModel):
+    signer_name: str
+    signer_email: str
+    signer_phone: Optional[str] = None
+    property_address: Optional[str] = None
+    lead_id: Optional[str] = None
+    template_name: Optional[str] = "Exclusive Right of Sale Listing Agreement"
+
+
+@router.post("/public/list-my-home")
+async def public_list_my_home(data: PublicSigningRequest, request: Request):
+    """
+    Public endpoint: any site visitor can trigger a signing request
+    for the Exclusive Right of Sale Listing Agreement.
+    No auth required — the document is sent via email link.
+    """
+    # Find the listing agreement template
+    template = await db.esign_templates.find_one(
+        {"name": {"$regex": data.template_name, "$options": "i"}},
+        {"_id": 0},
+    )
+    if not template:
+        # Fallback: any seller template
+        template = await db.esign_templates.find_one({"category": "seller"}, {"_id": 0})
+    if not template:
+        raise HTTPException(status_code=404, detail="Listing agreement template not configured yet. Please contact us directly.")
+
+    token = secrets.token_urlsafe(32)
+    req_id = str(uuid.uuid4())
+    expires_at = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+
+    base_url = str(request.base_url).rstrip("/")
+    site_url = os.environ.get("SITE_URL", base_url.replace(":8001", "").replace("/api", ""))
+    sign_url = f"{site_url}/sign/{token}"
+
+    message = "Thank you for your interest in listing your property! Sheila Desautels is excited to work with you."
+    if data.property_address:
+        message += f" We'll get started on {data.property_address} right away."
+
+    doc = {
+        "id": req_id,
+        "token": token,
+        "template_id": template["id"],
+        "template_name": template["name"],
+        "signer_name": data.signer_name,
+        "signer_email": data.signer_email,
+        "signer_phone": data.signer_phone or "",
+        "contact_id": "",
+        "lead_id": data.lead_id or "",
+        "message": message,
+        "sent_by": "system",
+        "sent_by_name": "Sheila Desautels",
+        "status": "pending",
+        "source": "list_my_home_button",
+        "property_address": data.property_address or "",
+        "consent_given": False,
+        "consent_at": None,
+        "signed_at": None,
+        "declined_at": None,
+        "decline_reason": None,
+        "field_values": {},
+        "signature_data": None,
+        "typed_signature": None,
+        "signed_pdf_url": None,
+        "sign_url": sign_url,
+        "expires_at": expires_at,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.esign_requests.insert_one(doc)
+
+    # Send invite email
+    await _send_invite_email(
+        signer_email=data.signer_email,
+        signer_name=data.signer_name,
+        template_name=template["name"],
+        sign_url=sign_url,
+        message=message,
+        expires_at=expires_at,
+    )
+
+    return {"token": token, "sign_url": sign_url, "message": "Signing link created"}
 
 
 # ═══════════════════════════════════════════════════
