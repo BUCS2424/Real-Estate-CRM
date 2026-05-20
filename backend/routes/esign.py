@@ -335,7 +335,12 @@ async def get_ceremony_data(token: str, request: Request):
         raise HTTPException(status_code=410, detail="This signing link has expired")
 
     if r.get("status") in ("signed", "declined", "cancelled"):
-        return {"status": r["status"], "signer_name": r.get("signer_name"), "template_name": r.get("template_name")}
+        return {
+            "status": r["status"],
+            "signer_name": r.get("signer_name"),
+            "template_name": r.get("template_name"),
+            "signed_pdf_path": r.get("signed_pdf_url"),  # path like /api/static/esign/signed/{id}.pdf
+        }
 
     # Update to viewed
     if r.get("status") == "pending":
@@ -357,8 +362,6 @@ async def get_ceremony_data(token: str, request: Request):
         "fields": template.get("fields", []) if template else [],
         "consent_given": r.get("consent_given", False),
     }
-
-
 @router.post("/sign/{token}/consent")
 async def give_consent(token: str, req: Request):
     """Public: record consent to e-sign"""

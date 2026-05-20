@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   FileText, Upload, Send, Eye, Trash2, Clock, CheckCircle,
   XCircle, AlertCircle, Copy, ExternalLink, Search,
-  PenLine, Users, Loader2
+  PenLine, Users, Loader2, Printer
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -238,14 +238,33 @@ export const DocumentsPage = () => {
                   <div className="flex items-center gap-2 shrink-0">
                     <Badge className={`${sc.bg} ${sc.color} border text-xs font-medium`}>{sc.label}</Badge>
                     {r.sign_url && !['signed','declined'].includes(r.status) && (
-                      <button onClick={() => copyLink(r.sign_url)} className="text-muted-foreground hover:text-foreground transition-colors" title="Copy link">
+                      <button onClick={() => copyLink(r.sign_url)} className="text-muted-foreground hover:text-foreground transition-colors" title="Copy signing link">
                         <Copy className="w-4 h-4" />
                       </button>
                     )}
                     {r.signed_pdf_url && (
-                      <a href={`${API}${r.signed_pdf_url}`} target="_blank" rel="noreferrer" className="text-green-600 hover:text-green-700" title="Download signed PDF">
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
+                      <div className="flex items-center gap-1.5">
+                        <a
+                          href={`${API}${r.signed_pdf_url}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 text-xs font-semibold transition-colors"
+                          title="View signed PDF"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" /> View
+                        </a>
+                        <button
+                          onClick={() => {
+                            const url = `${API}${r.signed_pdf_url}`;
+                            const win = window.open(url, '_blank', 'noopener,noreferrer');
+                            if (win) win.addEventListener('load', () => { try { win.print(); } catch {} });
+                          }}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-semibold transition-colors"
+                          title="Print signed PDF"
+                        >
+                          <Printer className="w-3.5 h-3.5" /> Print
+                        </button>
+                      </div>
                     )}
                     {r.status === 'pending' && (
                       <button onClick={() => handleCancelRequest(r.id)} className="text-red-400 hover:text-red-600 transition-colors" title="Cancel">
