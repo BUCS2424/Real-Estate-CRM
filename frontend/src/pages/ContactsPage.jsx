@@ -58,6 +58,7 @@ import {
 import { toast } from 'sonner';
 import api, { contactsAPI } from '../lib/api';
 import EmailComposerModal from '../components/EmailComposerModal';
+import { ESignDocumentsSection } from '../components/ESignDocumentsSection';
 
 const DEFAULT_STATUS_OPTIONS = [
   { value: 'active', label: 'Active', color: 'bg-green-500/20 text-green-600 border-green-500/50' },
@@ -883,6 +884,16 @@ const ContactDetail = ({ contactId, onBack }) => {
                         </div>
                       </div>
                     )}
+                  </CardContent>
+                </Card>
+
+                {/* eSign Documents */}
+                <Card className="border-amber-500/20">
+                  <CardContent className="p-5">
+                    <ESignDocumentsSection
+                      contactId={contact.id}
+                      contact={contact}
+                    />
                   </CardContent>
                 </Card>
 

@@ -57,6 +57,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { propertyLeadsAPI } from '../lib/api';
+import { ESignDocumentsSection } from '../components/ESignDocumentsSection';
 import BrochureGeneratorModal from '../components/BrochureGeneratorModal';
 import PropertyImagesGallery from '../components/PropertyImagesGallery';
 
@@ -872,6 +873,16 @@ const PropertyLeadDetailPage = () => {
 
             {/* Marketing Tab */}
             <TabsContent value="marketing" className="mt-0 space-y-4">
+              {/* eSign Documents */}
+              <Card className="border-amber-500/20">
+                <CardContent className="p-5">
+                  <ESignDocumentsSection
+                    leadId={lead?.id}
+                    lead={lead}
+                  />
+                </CardContent>
+              </Card>
+
               {/* Lead Score Card */}
               <Card className="border-amber-500/30">
                 <CardHeader>
