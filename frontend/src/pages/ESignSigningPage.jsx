@@ -1,207 +1,230 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import SignatureCanvas from 'react-signature-canvas';
 import {
-  ChevronLeft, ChevronRight, Check, X, PenLine, Type,
-  Loader2, AlertCircle, ZoomIn, ZoomOut, Send, Home
+  User, Home, DollarSign, Megaphone, ClipboardList, PenLine,
+  ChevronRight, ChevronLeft, Check, X, Loader2, AlertCircle,
+  Type, Phone, Mail, MapPin, Calendar, Building2
 } from 'lucide-react';
-import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
 import axios from 'axios';
-import './ESignFormFiller.css';
 
 const API = (process.env.REACT_APP_BACKEND_URL || '').replace(/\/+$/, '');
 
-/* ── Font styles for typed signatures ─────────────────────────────────────── */
 const SIG_FONTS = [
-  { label: 'Script',  style: { fontFamily: "'Dancing Script', cursive",    fontSize: 22, color: '#1a3a6b' } },
-  { label: 'Classic', style: { fontFamily: "'Great Vibes', cursive",        fontSize: 22, color: '#1a3a6b' } },
-  { label: 'Modern',  style: { fontFamily: "'Pacifico', cursive",           fontSize: 18, color: '#1a3a6b' } },
+  { label: 'Script',  style: { fontFamily: "'Dancing Script', cursive",  fontSize: 28, color: '#0a1628' } },
+  { label: 'Classic', style: { fontFamily: "'Great Vibes', cursive",      fontSize: 28, color: '#0a1628' } },
+  { label: 'Modern',  style: { fontFamily: "'Pacifico', cursive",         fontSize: 22, color: '#0a1628' } },
 ];
 
-/* ── Signature Modal ────────────────────────────────────────────────────────  */
-const SignaturePad = ({ field, signerName, onApply, onClose }) => {
-  const [mode, setMode] = useState('draw');
-  const [typed, setTyped] = useState(signerName || '');
-  const [font, setFont] = useState(0);
-  const canvasRef = useRef(null);
-
-  const apply = () => {
-    if (mode === 'draw') {
-      if (!canvasRef.current || canvasRef.current.isEmpty()) {
-        toast.error('Please draw your signature first');
-        return;
-      }
-      onApply({ mode: 'draw', dataUrl: canvasRef.current.toDataURL('image/png'), typed: null, fontStyle: null });
-    } else {
-      if (!typed.trim()) { toast.error('Please type your name'); return; }
-      onApply({ mode: 'type', dataUrl: null, typed: typed.trim(), fontStyle: SIG_FONTS[font] });
-    }
-  };
-
-  return (
-    <div className="esf-modal-overlay" onClick={onClose}>
-      <div className="esf-sig-modal" onClick={e => e.stopPropagation()}>
-        <div className="esf-sig-modal-header">
-          <div>
-            <h3>{field.label || (field.type === 'initials' ? 'Your Initials' : 'Your Signature')}</h3>
-            <p>{field.type === 'initials' ? 'Sign your initials' : 'Sign exactly as your name appears'}</p>
-          </div>
-          <button onClick={onClose} className="esf-close-btn"><X size={18}/></button>
-        </div>
-
-        {/* Mode Toggle */}
-        <div className="esf-mode-toggle">
-          <button className={`esf-mode-btn ${mode==='draw' ? 'active':''}`} onClick={()=>setMode('draw')}>
-            <PenLine size={14}/> Draw
-          </button>
-          <button className={`esf-mode-btn ${mode==='type' ? 'active':''}`} onClick={()=>setMode('type')}>
-            <Type size={14}/> Type
-          </button>
-        </div>
-
-        {mode === 'draw' ? (
-          <div className="esf-sig-draw-area">
-            <div className="esf-sig-canvas-wrap">
-              <SignatureCanvas
-                ref={canvasRef}
-                penColor="#1a3a6b"
-                canvasProps={{ width: 440, height: 130, className: 'esf-sig-canvas' }}
-                backgroundColor="white"
-              />
-              <div className="esf-sig-guideline">Sign above this line</div>
-            </div>
-            <button className="esf-clear-link" onClick={() => canvasRef.current?.clear()}>Clear</button>
-          </div>
-        ) : (
-          <div className="esf-sig-type-area">
-            <input
-              className="esf-sig-type-input"
-              value={typed}
-              onChange={e => setTyped(e.target.value)}
-              placeholder="Type your full name..."
-              autoFocus
-            />
-            <div className="esf-font-options">
-              {SIG_FONTS.map((f, idx) => (
-                <button
-                  key={idx}
-                  className={`esf-font-opt ${font===idx?'selected':''}`}
-                  style={f.style}
-                  onClick={() => setFont(idx)}
-                >
-                  {typed || 'Your Signature'}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="esf-sig-actions">
-          <button className="esf-apply-btn" onClick={apply}>
-            <Check size={16}/> Apply {field.type === 'initials' ? 'Initials' : 'Signature'}
-          </button>
-          <button className="esf-cancel-btn" onClick={onClose}>Cancel</button>
-        </div>
-      </div>
+/* ── Disclosure Yes/No/DK Radio ─────────────────────────────────────────── */
+const YesNoDK = ({ id, value, onChange, label, hint }) => (
+  <div className="yn-row">
+    <div className="yn-label-wrap">
+      <span className="yn-label">{label}</span>
+      {hint && <span className="yn-hint">{hint}</span>}
     </div>
-  );
-};
+    <div className="yn-btns">
+      {['Yes','No',"Don't Know"].map(opt => (
+        <button
+          key={opt}
+          type="button"
+          className={`yn-btn ${value===opt?'yn-selected':''} ${opt==='Yes'&&value==='Yes'?'yn-yes':''} ${opt==='No'&&value==='No'?'yn-no':''}`}
+          onClick={()=>onChange(opt)}
+        >{opt}</button>
+      ))}
+    </div>
+  </div>
+);
 
-/* ══════════════════════════════════════════════════════════════════════════════
-   MAIN FORM FILLER PAGE
-══════════════════════════════════════════════════════════════════════════════ */
+/* ── Field Input ─────────────────────────────────────────────────────────── */
+const Field = ({ label, hint, required, error, children }) => (
+  <div className={`wf-field ${error?'wf-field-error':''}`}>
+    <label className="wf-label">{label}{required&&<span className="wf-req">*</span>}</label>
+    {hint && <p className="wf-hint">{hint}</p>}
+    {children}
+    {error && <p className="wf-error-msg">{error}</p>}
+  </div>
+);
+
+const TextInput = ({ value, onChange, placeholder, type='text', ...rest }) => (
+  <input
+    type={type}
+    value={value||''}
+    onChange={e=>onChange(e.target.value)}
+    placeholder={placeholder}
+    className="wf-input"
+    {...rest}
+  />
+);
+
+const CheckGroup = ({ options, values, onChange }) => (
+  <div className="wf-checks">
+    {options.map(opt => (
+      <label key={opt.value} className={`wf-check-label ${values?.[opt.value]?'checked':''}`}>
+        <input
+          type="checkbox"
+          checked={!!values?.[opt.value]}
+          onChange={e => onChange(opt.value, e.target.checked)}
+          className="wf-check-input"
+        />
+        <span className="wf-check-box"><Check size={11}/></span>
+        {opt.label}
+      </label>
+    ))}
+  </div>
+);
+
+/* ════════════════════════════════════════════════════════════════════
+   MAIN WIZARD
+════════════════════════════════════════════════════════════════════ */
 export const ESignSigningPage = () => {
   const { token } = useParams();
   const navigate = useNavigate();
-
-  const [data, setData]           = useState(null);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages]              = useState(10);
-  const [scale, setScale]         = useState(1.0);
-  const [fieldValues, setFieldValues] = useState({});
-  const [sigData, setSigData]     = useState(null);   // base64 draw sig
-  const [typedSig, setTypedSig]   = useState('');
-  const [sigFontStyle, setSigFontStyle] = useState(SIG_FONTS[0].style);
-  const [activeSignField, setActiveSignField] = useState(null);
+  const [sessionData, setSessionData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [pageImgCache, setPageImgCache] = useState({});
-  const [pageLoading, setPageLoading] = useState(false);
+  const [sigMode, setSigMode] = useState('draw');
+  const [typedSig, setTypedSig] = useState('');
+  const [sigFont, setSigFont] = useState(0);
+  const [sigDataUrl, setSigDataUrl] = useState(null);
+  const sigCanvasRef = useRef(null);
 
-  // Load Google Fonts for typed sigs
+  // Form state — all values flat
+  const [form, setForm] = useState({
+    // Step 0: Seller Info
+    seller_name: '', seller_email: '', seller_phone: '', seller_address: '',
+    // Step 1: Property
+    property_address: '', property_city: 'Tampa', property_state: 'FL',
+    property_zip: '', legal_description: '',
+    // Step 2: Listing Terms
+    listing_price: '', listing_start: '', listing_end: '',
+    financing_cash: false, financing_conventional: false, financing_va: false, financing_fha: false,
+    occupancy_type: 'owner',
+    // Step 3: Marketing
+    marketing_mls: true, marketing_lockbox: false, marketing_sign: false,
+    marketing_internet: true, marketing_withhold_verbal: false,
+    // Step 4: Disclosure
+    q1_systems: '', q2_pests: '', q3_water: '', q4_plumbing: '',
+    q5_roof: '', q7_sinkhole: '', q8_hoa: '', q9_environmental: '',
+    q10_legal: '', q10_zoning: '',
+  });
+
+  const set = (key, val) => setForm(p => ({ ...p, [key]: val }));
+  const setMany = (updates) => setForm(p => ({ ...p, ...updates }));
+
+  // Load session
   useEffect(() => {
     const link = document.createElement('link');
     link.href = 'https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Great+Vibes&family=Pacifico&display=swap';
     link.rel = 'stylesheet';
     document.head.appendChild(link);
-  }, []);
 
-  // Fetch signing data
-  useEffect(() => {
     axios.get(`${API}/api/esign/sign/${token}`)
       .then(res => {
         if (!['active','consented'].includes(res.data.status)) {
           navigate(`/sign/${token}`, { replace: true });
           return;
         }
-        setData(res.data);
-        // Pre-fill known fields
-        const pre = {};
-        (res.data.fields || []).forEach(f => {
-          if (f.prefill_from === 'signer_name')  pre[f.id] = res.data.signer_name || '';
-          if (f.prefill_from === 'signer_email') pre[f.id] = res.data.signer_email || '';
-          if (f.prefill_from === 'today') pre[f.id] = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
-        });
-        setFieldValues(pre);
-        if (res.data.signer_name) setTypedSig(res.data.signer_name);
+        setSessionData(res.data);
+        setForm(p => ({
+          ...p,
+          seller_name: res.data.signer_name || '',
+          seller_email: res.data.signer_email || '',
+        }));
+        setTypedSig(res.data.signer_name || '');
       })
-      .catch(() => setError('Could not load document. Please check your link.'))
+      .catch(() => setError('Invalid or expired signing link.'))
       .finally(() => setLoading(false));
   }, [token, navigate]);
 
-  // Preload adjacent pages
-  useEffect(() => {
-    if (!data?.template_id) return;
-    [currentPage - 1, currentPage, currentPage + 1].forEach(pg => {
-      if (pg < 1 || pg > totalPages || pageImgCache[pg]) return;
-      const url = `${API}/api/esign/templates/${data.template_id}/page/${pg}/image?scale=2&v=${Date.now()}`;
-      const img = new window.Image();
-      img.onload = () => setPageImgCache(c => ({ ...c, [pg]: url }));
-      img.src = url;
-    });
-  }, [currentPage, data, totalPages, pageImgCache]);
+  // ── Steps definition ────────────────────────────────────────────────────
+  const STEPS = [
+    { id: 'seller',     icon: User,         label: 'Your Info',         color: '#3b82f6' },
+    { id: 'property',   icon: Home,         label: 'Property',          color: '#8b5cf6' },
+    { id: 'listing',    icon: DollarSign,   label: 'Listing Terms',     color: '#10b981' },
+    { id: 'marketing',  icon: Megaphone,    label: 'Marketing',         color: '#f59e0b' },
+    { id: 'disclosure', icon: ClipboardList,label: 'Disclosure',        color: '#ef4444' },
+    { id: 'sign',       icon: PenLine,      label: 'Sign & Submit',     color: '#fbbf24' },
+  ];
 
-  const currentPageImg = pageImgCache[currentPage];
-  const fieldsOnPage   = (data?.fields || []).filter(f => f.page === currentPage);
-  const allFields      = data?.fields || [];
-  const signerName     = data?.signer_name || '';
-
-  // ── Field value helpers ───────────────────────────────────────────────────
-  const setValue = (id, val) => setFieldValues(p => ({ ...p, [id]: val }));
-  const hasValue = (f) => {
-    if (f.type === 'signature' || f.type === 'initials') return !!(sigData || typedSig.trim());
-    if (f.type === 'checkbox') return !!fieldValues[f.id];
-    return !!(fieldValues[f.id]?.toString().trim());
+  // ── Validation ──────────────────────────────────────────────────────────
+  const validate = () => {
+    if (step === 0) {
+      if (!form.seller_name.trim()) { toast.error('Please enter your full legal name'); return false; }
+      if (!form.seller_email.trim()) { toast.error('Please enter your email'); return false; }
+    }
+    if (step === 1) {
+      if (!form.property_address.trim()) { toast.error('Please enter the property street address'); return false; }
+      if (!form.property_zip.trim())     { toast.error('Please enter the ZIP code'); return false; }
+    }
+    if (step === 2) {
+      if (!form.listing_price)   { toast.error('Please enter the listing price'); return false; }
+      if (!form.listing_start)   { toast.error('Please enter the listing start date'); return false; }
+      if (!form.listing_end)     { toast.error('Please enter the listing end date'); return false; }
+    }
+    if (step === 5) {
+      if (sigMode === 'draw' && (!sigCanvasRef.current || sigCanvasRef.current.isEmpty())) {
+        toast.error('Please draw or type your signature to complete signing');
+        return false;
+      }
+      if (sigMode === 'type' && !typedSig.trim()) {
+        toast.error('Please type your name to sign');
+        return false;
+      }
+    }
+    return true;
   };
 
-  const requiredComplete = allFields.filter(f => f.required).every(hasValue);
+  const next = () => { if (validate()) setStep(s => Math.min(STEPS.length - 1, s + 1)); };
+  const back = () => setStep(s => Math.max(0, s - 1));
 
   // ── Submit ───────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
-    const missing = allFields.filter(f => f.required && !hasValue(f));
-    if (missing.length > 0) {
-      toast.error(`Please fill in: ${missing[0].label || missing[0].type} (Page ${missing[0].page})`);
-      setCurrentPage(missing[0].page);
-      return;
-    }
+    if (!validate()) return;
     setSubmitting(true);
+
+    // Build field_values map for the backend
+    const today = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+    const sigDataFinal = sigMode === 'draw' && sigCanvasRef.current
+      ? sigCanvasRef.current.toDataURL('image/png')
+      : null;
+    const typedFinal = sigMode === 'type' ? typedSig.trim() : null;
+
+    const fv = {
+      'p1-seller-name':   form.seller_name,
+      'p1-price':         form.listing_price ? `$${Number(form.listing_price).toLocaleString()}` : '',
+      'p1-cash':          form.financing_cash,
+      'p1-conventional':  form.financing_conventional,
+      'p1-va':            form.financing_va,
+      'p1-fha':           form.financing_fha,
+      'p6-email':         form.seller_email,
+      'p6-phone':         form.seller_phone,
+      'p6-address':       form.seller_address || `${form.property_address}, ${form.property_city}, ${form.property_state} ${form.property_zip}`,
+      'p7-q1a-y': form.q1_systems === 'Yes', 'p7-q1a-n': form.q1_systems === 'No',
+      'p7-q2a-y': form.q2_pests === 'Yes',   'p7-q2a-n': form.q2_pests === 'No',
+      'p7-q3a-y': form.q3_water === 'Yes',   'p7-q3a-n': form.q3_water === 'No',
+      'p8-q4g-y': form.q4_plumbing === 'Yes','p8-q4g-n': form.q4_plumbing === 'No',
+      'p8-q5a-y': form.q5_roof === 'Yes',    'p8-q5a-n': form.q5_roof === 'No',
+      'p8-q7a-y': form.q7_sinkhole === 'Yes','p8-q7a-n': form.q7_sinkhole === 'No',
+      'p9-q8a-y': form.q8_hoa === 'Yes',     'p9-q8a-n': form.q8_hoa === 'No',
+      'p9-q9b-y': form.q9_environmental === 'Yes', 'p9-q9b-n': form.q9_environmental === 'No',
+      'p9-q10a-y':form.q10_legal === 'Yes',  'p9-q10a-n': form.q10_legal === 'No',
+      'p10-q10f-y':form.q10_zoning === 'Yes','p10-q10f-n': form.q10_zoning === 'No',
+      'p10-print1': form.seller_name,
+      // Dates auto-fill
+      'p4-date1': today, 'p4-date2': today,
+      'p6-date1': today, 'p6-date2': today,
+      'p10-date1': today, 'p10-date2': today,
+    };
+
     try {
       await axios.post(`${API}/api/esign/sign/${token}/submit`, {
-        field_values: fieldValues,
-        signature_data: sigData,
-        typed_signature: typedSig || null,
+        field_values: fv,
+        signature_data: sigDataFinal,
+        typed_signature: typedFinal,
       });
       navigate(`/sign/${token}/complete`);
     } catch (e) {
@@ -209,261 +232,330 @@ export const ESignSigningPage = () => {
     } finally { setSubmitting(false); }
   };
 
-  // ── Render a single field overlay on the page ────────────────────────────
-  const renderField = (field) => {
-    const { id, type, x, y, width, height, label, required, prefill_from } = field;
-    const val = fieldValues[id] || '';
-    const filled = hasValue(field);
-    const isAutoFilled = prefill_from && val;
-
-    const style = {
-      position:  'absolute',
-      left:      `${x}%`,
-      top:       `${y}%`,
-      width:     `${width}%`,
-      height:    `${height}%`,
-      zIndex:    5,
-    };
-
-    if (type === 'checkbox') {
-      return (
-        <div key={id} style={style} className="esf-checkbox-wrap">
-          <div
-            className={`esf-checkbox ${val ? 'checked' : ''} ${required ? 'required' : ''}`}
-            onClick={() => setValue(id, !val)}
-            title={label}
-          >
-            {val && <Check size={10} strokeWidth={3}/>}
-          </div>
-        </div>
-      );
-    }
-
-    if (type === 'signature' || type === 'initials') {
-      const hasSig = sigData || typedSig.trim();
-      return (
-        <div
-          key={id}
-          style={style}
-          className={`esf-sig-field ${hasSig ? 'signed' : 'empty'} ${required ? 'required' : ''}`}
-          onClick={() => setActiveSignField(field)}
-          title={`Click to ${hasSig ? 'change' : 'add'} ${type}`}
-        >
-          {hasSig ? (
-            sigData ? (
-              <img src={sigData} alt="signature" className="esf-sig-img"/>
-            ) : (
-              <span className="esf-typed-sig" style={sigFontStyle}>{typedSig}</span>
-            )
-          ) : (
-            <span className="esf-sig-placeholder">
-              <PenLine size={12}/> {type === 'initials' ? 'Initials' : 'Sign here'}
-            </span>
-          )}
-        </div>
-      );
-    }
-
-    // Text / date / fullname / email
-    const inputType = type === 'date' ? 'text'
-                    : type === 'email' ? 'email'
-                    : 'text';
-
-    return (
-      <div key={id} style={style} className={`esf-text-field-wrap ${required && !filled ? 'required' : ''}`}>
-        <input
-          type={inputType}
-          value={val}
-          onChange={e => setValue(id, e.target.value)}
-          placeholder={label || ''}
-          className={`esf-text-input ${isAutoFilled ? 'autofilled' : ''} ${filled ? 'filled' : ''}`}
-          title={label}
-        />
-      </div>
-    );
-  };
-
-  // ── Loading / Error states ───────────────────────────────────────────────
+  // ── Loading / Error ──────────────────────────────────────────────────────
   if (loading) return (
-    <div className="esf-loading-screen">
-      <Loader2 className="esf-spinner" /> Loading document…
+    <div className="wf-fullscreen wf-loading">
+      <Loader2 className="wf-spin" size={36}/>
+      <p>Loading your signing session…</p>
     </div>
   );
   if (error) return (
-    <div className="esf-error-screen">
-      <AlertCircle size={36} color="#ef4444"/>
+    <div className="wf-fullscreen wf-error">
+      <AlertCircle size={40}/>
       <p>{error}</p>
     </div>
   );
 
-  // ── Page thumbnails ──────────────────────────────────────────────────────
-  const completedPages = Array.from({ length: totalPages }, (_, i) => i + 1).map(pg => {
-    const pgFields = allFields.filter(f => f.page === pg);
-    const done = pgFields.filter(f => f.required).every(hasValue);
-    return { pg, done, count: pgFields.length };
-  });
+  const S = STEPS[step];
 
   return (
-    <div className="esf-root">
-      {/* ── Top Bar ─────────────────────────────────────────────────────── */}
-      <header className="esf-header">
-        <div className="esf-header-left">
-          <img src="/images/hidden-haven-logo-full.png" alt="HHR" className="esf-logo"
-               onError={e=>e.target.style.display='none'}/>
-          <div className="esf-doc-title">
-            <span className="esf-doc-name">{data?.template_name || 'Listing Agreement'}</span>
-            <span className="esf-doc-signer">For {data?.signer_name || 'New Client'}</span>
-          </div>
+    <div className="wf-root">
+      {/* ── Header ────────────────────────────────────────────────────────── */}
+      <header className="wf-header">
+        <img src="/images/hidden-haven-logo-full.png" alt="Hidden Haven Realty"
+             className="wf-header-logo" onError={e=>e.target.style.display='none'}/>
+        <div className="wf-header-center">
+          <span className="wf-header-doc">{sessionData?.template_name || 'Listing Agreement'}</span>
+          <span className="wf-header-signer">{sessionData?.signer_name}</span>
         </div>
-        <div className="esf-header-center">
-          <button onClick={()=>setScale(s=>Math.max(0.5,s-0.1))} className="esf-zoom-btn" title="Zoom out">
-            <ZoomOut size={15}/>
-          </button>
-          <span className="esf-zoom-label">{Math.round(scale*100)}%</span>
-          <button onClick={()=>setScale(s=>Math.min(2,s+0.1))} className="esf-zoom-btn" title="Zoom in">
-            <ZoomIn size={15}/>
-          </button>
-        </div>
-        <div className="esf-header-right">
-          <span className={`esf-progress-badge ${requiredComplete?'complete':''}`}>
-            {allFields.filter(f=>f.required&&hasValue(f)).length} / {allFields.filter(f=>f.required).length} required
-          </span>
-          <button
-            className={`esf-submit-btn ${requiredComplete?'ready':''}`}
-            onClick={handleSubmit}
-            disabled={submitting}
-          >
-            {submitting ? <Loader2 size={15} className="esf-spinner"/> : <Send size={15}/>}
-            Sign & Submit
-          </button>
+        <div className="wf-header-right">
+          <span className="wf-header-step">{step + 1} / {STEPS.length}</span>
         </div>
       </header>
 
-      <div className="esf-body">
-        {/* ── Page Sidebar ──────────────────────────────────────────────── */}
-        <aside className="esf-sidebar">
-          <div className="esf-sidebar-label">Pages</div>
-          <div className="esf-page-thumbnails">
-            {completedPages.map(({ pg, done, count }) => (
-              <button
-                key={pg}
-                className={`esf-thumb-btn ${pg===currentPage?'active':''} ${done&&count>0?'done':''}`}
-                onClick={() => setCurrentPage(pg)}
-              >
-                <span className="esf-thumb-num">{pg}</span>
-                {done && count > 0 && <Check size={10} className="esf-thumb-check"/>}
-              </button>
-            ))}
-          </div>
-        </aside>
+      {/* ── Progress Bar ──────────────────────────────────────────────────── */}
+      <div className="wf-progress-track">
+        {STEPS.map((s, i) => (
+          <button
+            key={s.id}
+            className={`wf-prog-step ${i===step?'active':''} ${i<step?'done':''}`}
+            onClick={() => i < step && setStep(i)}
+            title={s.label}
+            disabled={i > step}
+          >
+            <span className="wf-prog-icon" style={{ background: i <= step ? s.color : undefined }}>
+              {i < step ? <Check size={13}/> : <s.icon size={13}/>}
+            </span>
+            <span className="wf-prog-label">{s.label}</span>
+          </button>
+        ))}
+        <div className="wf-prog-bar" style={{ width: `${(step / (STEPS.length - 1)) * 100}%` }}/>
+      </div>
 
-        {/* ── Document Canvas ───────────────────────────────────────────── */}
-        <main className="esf-canvas-area">
-          <div className="esf-paper-container" style={{ transform: `scale(${scale})`, transformOrigin: 'top center' }}>
-            <div className="esf-paper">
-              {/* Page image */}
-              {!currentPageImg ? (
-                <div className="esf-page-loading">
-                  <Loader2 className="esf-spinner" size={28}/> Loading page {currentPage}…
-                </div>
-              ) : (
-                <img
-                  src={currentPageImg}
-                  alt={`Page ${currentPage}`}
-                  className="esf-page-img"
-                  draggable={false}
-                />
-              )}
-
-              {/* Field overlays */}
-              {currentPageImg && fieldsOnPage.map(renderField)}
+      {/* ── Form Content ──────────────────────────────────────────────────── */}
+      <main className="wf-main">
+        <div className="wf-card">
+          {/* Card header */}
+          <div className="wf-card-header" style={{ borderColor: S.color }}>
+            <div className="wf-card-icon" style={{ background: S.color }}>
+              <S.icon size={22} color="white"/>
+            </div>
+            <div>
+              <h2 className="wf-card-title">{S.label}</h2>
+              <p className="wf-card-sub">
+                {step===0 && 'Tell us about yourself as the seller'}
+                {step===1 && 'Details about the property being listed'}
+                {step===2 && 'Price, dates, and financing terms'}
+                {step===3 && 'How you want the property marketed'}
+                {step===4 && 'Required Florida disclosure questions'}
+                {step===5 && 'Review your information and sign'}
+              </p>
             </div>
           </div>
 
-          {/* Page navigation */}
-          <div className="esf-page-nav">
-            <button
-              className="esf-nav-btn"
-              onClick={() => setCurrentPage(p => Math.max(1, p-1))}
-              disabled={currentPage <= 1}
-            >
-              <ChevronLeft size={18}/> Prev
-            </button>
-            <span className="esf-page-indicator">
-              Page <strong>{currentPage}</strong> of {totalPages}
-            </span>
-            <button
-              className="esf-nav-btn"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))}
-              disabled={currentPage >= totalPages}
-            >
-              Next <ChevronRight size={18}/>
-            </button>
-          </div>
-        </main>
+          {/* ── Step Content ────────────────────────────────────────────── */}
+          <div className="wf-fields">
 
-        {/* ── Field Checklist Sidebar ───────────────────────────────────── */}
-        <aside className="esf-checklist">
-          <div className="esf-checklist-label">Required Fields</div>
-          <div className="esf-checklist-items">
-            {allFields.filter(f=>f.required).map(f => {
-              const done = hasValue(f);
-              return (
-                <button
-                  key={f.id}
-                  className={`esf-checklist-item ${done?'done':''}`}
-                  onClick={() => {
-                    setCurrentPage(f.page);
-                    if (f.type === 'signature' || f.type === 'initials') setActiveSignField(f);
-                  }}
-                >
-                  <span className={`esf-check-icon ${done?'filled':''}`}>
-                    {done ? <Check size={11}/> : null}
-                  </span>
-                  <span className="esf-check-label">{f.label || f.type}</span>
-                  <span className="esf-check-page">p.{f.page}</span>
-                </button>
-              );
-            })}
-          </div>
-          <div className="esf-checklist-submit">
-            <button
-              className={`esf-checklist-submit-btn ${requiredComplete?'ready':''}`}
-              onClick={handleSubmit}
-              disabled={submitting || !requiredComplete}
-            >
-              {submitting ? <Loader2 size={14} className="esf-spinner"/> : <Check size={14}/>}
-              Complete & Sign
-            </button>
-          </div>
-        </aside>
-      </div>
+            {/* STEP 0: Seller Info */}
+            {step === 0 && <>
+              <Field label="Full Legal Name" required>
+                <TextInput value={form.seller_name} onChange={v=>set('seller_name',v)} placeholder="As it appears on legal documents"/>
+              </Field>
+              <div className="wf-row">
+                <Field label="Email Address" required>
+                  <TextInput type="email" value={form.seller_email} onChange={v=>set('seller_email',v)} placeholder="your@email.com"/>
+                </Field>
+                <Field label="Phone Number">
+                  <TextInput type="tel" value={form.seller_phone} onChange={v=>set('seller_phone',v)} placeholder="(813) 000-0000"/>
+                </Field>
+              </div>
+              <Field label="Current Mailing Address">
+                <TextInput value={form.seller_address} onChange={v=>set('seller_address',v)} placeholder="Street address, City, State ZIP"/>
+              </Field>
+            </>}
 
-      {/* ── Signature Modal ────────────────────────────────────────────────── */}
-      {activeSignField && (
-        <SignaturePad
-          field={activeSignField}
-          signerName={signerName}
-          onClose={() => setActiveSignField(null)}
-          onApply={({ mode, dataUrl, typed, fontStyle }) => {
-            if (mode === 'draw') {
-              setSigData(dataUrl);
-              setTypedSig('');
-            } else {
-              setTypedSig(typed);
-              setSigData(null);
-              setSigFontStyle(fontStyle.style);
-            }
-            // Mark all sig/initials fields as "filled"
-            const updates = {};
-            allFields.filter(f => f.type === 'signature' || f.type === 'initials')
-                     .forEach(f => { updates[f.id] = true; });
-            setFieldValues(p => ({ ...p, ...updates }));
-            setActiveSignField(null);
-            toast.success('Signature applied to all signature fields!');
-          }}
-        />
-      )}
+            {/* STEP 1: Property */}
+            {step === 1 && <>
+              <Field label="Property Street Address" required>
+                <TextInput value={form.property_address} onChange={v=>set('property_address',v)} placeholder="123 Main Street"/>
+              </Field>
+              <div className="wf-row-3">
+                <Field label="City" required>
+                  <TextInput value={form.property_city} onChange={v=>set('property_city',v)} placeholder="Tampa"/>
+                </Field>
+                <Field label="State">
+                  <TextInput value={form.property_state} onChange={v=>set('property_state',v)} placeholder="FL"/>
+                </Field>
+                <Field label="ZIP Code" required>
+                  <TextInput value={form.property_zip} onChange={v=>set('property_zip',v)} placeholder="33602"/>
+                </Field>
+              </div>
+              <Field label="Legal Description" hint="From property deed or tax records — leave blank if unknown">
+                <TextInput value={form.legal_description} onChange={v=>set('legal_description',v)} placeholder="e.g. BEACH PARK LOT 3 BLOCK 14"/>
+              </Field>
+            </>}
+
+            {/* STEP 2: Listing Terms */}
+            {step === 2 && <>
+              <Field label="Listing Price" required>
+                <div className="wf-price-wrap">
+                  <span className="wf-price-symbol">$</span>
+                  <input
+                    type="number"
+                    value={form.listing_price}
+                    onChange={e=>set('listing_price', e.target.value)}
+                    placeholder="850,000"
+                    className="wf-input wf-price-input"
+                  />
+                </div>
+              </Field>
+              <div className="wf-row">
+                <Field label="Listing Start Date" required>
+                  <TextInput type="date" value={form.listing_start} onChange={v=>set('listing_start',v)}/>
+                </Field>
+                <Field label="Listing End Date" required>
+                  <TextInput type="date" value={form.listing_end} onChange={v=>set('listing_end',v)}/>
+                </Field>
+              </div>
+              <Field label="Accepted Financing Terms" hint="Check all that apply">
+                <CheckGroup
+                  options={[
+                    { value: 'financing_cash',         label: 'Cash' },
+                    { value: 'financing_conventional',  label: 'Conventional' },
+                    { value: 'financing_va',            label: 'VA Loan' },
+                    { value: 'financing_fha',           label: 'FHA Loan' },
+                  ]}
+                  values={form}
+                  onChange={(key, val) => set(key, val)}
+                />
+              </Field>
+              <Field label="Property Occupancy">
+                <div className="wf-radio-group">
+                  {[{v:'owner',l:'Owner Occupied'},{v:'tenant',l:'Tenant Occupied'},{v:'vacant',l:'Vacant'}].map(o=>(
+                    <label key={o.v} className={`wf-radio ${form.occupancy_type===o.v?'selected':''}`}>
+                      <input type="radio" name="occupancy" value={o.v} checked={form.occupancy_type===o.v}
+                             onChange={()=>set('occupancy_type',o.v)}/>
+                      {o.l}
+                    </label>
+                  ))}
+                </div>
+              </Field>
+            </>}
+
+            {/* STEP 3: Marketing */}
+            {step === 3 && <>
+              <p className="wf-section-note">Select how you authorize Hidden Haven Realty to market your property:</p>
+              <div className="wf-toggle-list">
+                {[
+                  { key:'marketing_mls', label:'List on MLS (Multiple Listing Service)', desc:'Makes your property visible to all local agents' },
+                  { key:'marketing_internet', label:'Display on the Internet', desc:'Listed on Zillow, Realtor.com, and other sites' },
+                  { key:'marketing_sign', label:'Place a For Sale sign on the property', desc:'Physical sign in the yard' },
+                  { key:'marketing_lockbox', label:'Use a lockbox for agent access', desc:'Allows showings when you are not home' },
+                  { key:'marketing_withhold_verbal', label:'Withhold verbal offers', desc:'Only consider written offers' },
+                ].map(item => (
+                  <div key={item.key} className={`wf-toggle-item ${form[item.key]?'on':''}`} onClick={()=>set(item.key, !form[item.key])}>
+                    <div className="wf-toggle-text">
+                      <span className="wf-toggle-label">{item.label}</span>
+                      <span className="wf-toggle-desc">{item.desc}</span>
+                    </div>
+                    <div className={`wf-toggle-switch ${form[item.key]?'on':''}`}>
+                      <div className="wf-toggle-knob"/>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>}
+
+            {/* STEP 4: Disclosure */}
+            {step === 4 && <>
+              <p className="wf-section-note">Florida law requires sellers to disclose known material defects. Answer each question to the best of your knowledge:</p>
+              <div className="wf-disclosure-sections">
+                <div className="wf-disc-section">
+                  <h4 className="wf-disc-heading">Structures & Systems</h4>
+                  <YesNoDK id="q1" value={form.q1_systems} onChange={v=>set('q1_systems',v)}
+                    label="Are all structures, systems, and appliances in working condition?"
+                    hint="Includes HVAC, electrical, plumbing, appliances"/>
+                  <YesNoDK id="q2" value={form.q2_pests} onChange={v=>set('q2_pests',v)}
+                    label="Has the property ever been treated for termites or other pests?"/>
+                </div>
+                <div className="wf-disc-section">
+                  <h4 className="wf-disc-heading">Water & Roof</h4>
+                  <YesNoDK id="q3" value={form.q3_water} onChange={v=>set('q3_water',v)}
+                    label="Has the property experienced water intrusion, flooding, or drainage issues?"/>
+                  <YesNoDK id="q4" value={form.q4_plumbing} onChange={v=>set('q4_plumbing',v)}
+                    label="Are there any known plumbing leaks or defects?"/>
+                  <YesNoDK id="q5" value={form.q5_roof} onChange={v=>set('q5_roof',v)}
+                    label="Is the roof in sound condition with no known defects or leaks?"/>
+                </div>
+                <div className="wf-disc-section">
+                  <h4 className="wf-disc-heading">Property & Legal</h4>
+                  <YesNoDK id="q7" value={form.q7_sinkhole} onChange={v=>set('q7_sinkhole',v)}
+                    label="Is there any known sinkhole activity affecting the property?"/>
+                  <YesNoDK id="q8" value={form.q8_hoa} onChange={v=>set('q8_hoa',v)}
+                    label="Is the property subject to an HOA or deed restrictions?"/>
+                  <YesNoDK id="q9" value={form.q9_environmental} onChange={v=>set('q9_environmental',v)}
+                    label="Are there any known environmental hazards on or near the property?"/>
+                  <YesNoDK id="q10l" value={form.q10_legal} onChange={v=>set('q10_legal',v)}
+                    label="Are there any active legal or administrative claims against the property?"/>
+                  <YesNoDK id="q10z" value={form.q10_zoning} onChange={v=>set('q10_zoning',v)}
+                    label="Are there any known zoning violations or code issues?"/>
+                </div>
+              </div>
+            </>}
+
+            {/* STEP 5: Review & Sign */}
+            {step === 5 && <>
+              {/* Summary */}
+              <div className="wf-review-grid">
+                <div className="wf-review-card">
+                  <h4><User size={14}/> Seller</h4>
+                  <p><strong>{form.seller_name}</strong></p>
+                  <p>{form.seller_email}</p>
+                  {form.seller_phone && <p>{form.seller_phone}</p>}
+                </div>
+                <div className="wf-review-card">
+                  <h4><Home size={14}/> Property</h4>
+                  <p><strong>{form.property_address}</strong></p>
+                  <p>{form.property_city}, {form.property_state} {form.property_zip}</p>
+                  {form.legal_description && <p className="wf-review-small">{form.legal_description}</p>}
+                </div>
+                <div className="wf-review-card">
+                  <h4><DollarSign size={14}/> Listing</h4>
+                  <p><strong>${Number(form.listing_price||0).toLocaleString()}</strong></p>
+                  <p>{form.listing_start} → {form.listing_end}</p>
+                  <p>{[form.financing_cash&&'Cash',form.financing_conventional&&'Conv.',form.financing_va&&'VA',form.financing_fha&&'FHA'].filter(Boolean).join(' · ') || 'No financing selected'}</p>
+                </div>
+              </div>
+
+              {/* Signature */}
+              <div className="wf-sig-section">
+                <h3 className="wf-sig-title">Your Signature</h3>
+                <p className="wf-sig-sub">By signing, you agree to the Exclusive Right of Sale Listing Agreement and confirm all information is accurate.</p>
+
+                <div className="wf-sig-mode-toggle">
+                  <button className={`wf-sig-mode ${sigMode==='draw'?'active':''}`} onClick={()=>setSigMode('draw')}>
+                    <PenLine size={14}/> Draw
+                  </button>
+                  <button className={`wf-sig-mode ${sigMode==='type'?'active':''}`} onClick={()=>setSigMode('type')}>
+                    <Type size={14}/> Type
+                  </button>
+                </div>
+
+                {sigMode === 'draw' ? (
+                  <div className="wf-draw-wrap">
+                    <div className="wf-canvas-holder">
+                      <SignatureCanvas
+                        ref={sigCanvasRef}
+                        penColor="#0a1628"
+                        canvasProps={{ width: 520, height: 140, className: 'wf-sig-canvas' }}
+                        backgroundColor="white"
+                        onEnd={() => setSigDataUrl(sigCanvasRef.current?.toDataURL())}
+                      />
+                      <div className="wf-sig-line"/>
+                      <span className="wf-sig-line-label">Sign above</span>
+                    </div>
+                    <button className="wf-clear-sig" onClick={()=>{ sigCanvasRef.current?.clear(); setSigDataUrl(null); }}>
+                      <X size={12}/> Clear
+                    </button>
+                  </div>
+                ) : (
+                  <div className="wf-type-wrap">
+                    <input
+                      className="wf-type-input"
+                      value={typedSig}
+                      onChange={e=>setTypedSig(e.target.value)}
+                      placeholder="Type your full legal name"
+                      autoFocus
+                    />
+                    <div className="wf-font-picker">
+                      {SIG_FONTS.map((f,i) => (
+                        <button key={i} className={`wf-font-opt ${sigFont===i?'selected':''}`}
+                                style={f.style} onClick={()=>setSigFont(i)}>
+                          {typedSig || 'Your Signature'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <p className="wf-legal-note">
+                  By clicking "Sign & Submit" you agree this is your legally binding electronic signature under the Electronic Records and Signatures Disclosure you accepted.
+                </p>
+              </div>
+            </>}
+          </div>
+
+          {/* ── Navigation ────────────────────────────────────────────────── */}
+          <div className="wf-nav">
+            <button className="wf-btn-back" onClick={back} disabled={step===0}>
+              <ChevronLeft size={16}/> Back
+            </button>
+            <div className="wf-dots">
+              {STEPS.map((_,i) => <span key={i} className={`wf-dot ${i===step?'active':''} ${i<step?'done':''}`}/>)}
+            </div>
+            {step < STEPS.length - 1 ? (
+              <button className="wf-btn-next" onClick={next}>
+                Continue <ChevronRight size={16}/>
+              </button>
+            ) : (
+              <button className="wf-btn-submit" onClick={handleSubmit} disabled={submitting}>
+                {submitting ? <Loader2 size={16} className="wf-spin"/> : <Check size={16}/>}
+                Sign & Submit
+              </button>
+            )}
+          </div>
+        </div>
+      </main>
     </div>
   );
 };
