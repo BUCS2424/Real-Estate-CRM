@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Cog, Save, Globe, Building2, Image, Link, ExternalLink, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Cog, Save, Globe, Building2, Image, Link, ExternalLink, Loader2, Upload, Check } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
@@ -21,7 +21,6 @@ export const GeneralSettings = () => {
     currency: 'USD',
     maintenanceMode: false,
     debugMode: false,
-    // Logo settings
     logoUrl: '',
     logoLinkUrl: '/',
     dashboardLogoUrl: '',
@@ -32,6 +31,15 @@ export const GeneralSettings = () => {
 
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState({});  // fieldKey → true/false
+
+  // Refs for hidden file inputs
+  const fileRefs = {
+    logoUrl:          useRef(),
+    dashboardLogoUrl: useRef(),
+    faviconUrl:       useRef(),
+    pwaIconUrl:       useRef(),
+  };
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -40,8 +48,8 @@ export const GeneralSettings = () => {
         if (res.data) {
           setSettings(prev => ({ ...prev, ...res.data }));
         }
-      } catch (error) {
-        // Use defaults if no settings exist
+      } catch {
+        // Use defaults
       } finally {
         setLoading(false);
       }
@@ -53,45 +61,77 @@ export const GeneralSettings = () => {
     setSaving(true);
     try {
       await api.put('/settings/general', settings);
-      toast.success('General settings saved successfully');
-      // Refresh branding across the app
+      toast.success('Settings saved successfully');
       refreshBranding();
-    } catch (error) {
+    } catch {
       toast.error('Failed to save settings');
     } finally {
       setSaving(false);
     }
   };
 
-  const ImagePreview = ({ url, alt, size = 'md' }) => {
-    const sizeClasses = {
-      sm: 'w-8 h-8',
-      md: 'w-16 h-16',
-      lg: 'w-24 h-24',
-    };
-    
-    if (!url) {
-      return (
-        <div className={`${sizeClasses[size]} bg-muted/30 rounded-lg flex items-center justify-center border border-dashed border-muted-foreground/30`}>
-          <Image className="w-6 h-6 text-muted-foreground/50" />
-        </div>
-      );
+  /** Upload a file for a specific field, set its URL in state */
+  const handleImageUpload = async (fieldKey, file) => {
+    if (!file) return;
+    setUploading(u => ({ ...u, [fieldKey]: true }));
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await api.post('/settings/upload-image', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const url = res.data?.url;
+      if (!url) throw new Error('No URL returned');
+      setSettings(s => ({ ...s, [fieldKey]: url }));
+      toast.success(`Image uploaded (${res.data.size_kb} KB) — click Save to apply`);
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Upload failed — check file size and format');
+    } finally {
+      setUploading(u => ({ ...u, [fieldKey]: false }));
     }
-    
+  };
+
+  /** Reusable upload button — triggers hidden file input, then calls handleImageUpload */
+  const UploadBtn = ({ fieldKey, label = 'Upload' }) => (
+    <>
+      <input
+        ref={fileRefs[fieldKey]}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={e => {
+          const f = e.target.files?.[0];
+          if (f) handleImageUpload(fieldKey, f);
+          e.target.value = '';   // reset so same file can be re-selected
+        }}
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={uploading[fieldKey]}
+        onClick={() => fileRefs[fieldKey].current?.click()}
+        className="shrink-0 h-9"
+      >
+        {uploading[fieldKey]
+          ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5"/>
+          : <Upload className="w-3.5 h-3.5 mr-1.5"/>}
+        {uploading[fieldKey] ? 'Uploading…' : label}
+      </Button>
+    </>
+  );
+
+  const ImagePreview = ({ url, alt, size = 'md' }) => {
+    const sizeClasses = { sm: 'w-8 h-8', md: 'w-16 h-16', lg: 'w-24 h-24' };
+    if (!url) return (
+      <div className={`${sizeClasses[size]} bg-muted/30 rounded-lg flex items-center justify-center border border-dashed border-muted-foreground/30`}>
+        <Image className="w-6 h-6 text-muted-foreground/50" />
+      </div>
+    );
     return (
       <div className={`${sizeClasses[size]} rounded-lg overflow-hidden border border-border bg-muted/10`}>
-        <img 
-          src={url} 
-          alt={alt} 
-          className="w-full h-full object-contain"
-          onError={(e) => {
-            e.target.style.display = 'none';
-            const fallback = document.createElement('div');
-            fallback.className = 'w-full h-full flex items-center justify-center text-xs text-destructive';
-            fallback.textContent = 'Invalid URL';
-            e.target.parentNode.appendChild(fallback);
-          }}
-        />
+        <img src={url} alt={alt} className="w-full h-full object-contain"
+          onError={e => { e.target.style.display='none'; }}/>
       </div>
     );
   };
@@ -134,13 +174,16 @@ export const GeneralSettings = () => {
             <div className="lg:col-span-2 space-y-4">
               <div>
                 <Label htmlFor="logoUrl">Logo URL</Label>
-                <p className="text-xs text-muted-foreground mb-2">Public logo image URL</p>
-                <Input 
-                  id="logoUrl"
-                  placeholder="https://example.com/logo.png"
-                  value={settings.logoUrl}
-                  onChange={(e) => setSettings({ ...settings, logoUrl: e.target.value })}
-                />
+                <p className="text-xs text-muted-foreground mb-2">Public logo image URL — or upload directly</p>
+                <div className="flex gap-2">
+                  <Input 
+                    id="logoUrl"
+                    placeholder="https://example.com/logo.png"
+                    value={settings.logoUrl}
+                    onChange={(e) => setSettings({ ...settings, logoUrl: e.target.value })}
+                  />
+                  <UploadBtn fieldKey="logoUrl" label="Upload" />
+                </div>
               </div>
               <div>
                 <Label htmlFor="logoLinkUrl">Logo Link URL</Label>
@@ -175,13 +218,16 @@ export const GeneralSettings = () => {
             <div className="lg:col-span-2 space-y-4">
               <div>
                 <Label htmlFor="dashboardLogoUrl">Dashboard Logo URL</Label>
-                <p className="text-xs text-muted-foreground mb-2">Logo shown in the dashboard</p>
-                <Input 
-                  id="dashboardLogoUrl"
-                  placeholder="https://example.com/dashboard-logo.png"
-                  value={settings.dashboardLogoUrl}
-                  onChange={(e) => setSettings({ ...settings, dashboardLogoUrl: e.target.value })}
-                />
+                <p className="text-xs text-muted-foreground mb-2">Logo shown in the dashboard — or upload directly</p>
+                <div className="flex gap-2">
+                  <Input 
+                    id="dashboardLogoUrl"
+                    placeholder="https://example.com/dashboard-logo.png"
+                    value={settings.dashboardLogoUrl}
+                    onChange={(e) => setSettings({ ...settings, dashboardLogoUrl: e.target.value })}
+                  />
+                  <UploadBtn fieldKey="dashboardLogoUrl" label="Upload" />
+                </div>
               </div>
               <div>
                 <Label htmlFor="dashboardLogoLinkUrl">Dashboard Logo Link</Label>
@@ -217,13 +263,16 @@ export const GeneralSettings = () => {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="faviconUrl">Favicon URL</Label>
-                <p className="text-xs text-muted-foreground mb-2">Browser tab icon (32x32 recommended)</p>
-                <Input 
-                  id="faviconUrl"
-                  placeholder="https://example.com/favicon.ico"
-                  value={settings.faviconUrl}
-                  onChange={(e) => setSettings({ ...settings, faviconUrl: e.target.value })}
-                />
+                <p className="text-xs text-muted-foreground mb-2">Browser tab icon (32×32 recommended) — or upload directly</p>
+                <div className="flex gap-2">
+                  <Input 
+                    id="faviconUrl"
+                    placeholder="https://example.com/favicon.ico"
+                    value={settings.faviconUrl}
+                    onChange={(e) => setSettings({ ...settings, faviconUrl: e.target.value })}
+                  />
+                  <UploadBtn fieldKey="faviconUrl" label="Upload" />
+                </div>
               </div>
               <div className="flex items-center gap-4 p-3 bg-muted/20 rounded-lg">
                 <ImagePreview url={settings.faviconUrl} alt="Favicon preview" size="sm" />
@@ -238,13 +287,16 @@ export const GeneralSettings = () => {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="pwaIconUrl">PWA Icon URL</Label>
-                <p className="text-xs text-muted-foreground mb-2">App icon for mobile (192x192 recommended)</p>
-                <Input 
-                  id="pwaIconUrl"
-                  placeholder="https://example.com/icon-192.png"
-                  value={settings.pwaIconUrl}
-                  onChange={(e) => setSettings({ ...settings, pwaIconUrl: e.target.value })}
-                />
+                <p className="text-xs text-muted-foreground mb-2">App icon for mobile home screen (192×192 recommended) — or upload directly</p>
+                <div className="flex gap-2">
+                  <Input 
+                    id="pwaIconUrl"
+                    placeholder="https://example.com/icon-192.png"
+                    value={settings.pwaIconUrl}
+                    onChange={(e) => setSettings({ ...settings, pwaIconUrl: e.target.value })}
+                  />
+                  <UploadBtn fieldKey="pwaIconUrl" label="Upload" />
+                </div>
               </div>
               <div className="flex items-center gap-4 p-3 bg-muted/20 rounded-lg">
                 <ImagePreview url={settings.pwaIconUrl} alt="PWA icon preview" size="md" />

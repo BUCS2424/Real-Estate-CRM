@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, UploadFile, File
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, List
@@ -210,22 +210,122 @@ async def get_public_branding():
     print(f"[DEBUG] Returning branding: {result}")
     return result
 
+
+@router.get("/manifest", include_in_schema=False)
+async def dynamic_manifest(response: Response):
+    """
+    Serve a dynamic PWA manifest.json that reflects the current branding settings.
+    The frontend BrandingContext swaps <link rel='manifest'> to point here so that
+    the PWA 'Add to Home Screen' icon always uses the admin-configured pwaIconUrl.
+    """
+    import json as _json
+
+    settings = await db.general_settings.find_one({}, {"_id": 0})
+    settings = settings or {}
+
+    site_name  = settings.get("siteName", "Hidden Haven Realty")
+    short_name = (site_name[:12] + "…") if len(site_name) > 12 else site_name
+    pwa_icon   = settings.get("pwaIconUrl") or settings.get("faviconUrl") or ""
+
+    # Build icon list — prefer custom URL, fallback to bundled static icons
+    def icon_entry(url_or_path, size):
+        return {
+            "src": url_or_path,
+            "sizes": f"{size}x{size}",
+            "type": "image/png" if not url_or_path.endswith(".ico") else "image/x-icon",
+            "purpose": "maskable any",
+        }
+
+    if pwa_icon:
+        icons = [icon_entry(pwa_icon, s) for s in [72, 96, 128, 144, 152, 192, 384, 512]]
+    else:
+        icons = [
+            icon_entry(f"icons/icon-{s}x{s}.png", s)
+            for s in [72, 96, 128, 144, 152, 192, 384, 512]
+        ]
+
+    manifest = {
+        "short_name": short_name,
+        "name": site_name + " CRM",
+        "description": f"All-in-one CRM for {site_name}",
+        "icons": icons,
+        "start_url": "/",
+        "display": "standalone",
+        "theme_color": "#0a1628",
+        "background_color": "#0a1628",
+        "orientation": "portrait-primary",
+        "scope": "/",
+        "categories": ["business", "productivity"],
+    }
+
+    # No-cache so icon updates show immediately
+    response.headers["Content-Type"]  = "application/manifest+json"
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return _json.loads(_json.dumps(manifest))  # plain dict for FastAPI serialization
+
 @router.put("/general")
 async def update_general_settings(settings_data: dict, current_user: dict = Depends(get_current_user)):
-    """Update general application settings"""
+    """Update general application settings — always stores camelCase keys."""
     if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
         raise HTTPException(status_code=403, detail="Admin access required")
-    
-    settings_data["updated_at"] = datetime.now(timezone.utc).isoformat()
-    settings_data["updated_by"] = current_user["id"]
-    
-    await db.general_settings.update_one(
-        {},
-        {"$set": settings_data},
-        upsert=True
-    )
-    
-    return {"message": "Settings saved successfully", "data": settings_data}
+
+    # ── Normalise all keys to camelCase so we never accumulate snake_case duplicates ──
+    key_map = {
+        "site_name":          "siteName",
+        "logo_url":           "logoUrl",
+        "logo_link_url":      "logoLinkUrl",
+        "dashboard_logo_url": "dashboardLogoUrl",
+        "favicon_url":        "faviconUrl",
+        "pwa_icon_url":       "pwaIconUrl",
+        "support_email":      "supportEmail",
+        "site_url":           "siteUrl",
+        "date_format":        "dateFormat",
+        "maintenance_mode":   "maintenanceMode",
+        "debug_mode":         "debugMode",
+    }
+    normalised = {}
+    for k, v in settings_data.items():
+        canonical = key_map.get(k, k)   # map snake → camel; leave camel as-is
+        normalised[canonical] = v
+
+    normalised["updated_at"] = datetime.now(timezone.utc).isoformat()
+    normalised["updated_by"] = current_user["id"]
+
+    # Wipe the document first to remove stale snake_case keys, then re-insert
+    await db.general_settings.replace_one({}, normalised, upsert=True)
+
+    return {"message": "Settings saved successfully"}
+
+
+@router.post("/upload-image")
+async def upload_settings_image(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Upload an image for use in settings (favicon, logo, PWA icon). Returns the static URL."""
+    import os, uuid
+
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    # Save to static/site-images/
+    static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static", "site-images")
+    os.makedirs(static_dir, exist_ok=True)
+
+    ext = os.path.splitext(file.filename or "image.png")[1].lower() or ".png"
+    filename = f"{uuid.uuid4().hex[:12]}{ext}"
+    dest = os.path.join(static_dir, filename)
+
+    contents = await file.read()
+    if len(contents) < 100:
+        raise HTTPException(status_code=400, detail="File appears empty or too small — check the file and try again")
+
+    with open(dest, "wb") as f:
+        f.write(contents)
+
+    site_url = os.environ.get("SITE_URL", "")
+    url = f"{site_url}/api/static/site-images/{filename}"
+    return {"url": url, "filename": filename, "size_kb": round(len(contents) / 1024, 1)}
 
 # ============ TELNYX SETTINGS ============
 
