@@ -29,6 +29,7 @@ import {
   Phone,
   MessageSquare,
   PhoneCall,
+  Mic,
   PenLine
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -47,6 +48,7 @@ const salesItems = [
 const toolsItems = [
   { path: '/media', icon: FolderOpen, label: 'Media Library' },
   { path: '/video-generator', icon: Video, label: 'Video Generator' },
+  { path: '/voice-recorder', icon: Mic, label: 'Voice Recorder' },
   { path: '/documents', icon: PenLine, label: 'eSign Documents' },
   { path: '/tasks', icon: CheckSquare, label: 'Tasks' },
   { path: '/bookings', icon: CalendarCheck, label: 'Bookings' },

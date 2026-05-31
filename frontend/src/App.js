@@ -86,6 +86,7 @@ import ListingDetailPage from './pages/ListingDetailPage';
 import SellerLeadsPage from './pages/SellerLeadsPage';
 import SellerLeadDetailPage from './pages/SellerLeadDetailPage';
 import VideoGeneratorPage from './pages/VideoGeneratorPage';
+import { VoiceRecorderPage } from './pages/VoiceRecorderPage';
 import { ESignPortalPage } from './pages/ESignPortalPage';
 import { ESignSigningPage } from './pages/ESignSigningPage';
 import { ESignCompletePage } from './pages/ESignCompletePage';
@@ -179,6 +180,7 @@ function App() {
               <Route path="/seller-leads/:id" element={<ErrorBoundary><SellerLeadDetailPage /></ErrorBoundary>} />
               <Route path="/writer" element={<ErrorBoundary><AIWriterPage /></ErrorBoundary>} />
               <Route path="/video-generator" element={<ErrorBoundary><VideoGeneratorPage /></ErrorBoundary>} />
+              <Route path="/voice-recorder" element={<ErrorBoundary><VoiceRecorderPage /></ErrorBoundary>} />
               <Route path="/documents" element={<ErrorBoundary><DocumentsPage /></ErrorBoundary>} />
               <Route path="/documents/editor/:templateId" element={<ErrorBoundary><DocumentEditorPage /></ErrorBoundary>} />
               <Route path="/newsletter" element={<ErrorBoundary><NewsletterPage /></ErrorBoundary>} />
