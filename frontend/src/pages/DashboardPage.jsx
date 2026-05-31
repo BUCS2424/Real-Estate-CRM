@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dashboardAPI, contactsAPI, dealsAPI, tasksAPI } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { MobileAgentMenu } from '../components/MobileAgentMenu';
 import { 
   Users, 
   Briefcase, 
@@ -109,6 +110,10 @@ export const DashboardPage = () => {
 
   return (
     <div className="space-y-8 animate-fade-in" data-testid="dashboard-page">
+
+      {/* ── Mobile Quick-Launch Menu (visible on phones only) ── */}
+      <MobileAgentMenu />
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>

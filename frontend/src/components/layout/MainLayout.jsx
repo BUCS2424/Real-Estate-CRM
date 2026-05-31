@@ -9,10 +9,27 @@ import { cn } from '../../lib/utils';
 export const MainLayout = () => {
   const { user, loading } = useAuth();
   const location = useLocation();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Auto-collapse sidebar on mobile screens (< 768px)
+  const isMobile = () => window.innerWidth < 768;
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(isMobile());
 
   useEffect(() => {
-    if (location.pathname.startsWith('/mls')) {
+    const handleResize = () => {
+      // Auto-collapse on mobile, restore on desktop (unless user manually toggled)
+      if (window.innerWidth < 768) {
+        setSidebarCollapsed(true);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    // Set initial state
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    // MLS pages always collapse sidebar; also auto-collapse on mobile route changes
+    if (location.pathname.startsWith('/mls') || isMobile()) {
       setSidebarCollapsed(true);
     } else {
       setSidebarCollapsed(false);
