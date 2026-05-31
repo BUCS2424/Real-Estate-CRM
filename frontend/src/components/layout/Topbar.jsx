@@ -35,7 +35,7 @@ const roleLabels = {
   client: 'Client'
 };
 
-export const Topbar = ({ sidebarCollapsed }) => {
+export const Topbar = ({ sidebarCollapsed, onMobileMenuToggle, mobileSidebarOpen }) => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -52,14 +52,25 @@ export const Topbar = ({ sidebarCollapsed }) => {
   return (
     <header
       data-testid="topbar"
-      className={`fixed top-0 right-0 z-30 h-16 bg-background/80 backdrop-blur-md border-b border-border transition-all duration-300 ${
-        sidebarCollapsed ? 'left-16' : 'left-64'
-      }`}
+      className={`fixed top-0 right-0 z-30 h-16 bg-background/80 backdrop-blur-md border-b border-border transition-all duration-300
+        left-0 md:${sidebarCollapsed ? 'left-16' : 'left-64'}`}
     >
-      <div className="flex items-center justify-between h-full px-6">
-        {/* Page title area - can be used for breadcrumbs later */}
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-serif font-semibold text-foreground">
+      <div className="flex items-center justify-between h-full px-4 md:px-6">
+        {/* Left: Hamburger on mobile, greeting on desktop */}
+        <div className="flex items-center gap-3">
+          {/* Hamburger — mobile only */}
+          <button
+            onClick={onMobileMenuToggle}
+            data-testid="hamburger-menu-btn"
+            aria-label="Open navigation menu"
+            className="md:hidden flex flex-col justify-center items-center w-9 h-9 rounded-lg hover:bg-muted transition-colors gap-1.5 shrink-0"
+          >
+            <span className={`block w-5 h-0.5 bg-foreground rounded-full transition-all duration-300 ${mobileSidebarOpen ? 'rotate-45 translate-y-2' : ''}`}/>
+            <span className={`block w-5 h-0.5 bg-foreground rounded-full transition-all duration-300 ${mobileSidebarOpen ? 'opacity-0 scale-x-0' : ''}`}/>
+            <span className={`block w-5 h-0.5 bg-foreground rounded-full transition-all duration-300 ${mobileSidebarOpen ? '-rotate-45 -translate-y-2' : ''}`}/>
+          </button>
+
+          <h1 className="text-base md:text-lg font-serif font-semibold text-foreground truncate">
             Welcome back, {user?.name?.split(' ')[0]}
           </h1>
         </div>

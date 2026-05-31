@@ -75,7 +75,7 @@ const navItems = [
   { type: 'tools', icon: Wrench, label: 'Tools' },
 ];
 
-export const Sidebar = ({ collapsed, onToggle }) => {
+export const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose }) => {
   const location = useLocation();
   const { branding } = useBranding();
   const adminLogoUrl =
@@ -84,6 +84,11 @@ export const Sidebar = ({ collapsed, onToggle }) => {
     branding.dashboardLogoUrl ||
     branding.logoUrl;
   
+  // Close mobile drawer on route change
+  React.useEffect(() => {
+    if (onMobileClose) onMobileClose();
+  }, [location.pathname]);
+
   // Check if current path is a sales item to auto-expand
   const isSalesPath = salesItems.some(item => 
     location.pathname === item.path || location.pathname.startsWith(item.path)
@@ -195,7 +200,12 @@ export const Sidebar = ({ collapsed, onToggle }) => {
       data-testid="sidebar"
       className={cn(
         "fixed left-0 top-0 z-40 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
+        // Desktop: normal collapsed/expanded, always visible
+        "md:translate-x-0",
+        collapsed ? "md:w-16" : "md:w-64",
+        // Mobile: full-width drawer — hidden off-screen, slides in when open
+        "w-72",
+        mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}
     >
       {/* Logo */}

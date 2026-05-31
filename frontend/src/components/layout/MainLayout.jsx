@@ -10,30 +10,20 @@ export const MainLayout = () => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  // Auto-collapse sidebar on mobile screens (< 768px)
-  const isMobile = () => window.innerWidth < 768;
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(isMobile());
+  // Desktop: collapsed / expanded
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // Mobile: drawer open / closed
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
+  // Auto-collapse desktop sidebar on MLS pages
   useEffect(() => {
-    const handleResize = () => {
-      // Auto-collapse on mobile, restore on desktop (unless user manually toggled)
-      if (window.innerWidth < 768) {
-        setSidebarCollapsed(true);
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    // Set initial state
-    handleResize();
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    // MLS pages always collapse sidebar; also auto-collapse on mobile route changes
-    if (location.pathname.startsWith('/mls') || isMobile()) {
+    if (location.pathname.startsWith('/mls')) {
       setSidebarCollapsed(true);
-    } else {
+    } else if (window.innerWidth >= 768) {
       setSidebarCollapsed(false);
     }
+    // Always close mobile drawer on route change
+    setMobileSidebarOpen(false);
   }, [location.pathname]);
 
   if (loading) {
@@ -50,22 +40,44 @@ export const MainLayout = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar 
-        collapsed={sidebarCollapsed} 
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} 
+
+      {/* Mobile backdrop — tap to close sidebar */}
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <Sidebar
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(c => !c)}
+        mobileOpen={mobileSidebarOpen}
+        onMobileClose={() => setMobileSidebarOpen(false)}
       />
-      <Topbar sidebarCollapsed={sidebarCollapsed} />
+
+      <Topbar
+        sidebarCollapsed={sidebarCollapsed}
+        onMobileMenuToggle={() => setMobileSidebarOpen(o => !o)}
+        mobileSidebarOpen={mobileSidebarOpen}
+      />
+
       <main
         data-testid="main-content"
         className={cn(
           "pt-16 min-h-screen transition-all duration-300",
-          sidebarCollapsed ? "pl-16" : "pl-64"
+          // Desktop: offset by sidebar width
+          sidebarCollapsed ? "md:pl-16" : "md:pl-64",
+          // Mobile: no sidebar offset (sidebar is an overlay)
+          "pl-0"
         )}
       >
-        <div className="p-6 md:p-8">
+        <div className="p-4 md:p-8">
           <Outlet />
         </div>
       </main>
+
       <StaffChatDrawer />
     </div>
   );
