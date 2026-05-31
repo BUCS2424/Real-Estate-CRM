@@ -467,7 +467,7 @@ export const MailingListsPage = () => {
                   </div>
                 ) : (
                   <div className="border rounded-lg overflow-hidden">
-                    <Table>
+                    <div className="overflow-x-auto"><Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Email</TableHead>
@@ -501,7 +501,7 @@ export const MailingListsPage = () => {
                           </TableRow>
                         ))}
                       </TableBody>
-                    </Table>
+                    </Table></div>
                     {filteredSubscribers.length > 50 && (
                       <div className="p-3 text-center text-sm text-muted-foreground border-t">
                         Showing 50 of {filteredSubscribers.length} subscribers

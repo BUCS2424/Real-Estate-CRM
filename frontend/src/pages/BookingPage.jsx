@@ -327,17 +327,19 @@ export const BookingPage = () => {
           <p className="text-muted-foreground mt-1">Manage your appointments and availability</p>
         </div>
         <div className="flex gap-3">
-          <Button onClick={handleOpenCreateBooking} data-testid="create-booking-btn">
-            <Plus className="w-4 h-4 mr-2" />
-            Create Booking
+          <Button onClick={handleOpenCreateBooking} data-testid="create-booking-btn" className="h-9">
+            <Plus className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Create Booking</span>
+            <span className="sm:hidden">Create</span>
           </Button>
-          <Button variant="outline" onClick={() => setIsBlockDateOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Block Date
+          <Button variant="outline" onClick={() => setIsBlockDateOpen(true)} className="h-9">
+            <Plus className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Block Date</span>
+            <span className="sm:hidden">Block</span>
           </Button>
-          <Button variant="outline" onClick={() => setIsSettingsOpen(true)}>
-            <Settings className="w-4 h-4 mr-2" />
-            Settings
+          <Button variant="outline" onClick={() => setIsSettingsOpen(true)} className="h-9">
+            <Settings className="w-4 h-4" />
+            <span className="hidden sm:inline ml-2">Settings</span>
           </Button>
         </div>
       </div>
@@ -352,7 +354,7 @@ export const BookingPage = () => {
               </div>
               <div>
                 <p className="font-medium">Your Booking Link</p>
-                <p className="text-sm text-muted-foreground truncate max-w-md">{bookingLink}</p>
+                <p className="text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-xs md:max-w-md">{bookingLink}</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -370,7 +372,7 @@ export const BookingPage = () => {
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="overflow-x-auto w-full justify-start">
           <TabsTrigger value="calendar">Calendar View</TabsTrigger>
           <TabsTrigger value="list">All Bookings</TabsTrigger>
           <TabsTrigger value="availability">Availability</TabsTrigger>

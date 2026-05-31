@@ -433,9 +433,9 @@ const ContactDetail = ({ contactId, onBack }) => {
   const jobTitle = contact.position || contact.job_title;
 
   return (
-    <div className="flex gap-6 min-h-[calc(100vh-6rem)]" data-testid="contact-detail">
+    <div className="flex flex-col md:flex-row gap-4 md:gap-6" data-testid="contact-detail">
       {/* Left Sidebar */}
-      <div className="w-80 flex-shrink-0 flex flex-col gap-4 overflow-y-auto">
+      <div className="w-full md:w-80 md:flex-shrink-0 flex flex-col gap-4 md:overflow-y-auto">
         <Card>
           <CardContent className="pt-6">
             <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-amber-400/20 to-amber-600/20 rounded-full flex items-center justify-center border-2 border-amber-500/30">
@@ -2299,28 +2299,29 @@ export const ContactsPage = () => {
           <p className="text-muted-foreground">Manage your buyers and sellers</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={handleExport} disabled={exporting} data-testid="export-contacts-btn">
-            {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-            Export
+          <Button variant="outline" onClick={handleExport} disabled={exporting} data-testid="export-contacts-btn" className="h-9">
+            {exporting ? <Loader2 className="w-4 h-4 sm:mr-2 animate-spin" /> : <Download className="w-4 h-4 sm:mr-2" />}
+            <span className="hidden sm:inline">Export</span>
           </Button>
-          <Button variant="outline" onClick={() => setShowSyncModal(true)} data-testid="sync-iphone-btn">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Sync iPhone
+          <Button variant="outline" onClick={() => setShowSyncModal(true)} data-testid="sync-iphone-btn" className="h-9">
+            <RefreshCw className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Sync iPhone</span>
           </Button>
-          <Button variant="outline" onClick={() => setShowImportModal(true)} data-testid="import-contacts-btn">
-            <Upload className="w-4 h-4 mr-2" />
-            Import
+          <Button variant="outline" onClick={() => setShowImportModal(true)} data-testid="import-contacts-btn" className="h-9">
+            <Upload className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Import</span>
           </Button>
-          <Button variant="outline" onClick={() => setShowSmartListModal(true)} className="text-amber-500 hover:text-amber-600 hover:bg-amber-500/10" data-testid="smart-list-btn">
-            <ListFilter className="w-4 h-4 mr-2" />
-            Smart List
+          <Button variant="outline" onClick={() => setShowSmartListModal(true)} className="text-amber-500 hover:text-amber-600 hover:bg-amber-500/10 h-9" data-testid="smart-list-btn">
+            <ListFilter className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Smart List</span>
           </Button>
-          <Button variant="outline" onClick={() => setShowDeleteAllModal(true)} className="text-red-500 hover:text-red-600 hover:bg-red-500/10" data-testid="delete-all-contacts-btn">
-            <Trash2 className="w-4 h-4 mr-2" />
-            Delete All
+          <Button variant="outline" onClick={() => setShowDeleteAllModal(true)} className="text-red-500 hover:text-red-600 hover:bg-red-500/10 h-9" data-testid="delete-all-contacts-btn">
+            <Trash2 className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Delete All</span>
           </Button>
-          <Button onClick={() => setShowAddModal(true)} className="bg-amber-500 hover:bg-amber-600 text-black" data-testid="add-contact-btn">
-            <Plus className="w-4 h-4 mr-2" />Add Contact
+          <Button onClick={() => setShowAddModal(true)} className="bg-amber-500 hover:bg-amber-600 text-black h-9" data-testid="add-contact-btn">
+            <Plus className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Add Contact</span>
+            <span className="sm:hidden">Add</span>
           </Button>
         </div>
       </div>

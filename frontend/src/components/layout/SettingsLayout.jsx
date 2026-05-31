@@ -158,9 +158,9 @@ const MenuSection = ({ section }) => {
 
 export const SettingsLayout = () => {
   return (
-    <div className="flex gap-6 min-h-[calc(100vh-8rem)]" data-testid="settings-layout">
+    <div className="flex flex-col md:flex-row gap-4 md:gap-6 min-h-[calc(100vh-8rem)]" data-testid="settings-layout">
       {/* Settings Sidebar */}
-      <aside className="w-64 flex-shrink-0">
+      <aside className="w-full md:w-64 md:flex-shrink-0">
         <div className="sticky top-24">
           <div className="flex items-center gap-2 px-3 py-4 border-b border-border mb-4">
             <Settings className="w-5 h-5" />

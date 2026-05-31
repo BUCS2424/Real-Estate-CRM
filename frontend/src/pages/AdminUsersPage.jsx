@@ -106,7 +106,7 @@ export const AdminUsersPage = () => {
           <CardDescription>View and manage user accounts</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
+          <div className="overflow-x-auto"><Table>
             <TableHeader>
               <TableRow>
                 <TableHead>User</TableHead>
@@ -167,7 +167,7 @@ export const AdminUsersPage = () => {
                 );
               })}
             </TableBody>
-          </Table>
+          </Table></div>
         </CardContent>
       </Card>
 

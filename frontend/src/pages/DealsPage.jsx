@@ -191,7 +191,7 @@ const KanbanColumn = ({ stage, deals, children }) => {
   
   return (
     <div
-      className="min-w-[300px] bg-muted/30 rounded-xl p-4 backdrop-blur-sm border border-border/50 kanban-column"
+      className="min-w-[260px] sm:min-w-[300px] bg-muted/30 rounded-xl p-4 backdrop-blur-sm border border-border/50 kanban-column"
       data-testid={`kanban-column-${stage.id}`}
     >
       <div className="flex items-center justify-between mb-4">

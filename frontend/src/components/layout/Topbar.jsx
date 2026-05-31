@@ -57,7 +57,7 @@ export const Topbar = ({ sidebarCollapsed, onMobileMenuToggle, mobileSidebarOpen
     >
       <div className="flex items-center justify-between h-full px-4 md:px-6">
         {/* Left: Hamburger on mobile, greeting on desktop */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           {/* Hamburger — mobile only */}
           <button
             onClick={onMobileMenuToggle}
@@ -70,7 +70,8 @@ export const Topbar = ({ sidebarCollapsed, onMobileMenuToggle, mobileSidebarOpen
             <span className={`block w-5 h-0.5 bg-foreground rounded-full transition-all duration-300 ${mobileSidebarOpen ? '-rotate-45 -translate-y-2' : ''}`}/>
           </button>
 
-          <h1 className="text-base md:text-lg font-serif font-semibold text-foreground truncate">
+          {/* Greeting — hidden on very small screens */}
+          <h1 className="hidden sm:block text-base md:text-lg font-serif font-semibold text-foreground truncate">
             Welcome back, {user?.name?.split(' ')[0]}
           </h1>
         </div>
@@ -97,7 +98,7 @@ export const Topbar = ({ sidebarCollapsed, onMobileMenuToggle, mobileSidebarOpen
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="flex items-center gap-3 h-10 px-2 hover:bg-muted"
+                className="flex items-center gap-2 h-10 px-2 hover:bg-muted"
                 data-testid="user-menu-trigger"
               >
                 <Avatar className="w-8 h-8">
@@ -105,7 +106,8 @@ export const Topbar = ({ sidebarCollapsed, onMobileMenuToggle, mobileSidebarOpen
                     {getInitials(user?.name)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex flex-col items-start">
+                {/* Name + badge — hide on mobile */}
+                <div className="hidden sm:flex flex-col items-start">
                   <span className="text-sm font-medium">{user?.name}</span>
                   <Badge className={`text-[10px] px-1.5 py-0 h-4 ${roleColors[user?.role]}`}>
                     {roleLabels[user?.role]}

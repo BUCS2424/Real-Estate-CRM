@@ -340,3 +340,79 @@ code, .mono {
 .yn-selected{border-color:#fbbf24!important;color:#fbbf24!important;background:rgba(251,191,36,.1)!important}
 .yn-yes.yn-selected{border-color:#4ade80!important;color:#4ade80!important;background:rgba(74,222,128,.08)!important}
 .yn-no.yn-selected{border-color:#f87171!important;color:#f87171!important;background:rgba(248,113,113,.08)!important}
+
+/* ════════════════════════════════════════════════════
+   GLOBAL MOBILE RESPONSIVENESS UTILITIES
+   Applies to all pages across the CRM
+════════════════════════════════════════════════════ */
+
+/* Ensure all horizontal scrolling containers work properly on mobile */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.overflow-x-auto::-webkit-scrollbar { display: none; }
+
+/* Touch-friendly minimum tap target for buttons */
+@media (max-width: 640px) {
+  button, [role="button"] {
+    min-height: 36px;
+  }
+
+  /* Reduce large page headings on mobile */
+  .text-3xl { font-size: 1.5rem; line-height: 2rem; }
+  .text-4xl { font-size: 1.75rem; line-height: 2.25rem; }
+
+  /* Make all card content slightly tighter on mobile */
+  .p-6 { padding: 1rem; }
+  .p-8 { padding: 1.25rem; }
+
+  /* Stack side-by-side button groups vertically */
+  .mobile-btn-stack {
+    flex-direction: column;
+    width: 100%;
+  }
+  .mobile-btn-stack > * {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Responsive table cells — hide less important columns on small screens */
+@media (max-width: 640px) {
+  .hide-mobile { display: none !important; }
+}
+@media (max-width: 768px) {
+  .hide-tablet { display: none !important; }
+}
+
+/* Make all TabsLists scrollable horizontally on mobile */
+[role="tablist"] {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+[role="tablist"]::-webkit-scrollbar { display: none; }
+
+/* Fix modal/dialog on very small screens */
+@media (max-width: 480px) {
+  [role="dialog"] {
+    margin: 8px;
+    width: calc(100% - 16px) !important;
+    max-width: calc(100% - 16px) !important;
+  }
+}
+
+/* Better form inputs on mobile */
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="number"],
+  select,
+  textarea {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+}
