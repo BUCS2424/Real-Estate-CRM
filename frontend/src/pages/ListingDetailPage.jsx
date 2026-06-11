@@ -38,10 +38,12 @@ import {
   Clock,
   Upload,
   GripVertical,
-  Download
+  Download,
+  QrCode
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { listingsAPI } from '../lib/api';
+import { QRCodeModal } from '../components/QRCodeModal';
 
 const STATUS_OPTIONS = [
   { value: 'draft', label: 'Draft', color: 'bg-gray-500/20 text-gray-600 border-gray-500/50' },
@@ -76,6 +78,7 @@ const ListingDetailPage = () => {
   
   // Edit mode
   const [editMode, setEditMode] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const [editData, setEditData] = useState({});
   
   // Image upload state
@@ -347,6 +350,15 @@ const ListingDetailPage = () => {
               <Button variant="outline" className="w-full" onClick={() => setEditMode(true)}>
                 <Edit2 className="w-4 h-4 mr-2" />
                 Edit Listing
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full border-amber-500/40 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 gap-2"
+                onClick={() => setShowQr(true)}
+                data-testid="listing-qr-btn"
+              >
+                <QrCode className="w-4 h-4"/>
+                Generate QR Code
               </Button>
               <Button variant="outline" className="w-full text-red-500 hover:text-red-600" onClick={handleDelete}>
                 <Trash2 className="w-4 h-4 mr-2" />
@@ -983,6 +995,11 @@ const ListingDetailPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* QR Code Modal */}
+      {showQr && listing && (
+        <QRCodeModal listing={listing} onClose={() => setShowQr(false)} />
+      )}
     </div>
   );
 };

@@ -451,6 +451,17 @@ async def migrate_slugs(current_user: dict = Depends(get_current_user)):
         "results": results
     }
 
+
+@router.get("/listings/sync-status")
+async def get_sync_status(current_user: dict = Depends(get_current_user)):
+    """Return last MLS sync timestamp and count."""
+    s = await db.general_settings.find_one({}, {"_id": 0, "mls_last_sync": 1, "mls_last_sync_count": 1})
+    return {
+        "last_sync":  (s or {}).get("mls_last_sync"),
+        "last_count": (s or {}).get("mls_last_sync_count", 0),
+    }
+
+
 @router.get("/listings/{listing_id}")
 async def get_listing(listing_id: str, current_user: dict = Depends(get_current_user)):
     """Alias for /properties/{id} for frontend compatibility"""
@@ -458,6 +469,7 @@ async def get_listing(listing_id: str, current_user: dict = Depends(get_current_
     if not prop:
         raise HTTPException(status_code=404, detail="Listing not found")
     return prop
+
 
 @router.post("/listings")
 async def create_listing(listing: PropertyListingCreate, current_user: dict = Depends(get_current_user)):
@@ -1509,3 +1521,168 @@ async def delete_property_submission(submission_id: str, current_user: dict = De
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Submission not found")
     return {"message": "Submission deleted"}
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# MLS AGENT AUTO-SYNC  ─  Pull all of Sheila's active MLS listings into showcase
+# ══════════════════════════════════════════════════════════════════════════
+
+@router.post("/listings/sync-agent-listings")
+async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
+    """
+    Fetch every active MLS listing where Sheila Desautels / Hidden Haven Realty
+    is the listing agent and upsert them into the showcase (db.properties).
+    Returns a summary of what was created / updated / skipped.
+    """
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    from services.mls_service import mls_service
+
+    if not mls_service.is_configured():
+        raise HTTPException(status_code=400, detail="MLS API not configured. Add your Bridge API key in Settings → MLS.")
+
+    # ── Fetch from Bridge API ──────────────────────────────────────────────
+    # OData filter: listings where the agent or office matches Hidden Haven Realty
+    import httpx
+    ds      = mls_service.dataset
+    base    = mls_service.base_url
+    token   = mls_service.token
+
+    agent_filter = (
+        "(contains(ListAgentFullName, 'Desautels') or "
+        "contains(ListOfficeName, 'Hidden Haven') or "
+        "contains(ListAgentFullName, 'Sheila'))"
+    )
+    odata_filter = f"{agent_filter} and StandardStatus eq 'Active'"
+
+    params = {
+        "access_token": token,
+        "$filter": odata_filter,
+        "$top": 200,
+    }
+
+    mls_listings = []
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.get(f"{base}/OData/{ds}/Property", params=params)
+            if resp.status_code == 200:
+                raw = resp.json().get("value", [])
+                mls_listings = mls_service._transform_listings(raw, photo_limit=20)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"MLS API error: {e}")
+
+    now     = datetime.now(timezone.utc).isoformat()
+    created = []
+    updated = []
+    skipped = []
+
+    # Load all existing slugs to avoid collisions
+    existing_slugs: list = await db.properties.distinct("slug")
+    existing_slugs = [s for s in existing_slugs if s]
+
+    for listing in mls_listings:
+        mls_id   = listing.get("mls_id") or listing.get("ListingId")
+        address  = listing.get("address") or listing.get("UnparsedAddress", "")
+        city     = listing.get("city", "Tampa")
+        state    = listing.get("state", "FL")
+        zip_code = listing.get("zip_code", "")
+        price    = listing.get("list_price") or listing.get("ListPrice") or 0
+
+        if not mls_id or not address:
+            skipped.append(mls_id or "unknown")
+            continue
+
+        # Build image list
+        photos   = listing.get("photos", [])
+        primary  = listing.get("primary_photo") or (photos[0] if photos else "")
+        images   = [{"url": p, "id": str(uuid.uuid4()), "is_primary": i == 0} for i, p in enumerate(photos)]
+
+        # Generate slug
+        base_slug  = generate_property_slug(address, city, state, zip_code)
+
+        # Check existing
+        existing = await db.properties.find_one(
+            {"$or": [{"mls_id": mls_id}, {"address": address}]},
+            {"_id": 0, "id": 1, "slug": 1}
+        )
+
+        if existing:
+            await db.properties.update_one(
+                {"id": existing["id"]},
+                {"$set": {
+                    "mls_id":         mls_id,
+                    "price":          price,
+                    "list_price":     price,
+                    "status":         "active",
+                    "listing_agent":  listing.get("listing_agent", "Sheila M Desautels"),
+                    "listing_office": listing.get("listing_office", "HIDDEN HAVEN REALTY"),
+                    "bedrooms":       listing.get("bedrooms"),
+                    "bathrooms":      listing.get("bathrooms"),
+                    "sqft":           listing.get("sqft"),
+                    "year_built":     listing.get("year_built"),
+                    "description":    listing.get("description", ""),
+                    "primary_photo":  primary,
+                    "images":         images,
+                    "source":         "mls_auto_sync",
+                    "updated_at":     now,
+                }}
+            )
+            updated.append({"id": existing["id"], "address": address})
+        else:
+            # Create new showcase listing
+            prop_id    = str(uuid.uuid4())
+            unique_slug = ensure_unique_slug(base_slug, existing_slugs)
+            existing_slugs.append(unique_slug)
+
+            property_doc = {
+                "id":             prop_id,
+                "slug":           unique_slug,
+                "mls_id":         mls_id,
+                "address":        address,
+                "city":           city,
+                "state":          state,
+                "zip_code":       zip_code,
+                "price":          price,
+                "list_price":     price,
+                "status":         "active",
+                "property_type":  listing.get("property_type", "Single Family"),
+                "bedrooms":       listing.get("bedrooms"),
+                "bathrooms":      listing.get("bathrooms"),
+                "sqft":           listing.get("sqft"),
+                "lot_size":       listing.get("lot_size"),
+                "year_built":     listing.get("year_built"),
+                "county":         listing.get("county"),
+                "description":    listing.get("description", ""),
+                "primary_photo":  primary,
+                "images":         images,
+                "listing_agent":  listing.get("listing_agent", "Sheila M Desautels"),
+                "listing_office": listing.get("listing_office", "HIDDEN HAVEN REALTY"),
+                "source":         "mls_auto_sync",
+                "features":       [],
+                "moderation_status": "approved",
+                "created_by":     current_user["id"],
+                "created_at":     now,
+                "updated_at":     now,
+            }
+            await db.properties.insert_one(property_doc)
+            created.append({"id": prop_id, "address": address, "slug": unique_slug})
+
+    # Save last sync metadata
+    await db.general_settings.update_one(
+        {},
+        {"$set": {
+            "mls_last_sync":       now,
+            "mls_last_sync_count": len(created) + len(updated),
+        }},
+        upsert=True
+    )
+
+    return {
+        "message": "MLS sync complete",
+        "created":       len(created),
+        "updated":       len(updated),
+        "skipped":       len(skipped),
+        "total_fetched": len(mls_listings),
+        "listings":      created,
+    }

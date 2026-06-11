@@ -3,36 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { listingsAPI, propertyLeadsAPI, badgeAPI } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  Home,
-  Plus,
-  Search,
-  MapPin,
-  Bed,
-  Bath,
-  Square,
-  DollarSign,
-  Edit,
-  Trash2,
-  Eye,
-  Loader2,
-  Building2,
-  RefreshCw,
-  FileSpreadsheet,
-  Upload,
-  Users,
-  CheckCircle,
-  TrendingUp,
-  Calendar,
-  Tag,
-  Star,
-  Gavel,
-  Sparkles,
-  TrendingDown,
-  FileSignature,
-  EyeOff,
-  Clock,
-  X
+  Home, Plus, Search, MapPin, Bed, Bath, Square, DollarSign,
+  Edit, Trash2, Eye, Loader2, Building2, RefreshCw, FileSpreadsheet,
+  Upload, Users, CheckCircle, TrendingUp, Calendar, Tag, Star, Gavel,
+  Sparkles, TrendingDown, FileSignature, EyeOff, Clock, X, QrCode, Download
 } from 'lucide-react';
+import { QRCodeModal } from '../components/QRCodeModal';
+import axios from 'axios';
+
+const API = (process.env.REACT_APP_BACKEND_URL || '').replace(/\/+$/, '');
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -104,11 +83,45 @@ export const ListingsPage = () => {
   const [availableBadges, setAvailableBadges] = useState([]);
   const [selectedBadges, setSelectedBadges] = useState([]);
   const [savingBadges, setSavingBadges] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState(null);
+  const [qrListing, setQrListing] = useState(null);   // listing to generate QR for
 
   useEffect(() => {
     fetchListings();
     fetchBadgeTypes();
+    fetchSyncStatus();
   }, []);
+
+  const fetchSyncStatus = async () => {
+    try {
+      const res = await axios.get(`${API}/api/listings/sync-status`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (res.data.last_sync) setLastSync(res.data);
+    } catch { /* silently ignore sync status fetch failure */ }
+  };
+
+  const handleMlsSync = async () => {
+    setSyncing(true);
+    try {
+      const res = await axios.post(`${API}/api/listings/sync-agent-listings`, {}, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      const { created, updated, total_fetched } = res.data;
+      if (total_fetched === 0) {
+        toast.info('No active MLS listings found for Sheila Desautels / Hidden Haven Realty. Check your MLS API settings.');
+      } else {
+        toast.success(`MLS Sync complete — ${created} new, ${updated} updated from ${total_fetched} listings found`);
+      }
+      fetchListings();
+      fetchSyncStatus();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'MLS sync failed — check your MLS API key in Settings');
+    } finally {
+      setSyncing(false);
+    }
+  };
   
   const fetchBadgeTypes = async () => {
     try {
@@ -241,17 +254,39 @@ export const ListingsPage = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-serif text-foreground mb-2">Property Listings</h1>
-          <p className="text-muted-foreground">Showcase your real estate properties</p>
+          <h1 className="text-3xl font-serif text-foreground mb-1">Property Listings</h1>
+          <p className="text-muted-foreground text-sm">
+            Showcase your real estate properties
+            {lastSync?.last_sync && (
+              <span className="ml-2 text-xs text-green-600">
+                · Last MLS sync: {new Date(lastSync.last_sync).toLocaleString()} ({lastSync.last_count} listings)
+              </span>
+            )}
+          </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {/* MLS Auto-Sync */}
+          <Button
+            variant="outline"
+            onClick={handleMlsSync}
+            disabled={syncing}
+            className="border-amber-500/50 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 gap-2"
+            data-testid="sync-mls-listings-btn"
+          >
+            {syncing
+              ? <Loader2 className="w-4 h-4 animate-spin"/>
+              : <RefreshCw className="w-4 h-4"/>}
+            <span className="hidden sm:inline">{syncing ? 'Syncing MLS…' : 'Sync MLS Listings'}</span>
+            <span className="sm:hidden">Sync MLS</span>
+          </Button>
           <Button variant="outline" onClick={() => setIsImportOpen(true)} data-testid="import-csv-btn">
-            <FileSpreadsheet className="w-4 h-4 mr-2" />
-            Import CSV
+            <FileSpreadsheet className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Import CSV</span>
           </Button>
           <Button onClick={() => navigate('/listings/new')} className="bg-amber-500 hover:bg-amber-600 text-black" data-testid="new-listing-btn">
-            <Plus className="w-4 h-4 mr-2" />
-            New Listing
+            <Plus className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">New Listing</span>
+            <span className="sm:hidden">New</span>
           </Button>
         </div>
       </div>
@@ -479,6 +514,16 @@ export const ListingsPage = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => { e.stopPropagation(); setQrListing(listing); }}
+                          className="text-muted-foreground hover:text-amber-500"
+                          title="Generate QR Code"
+                          data-testid={`qr-btn-${listing.id}`}
+                        >
+                          <QrCode className="w-4 h-4"/>
+                        </Button>
                         <Button 
                           variant="ghost" 
                           size="icon"
@@ -687,6 +732,11 @@ export const ListingsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* QR Code Modal */}
+      {qrListing && (
+        <QRCodeModal listing={qrListing} onClose={() => setQrListing(null)} />
+      )}
     </div>
   );
 };
