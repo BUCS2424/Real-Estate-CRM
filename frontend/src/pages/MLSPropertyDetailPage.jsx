@@ -116,7 +116,14 @@ export const MLSPropertyDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-[#0a1628]">
-      <PublicSeoHead title={`${p.address} | ${fmt(p.list_price)} | Hidden Haven Realty`} description={`${p.bedrooms || '—'} bed, ${p.bathrooms || '—'} bath, ${fmtNum(p.sqft)} sqft at ${p.address}, ${p.city} FL`} />
+      <PublicSeoHead
+        title={`${p.address}${p.city ? `, ${p.city}` : ''} | ${fmt(p.list_price)} | Hidden Haven Realty`}
+        description={`${p.bedrooms || '—'} bed, ${p.bathrooms || '—'} bath, ${fmtNum(p.sqft)} sqft at ${p.address}, ${p.city} FL. ${p.description ? p.description.slice(0, 120) + '…' : 'View listing details, photos, and schedule a private showing.'}`}
+        image={photos[0]}
+        urlPath={`/mls-property/${mlsId}`}
+        type="article"
+        keywords={[p.address, p.city, p.zip_code, 'homes for sale', 'hidden haven realty', 'tampa real estate'].filter(Boolean).join(', ')}
+      />
       <PublicSiteHeader />
 
       {/* ── Photo Grid ── */}

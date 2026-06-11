@@ -93,6 +93,7 @@ export const PublicListingsPage = () => {
       <PublicSeoHead
         title="Listing Showcase | Hidden Haven Realty"
         description="Browse curated listings, featured homes, and new opportunities from Hidden Haven Realty."
+        urlPath="/showcase"
       />
       <PublicSiteHeader activePage="showcase" />
 
