@@ -56,19 +56,35 @@ export const PropertyDetailPage = () => {
       try {
         const res = await publicAPI.getListingBySlug(slug);
         setProperty(res.data);
-      } catch (error) {
+      } catch {
         try {
           const res = await publicAPI.getListing(slug);
           setProperty(res.data);
-        } catch (fallbackError) {
-          // Last resort: check if this slug belongs to a landing page and redirect
-          try {
-            await landingPagesAPI.getPublicPage(slug);
-            navigate(`/landing/${slug}`, { replace: true });
-            return;
-          } catch {
-            // Truly not found — fall through to "Property Not Found" state
+        } catch {
+          // Last resort: check if this slug (or a trimmed version) belongs to a landing page
+          // and redirect there. The backend now does fuzzy matching on its end too.
+          const slugVariants = [
+            slug,
+            // Strip trailing zip code (last 5-digit segment)
+            slug.replace(/-\d{5}$/, ''),
+            // Strip last hyphen-segment entirely
+            slug.split('-').slice(0, -1).join('-'),
+          ].filter((v, i, arr) => v && arr.indexOf(v) === i); // dedupe
+
+          let redirectSlug = null;
+          for (const variant of slugVariants) {
+            try {
+              await landingPagesAPI.getPublicPage(variant);
+              redirectSlug = variant;
+              break;
+            } catch { /* try next */ }
           }
+
+          if (redirectSlug) {
+            navigate(`/landing/${redirectSlug}`, { replace: true });
+            return;
+          }
+          // Truly not found — fall through to "Property Not Found" state
         }
       } finally {
         setLoading(false);

@@ -399,12 +399,43 @@ async def upload_image(
 
 @router.get("/public/{slug}")
 async def get_public_landing_page(slug: str):
-    """Get published landing page by slug (public, no auth)"""
+    """
+    Get published landing page by slug (public, no auth).
+    Tries exact match first, then falls back to prefix/suffix fuzzy matching
+    to handle cases where the property slug has extra parts (e.g. zip code)
+    that weren't included when the landing page slug was generated.
+    """
+    # 1. Exact match
     page = await db.landing_pages.find_one(
         {"slug": slug, "status": LandingPageStatus.PUBLISHED},
         {"_id": 0}
     )
-    
+
+    # 2. Fuzzy match — strip trailing segments and try progressively shorter slugs
+    if not page:
+        parts = slug.split("-")
+        # Try removing the last 1-3 hyphen-segments (e.g. strip zip code)
+        for trim in range(1, 4):
+            if len(parts) <= trim:
+                break
+            shorter = "-".join(parts[:-trim])
+            page = await db.landing_pages.find_one(
+                {"slug": shorter, "status": LandingPageStatus.PUBLISHED},
+                {"_id": 0}
+            )
+            if page:
+                break
+
+    # 3. Prefix match — slug starts with the stored slug (landing page slug is a prefix)
+    if not page:
+        page = await db.landing_pages.find_one(
+            {
+                "slug": {"$regex": f"^{slug[:30]}", "$options": "i"},
+                "status": LandingPageStatus.PUBLISHED
+            },
+            {"_id": 0}
+        )
+
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")
     
