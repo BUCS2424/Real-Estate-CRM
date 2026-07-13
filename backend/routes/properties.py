@@ -1283,6 +1283,51 @@ async def set_property_badges(property_id: str, badges_data: dict, current_user:
     return {"message": "Property badges updated", "badges": badges}
 
 
+
+@router.get("/public/portfolio-stats")
+async def get_public_portfolio_stats():
+    """
+    Public endpoint: real-time portfolio stats for the homepage.
+    Returns total portfolio value, listing counts by status, and sold count.
+    """
+    pipeline = [
+        {"$match": {"source": "mls_auto_sync"}},
+        {"$group": {
+            "_id": "$status",
+            "count": {"$sum": 1},
+            "total_value": {"$sum": {"$toDouble": {"$ifNull": ["$price", 0]}}}
+        }}
+    ]
+    rows = await db.properties.aggregate(pipeline).to_list(20)
+
+    totals = {"active": 0, "pending": 0, "sold": 0, "total_value": 0, "total_listings": 0}
+    for row in rows:
+        st = row.get("_id") or "active"
+        totals[st] = row.get("count", 0)
+        totals["total_value"] += row.get("total_value", 0)
+        totals["total_listings"] += row.get("count", 0)
+
+    # Format portfolio value
+    val = totals["total_value"]
+    if val >= 1_000_000_000:
+        fmt_val = f"${val/1_000_000_000:.1f}B+"
+    elif val >= 1_000_000:
+        fmt_val = f"${val/1_000_000:.0f}M+"
+    else:
+        fmt_val = f"${val:,.0f}"
+
+    return {
+        "portfolio_value":    fmt_val,
+        "portfolio_value_raw": val,
+        "active_listings":    totals.get("active", 0),
+        "pending_listings":   totals.get("pending", 0),
+        "sold_listings":      totals.get("sold", 0),
+        "total_listings":     totals["total_listings"],
+        "off_market_count":   totals["total_listings"],
+    }
+
+
+
 # Public property endpoints
 @router.get("/public/properties")
 async def get_public_properties(
@@ -1554,23 +1599,34 @@ async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
         "contains(ListOfficeName, 'Hidden Haven') or "
         "contains(ListAgentFullName, 'Sheila'))"
     )
-    odata_filter = f"{agent_filter} and StandardStatus eq 'Active'"
 
-    params = {
-        "access_token": token,
-        "$filter": odata_filter,
-        "$top": 200,
-    }
+    # Sync Active, Pending AND Sold/Closed — build all statuses
+    all_statuses = ["Active", "Pending", "Closed"]
+    status_map   = {"Active": "active", "Pending": "pending", "Closed": "sold"}
 
     mls_listings = []
-    try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.get(f"{base}/OData/{ds}/Property", params=params)
-            if resp.status_code == 200:
-                raw = resp.json().get("value", [])
-                mls_listings = mls_service._transform_listings(raw, photo_limit=20)
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"MLS API error: {e}")
+    for std_status in all_statuses:
+        odata_filter = f"{agent_filter} and StandardStatus eq '{std_status}'"
+        params = {
+            "access_token": token,
+            "$filter":      odata_filter,
+            "$top":         200,
+            "$expand":      "Media",   # ← fetch photos in one request
+        }
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                resp = await client.get(f"{base}/OData/{ds}/Property", params=params)
+                if resp.status_code == 200:
+                    raw = resp.json().get("value", [])
+                    batch = mls_service._transform_listings(raw, photo_limit=None)
+                    # Tag each listing with its MLS status
+                    for listing in batch:
+                        listing["_mls_std_status"] = std_status
+                        listing["_crm_status"]      = status_map[std_status]
+                    mls_listings.extend(batch)
+        except Exception as e:
+            # Don't hard-fail — log and continue with the other statuses
+            print(f"[MLS Sync] {std_status} fetch error: {e}")
 
     now     = datetime.now(timezone.utc).isoformat()
     created = []
@@ -1598,6 +1654,9 @@ async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
         primary  = listing.get("primary_photo") or (photos[0] if photos else "")
         images   = [{"url": p, "id": str(uuid.uuid4()), "is_primary": i == 0} for i, p in enumerate(photos)]
 
+        # CRM status mapped from MLS StandardStatus
+        crm_status = listing.get("_crm_status", "active")  # active | pending | sold
+
         # Generate slug
         base_slug  = generate_property_slug(address, city, state, zip_code)
 
@@ -1608,27 +1667,28 @@ async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
         )
 
         if existing:
-            await db.properties.update_one(
-                {"id": existing["id"]},
-                {"$set": {
-                    "mls_id":         mls_id,
-                    "price":          price,
-                    "list_price":     price,
-                    "status":         "active",
-                    "listing_agent":  listing.get("listing_agent", "Sheila M Desautels"),
-                    "listing_office": listing.get("listing_office", "HIDDEN HAVEN REALTY"),
-                    "bedrooms":       listing.get("bedrooms"),
-                    "bathrooms":      listing.get("bathrooms"),
-                    "sqft":           listing.get("sqft"),
-                    "year_built":     listing.get("year_built"),
-                    "description":    listing.get("description", ""),
-                    "primary_photo":  primary,
-                    "images":         images,
-                    "source":         "mls_auto_sync",
-                    "updated_at":     now,
-                }}
-            )
-            updated.append({"id": existing["id"], "address": address})
+            update_fields = {
+                "mls_id":         mls_id,
+                "price":          price,
+                "list_price":     price,
+                "status":         crm_status,
+                "listing_agent":  listing.get("listing_agent", "Sheila M Desautels"),
+                "listing_office": listing.get("listing_office", "HIDDEN HAVEN REALTY"),
+                "bedrooms":       listing.get("bedrooms"),
+                "bathrooms":      listing.get("bathrooms"),
+                "sqft":           listing.get("sqft"),
+                "year_built":     listing.get("year_built"),
+                "description":    listing.get("description", ""),
+                "source":         "mls_auto_sync",
+                "updated_at":     now,
+            }
+            # Always update photos if MLS returned them; don't overwrite with empty
+            if primary:
+                update_fields["primary_photo"] = primary
+            if images:
+                update_fields["images"] = images
+            await db.properties.update_one({"id": existing["id"]}, {"$set": update_fields})
+            updated.append({"id": existing["id"], "address": address, "status": crm_status})
         else:
             # Create new showcase listing
             prop_id    = str(uuid.uuid4())
@@ -1645,8 +1705,7 @@ async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
                 "zip_code":       zip_code,
                 "price":          price,
                 "list_price":     price,
-                "status":         "active",
-                "property_type":  listing.get("property_type", "Single Family"),
+                "status":         crm_status,
                 "bedrooms":       listing.get("bedrooms"),
                 "bathrooms":      listing.get("bathrooms"),
                 "sqft":           listing.get("sqft"),

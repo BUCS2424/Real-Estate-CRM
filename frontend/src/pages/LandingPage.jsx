@@ -94,6 +94,7 @@ export const LandingPage = () => {
   const [listings, setListings] = useState([]);
   const [loadingListings, setLoadingListings] = useState(true);
   const [showListModal, setShowListModal] = useState(false);
+  const [portfolioStats, setPortfolioStats] = useState(null);
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -137,8 +138,12 @@ export const LandingPage = () => {
   useEffect(() => {
     const fetchListings = async () => {
       try {
-        const res = await publicAPI.getListings(12);
-        const payload = res?.data;
+        const API_URL = (process.env.REACT_APP_BACKEND_URL || '').replace(/\/+$/, '');
+        const [listRes, statsRes] = await Promise.all([
+          publicAPI.getListings(12),
+          fetch(`${API_URL}/api/public/portfolio-stats`).then(r => r.json()).catch(() => null),
+        ]);
+        const payload = listRes?.data;
         if (Array.isArray(payload)) {
           setListings(payload);
         } else if (payload && Array.isArray(payload.properties)) {
@@ -146,8 +151,8 @@ export const LandingPage = () => {
         } else {
           setListings([]);
         }
-      } catch (error) {
-        console.error('Failed to load listings');
+        if (statsRes) setPortfolioStats(statsRes);
+      } catch {
         setListings([]);
       } finally {
         setLoadingListings(false);
@@ -260,17 +265,23 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
+      {/* Stats Section — live data from MLS sync */}
       <section className="py-16 border-y border-amber-400/10 bg-[#071020]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
-              <p className="text-4xl md:text-5xl font-serif text-amber-400">$2.8B+</p>
+              <p className="text-4xl md:text-5xl font-serif text-amber-400">
+                {portfolioStats?.portfolio_value || '$2.8B+'}
+              </p>
               <p className="text-sm text-white/50 mt-2 tracking-wide">PORTFOLIO VALUE</p>
             </div>
             <div>
-              <p className="text-4xl md:text-5xl font-serif text-amber-400">150+</p>
-              <p className="text-sm text-white/50 mt-2 tracking-wide">OFF-MARKET HOMES</p>
+              <p className="text-4xl md:text-5xl font-serif text-amber-400">
+                {portfolioStats
+                  ? `${portfolioStats.total_listings}+`
+                  : '150+'}
+              </p>
+              <p className="text-sm text-white/50 mt-2 tracking-wide">TOTAL LISTINGS</p>
             </div>
             <div>
               <p className="text-4xl md:text-5xl font-serif text-amber-400">25+</p>

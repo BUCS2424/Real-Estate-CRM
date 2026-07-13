@@ -81,6 +81,106 @@ async def scheduled_monthly_audit_job():
 
 
 
+async def scheduled_mls_sync():
+    """Daily 6 AM sync: pull all Sheila's Active/Pending/Closed listings from Bridge API."""
+    logger.info("Running daily MLS agent listings sync...")
+    try:
+        from services.mls_service import mls_service
+        if not mls_service.is_configured():
+            logger.info("MLS: not configured — skipping daily sync")
+            return
+
+        import httpx, uuid as _uuid
+        from utils.slug import generate_property_slug, ensure_unique_slug
+
+        ds    = mls_service.dataset
+        base  = mls_service.base_url
+        token = mls_service.token
+        now   = datetime.now(timezone.utc).isoformat()
+
+        agent_filter = (
+            "(contains(ListAgentFullName, 'Desautels') or "
+            "contains(ListOfficeName, 'Hidden Haven') or "
+            "contains(ListAgentFullName, 'Sheila'))"
+        )
+        status_map = {"Active": "active", "Pending": "pending", "Closed": "sold"}
+        all_listings = []
+
+        for std_status in ["Active", "Pending", "Closed"]:
+            params = {
+                "access_token": token,
+                "$filter": f"{agent_filter} and StandardStatus eq '{std_status}'",
+                "$top": 200,
+                "$expand": "Media",
+            }
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    resp = await client.get(f"{base}/OData/{ds}/Property", params=params)
+                    if resp.status_code == 200:
+                        raw = resp.json().get("value", [])
+                        batch = mls_service._transform_listings(raw, photo_limit=None)
+                        for l in batch:
+                            l["_crm_status"] = status_map[std_status]
+                        all_listings.extend(batch)
+            except Exception as e:
+                logger.warning(f"MLS sync {std_status} fetch error: {e}")
+
+        existing_slugs = await db.properties.distinct("slug")
+        existing_slugs = [s for s in existing_slugs if s]
+        created = updated = 0
+
+        for listing in all_listings:
+            mls_id  = listing.get("mls_id")
+            address = listing.get("address", "")
+            city    = listing.get("city", "Tampa")
+            state   = listing.get("state", "FL")
+            zip_code = listing.get("zip_code", "")
+            price   = listing.get("list_price") or 0
+            photos  = listing.get("photos", [])
+            primary = listing.get("primary_photo") or (photos[0] if photos else "")
+            images  = [{"url": p, "id": str(_uuid.uuid4()), "is_primary": i==0} for i, p in enumerate(photos)]
+            crm_status = listing.get("_crm_status", "active")
+
+            if not mls_id or not address:
+                continue
+
+            existing = await db.properties.find_one(
+                {"$or": [{"mls_id": mls_id}, {"address": address}]}, {"_id":0,"id":1}
+            )
+            upd = {"mls_id": mls_id, "price": price, "list_price": price, "status": crm_status,
+                   "listing_agent": listing.get("listing_agent","Sheila M Desautels"),
+                   "listing_office": listing.get("listing_office","HIDDEN HAVEN REALTY"),
+                   "bedrooms": listing.get("bedrooms"), "bathrooms": listing.get("bathrooms"),
+                   "sqft": listing.get("sqft"), "year_built": listing.get("year_built"),
+                   "description": listing.get("description",""), "source": "mls_auto_sync",
+                   "updated_at": now}
+            if primary: upd["primary_photo"] = primary
+            if images:  upd["images"] = images
+
+            if existing:
+                await db.properties.update_one({"id": existing["id"]}, {"$set": upd})
+                updated += 1
+            else:
+                base_slug = generate_property_slug(address, city, state, zip_code)
+                slug = ensure_unique_slug(base_slug, existing_slugs)
+                existing_slugs.append(slug)
+                prop_doc = {"id": str(_uuid.uuid4()), "slug": slug, "address": address,
+                            "city": city, "state": state, "zip_code": zip_code,
+                            "property_type": listing.get("property_type","Single Family"),
+                            "lot_size": listing.get("lot_size"), "county": listing.get("county"),
+                            "features": [], "moderation_status": "approved",
+                            "created_by": "scheduler", "created_at": now, **upd}
+                await db.properties.insert_one(prop_doc)
+                created += 1
+
+        await db.general_settings.update_one(
+            {}, {"$set": {"mls_last_sync": now, "mls_last_sync_count": created + updated}}, upsert=True
+        )
+        logger.info(f"Daily MLS sync complete: {created} created, {updated} updated from {len(all_listings)} listings")
+    except Exception as e:
+        logger.error(f"Daily MLS sync error: {e}")
+
+
 async def scheduled_birthday_cards():
     """
     Daily job (8 AM ET): find contacts whose birthday/anniversary falls today
@@ -236,6 +336,16 @@ async def start_scheduler():
         CronTrigger(hour=8, minute=0, timezone=ZoneInfo("America/New_York")),
         id="birthday_cards_daily",
         name="Daily Birthday & Anniversary Card Sending",
+        replace_existing=True
+    )
+    jobs_added = True
+
+    # Schedule daily MLS auto-sync for Sheila's listings — 6:00 AM Eastern
+    scheduler.add_job(
+        scheduled_mls_sync,
+        CronTrigger(hour=6, minute=0, timezone=ZoneInfo("America/New_York")),
+        id="mls_agent_sync_daily",
+        name="Daily MLS Agent Listings Sync",
         replace_existing=True
     )
     jobs_added = True
