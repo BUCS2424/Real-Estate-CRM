@@ -28,6 +28,36 @@ class MLSService:
         self.client_secret = os.environ.get("IDX_CLIENT_SECRET", "")
         self.server_token = BRIDGE_SERVER_TOKEN
         self.browser_token = os.environ.get("IDX_BROWSER_TOKEN", "")
+        self._db_loaded = False
+
+    async def _ensure_configured(self):
+        """Load credentials from the database if env vars are empty."""
+        if self.server_token and self._db_loaded:
+            return
+        try:
+            from database import db
+            config = await db.settings.find_one({"type": "mls_config"}, {"_id": 0})
+            if config:
+                st = config.get("server_token", "")
+                bt = config.get("browser_token", "")
+                ci = config.get("client_id", "")
+                cs = config.get("client_secret", "")
+                ds = config.get("dataset_id", config.get("dataset", ""))
+                if st:
+                    self.server_token = st
+                    self.token = st
+                if bt:
+                    self.browser_token = bt
+                if ci:
+                    self.client_id = ci
+                if cs:
+                    self.client_secret = cs
+                if ds:
+                    self.dataset = ds
+                self._db_loaded = True
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"MLS: could not load config from DB: {e}")
     
     def configure(self, client_id: str = "", client_secret: str = "", 
                   server_token: str = "", dataset_id: str = ""):

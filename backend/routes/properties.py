@@ -792,62 +792,68 @@ async def pull_mls_images(
     source_label = None
     manual_mls_id = (body or {}).get("mls_id", "").strip() if body else ""
 
-    # Strategy 1: User provided MLS ID — search Bridge API directly
-    if manual_mls_id:
+    # Strategy 0: listing already has mls_id stored — use it directly (fastest path)
+    stored_mls_id = listing.get("mls_id", "").strip() if listing.get("mls_id") else ""
+    lookup_id = manual_mls_id or stored_mls_id
+
+    if lookup_id:
         from services.mls_service import mls_service
+        await mls_service._ensure_configured()
         if mls_service.is_configured():
-            detail = await mls_service.get_property_details(mls_id=manual_mls_id)
+            detail = await mls_service.get_property_details(mls_id=lookup_id)
             if not detail.get("error"):
                 mls_photos = detail.get("all_photos", detail.get("photos", []))
-                source_label = detail.get("mls_id", manual_mls_id)
+                source_label = detail.get("mls_id", lookup_id)
 
-    # Strategy 2: Check if listing was converted from an MLS listing
+    # Strategy 1 (legacy): Check the mls_listings collection by converted_to_property_id
     if not mls_photos:
+        import ast as _ast
         mls_listing = await db.mls_listings.find_one({"converted_to_property_id": listing_id})
+        if not mls_listing:
+            mls_listing = await db.mls_listings.find_one({"mls_id": stored_mls_id}) if stored_mls_id else None
         if mls_listing:
-            mls_photos = mls_listing.get("photos", [])
+            raw = mls_listing.get("photos", [])
+            # Handle photos stored as a stringified Python list "['url1','url2',...]"
+            if isinstance(raw, str):
+                try:
+                    raw = _ast.literal_eval(raw)
+                except Exception:
+                    raw = []
+            mls_photos = [p for p in (raw if isinstance(raw, list) else []) if isinstance(p, str) and p.startswith("http")]
             source_label = mls_listing.get("mls_id", "MLS")
 
-    # Strategy 3: Match by source_lead_id -> property_lead -> mls_number
+    # Strategy 2: Match by source_lead_id -> property_lead -> mls_number
     if not mls_photos and listing.get("source_lead_id"):
         lead = await db.property_leads.find_one({"id": listing["source_lead_id"]})
         if lead:
             mls_num = lead.get("mls_number") or lead.get("mls_id")
             if mls_num:
-                mls_listing = await db.mls_listings.find_one({"mls_id": mls_num})
-                if mls_listing:
-                    mls_photos = mls_listing.get("photos", [])
-                    source_label = mls_num
+                from services.mls_service import mls_service
+                await mls_service._ensure_configured()
+                if mls_service.is_configured():
+                    detail = await mls_service.get_property_details(mls_id=mls_num)
+                    if not detail.get("error"):
+                        mls_photos = detail.get("all_photos", detail.get("photos", []))
+                        source_label = mls_num
 
-    # Strategy 4: Match by address in local mls_listings
-    if not mls_photos and listing.get("address"):
-        addr_query = listing["address"].split(",")[0].strip()
-        if len(addr_query) > 5:
-            mls_listing = await db.mls_listings.find_one({
-                "address": {"$regex": addr_query, "$options": "i"}
-            })
-            if mls_listing:
-                mls_photos = mls_listing.get("photos", [])
-                source_label = mls_listing.get("mls_id", "MLS")
-
-    # Strategy 5: Search Bridge API by address
+    # Strategy 3: Search Bridge API by address (with $expand=Media for photos)
     if not mls_photos and listing.get("address"):
         from services.mls_service import mls_service
+        await mls_service._ensure_configured()
         if mls_service.is_configured():
             addr_search = listing["address"].split(",")[0].strip()
-            search_result = await mls_service.search_properties(
-                address=addr_search, limit=5
-            )
+            # Use get_property_details via address search to ensure we get all photos
+            search_result = await mls_service.search_properties(address=addr_search, limit=3)
             for prop in search_result.get("properties", []):
-                if prop.get("photos"):
-                    mls_photos = prop.get("photos", [])
-                    source_label = prop.get("mls_id", "MLS")
-                    # Also fetch full details for all photos (search only returns 10)
-                    if source_label and len(mls_photos) <= 10:
-                        detail = await mls_service.get_property_details(mls_id=source_label)
-                        if not detail.get("error"):
-                            mls_photos = detail.get("all_photos", mls_photos)
-                    break
+                prop_mls_id = prop.get("mls_id")
+                if prop_mls_id:
+                    detail = await mls_service.get_property_details(mls_id=prop_mls_id)
+                    if not detail.get("error"):
+                        all_ph = detail.get("all_photos", detail.get("photos", []))
+                        if all_ph:
+                            mls_photos = all_ph
+                            source_label = prop_mls_id
+                            break
 
     if not mls_photos:
         raise HTTPException(
@@ -1583,6 +1589,7 @@ async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Admin access required")
 
     from services.mls_service import mls_service
+    await mls_service._ensure_configured()
 
     if not mls_service.is_configured():
         raise HTTPException(status_code=400, detail="MLS API not configured. Add your Bridge API key in Settings → MLS.")
