@@ -264,6 +264,17 @@ async def cancel_scheduled_card(queue_id: str, current_user: dict = Depends(get_
     return {"message": "Scheduled card cancelled"}
 
 
+@router.post("/run-daily-check")
+async def run_daily_check_now(current_user: dict = Depends(get_current_user)):
+    """Manually trigger the daily birthday card check (for testing)."""
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    from server import scheduled_birthday_cards
+    import asyncio
+    asyncio.create_task(scheduled_birthday_cards())
+    return {"message": "Daily birthday card check triggered — check the queue in a few seconds"}
+
+
 @router.get("/upcoming-occasions")
 async def get_upcoming_occasions(
     days: int = 30,

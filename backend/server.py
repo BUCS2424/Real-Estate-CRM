@@ -79,6 +79,118 @@ async def scheduled_monthly_audit_job():
     except Exception as exc:
         logger.error(f"Monthly audit failed: {exc}")
 
+
+
+async def scheduled_birthday_cards():
+    """
+    Daily job (8 AM ET): find contacts whose birthday/anniversary falls today
+    (adjusted by days_before_send) and send Jacquie Lawson cards automatically.
+    Only fires when JL is configured and enabled.
+    """
+    logger.info("Running daily birthday & anniversary card check...")
+    try:
+        config = await db.settings.find_one({"type": "jacquie_lawson_config"})
+        if not config or not config.get("enabled"):
+            logger.info("Jacquie Lawson: not enabled — skipping birthday card job")
+            return
+
+        jl_email    = config.get("email", "")
+        jl_password = config.get("password", "")
+        if not jl_email or not jl_password:
+            logger.warning("Jacquie Lawson: credentials not set — skipping")
+            return
+
+        days_before = int(config.get("days_before_send", 0))
+        sender_name = config.get("sender_name", "Sheila Desautels")
+        today       = datetime.now(timezone.utc).date()
+        target_day  = today + timedelta(days=days_before)
+
+        card_urls = {
+            "birthday":                 config.get("default_birthday_card", ""),
+            "anniversary":              config.get("default_anniversary_card", ""),
+            "home_purchase_anniversary": config.get("default_home_anniversary_card", ""),
+        }
+        auto_flags = {
+            "birthday":                 config.get("auto_send_birthday", True),
+            "anniversary":              config.get("auto_send_anniversary", True),
+            "home_purchase_anniversary": config.get("auto_send_home_anniversary", True),
+        }
+
+        fields = [
+            ("birthday",                 "Birthday"),
+            ("anniversary",              "Anniversary"),
+            ("home_purchase_anniversary","Home Purchase Anniversary"),
+        ]
+
+        contacts = await db.contacts.find(
+            {"$or": [{f: {"$ne": None}} for f, _ in fields]},
+            {"_id": 0}
+        ).to_list(5000)
+
+        queued = 0
+        for contact in contacts:
+            email = contact.get("email") or contact.get("email_2") or contact.get("email_3")
+            if not email:
+                continue
+            name = (contact.get("display_name") or contact.get("name") or
+                    f"{contact.get('first_name','')} {contact.get('last_name','')}".strip())
+
+            for field_key, label in fields:
+                if not auto_flags.get(field_key):
+                    continue
+                card_url = card_urls.get(field_key, "")
+                if not card_url:
+                    continue
+                date_val = contact.get(field_key)
+                if not date_val:
+                    continue
+                try:
+                    parsed = (
+                        datetime.fromisoformat(str(date_val).replace("Z", "+00:00")).date()
+                        if isinstance(date_val, str) else date_val
+                    )
+                    this_year = parsed.replace(year=today.year)
+                    if this_year < today:
+                        this_year = parsed.replace(year=today.year + 1)
+                    if this_year != target_day:
+                        continue
+
+                    # Skip if already sent this year
+                    if await db.card_history.find_one({
+                        "contact_id": contact.get("id"),
+                        "occasion":   field_key,
+                        "sent_at":    {"$gte": f"{today.year}-01-01"},
+                    }):
+                        continue
+
+                    qid = str(uuid.uuid4())
+                    msg = f"Happy {label}, {contact.get('first_name', name)}! Wishing you all the best."
+                    entry = {
+                        "id": qid, "contact_id": contact.get("id"),
+                        "contact_name": name, "recipient_email": email,
+                        "card_url": card_url, "occasion": field_key,
+                        "message": msg, "sender_name": sender_name,
+                        "scheduled_date": None, "status": "processing",
+                        "created_by": "scheduler",
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                    await db.card_queue.insert_one(entry)
+
+                    from services.jacquie_lawson_service import jl_service
+                    import asyncio as _aio
+                    _aio.create_task(jl_service.send_card(
+                        qid, jl_email, jl_password, email, card_url, msg, sender_name
+                    ))
+                    logger.info(f"Birthday card queued: {name} — {label} on {this_year}")
+                    queued += 1
+                except Exception as e:
+                    logger.warning(f"Birthday card skip ({name}, {field_key}): {e}")
+
+        logger.info(f"Birthday card job complete: {queued} card(s) queued")
+    except Exception as e:
+        logger.error(f"Birthday card scheduler error: {e}")
+
+
 @app.on_event("startup")
 async def start_scheduler():
     """Initialize and start the background scheduler"""
@@ -114,6 +226,16 @@ async def start_scheduler():
         IntervalTrigger(days=30),
         id="monthly_compliance_audit",
         name="Monthly Compliance & Security Audit",
+        replace_existing=True
+    )
+    jobs_added = True
+
+    # Schedule birthday / anniversary card sending — runs daily at 8:00 AM Eastern
+    scheduler.add_job(
+        scheduled_birthday_cards,
+        CronTrigger(hour=8, minute=0, timezone=ZoneInfo("America/New_York")),
+        id="birthday_cards_daily",
+        name="Daily Birthday & Anniversary Card Sending",
         replace_existing=True
     )
     jobs_added = True
