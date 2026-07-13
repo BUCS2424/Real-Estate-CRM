@@ -7,22 +7,9 @@ import { Badge } from '../../../components/ui/badge';
 import { Switch } from '../../../components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
 import { 
-  Heart, 
-  Loader2, 
-  Save, 
-  CheckCircle2, 
-  XCircle, 
-  Eye, 
-  EyeOff,
-  ExternalLink,
-  RefreshCw,
-  Calendar,
-  Gift,
-  Home,
-  Cake,
-  Mail,
-  Clock,
-  Send
+  Heart, Loader2, Save, CheckCircle2, XCircle, Eye, EyeOff,
+  ExternalLink, RefreshCw, Calendar, Gift, Home, Cake,
+  Mail, Clock, Send, Play, AlertCircle, Check
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../../../lib/api';
@@ -31,6 +18,7 @@ export const JacquieLawsonSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [running, setRunning] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [config, setConfig] = useState({
     email: '',
@@ -39,7 +27,7 @@ export const JacquieLawsonSettings = () => {
     auto_send_birthday: true,
     auto_send_anniversary: true,
     auto_send_home_anniversary: true,
-    days_before_send: 0, // 0 = on the day, 1 = day before, etc.
+    days_before_send: 0,
     default_birthday_card: '',
     default_anniversary_card: '',
     default_home_anniversary_card: '',
@@ -47,10 +35,14 @@ export const JacquieLawsonSettings = () => {
   });
   const [status, setStatus] = useState(null);
   const [stats, setStats] = useState(null);
+  const [upcoming, setUpcoming] = useState([]);
+  const [queue, setQueue] = useState([]);
 
   useEffect(() => {
     fetchConfig();
     fetchStats();
+    fetchUpcoming();
+    fetchQueue();
   }, []);
 
   const fetchConfig = async () => {
@@ -60,8 +52,7 @@ export const JacquieLawsonSettings = () => {
         setConfig(prev => ({ ...prev, ...res.data }));
         setStatus(res.data.configured ? 'configured' : 'not_configured');
       }
-    } catch (error) {
-      console.log('JL config not found, using defaults');
+    } catch {
       setStatus('not_configured');
     } finally {
       setLoading(false);
@@ -72,9 +63,27 @@ export const JacquieLawsonSettings = () => {
     try {
       const res = await api.get('/jacquie-lawson/stats');
       setStats(res.data);
-    } catch (error) {
-      console.error('Failed to fetch JL stats');
-    }
+    } catch {}
+  };
+
+  const fetchUpcoming = async () => {
+    try {
+      const res = await api.get('/jacquie-lawson/upcoming-occasions?days=30');
+      setUpcoming(res.data?.upcoming || []);
+    } catch {}
+  };
+
+  const fetchQueue = async () => {
+    try {
+      const res = await api.get('/jacquie-lawson/queue');
+      setQueue(res.data?.cards || []);
+    } catch {}
+  };
+
+  const refreshAll = () => {
+    fetchStats();
+    fetchUpcoming();
+    fetchQueue();
   };
 
   const handleSave = async () => {
@@ -82,18 +91,15 @@ export const JacquieLawsonSettings = () => {
       toast.error('Email and password are required');
       return;
     }
-    
     setSaving(true);
     try {
       await api.post('/jacquie-lawson/config', config);
-      toast.success('Jacquie Lawson settings saved');
+      toast.success('Settings saved');
       setStatus('configured');
-      fetchStats();
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to save settings');
-    } finally {
-      setSaving(false);
-    }
+      refreshAll();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Failed to save settings');
+    } finally { setSaving(false); }
   };
 
   const handleTest = async () => {
@@ -101,25 +107,33 @@ export const JacquieLawsonSettings = () => {
       toast.error('Please enter credentials first');
       return;
     }
-    
     setTesting(true);
     try {
-      const res = await api.post('/jacquie-lawson/test', {
-        email: config.email,
-        password: config.password
-      });
+      const res = await api.post('/jacquie-lawson/test', { email: config.email, password: config.password });
       if (res.data.success) {
-        toast.success('Login successful! Your credentials are valid.');
+        toast.success('Login successful! Credentials are valid.');
         setStatus('configured');
       } else {
         toast.error(res.data.error || 'Login failed');
         setStatus('error');
       }
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Connection test failed');
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Connection test failed');
       setStatus('error');
+    } finally { setTesting(false); }
+  };
+
+  const handleRunNow = async () => {
+    setRunning(true);
+    try {
+      const res = await api.post('/jacquie-lawson/run-daily-check');
+      toast.success(res.data.message || 'Daily check triggered');
+      // Refresh stats/queue after a moment
+      setTimeout(() => { refreshAll(); }, 3000);
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Failed to run check');
     } finally {
-      setTesting(false);
+      setTimeout(() => setRunning(false), 2000);
     }
   };
 
@@ -146,7 +160,7 @@ export const JacquieLawsonSettings = () => {
       {/* Status Card */}
       <Card className={status === 'configured' ? 'border-green-500/50' : 'border-orange-500/50'}>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex items-center justify-between flex-wrap gap-3">
             <span className="flex items-center gap-2">
               Account Status
               {status === 'configured' ? (
@@ -157,13 +171,30 @@ export const JacquieLawsonSettings = () => {
                 <Badge className="bg-orange-500/20 text-orange-600">Not Configured</Badge>
               )}
             </span>
-            <Button variant="outline" size="sm" onClick={fetchStats}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* Manual trigger button */}
+              <Button
+                size="sm"
+                onClick={handleRunNow}
+                disabled={running || status !== 'configured'}
+                className="bg-pink-500 hover:bg-pink-600 text-white gap-1.5"
+                title="Run the daily birthday check right now (don't wait until 8 AM)"
+              >
+                {running
+                  ? <Loader2 className="w-3.5 h-3.5 animate-spin"/>
+                  : <Play className="w-3.5 h-3.5"/>}
+                {running ? 'Running…' : 'Run Check Now'}
+              </Button>
+              <Button variant="outline" size="sm" onClick={refreshAll}>
+                <RefreshCw className="w-4 h-4 mr-1.5"/>Refresh
+              </Button>
+            </div>
           </CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">
+            Auto-check runs daily at <strong>8:00 AM Eastern</strong>. Use "Run Check Now" to trigger immediately after setup or for testing.
+          </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
               <p className="text-muted-foreground">Cards Sent</p>
@@ -182,6 +213,60 @@ export const JacquieLawsonSettings = () => {
               <p className="font-medium text-2xl text-blue-600">{stats?.upcoming_7_days || 0}</p>
             </div>
           </div>
+
+          {/* Upcoming occasions list */}
+          {upcoming.length > 0 && (
+            <div className="border-t pt-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Upcoming in 30 days ({upcoming.length})
+              </p>
+              <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                {upcoming.map((occ, i) => (
+                  <div key={i} className="flex items-center justify-between text-sm py-1 border-b border-border/40 last:border-0">
+                    <div className="flex items-center gap-2">
+                      {occ.occasion === 'Birthday' ? <Cake className="w-3.5 h-3.5 text-pink-500"/>
+                        : occ.occasion === 'Anniversary' ? <Heart className="w-3.5 h-3.5 text-red-400"/>
+                        : <Home className="w-3.5 h-3.5 text-blue-500"/>}
+                      <span className="font-medium">{occ.contact_name}</span>
+                      <span className="text-muted-foreground">{occ.occasion}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-muted-foreground text-xs">{occ.date}</span>
+                      {occ.days_until === 0
+                        ? <Badge className="bg-pink-500/20 text-pink-600 text-[10px] py-0">Today!</Badge>
+                        : occ.days_until <= 3
+                        ? <Badge className="bg-amber-500/20 text-amber-600 text-[10px] py-0">In {occ.days_until}d</Badge>
+                        : <span className="text-xs text-muted-foreground">in {occ.days_until}d</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Queue */}
+          {queue.length > 0 && (
+            <div className="border-t pt-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Card Queue ({queue.length})
+              </p>
+              <div className="space-y-1.5">
+                {queue.slice(0,5).map((c, i) => (
+                  <div key={i} className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{c.contact_name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground capitalize">{c.occasion}</span>
+                      <Badge className={
+                        c.status === 'sent' ? 'bg-green-500/20 text-green-600 text-[10px] py-0'
+                        : c.status === 'failed' ? 'bg-red-500/20 text-red-600 text-[10px] py-0'
+                        : 'bg-blue-500/20 text-blue-600 text-[10px] py-0'
+                      }>{c.status}</Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
