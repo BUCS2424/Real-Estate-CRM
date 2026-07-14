@@ -836,7 +836,7 @@ async def pull_mls_images(
                         mls_photos = detail.get("all_photos", detail.get("photos", []))
                         source_label = mls_num
 
-    # Strategy 3: Search Bridge API by address (with $expand=Media for photos)
+    # Strategy 3: Search Bridge API by address (Media returns automatically)
     if not mls_photos and listing.get("address"):
         from services.mls_service import mls_service
         await mls_service._ensure_configured()
@@ -1618,7 +1618,6 @@ async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
             "access_token": token,
             "$filter":      odata_filter,
             "$top":         200,
-            "$expand":      "Media",   # ← fetch photos in one request
         }
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:

@@ -183,7 +183,7 @@ class MLSService:
         params = {
             "access_token": self.token,
             "$top": min(limit, 200),
-            "$skip": offset
+            "$skip": offset,
         }
         
         if filters:
@@ -287,28 +287,43 @@ class MLSService:
     
     async def get_property_details(self, dataset: Optional[str] = None, mls_id: str = "") -> Dict[str, Any]:
         """
-        Get full property details by MLS ID/ListingKey
+        Get full property details by MLS ID/ListingKey, including all photos.
         """
         if not self.is_configured():
             return {"error": "Bridge API not configured"}
-        
+
         ds = dataset or self.dataset
-        
+
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
-                # Try to get by ListingKey directly
                 response = await client.get(
                     f"{self.base_url}/OData/{ds}/Property('{mls_id}')",
                     params={"access_token": self.token}
                 )
-                
+
                 if response.status_code == 200:
                     data = response.json()
                     return self._transform_listing_detail(data)
+
                 elif response.status_code == 404:
+                    # Fallback: search by ListingId
+                    resp2 = await client.get(
+                        f"{self.base_url}/OData/{ds}/Property",
+                        params={
+                            "access_token": self.token,
+                            "$filter": f"ListingId eq '{mls_id}'",
+                            "$top": 1,
+                        }
+                    )
+                    if resp2.status_code == 200:
+                        items = resp2.json().get("value", [])
+                        if items:
+                            return self._transform_listing_detail(items[0])
                     return {"error": "Property not found"}
+
                 else:
                     return {"error": f"Bridge API error: {response.status_code}"}
+
         except Exception as e:
             return {"error": f"Bridge API connection error: {str(e)}"}
     

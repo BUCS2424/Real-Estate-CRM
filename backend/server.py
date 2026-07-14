@@ -111,7 +111,6 @@ async def scheduled_mls_sync():
                 "access_token": token,
                 "$filter": f"{agent_filter} and StandardStatus eq '{std_status}'",
                 "$top": 200,
-                "$expand": "Media",
             }
             try:
                 async with httpx.AsyncClient(timeout=30.0) as client:
