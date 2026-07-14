@@ -19,12 +19,38 @@ router = APIRouter(prefix="/mls-listings", tags=["MLS Listings Management"])
 AGENT_MLS_ID = os.environ.get("AGENT_MLS_ID", "261507429")
 
 
-def _build_property_images(photo_urls: Optional[List[str]]) -> List[dict]:
+def _normalise_photos(listing: dict) -> dict:
+    """Ensure the 'photos' field is always a plain Python list of URL strings."""
+    import ast as _ast
+    raw = listing.get("photos", [])
+    if isinstance(raw, str):
+        try:
+            raw = _ast.literal_eval(raw)
+        except Exception:
+            raw = []
+    if not isinstance(raw, list):
+        raw = []
+    listing["photos"] = [p for p in raw if isinstance(p, str) and p.startswith("http")]
+    if listing["photos"] and not listing.get("primary_photo"):
+        listing["primary_photo"] = listing["photos"][0]
+    return listing
+
+
+def _build_property_images(photo_urls) -> List[dict]:
+    """Build image objects from a list (or stringified list) of photo URLs."""
+    import ast as _ast
+    # Handle stringified Python list stored in older documents  e.g. "['https://...','https://...']"
+    if isinstance(photo_urls, str):
+        try:
+            photo_urls = _ast.literal_eval(photo_urls)
+        except Exception:
+            photo_urls = []
     images: List[dict] = []
     seen = set()
     for url in photo_urls or []:
         clean = str(url).strip() if url else ""
-        if not clean or clean in seen:
+        # Must be a valid HTTP URL, not a lone character or garbage
+        if not clean or not clean.startswith("http") or clean in seen:
             continue
         seen.add(clean)
         images.append({"url": clean, "id": str(uuid.uuid4())})
@@ -67,6 +93,9 @@ async def get_mls_listings(
         {"_id": 0}
     ).sort("pulled_at", -1).skip(offset).limit(limit).to_list(limit)
     
+    # Normalise photos field on every listing before returning to frontend
+    listings = [_normalise_photos(l) for l in listings]
+    
     return {
         "listings": listings,
         "total": total,
@@ -99,6 +128,39 @@ async def get_mls_stats(current_user: dict = Depends(get_current_user)):
             "closed": closed
         }
     }
+
+
+
+@router.post("/fix-photos")
+async def fix_stringified_photos(current_user: dict = Depends(get_current_user)):
+    """
+    One-time migration: convert any mls_listings where 'photos' is stored
+    as a stringified Python list back into a proper JSON array.
+    Safe to run multiple times.
+    """
+    if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    import ast as _ast
+    fixed = 0
+    cursor = db.mls_listings.find({"photos": {"$type": "string"}}, {"_id": 1, "photos": 1})
+    async for doc in cursor:
+        raw = doc.get("photos", "")
+        try:
+            parsed = _ast.literal_eval(raw) if isinstance(raw, str) else raw
+            if isinstance(parsed, list):
+                clean = [p for p in parsed if isinstance(p, str) and p.startswith("http")]
+                await db.mls_listings.update_one(
+                    {"_id": doc["_id"]},
+                    {"$set": {"photos": clean, "photo_count": len(clean),
+                              "primary_photo": clean[0] if clean else None}}
+                )
+                fixed += 1
+        except Exception:
+            pass
+
+    return {"message": f"Fixed {fixed} listings with stringified photos"}
+
 
 
 @router.post("/pull")
@@ -233,6 +295,8 @@ async def get_mls_listing(
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
     
+    # Ensure photos is always a proper list, never a stringified Python list
+    listing = _normalise_photos(listing)
     return listing
 
 
