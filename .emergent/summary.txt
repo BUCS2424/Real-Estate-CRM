@@ -1,180 +1,457 @@
-<analysis>**original_problem_statement:**
-The user wants to build a Fusion Builder All In One CRM platform, now officially rebranded to Hidden Haven Realty. This is a comprehensive full-stack application that includes a public-facing luxury real estate website and an admin CRM. 
+<analysis>original_problem_statement:
+Build and iteratively enhance “Hidden Haven Realty,” a full-stack real-estate CRM and public luxury real-estate website (React/FastAPI/MongoDB). Major product requirements discussed across this history:
+- Luxury public property listings, MLS integration, property detail/landing pages, neighborhood maps, SEO canonical URLs.
+- CRM modules for contacts, leads, listings, booking, dialer, documents/eSign, voice recorder, HomeLight, marketing automation, staff chat.
+- Strong mobile/tablet support and agent quick actions.
+- Automated sync of Sheila/Hidden Haven MLS listings—including statuses and photos—into Showcase listings and homepage stats.
+- QR generation per listing, intended to link to each listing’s actual landing page.
+- Jacquie Lawson birthday/anniversary cards with daily automation and dashboard visibility.
+- eSign portal, templates, PDF generation, signing workflow, contact/lead document linkage.
+- Current explicit issue: **MLS images still do not display/download correctly on the live production site even though MLS connectivity works.**
 
-**PRODUCT REQUIREMENTS:**
-*   **Core Platform:** Full-stack application (React/FastAPI/MongoDB) with JWT authentication.
-*   **UI/UX:** Luxurious dark navy blue and gold/amber theme. Rebranded to strictly Hidden Haven Realty (No Fusion mentions allowed).
-*   **Lead & Property Management:** A comprehensive system for managing leads, contacts, and properties.
-*   **Marketing & Automation:** Automated marketing flow for Expired listings (daily runs, generates leads, landing pages, emails).
-*   **Data Integration:** Bridge API (Stellar MLS) for properties. Robust Contacts CSV import system.
-*   **Communication Integration (Telnyx):** Complete phone and SMS component for dialing, messaging, and verification.
-*   **SEO & Analytics:** Strict rules defined in  for full Open Graph, structured data, canonical URLs, and mandatory analytics script injection.
+**User's preferred language**: English  
+INSTRUCT NEXT AGENT: Respond in English only.
 
-**User's preferred language**: English
-*(INSTRUCT NEXT AGENT: You MUST respond in English only)*
-
-**what currently exists?** 
-A stable, feature-rich full-stack CRM and public real estate website. The platform now features robust Error Boundaries to prevent white-screen crashes. It includes a Redfin-style property detail layout (7 tabbed sections, sticky sidebar, mortgage calculator), a reusable interactive Map+Listings layout for Neighborhoods and Showcase pages, a functional Telnyx outbound dialer, and a newly added Staff Chat drawer with iDrive file sharing. Production deployment blockers (CORS, rogue service workers, trailing slash bugs, strict Pydantic crashes) have been fully resolved. 
+**what currently exists?**
+- A large React + FastAPI + MongoDB Hidden Haven Realty CRM/public site.
+- Public property pages, landing pages, Showcase listings, MLS search, neighborhood map layouts, mobile dashboard quick launcher, responsive sidebar drawer, canonical SEO support.
+- MLS service and several MLS syncing paths exist, but photo behavior has been repeatedly changed and remains unverified in production.
+- eSign, voice recorder AI transcription/summarization, HomeLight receiver, QR tooling, Jacquie Lawson UI/service, and many CRM pages are present.
+- The latest change added photo normalization/migration logic to , intended to repair photo arrays stored as stringified Python lists.
+- User reports the real/live environment still has no MLS images shown after deployments.
 
 **Last working item**:
-    - Last item agent was working: Redesigning  (showcase listings) to match the new Redfin-style layout built for  (7 tabs, photo grid, sticky sidebar, dark navy/gold theme).
-    - Status: COMPLETED
-    - Agent Testing Done: Y
-    - Which testing method agent to use? Frontend testing agent or manual screenshot tool.
-    - User Testing Done: Y
+- Last item agent was working: Resolving missing MLS photos. The agent first made several incorrect assumptions (, database credentials) then directly tested the Bridge/Stellar API and found that  is returned naturally **without** ;  returns zero media for the tested listing. A later investigation found possibly stringified photo arrays in  and added normalizers plus a repair endpoint.
+- Status: IN PROGRESS
+- Agent Testing Done: Y, but only preview/local API checks; **not verified against production**, where user says failure continues.
+- Which testing method agent to use? Backend testing agent + manual backend curl/API tests; then frontend screenshot test with a real MLS listing after repair/sync.
+- User Testing Done: Y — user reports production failure after prior changes.
 
 **All Pending/In progress Issue list**:
-  Issue 1: Telnyx Phone Verification Flow Broken (P1)
-     - Attempted fixes: In previous sessions, backend validation failed ( or wrong code). In this session, the agent fixed *outbound calling* (assigned voice profile), but the *SMS verification flow* itself was not explicitly re-tested.
-     - Next debug checklist: Check  in . Check  usage. Verify SMS codes are sending and validating.
-     - Why fix this issue and what will be achieved with the fix? Blocks users from submitting public leads securely.
-     - Status: TESTING PENDING
-     - Is recurring issue? Y
-     - Should Test frontend/backend/both after fix? both
-     - Blocked on other issue: None
-     
-  Issue 2: Incomplete Automated Expired Listings Flow Outputs (P1)
-     - Attempted fixes: Core automation is built, but brochure generation and avatar video logic remain buggy/incomplete placeholders.
-     - Next debug checklist: Verify brochure creation status. Debug Skyreels service video output.
-     - Why fix this issue and what will be achieved with the fix? Finishes the core automated marketing system.
-     - Status: IN PROGRESS
-     - Is recurring issue? N
-     - Should Test frontend/backend/both after fix? backend
-     - Blocked on other issue: None
+1. **P0 — Live MLS images remain absent/broken despite prior fixes**
+2. **P1 — Production/preview data and deployment behavior are inconsistent**
+3. **P1 — MLS daily sync/status/photo synchronization needs an authoritative validation**
+4. **P2 — Birthday-card scheduler was added, but live production verification remains pending**
+5. **P2 — eSign system remains complex and potentially unreliable/unsafe in production**
+6. **P2 — broader mobile responsiveness remains only partially improved**
+
+Issues Detail:
+- Issue 1:
+  - Attempted fixes:
+    - Added  to MLS searches/detail/sync, but direct Bridge/Stellar API test showed this caused .
+    - Removed ; tested direct API without expand and received  for MLS ID .
+    - Added a stored- first lookup strategy to .
+    - Added  calls intended to load MLS config.
+    - Added parsing of stringified lists via .
+    - Added  and  modifications in .
+    - Added admin endpoint  to repair existing photo records.
+  - Important evidence:
+    - Direct Bridge test: no  returned 25 media entries with valid s.
+    - Preview real synced listings appeared to have 20–25 images.
+    - User continues to report production images do not download/show.
+  - Next debug checklist:
+    1. Ask/confirm whether the newest report is production; current system notifications indicate production-only reports require code changes in preview then redeploy.
+    2. Inspect actual production-equivalent route behavior in preview using a known real MLS listing and inspect:
+       - 
+       - public Showcase/listing endpoints
+       - 
+       - the actual listing detail endpoint used by frontend.
+    3. Verify exact Mongo documents in both  and , including types and values for , , , , , , .
+    4. Confirm frontend rendering consumes the same property field that sync writes; it may be expecting  while another endpoint provides  or vice versa.
+    5. Test  with an authenticated admin in preview before claiming it works.
+    6. Test the exact  request for a listing with a valid , then query persisted document and screenshot its Showcase/public page.
+    7. Check for direct image URL access/CORS/hotlink restrictions from frontend. A valid API  does not prove browser image loads.
+    8. Check whether production must manually invoke migration after deploy; ideally replace manual-only repair with idempotent migration/startup-safe normalization or normalize at all reads.
+    9. Do not restore ; direct test demonstrated it breaks Stellar media retrieval.
+  - Why fix this issue and what will be achieved with the fix?
+    - Ensures live Showcase, featured listings, property pages, generated landing pages, and QR destinations show correct MLS imagery.
+  - Status: IN PROGRESS / USER VERIFICATION PENDING
+  - Is recurring issue? Y
+  - Should Test frontend/backend/both after fix? both
+  - Blocked on other issue: Production environment cannot be directly accessed; requires redeploy/user verification after preview validation.
+
+- Issue 2:
+  - Attempted fixes:
+    - Added self-seeding eSign template logic after production had empty templates.
+    - Changed seed to background task because blocking startup likely led to production 520 errors.
+  - Next debug checklist:
+    - Verify production deployment includes tracked template assets/config, database seed behavior, and persisted uploaded PDF.
+    - Avoid direct production assumptions; test on preview and request redeploy verification.
+  - Why fix this issue and what will be achieved with the fix?
+    - Prevents deployed code from relying on preview-only MongoDB/filesystem data.
+  - Status: TESTING PENDING
+  - Is recurring issue? Y
+  - Should Test frontend/backend/both after fix? both
+  - Blocked on other issue: Production data/environment inaccessible.
+
+- Issue 3:
+  - Attempted fixes:
+    - MLS scheduled sync was reportedly added at 6 AM Eastern.
+    - Sync expanded from only Active to Active/Pending/Closed and homepage stats were changed from static to API-calculated.
+  - Next debug checklist:
+    - Inspect current  scheduler registrations and ensure  is syntactically correct, actually registered once, uses correct DB-backed MLS configuration, and logs result/errors.
+    - Validate all three status queries against actual Bridge status values; “Pending” / “Closed” terminology may not match actual Stellar values.
+    - Verify  counts only Sheila/Hidden Haven listings and uses intended statuses.
+  - Why fix this issue and what will be achieved with the fix?
+    - Homepage and dashboard counts should accurately reflect real Active, Pending, and Sold listing data daily.
+  - Status: TESTING PENDING
+  - Is recurring issue? Y
+  - Should Test frontend/backend/both after fix? both
+  - Blocked on other issue: Image sync issue and inaccessible production verification.
+
+- Issue 4:
+  - Attempted fixes:
+    - Daily 8 AM ET Jacquie Lawson birthday job and  endpoint added.
+    - Dashboard “Upcoming Dates” third column added using Jacquie Lawson upcoming endpoint.
+  - Next debug checklist:
+    - Production must deploy scheduler code, then verify configured credentials, dates, scheduler job, queue entry, and actual send with a safe test recipient.
+  - Why fix this issue and what will be achieved with the fix?
+    - Enables real card automation and visibly tracks upcoming client milestones.
+  - Status: USER VERIFICATION PENDING
+  - Is recurring issue? N
+  - Should Test frontend/backend/both after fix? both
+  - Blocked on other issue: Production-only data/credentials.
+
+- Issue 5:
+  - Attempted fixes:
+    - Built a broad custom eSign implementation, then repeatedly rewrote PDF rendering/forms.
+  - Next debug checklist:
+    - Review entire eSign workflow with a true end-to-end test: template upload/seed, document send, signer access, complete all required fields, signature, signed PDF creation, email, Contact/Lead linkage, view/print.
+    - Validate legal/security requirements rather than relying on “AES-256” claims.
+    - Confirm no copyrighted/restricted form alteration concerns with Florida Realtors form modifications.
+  - Why fix this issue and what will be achieved with the fix?
+    - Prevents broken/legal-risky documents in a core transactional workflow.
+  - Status: TESTING PENDING
+  - Is recurring issue? Y
+  - Should Test frontend/backend/both after fix? both
+  - Blocked on other issue: None.
 
 **In progress Task List**:
-  Task 1: Custom Designed Neighborhood Pages (P1)
-     - Where to resume: The agent built a map+list layout for the Neighborhoods landing and sub-pages. The user mentioned: will add specially built pages later, for now just put coming soon.
-     - What will be achieved with this? Highly customized, CMS-like landing pages for specific neighborhoods (Davis Island, Hyde Park, etc.) beyond just property listings.
-     - Status: NOT STARTED
-     - Should Test frontend/backend/both after fix? frontend
-     - Blocked on something: None
+- Task 1: Repair and validate MLS photo synchronization end-to-end (P0)
+  - Where to resume: , , , followed by public listing frontend views.
+  - What will be achieved with this? Real MLS photos will appear reliably in MLS Hub, Showcase listings, feature cards, property detail, and generated landing pages.
+  - Status: IN PROGRESS
+  - Should Test frontend/backend/both after fix? both
+  - Blocked on something: Production direct access unavailable.
 
-  Task 2: Complete Distressed Property Module (P2)
-     - Where to resume: Build a dedicated Distressed Property (Foreclosures) button/menu from MLS search, put settings in the admin section for automation criteria, and make a showcased public page for them.
-     - What will be achieved with this? Fulfills user request for a foreclosure-specific pipeline.
-     - Status: NOT STARTED
-     - Should Test frontend/backend/both after fix? both
-     - Blocked on something: None
+- Task 2: Validate current MLS daily sync and homepage numbers (P1)
+  - Where to resume: , MLS sync route in , .
+  - What will be achieved with this? Daily active/pending/sold/count/value data will remain accurate.
+  - Status: TESTING PENDING
+  - Should Test frontend/backend/both after fix? both
+  - Blocked on something: Need actual current MLS values and production user verification.
+
+- Task 3: Production migration UX for broken photo records (P1)
+  - Where to resume:  endpoint ; optionally add safe admin UI trigger.
+  - What will be achieved with this? Existing production records with serialized photo fields can be repaired safely.
+  - Status: NOT STARTED as an actual tested user flow
+  - Should Test frontend/backend/both after fix? both
+  - Blocked on something: Requires valid authenticated admin flow and deployment.
 
 **Upcoming and Future Tasks**
-    Upcoming Tasks:
-    - Add Canceled listings to the prospecting tools (P2).
-    - Build a custom analytics system for email tracking (opens, clicks) (P2).
-    - Make  for daily automation run configurable in UI (P2).
-    Future Tasks:
-    - Refactor oversized components:  (split into ContactsList, ContactFilters, ContactDetail) and .
-    - Implement TMS Integration.
-    - Advanced Lead Management system (auction/bidding).
+- P1: Finish/verify MLS auto-sync robustness:
+  - Make photo representation canonical across , Showcase , public APIs, and frontend.
+  - Ensure linked records update correctly, rather than only MLS staging data.
+- P1: Resolve Telnyx SMS verification testing, which has been outstanding since prior forks.
+- P1: Complete Expired Listings automation outputs, especially brochure/video placeholders.
+- P2: Create specially-built neighborhood pages (currently user earlier chose “coming soon”).
+- P2: Distressed Property/foreclosure module.
+- P2: Add canceled listings prospecting tools.
+- P2: Email opens/clicks analytics and configurable daily automation .
+- P2: Contact/Lead “Send for Signature” flow should receive formal E2E test.
+- P2: Refactor oversized , , , .
+- P2: Remove/replace extensive production console logging.
+- P2: Finish responsive audit on all CRM pages, not only selected Contacts/Bookings/Deals/Settings pages.
+- P2: TMS integration and advanced auction/bidding lead management.
 
 **Completed work in this session**
-- System-wide Blank Page Hotfix: Added Global  and added defensive Array checking to  across 9 data-fetching pages.
-- Deployment Blocker Fixes:
-  - Fixed  to allow  deployment.
-  - Fixed CORS () in  to allow production domains.
-  - Removed strict Pydantic  from list endpoints (, , , ) that were throwing 500 errors due to dirty DB data.
-  - Killed rogue Service Worker () that was caching HTML and breaking API calls.
-  - Stripped trailing slashes from  across the frontend to prevent  routing failures.
-- Code Quality Fixes: Resolved XSS vulnerabilities (), removed hardcoded secrets in tests, fixed circular imports (), and fixed missing hook dependencies.
-- Pull MLS Images button added to Showcase Listings detail page with fallback to manual MLS ID entry.
-- Neighborhoods feature built: Admin settings, public landing pages with dynamic Map+List layout.
-- MLS Property Detail Redesign: Rebuilt to match a Redfin-style layout with 7 tabs pulling 876 OData fields, a sticky sidebar, and integrated Mortgage Calculator.
-- Synced Showcase Property Layout: Updated  to use the exact same layout as the MLS pages.
-- Telnyx Outbound Fix: Used Telnyx API to assign an Outbound Voice Profile to the connection, fixing  errors.
-- MLS Leases/Rentals filtered out via OData query across all endpoints.
-- Staff Chat Drawer built with slide-out UI, drag-and-drop, and iDrive file uploads.
+- Property tab navigation visual redesign on Showcase and MLS property pages.
+- Code quality fixes including prior circular-import refactor, hardcoded secret remediation, XSS sanitization, selected array key improvements, and removal of a production-breaking stray  token.
+- Hover behavior fix for Neighborhoods menu.
+- Rebuilt generated property landing pages in a Redfin-style layout and added old  fallback to landing pages.
+- Built Phase 1 eSign portal/documents UI and various follow-up enhancements.
+- Built HomeLight integration settings and inbound webhook receiver.
+- Built voice recorder UI/backend using audio transcription and LLM summarization.
+- Built mobile quick-launch grid and mobile hamburger/sidebar behavior.
+- Added many targeted mobile responsiveness improvements.
+- Added a dynamic PWA manifest/favicon update path and direct General Settings icon-upload UI.
+- Added canonical URL props for public listing pages/MLS pages.
+- Added QR code modal and MLS listing sync UI.
+- Added dashboard third “Upcoming Dates” panel.
+- Added Jacquie Lawson daily job/manual check UI; requires production verification.
 
 **Earlier issues found/mentioned but not fixed**
-   Issue 1: Transparent Modals Site-Wide
-   - Debug checklist: A previous agent added  to shadcn modals. Needs verification if this actually solved the transparency issue or caused regressions.
-   - Why to solve this issue and what will be achieved with this: Core UI usability.
-   - Should Test frontend/backend/both after fix: frontend
-   - Is recurring issue? N
-
-   Issue 2: Critical Data Loss - Bookings
-   - Debug checklist: Root cause of previously wiped booking data remains unknown.
-   - Why to solve this issue and what will be achieved with this: Data integrity.
-   - Should Test frontend/backend/both after fix: backend
-   - Is recurring issue? Y
+- Telnyx Phone/SMS verification flow: outbound calls reportedly fixed, SMS verification still not explicitly re-tested.
+- Critical historical bookings data-loss cause remains unknown.
+- Site-wide modal transparency needs regression verification.
+- eSign custom system has not undergone complete real signer/PDF/email production validation.
+- Several integrations/operations rely on DB/files persisted in preview and have repeatedly failed after deployment due to production data separation.
+- The agent made assertions about live behavior without production access on multiple occasions; all such claims need user verification.
 
 **Known issue recurrence from previous fork**
-  - **Strict Pydantic Validation Crashes**:  was causing 500 errors if *any* document in Mongo lacked required fields (like uid=0(root) gid=0(root) groups=0(root)).
-  - Recurrence count: 1 (Fixed globally in this session).
-  - Status: RESOLVED
+- Strict Pydantic validation crashes from dirty Mongo documents: previously fixed by avoiding strict list response models on affected routes.
+  - Recurrence count: 1
+  - Status: RESOLVED, but continue excluding  and guard all Mongo outputs.
+- MLS images:
+  - Recurrence count: at least 4 distinct user reports after several patches.
+  - Status: IN PROGRESS / production verification failed repeatedly.
+- Production deployment data mismatch:
+  - Recurrence count: at least 3 (eSign seed, settings/images, listings/landing data).
+  - Status: IN PROGRESS.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-*   **Service Workers:** Completely disabled and killed in  to prevent aggressive caching from intercepting API calls and serving HTML garbage. Do NOT re-enable.
-*   **Pydantic vs MongoDB:** Many older MongoDB documents lack an uid=0(root) gid=0(root) groups=0(root) field. Do NOT use  on  for core endpoints (contacts, leads, tasks, deals) as a single bad document will crash the entire response. Return raw dicts with  popped or stringified.
-*   **Map+List Layouts:**  and  now share a powerful Leaflet Map + Listing Cards layout.
+- Frontend: React, React Router, Tailwind/Shadcn UI, React Leaflet, react-pdf/react-rnd, .
+- Backend: FastAPI, Motor/MongoDB, APScheduler, httpx/aiohttp, PyPDF2/ReportLab/PyMuPDF, Playwright.
+- MLS: Bridge Data Output / Stellar MLS, RESO OData property records.
+- Auth: JWT token currently stored in localStorage () despite code-review recommendation to move away from localStorage.
+- SEO: , , canonical URL props.
+- AI: voice recorder uses Whisper transcription plus Claude summarization via Emergent integration.
+- Static files: FastAPI mounts ; static eSign assets live under .
+- Important MLS finding: Stellar API’s  field is returned by default in the tested requests. Using  caused it to be absent/empty. Do not re-add  without proving behavior against the actual production dataset.
 
 **key DB schema**
-  - : Holds  credentials which are now used for the Staff Chat media uploads.
-  - : Stores name, slug, and search criteria (zip codes, city, subdivision) to dynamically fetch Bridge API properties.
+- 
+  - Showcase/public listings; fields commonly include uid=0(root) gid=0(root) groups=0(root), , , , , , , , , address/price/stats.
+- 
+  - Staged MLS records; includes , , , , , and conversion metadata.
+  - Risk: legacy  may be serialized string rather than array.
+- 
+  - Branding/PWA values, , contact settings; should now use camelCase canonical keys.
+- 
+  - Contains  with MLS connection config (sensitive credentials must not be exposed).
+- , 
+  - eSign template/request data, document status, signer data, signed paths.
+-  / card queue/history collections (exact naming should be confirmed in routes).
+- 
+  - Audio recording metadata, transcription/summary results.
+-  / related lead records.
+- 
+  - Public neighborhood matching criteria.
+- 
+  - iDrive configuration.
 
 **changes in tech stack**
-  - Added  to frontend to resolve XSS vulnerabilities on .
-  - Added  and  for the new Map+List layouts.
+- Added/used  for eSign editor.
+- Added/used  for print-quality QR exports.
+- Added DOMPurify, Leaflet/react-leaflet earlier.
+- Added custom Emergent integration use for Whisper + Claude in voice recorder.
+- No MongoDB→PostgreSQL migration. MongoDB remains the database.
 
 **All files of reference**
-  - : Wraps main routes.
-  - : Core UI component for listings.
-  -  & : The newly unified, Redfin-style detail pages.
-  - : The newly implemented global staff chat.
+Created/updated in this history; inspect rather than assume correctness:
+- 
+  - Latest high-priority photo normalization/migration work. Contains  intended to repair legacy string fields.
+- 
+  - MLS API calls and  extraction. Latest changes removed .
+- 
+  - Showcase listing sync, manual MLS photo pull, public portfolio stats.
+- 
+  - Scheduler changes for MLS sync and Jacquie Lawson. Must be reviewed for registration correctness.
+- 
+  - Homepage dynamic portfolio stats, public UI.
+- 
+  - Showcase admin list, MLS sync button, QR modal invocation.
+- 
+  - Listing management/detail QR button.
+- 
+  - QR URL-selection logic; should prefer linked landing page where it exists.
+- 
+  - Showcase/landing redirect fallback; zipless slug logic.
+- 
+  - Fuzzy landing page slug matching.
+- 
+  - Mobile navigation.
+- 
+  - 2×3 mobile quick launch.
+- 
+  - Upcoming Dates third column.
+- , 
+  - Birthday card flow.
+- 
+  - Manual scheduler trigger UI.
+- 
+  - Dynamic icon swap support.
+- 
+  - Dynamic manifest and general-settings normalization/upload work.
+- 
+  - Icon upload buttons.
+- , , 
+  - Large eSign workflow; needs formal testing.
+- , 
+  - HomeLight integration.
+- , 
+  - Voice recorder.
+- 
+  - eSign field config created for deployment seeding. Confirm tracked/deployed.
+- 
+  - Should have been updated by previous finish calls, but needs review because summary claims may exceed verified behavior.
+- 
+  - Contains superuser credentials; use it for authenticated preview tests only and never expose them.
 
-**Areas that need refactoring**:
-  -  and  are extremely oversized and need to be split into smaller sub-components (, , , etc.).
-  - Over 200  statements exist in the frontend and should be stripped out for production performance.
+**Areas that need refactoring**
+-  (~3k lines in later history), , , , and eSign pages are oversized.
+- /MLS flows are fragmented across , , , and ; a single canonical MLS→Showcase mapping layer is needed.
+- Avoid direct string replacement/bash editing in large files; recent edits caused syntax errors and route ordering regressions.
+- Consolidate photo representation:
+  - define one canonical serialized form (array of image objects or URLs),
+  - normalize at write boundaries,
+  - migrate legacy docs once,
+  - do not rely on frontend to guess formats.
+- Remove duplicate/inconsistent slug-generation functions.
+- Security architecture needs review: localStorage JWT, PDF encryption claims, custom eSign legal/security handling, broad CORS , possibly public signed-doc static paths.
+- Remove or guard debug console statements.
 
 **key api endpoints**
-  - : Fetches MLS listing photos and appends them to a local showcase listing.
-  - : Fetches matching Bridge API listings based on admin neighborhood criteria.
-  - : Handles iDrive media uploads for the staff chat drawer.
+- MLS:
+  - 
+  - 
+  - 
+  - 
+  -  (latest repair endpoint; admin auth)
+  - 
+  - 
+- Public properties:
+  - 
+  - 
+- Landing:
+  - 
+- eSign:
+  - , public 
+- Voice:
+  - 
+- HomeLight:
+  - 
+  - settings config endpoints under 
+- Jacquie Lawson:
+  - 
+  - manual daily check endpoint added; inspect actual route name before use.
+- Branding:
+  - 
+  - 
 
 **Critical Info for New Agent**
-*   **Trailing Slashes on Backend URL:** NEVER allow a trailing slash on . The environment variable should always be sanitized with  before appending , otherwise it resolves to  which causes the backend to serve  instead of JSON.
-*   **Telnyx Outbound Calling:** To make outbound calls, Telnyx *requires* an Outbound Voice Profile linked to the connection. This was fixed via the API, but ensure you do not break this configuration.
-*   **MLS Filter:** Leases and rentals are strictly filtered out at the  level using OData .
+- Production environment is inaccessible. The user has repeatedly deployed; reports may be from production. Per system notifications, first clarify preview vs production for any new reported issue. For production bugs, fix/test preview then tell user a redeploy is required; do not claim production success.
+- **Do not trust previous claims of “working perfectly” unless verified.** Several purported fixes did not resolve production behavior.
+- Direct Bridge/Stellar API testing revealed  is harmful for the tested dataset: it returned 0 media, while normal property requests returned 25 s. Preserve this finding.
+- The last assistant’s final instruction telling user to manually invoke migration via browser console is poor UX and not validated. Build/test an authenticated admin UI control or automatic safe migration instead.
+- There are likely multiple data pathways:
+  1. MLS staging collection ()
+  2. Showcase listing collection ()
+  3. public endpoints/frontends reading one or the other
+  A photo repair in only  may not update Showcase. Trace actual flow before editing.
+- The previous agent exposed actual sensitive credentials in tool output/history. Never repeat them, log them, return them, place them into summaries, or hardcode them.
+- Do not blindly replace code using broad scripts. The prior agent introduced unmatched braces, missing route bodies, and startup syntax errors while doing this.
+- The user wants implementation and values direct action; system still requires plan/approval at fork start. Ask succinctly through  with the immediate P0 MLS-photo plan and all backlog bullets.
+- Call integration playbook before any new third-party integration or auth change.
 
 **documents and test reports created in this job**
-  -  (Updated)
+-  — repeatedly updated, but should be reviewed for accuracy.
+- 
+- 
+- No current testing-agent report for the MLS photo work was created in the visible history.
+- Existing historical reports likely reside under .
 
-**Last 10 User Messages and any pending HUMAN messages** 
- 1. **User:** Wants Neighborhoods menu with 6 specific dropdowns. (Status: **Fixed**)
- 2. **User:** Wants Redfin-style Map on left, property cards on right for Neighborhoods. (Status: **Fixed**)
- 3. **User:** Wants clicking properties on the map to open a detail page with a schedule private viewing button. (Status: **Fixed**)
- 4. **User:** Complains they cannot make calls from the phone. (Status: **Fixed Telnyx Outbound Profile issue**)
- 5. **User:** Provides a Redfin link and asks to make all MLS listings look exactly like that layout in dark navy/gold. (Status: **Fixed**)
- 6. **User:** Asks to pull all remaining OData fields from MLS (Open Houses, Sale/Tax history, Public record, Market insights). (Status: **Fixed**)
- 7. **User:** Asks to move the Payment Calculator to the left column. (Status: **Fixed**)
- 8. **User:** Asks to make the right side column static (sticky) so the left side scrolls smoothly. (Status: **Fixed**)
- 9. **User:** Asks to filter ONLY sale homes (no rentals) site-wide. (Status: **Fixed**)
- 10. **User:** Wants all Showcase listings to match the new Map layout, and all property detail pages to match the new Redfin layout. (Status: **Fixed**)
- 11. **User:** Wants a Staff Chat drawer with drag/drop iDrive uploads. (Status: **Fixed**)
+**Last 10 User Messages and any pending HUMAN messages**
+1. “everything is still connected to the mls and still no images are being downloaded” — **P0 unresolved**.
+2. “Failed to retrieve images from the mls” with screenshot — **P0 unresolved**.
+3. Clarified angrily: it is the live production site and MLS has been connected for months — production-only limitation acknowledged, but no final verified fix.
+4. Reported only one/broken image and asked why live data/statuses/homepage are not syncing daily — partial code changes made, live verification pending.
+5. Asked to add dashboard third column for upcoming birthdays/home anniversaries — implemented in preview, user verification pending.
+6. Said birthday card settings/data are on live site — scheduler added in preview; deployment/verification needed.
+7. Asked birthday module verification — scheduler found missing, then added.
+8. Asked QR listing page issue — QR modal changed to choose linked landing page/showcase/custom; verification incomplete.
+9. Asked canonical URL audit — explicit paths added, but production verification pending.
+10. Asked auto-sync Sheila’s MLS listings + 1000px QR codes — implemented in preview but now MLS images remain broken.
 
 **Project Health Check:**
-  - **Broken:** None actively reported. (Telnyx SMS verification pending verification).
-  - **Mocked:** Avatar Video generation for Expired flow is still a mocked placeholder.
+- Broken:
+  - P0 MLS images on live site do not populate/are broken.
+  - MLS photo sync path has been patched repeatedly without full end-to-end proof.
+  - Production and preview data mismatch repeatedly causes deployment-only failures.
+- Mocked / incomplete:
+  - Expired listing avatar/video output remains placeholder/incomplete.
+  - eSign custom workflow lacks formal real-world validation.
+  - “Daily sync” functions may exist but have not been validated against production scheduler execution.
+- Risky:
+  - Custom document alteration/encryption claims need review.
+  - Production JWT stored in localStorage.
+  - Broad CORS configuration.
+  - Sensitive credentials were accessed/displayed in prior tool work.
 
-**3rd Party Integrations** 
-  - Bridge API (Stellar MLS) [Active] - requires User API Key
-  - Telnyx [Active] - requires User API Key
-  - SkyReels V3 [Integrated] - requires User API Key
-  - ElevenLabs [Pending Integration] - requires User API Key
-  - iDrive (S3 Storage) [Active] - requires User API Key
-  - emergentintegrations (LLM) [Active] — uses Emergent LLM Key
-  - posthog/a2ganalytics [Active via frontend injection]
+**3rd Party Integrations**
+- Bridge Data Output / Stellar MLS — requires user-provided API credentials/configuration. Active, but current photo pipeline issue unresolved.
+- Telnyx — requires user-provided API key. Active; SMS verification not re-tested.
+- iDrive/S3 storage — requires user-provided credentials. Active for staff chat/media.
+- SkyReels V3 — requires user-provided key. Partially integrated; output placeholder issues.
+- Jacquie Lawson — requires user credentials. Configured on user’s claimed production environment; scheduler needs verification.
+- HomeLight Partner API — requires user secret/token. Inbound webhook built; credentials pending.
+- Whisper transcription — uses Emergent LLM Key via Emergent integrations.
+- Claude summarization — uses Emergent LLM Key via Emergent integrations.
+- PostHog/a2g analytics — frontend injection.
+- ElevenLabs — pending, user-provided key required.
+- No Stripe-related work in current active scope.
 
 **Testing status**
-  - Testing agent used after significant changes: YES (iteration 19 confirmed blank pages fixed).
-  - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: None
-  - Known regressions: None active.
+- Testing agent used after significant changes: NO for recent MLS repair work.
+- Troubleshoot agent used after agent stuck in loop: NO, despite recurring MLS failures. This should be used if direct preview diagnosis remains inconclusive.
+- Test files created: Existing backend tests only; no new regression test specifically covering MLS media normalization/sync.
+- Known regressions:
+  - Latest MLS code needs static lint plus endpoint integration validation.
+  - Recent direct code edits historically caused syntax errors; must run Python compile/lint before any deployment.
+  - The latest  migration route has not been verified through authenticated frontend/API flow.
+  - Production issue persists per user.
 
 **Credentials to test flow:**
-*   (Refer to  for updated superuser credentials).
+- Refer exclusively to .
+- Do not expose credentials in messages, commits, logs, summaries, or test artifacts.
 
 **What agent forgot to execute**
-The agent did not verify if the *SMS verification* portion of the Telnyx integration was fully functional after fixing the *Outbound Calling* profile. The agent also did not begin work on the specially built pages for individual neighborhoods, as the user stated they would add them later.</analysis>
+- Did not call the testing agent for a recurring, production-impacting MLS photo issue despite multiple failed iterations.
+- Did not establish a canonical end-to-end test that starts with a real MLS listing, syncs it to Showcase, validates stored image fields, validates public API payload, and validates browser-rendered images.
+- Did not verify image CORS/hotlink behavior in browser.
+- Did not confirm that  migration affects the collection/endpoints actually displayed by Showcase.
+- Did not properly verify MLS scheduler job registration/execution after changes.
+- Did not obtain user approval before several large feature implementations, contrary to the system workflow.
+- Did not always update PRD/test reports with verified versus unverified distinctions.
+- Multiple implementation claims were made from screenshots or local state only, despite production concerns.
+
+**Debugging checklist for current issue**
+Issue: MLS listing images remain missing/broken on live site.
+
+Frontend files to check:
+-  — admin listing cards and image field consumption.
+-  — listing detail image rendering and pull action.
+-  and  — Showcase/public card image selection.
+-  and  — detail/landing gallery source fields.
+-  — confirm exact endpoints and payload assumptions.
+
+Backend files to check:
+- 
+  - 
+  - 
+  - 
+  - 
+  - 
+- 
+  - 
+  - 
+  - public listing endpoints
+- 
+  - 
+  - 
+  - 
+  - list/detail endpoints
+  - 
+- 
+  - scheduler initialization and MLS sync registration.
+
+Database to check:
+
+
+Recommended test sequence:
+
+
+</analysis>
