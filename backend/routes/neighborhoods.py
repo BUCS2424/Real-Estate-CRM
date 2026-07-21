@@ -7,8 +7,11 @@ from database import db
 from utils.auth import get_current_user
 from models.user import UserRole
 from services.mls_service import mls_service
+import os
 
 router = APIRouter(prefix="/neighborhoods", tags=["Neighborhoods"])
+
+AGENT_MLS_ID = os.environ.get("AGENT_MLS_ID", "261507429")
 
 # Default neighborhoods with search criteria
 DEFAULT_NEIGHBORHOODS = [
@@ -147,38 +150,53 @@ async def get_public_neighborhood(slug: str):
         raise HTTPException(status_code=404, detail="Neighborhood not found")
     neighborhood.pop("_id", None)
 
-    # Search MLS using the neighborhood criteria
+    # Search MLS using the neighborhood criteria — restricted to Sheila Desautels'
+    # own live listings only (Active/Pending). Sold homes never show in Neighborhoods.
     criteria = neighborhood.get("criteria", {})
     listings = []
+    seen_mls_ids = set()
 
     if mls_service.is_configured():
-        search_params = {
-            "status": criteria.get("status", "Active"),
-            "limit": 50,
-        }
-        if criteria.get("zip_codes"):
-            # Search per zip code and merge results
-            for zc in criteria["zip_codes"]:
+        live_statuses = ["Active", "Pending"]
+        search_limit = 50
+
+        for std_status in live_statuses:
+            if criteria.get("zip_codes"):
+                # Search per zip code and merge results
+                for zc in criteria["zip_codes"]:
+                    result = await mls_service.search_properties(
+                        zip_code=zc,
+                        status=std_status,
+                        agent_id=AGENT_MLS_ID,
+                        limit=search_limit,
+                    )
+                    for p in result.get("properties", []):
+                        # Apply subdivision filter if specified
+                        if criteria.get("subdivision"):
+                            patterns = [s.strip().lower().replace("*", "") for s in criteria["subdivision"].split(",")]
+                            subdiv = (p.get("subdivision") or p.get("address") or "").lower()
+                            if not any(pat in subdiv for pat in patterns):
+                                continue
+                        mls_id = p.get("mls_id")
+                        if mls_id and mls_id in seen_mls_ids:
+                            continue
+                        if mls_id:
+                            seen_mls_ids.add(mls_id)
+                        listings.append(p)
+            elif criteria.get("city"):
                 result = await mls_service.search_properties(
-                    zip_code=zc,
-                    status=search_params["status"],
-                    limit=search_params["limit"],
+                    city=criteria["city"],
+                    status=std_status,
+                    agent_id=AGENT_MLS_ID,
+                    limit=search_limit,
                 )
                 for p in result.get("properties", []):
-                    # Apply subdivision filter if specified
-                    if criteria.get("subdivision"):
-                        patterns = [s.strip().lower().replace("*", "") for s in criteria["subdivision"].split(",")]
-                        subdiv = (p.get("subdivision") or p.get("address") or "").lower()
-                        if not any(pat in subdiv for pat in patterns):
-                            continue
+                    mls_id = p.get("mls_id")
+                    if mls_id and mls_id in seen_mls_ids:
+                        continue
+                    if mls_id:
+                        seen_mls_ids.add(mls_id)
                     listings.append(p)
-        elif criteria.get("city"):
-            result = await mls_service.search_properties(
-                city=criteria["city"],
-                status=search_params["status"],
-                limit=search_params["limit"],
-            )
-            listings = result.get("properties", [])
 
     # Filter out any rentals/leases that slipped through
     LEASE_TYPES = {'residential lease', 'commercial lease'}

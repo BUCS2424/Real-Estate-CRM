@@ -310,6 +310,9 @@ export const MapListingsLayout = ({
                           <span style={{fontSize:'9px',fontWeight:'700',color:'#fbbf24',textTransform:'uppercase',letterSpacing:'0.05em'}}>Hidden Haven Realty</span>
                         </div>
                       )}
+                      {listing.status === 'Sold' && (
+                        <span style={{display:'inline-block',fontSize:'9px',fontWeight:'700',color:'#0a1628',background:'#fbbf24',padding:'2px 6px',borderRadius:'4px',marginBottom:'4px',textTransform:'uppercase',letterSpacing:'0.05em'}}>Sold</span>
+                      )}
                       <p className="font-bold text-amber-600">{formatPrice(listing.list_price)}</p>
                       <p className="font-medium">{listing.address}</p>
                       <p className="text-gray-500">{listing.bedrooms} bd | {listing.bathrooms} ba | {listing.sqft?.toLocaleString()} sqft</p>
@@ -365,7 +368,10 @@ export const MapListingsLayout = ({
                   data-testid={`listing-card-${listing.mls_id}`}
                 >
                   <div className="flex gap-3">
-                    <div className="w-28 h-20 rounded-lg overflow-hidden bg-white/5 shrink-0">
+                    <div className="w-28 h-20 rounded-lg overflow-hidden bg-white/5 shrink-0 relative">
+                      {listing.status === 'Sold' && (
+                        <span className="absolute top-1 left-1 z-10 bg-amber-400 text-[#0a1628] text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded">Sold</span>
+                      )}
                       {listing.primary_photo ? (
                         <img src={listing.primary_photo} alt="" className="w-full h-full object-cover" />
                       ) : (

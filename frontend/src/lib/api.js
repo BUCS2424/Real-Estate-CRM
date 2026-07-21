@@ -223,6 +223,7 @@ export const publicAPI = {
   getListings: (limit = 12) => api.get(`/public/listings?limit=${limit}`),
   getListing: (id) => api.get(`/public/listings/${id}`),
   getListingBySlug: (slug) => api.get(`/public/property/by-slug/${slug}`),
+  getProvenResults: (limit = 200) => api.get(`/public/proven-results?limit=${limit}`),
   submitLead: (data) => api.post('/public/leads', data),
 };
 

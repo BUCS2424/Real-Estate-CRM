@@ -14,6 +14,8 @@ from utils.slug import generate_property_slug, ensure_unique_slug
 
 router = APIRouter()
 
+AGENT_MLS_ID = os.environ.get("AGENT_MLS_ID", "261507429")
+
 def generate_storage_folder(address: str, city: str, state: str) -> str:
     """Generate a consistent storage folder path from property address"""
     # Combine address parts
@@ -1343,7 +1345,9 @@ async def get_public_properties(
     bedrooms: Optional[int] = None,
     bathrooms: Optional[float] = None
 ):
-    query = {"status": "active"}
+    # Only confirmed MLS listings under Sheila Desautels' own agent ID —
+    # never other agents, never unconfirmed/prospecting leads.
+    query = {"status": {"$in": ["active", "pending"]}, "source": "mls_auto_sync"}
     if city:
         query["city"] = {"$regex": city, "$options": "i"}
     if min_price:
@@ -1361,21 +1365,26 @@ async def get_public_properties(
 # Alias for frontend compatibility
 @router.get("/public/listings")
 async def get_public_listings(limit: int = 100):
-    """Alias endpoint for /public/properties for frontend compatibility"""
-    properties = await db.properties.find({"status": "active"}, {"_id": 0}).to_list(limit)
+    """Alias endpoint for /public/properties for frontend compatibility.
+    Only Sheila Desautels' confirmed live MLS listings (Active/Pending) —
+    never other agents, never unconfirmed leads. Sold homes live on the
+    separate Proven Results page instead."""
+    properties = await db.properties.find(
+        {"status": {"$in": ["active", "pending"]}, "source": "mls_auto_sync"}, {"_id": 0}
+    ).to_list(limit)
     return properties
 
 @router.get("/public/listings/{listing_id}")
 async def get_public_listing(listing_id: str):
     """Alias endpoint for frontend compatibility"""
-    prop = await db.properties.find_one({"id": listing_id, "status": "active"}, {"_id": 0})
+    prop = await db.properties.find_one({"id": listing_id, "status": {"$in": ["active", "pending", "sold"]}}, {"_id": 0})
     if not prop:
         raise HTTPException(status_code=404, detail="Property not found")
     return prop
 
 @router.get("/public/properties/{property_id}")
 async def get_public_property(property_id: str):
-    prop = await db.properties.find_one({"id": property_id, "status": "active"}, {"_id": 0})
+    prop = await db.properties.find_one({"id": property_id, "status": {"$in": ["active", "pending", "sold"]}}, {"_id": 0})
     if not prop:
         raise HTTPException(status_code=404, detail="Property not found")
     return prop
@@ -1386,14 +1395,25 @@ async def get_public_property_by_slug(slug: str):
     Get a public property by its SEO-friendly URL slug.
     Example: /api/public/property/by-slug/804-s-davis-blvd-tampa-fl-33606
     """
-    prop = await db.properties.find_one({"slug": slug, "status": "active"}, {"_id": 0})
+    prop = await db.properties.find_one({"slug": slug, "status": {"$in": ["active", "pending", "sold"]}}, {"_id": 0})
     if not prop:
         # Try fallback: search by ID if it looks like a UUID
         if len(slug) >= 32 and '-' in slug:
-            prop = await db.properties.find_one({"id": slug, "status": "active"}, {"_id": 0})
+            prop = await db.properties.find_one({"id": slug, "status": {"$in": ["active", "pending", "sold"]}}, {"_id": 0})
         if not prop:
             raise HTTPException(status_code=404, detail="Property not found")
     return prop
+
+@router.get("/public/proven-results")
+async def get_public_proven_results(limit: int = 200):
+    """
+    Public endpoint: Sheila Desautels' sold/closed MLS listings for the
+    "Proven Results" marketing page. Sorted by most recently sold first.
+    """
+    properties = await db.properties.find(
+        {"status": "sold", "source": "mls_auto_sync"}, {"_id": 0}
+    ).sort([("close_date", -1), ("updated_at", -1)]).to_list(limit)
+    return properties
 
 # AI Property Lookup
 @router.post("/properties/ai-lookup")
@@ -1595,17 +1615,14 @@ async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="MLS API not configured. Add your Bridge API key in Settings → MLS.")
 
     # ── Fetch from Bridge API ──────────────────────────────────────────────
-    # OData filter: listings where the agent or office matches Hidden Haven Realty
+    # OData filter: strictly Sheila Desautels' own MLS agent ID — no other
+    # agent (even other agents literally named "Sheila") should ever sync in.
     import httpx
     ds      = mls_service.dataset
     base    = mls_service.base_url
     token   = mls_service.token
 
-    agent_filter = (
-        "(contains(ListAgentFullName, 'Desautels') or "
-        "contains(ListOfficeName, 'Hidden Haven') or "
-        "contains(ListAgentFullName, 'Sheila'))"
-    )
+    agent_filter = f"ListAgentMlsId eq '{AGENT_MLS_ID}'"
 
     # Sync Active, Pending AND Sold/Closed — build all statuses
     all_statuses = ["Active", "Pending", "Closed"]
@@ -1625,10 +1642,12 @@ async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
                 if resp.status_code == 200:
                     raw = resp.json().get("value", [])
                     batch = mls_service._transform_listings(raw, photo_limit=None)
-                    # Tag each listing with its MLS status
-                    for listing in batch:
+                    # Tag each listing with its MLS status + sale info (for Proven Results)
+                    for idx, listing in enumerate(batch):
                         listing["_mls_std_status"] = std_status
                         listing["_crm_status"]      = status_map[std_status]
+                        listing["_close_price"]     = raw[idx].get("ClosePrice")
+                        listing["_close_date"]      = raw[idx].get("CloseDate")
                     mls_listings.extend(batch)
         except Exception as e:
             # Don't hard-fail — log and continue with the other statuses
@@ -1686,6 +1705,8 @@ async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
                 "year_built":     listing.get("year_built"),
                 "description":    listing.get("description", ""),
                 "source":         "mls_auto_sync",
+                "close_price":    listing.get("_close_price"),
+                "close_date":     listing.get("_close_date"),
                 "updated_at":     now,
             }
             # Always update photos if MLS returned them; don't overwrite with empty
@@ -1724,6 +1745,8 @@ async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
                 "listing_agent":  listing.get("listing_agent", "Sheila M Desautels"),
                 "listing_office": listing.get("listing_office", "HIDDEN HAVEN REALTY"),
                 "source":         "mls_auto_sync",
+                "close_price":    listing.get("_close_price"),
+                "close_date":     listing.get("_close_date"),
                 "features":       [],
                 "moderation_status": "approved",
                 "created_by":     current_user["id"],
@@ -1743,11 +1766,22 @@ async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
         upsert=True
     )
 
+    # ── Self-healing cleanup ────────────────────────────────────────────────
+    # Remove any previously-synced showcase listings that do NOT belong to
+    # Sheila Desautels (e.g. from the old buggy filter that matched ANY agent
+    # literally named "Sheila"). Runs every sync so production data self-heals
+    # automatically once this fix is deployed — no manual migration needed.
+    cleanup_result = await db.properties.delete_many({
+        "source": "mls_auto_sync",
+        "listing_agent": {"$not": {"$regex": "desautels", "$options": "i"}}
+    })
+
     return {
         "message": "MLS sync complete",
         "created":       len(created),
         "updated":       len(updated),
         "skipped":       len(skipped),
         "total_fetched": len(mls_listings),
+        "removed_other_agents": cleanup_result.deleted_count,
         "listings":      created,
     }

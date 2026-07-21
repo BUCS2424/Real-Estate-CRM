@@ -142,6 +142,7 @@ class MLSService:
         bathrooms: Optional[float] = None,
         property_type: Optional[str] = None,
         status: Optional[str] = None,
+        agent_id: Optional[str] = None,
         limit: int = 50,
         offset: int = 0
     ) -> Dict[str, Any]:
@@ -158,6 +159,8 @@ class MLSService:
         # Exclude rentals/leases by default — only show for-sale properties
         filters.append("PropertyType ne 'Residential Lease'")
         filters.append("PropertyType ne 'Commercial Lease'")
+        if agent_id:
+            filters.append(f"ListAgentMlsId eq '{agent_id}'")
         if city:
             filters.append(f"City eq '{city}'")
         if zip_code:

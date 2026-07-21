@@ -130,7 +130,10 @@ export const PropertyDetailPage = () => {
       : [];
   const photos = images.map(i => i.url).filter(Boolean);
   const p = property;
-  const price = typeof p.price === 'string' ? parseInt(p.price.replace(/[^0-9]/g, '')) : (p.price || 0);
+  const isSold = p.status === 'sold';
+  const price = isSold && p.close_price
+    ? p.close_price
+    : (typeof p.price === 'string' ? parseInt(p.price.replace(/[^0-9]/g, '')) : (p.price || 0));
 
   const seoTitle = p.address ? `${p.address}, ${p.city || ''}`.trim() : 'Property Details';
   const seoDescription = p.description || 'Explore this property listed by Hidden Haven Realty.';
@@ -177,6 +180,7 @@ export const PropertyDetailPage = () => {
             <div className="pt-2">
               <div className="flex items-start justify-between">
                 <div>
+                  {isSold && <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Sold Price</p>}
                   <p className="text-amber-400 text-3xl lg:text-4xl font-serif font-bold">{fmt(price)}</p>
                   <h1 className="text-xl lg:text-2xl font-serif text-white mt-1">{p.address}</h1>
                   <p className="text-white/50 flex items-center gap-1.5 mt-1">
@@ -184,7 +188,7 @@ export const PropertyDetailPage = () => {
                     {p.county && <span className="text-white/30">| {p.county} County</span>}
                   </p>
                 </div>
-                <Badge className="bg-amber-400/20 text-amber-400 border-amber-400/30 text-sm px-3 py-1">{p.status === 'active' ? 'Active' : p.status || 'Exclusive'}</Badge>
+                <Badge className={isSold ? 'bg-white/10 text-white/80 border-white/20 text-sm px-3 py-1 uppercase tracking-wide' : 'bg-amber-400/20 text-amber-400 border-amber-400/30 text-sm px-3 py-1'} data-testid="property-status-badge">{isSold ? 'Sold' : p.status === 'active' ? 'Active' : p.status || 'Exclusive'}</Badge>
               </div>
               <div className="flex flex-wrap gap-x-8 gap-y-3 py-5 mt-4 border-y border-white/10">
                 {p.bedrooms != null && <div className="flex items-center gap-2"><Bed className="w-5 h-5 text-amber-400/70" /><span className="text-white text-lg font-semibold">{p.bedrooms}</span><span className="text-white/40 text-sm">Beds</span></div>}
@@ -257,7 +261,7 @@ export const PropertyDetailPage = () => {
                     <DetailRow label="County" value={p.county} />
                     <DetailRow label="Garage" value={p.garage} />
                     <DetailRow label="MLS #" value={p.mls_id} />
-                    <DetailRow label="Status" value={p.status} />
+                    <DetailRow label="Status" value={isSold ? 'Sold' : p.status} />
                     {price > 0 && p.sqft && <DetailRow label="Price/Sq Ft" value={`$${Math.round(price / p.sqft)}`} />}
                   </div>
                 </div>
@@ -295,13 +299,22 @@ export const PropertyDetailPage = () => {
             <div className="sticky top-6 space-y-6 max-h-[calc(100vh-3rem)] overflow-y-auto scrollbar-hide">
               <Card className="bg-white/5 border-white/10">
                 <CardContent className="p-6 space-y-4">
-                  <div className="text-center">
-                    <h3 className="text-lg font-serif text-white font-bold">Schedule a Private Viewing</h3>
-                    <p className="text-white/50 text-sm mt-1">See this property in person</p>
-                  </div>
-                  <Button className="w-full bg-amber-400 hover:bg-amber-500 text-black font-semibold h-12 text-base" onClick={() => setShowInquiryForm(true)} data-testid="schedule-viewing-btn">
-                    <Calendar className="w-5 h-5 mr-2" /> Schedule Viewing
-                  </Button>
+                  {isSold ? (
+                    <div className="text-center">
+                      <h3 className="text-lg font-serif text-white font-bold">This Home Has Sold</h3>
+                      <p className="text-white/50 text-sm mt-1">Looking for something similar? Sheila can help.</p>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <h3 className="text-lg font-serif text-white font-bold">Schedule a Private Viewing</h3>
+                      <p className="text-white/50 text-sm mt-1">See this property in person</p>
+                    </div>
+                  )}
+                  {!isSold && (
+                    <Button className="w-full bg-amber-400 hover:bg-amber-500 text-black font-semibold h-12 text-base" onClick={() => setShowInquiryForm(true)} data-testid="schedule-viewing-btn">
+                      <Calendar className="w-5 h-5 mr-2" /> Schedule Viewing
+                    </Button>
+                  )}
                   <Button variant="outline" className="w-full border-amber-400/30 text-amber-400 hover:bg-amber-400/10 h-11" onClick={() => window.location.href = 'tel:+18134540004'}>
                     <Phone className="w-4 h-4 mr-2" /> Call (813) 454-0004
                   </Button>
@@ -333,7 +346,7 @@ export const PropertyDetailPage = () => {
                 <CardContent className="p-5">
                   <p className="text-white/40 text-xs uppercase tracking-wider mb-3">At a Glance</p>
                   {price > 0 && p.sqft && <DetailRow label="Price/SqFt" value={`$${Math.round(price / p.sqft)}`} />}
-                  <DetailRow label="Status" value={p.status === 'active' ? 'Active' : p.status} />
+                  <DetailRow label="Status" value={isSold ? 'Sold' : p.status === 'active' ? 'Active' : p.status} />
                   <DetailRow label="Year Built" value={p.year_built} />
                   <DetailRow label="MLS #" value={p.mls_id} />
                 </CardContent>
@@ -345,10 +358,12 @@ export const PropertyDetailPage = () => {
           <div className="lg:hidden space-y-6">
             <Card className="bg-white/5 border-white/10">
               <CardContent className="p-6 space-y-4">
-                <h3 className="text-lg font-serif text-white font-bold text-center">Schedule a Private Viewing</h3>
-                <Button className="w-full bg-amber-400 hover:bg-amber-500 text-black font-semibold h-12 text-base" onClick={() => setShowInquiryForm(true)}>
-                  <Calendar className="w-5 h-5 mr-2" /> Schedule Viewing
-                </Button>
+                <h3 className="text-lg font-serif text-white font-bold text-center">{isSold ? 'This Home Has Sold' : 'Schedule a Private Viewing'}</h3>
+                {!isSold && (
+                  <Button className="w-full bg-amber-400 hover:bg-amber-500 text-black font-semibold h-12 text-base" onClick={() => setShowInquiryForm(true)}>
+                    <Calendar className="w-5 h-5 mr-2" /> Schedule Viewing
+                  </Button>
+                )}
                 <Button variant="outline" className="w-full border-amber-400/30 text-amber-400 hover:bg-amber-400/10 h-11" onClick={() => window.location.href = 'tel:+18134540004'}>
                   <Phone className="w-4 h-4 mr-2" /> Call (813) 454-0004
                 </Button>

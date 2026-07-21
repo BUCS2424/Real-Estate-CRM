@@ -33,6 +33,7 @@ import { PropertyDetailPage } from './pages/PropertyDetailPage';
 import { LeadsPage } from './pages/LeadsPage';
 import { PropertySubmissionsPage } from './pages/PropertySubmissionsPage';
 import { PublicListingsPage } from './pages/PublicListingsPage';
+import { ProvenResultsPage } from './pages/ProvenResultsPage';
 import { NewsletterPage } from './pages/NewsletterPage';
 import { NewsletterArchivePage } from './pages/NewsletterArchivePage';
 import { AboutPage } from './pages/AboutPage';
@@ -135,6 +136,7 @@ function App() {
             <Route path="/property/:slug" element={<PropertyDetailPage />} />
             <Route path="/listing/:slug" element={<PropertyDetailPage />} />  {/* Backwards compatibility */}
             <Route path="/showcase" element={<PublicListingsPage />} />
+            <Route path="/proven-results" element={<ProvenResultsPage />} />
             <Route path="/neighborhoods" element={<NeighborhoodsListPage />} />
             <Route path="/neighborhoods/:slug" element={<NeighborhoodPage />} />
             <Route path="/mls-property/:mlsId" element={<MLSPropertyDetailPage />} />

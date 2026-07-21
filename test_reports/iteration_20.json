@@ -1,0 +1,50 @@
+{
+  "summary": "Full regression pass on the agent-filtering bug fix + new Proven Results feature. Verified via pytest (16 API tests) + Playwright UI flows across Showcase, Proven Results, Property Detail (active & sold), Neighborhoods, homepage stats, mobile nav, and admin Sync MLS Listings. Core fix works correctly: Showcase=12 Sheila-only active/pending listings, Proven Results=129 Sheila-only sold listings, Neighborhoods=Sheila-only Active/Pending (happy-in-the-heights correctly shows 1 listing), no other-agent names leaked anywhere. Found one real data-quality bug: 12 of the 129 'sold' listings are actually lease/rental records (StandardStatus=Closed leases) with rent-level close_price ($825-$3,100), showing as 'Sold Price' on public Proven Results cards and property detail pages (e.g. /property/409-s-orleans-ave-tampa-fl-33606 shows 'Sold Price $2,350', $2/sqft) — misleading marketing data.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/listings/sync-agent-listings (and GET /api/public/proven-results)",
+        "issue": "sync_agent_listings() fetches StandardStatus='Closed' listings for Proven Results but does NOT filter out lease/rental property types (Residential Lease / Commercial Lease) the way neighborhoods.py's LEASE_TYPES filter does. Result: 12 of 129 'sold' properties are actually closed leases with rent-level close_price ($825-$3,100/mo), e.g. '409 S ORLEANS AVENUE' shows Sold Price $2,350 and $2/Sq Ft on the public property detail page. Fix: filter by PropertyType/ PropertySubType != lease (e.g. StandardStatus='Closed' AND PropertyType='Residential' or similar) when building the sold/Closed sync batch, or exclude MLS records where the raw 'PropertyType'/'MlsStatus' indicates a lease before insert.",
+        "priority": "HIGH"
+      },
+      {
+        "endpoint": "GET /api/public/listings",
+        "issue": "One record ('200 COUNTRY CLUB DR UNIT 1302', MLS# TB8443656) has listing_agent = 'John Desautels, II' instead of 'Sheila Desautels' / 'Sheila M Desautels'. Passed the exact ListAgentMlsId filter and the 'desautels' cleanup regex (so it's not the original bug), but worth confirming with the user whether John Desautels is an intentional co-agent/team member sharing Sheila's MLS ID, since the review scope says listings should show only Sheila's name.",
+        "priority": "LOW"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Proven Results / Property Detail (sold)",
+        "issue": "Sold property detail pages inherit the backend lease-price bug — visually confirmed 'Sold Price $2,350' and '$2/Sq Ft' badge for a 990 sqft home at 409 S Orleans Avenue.",
+        "affected_selectors": ["[data-testid=property-status-badge]", ".text-amber-400.text-3xl"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_proven_results_agent_filter.py",
+    "/app/test_reports/pytest/proven_results_agent_filter_results.xml"
+  ],
+  "action_items": [
+    "Filter out lease/rental property types when syncing 'Closed' MLS status into Proven Results (mirror the LEASE_TYPES exclusion already used in neighborhoods.py) — this is the only real bug found.",
+    "Optionally verify with user whether 'John Desautels, II' should legitimately appear as listing_agent on one showcase listing, or should be normalized to Sheila's name."
+  ],
+  "critical_code_review_comments": [
+    "properties.py is 1788 lines — consider splitting sync/public endpoints into a separate module (e.g. routes/mls_sync.py) for maintainability.",
+    "sync_agent_listings' self-healing cleanup regex ({'listing_agent': {'$not': {'$regex': 'desautels', ...}}}) is a good pragmatic guard but is coupled to the agent's surname string; if the agent name ever changes in MLS data this silently breaks — consider also cross-checking against AGENT_MLS_ID stored per-record if available."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "94% (15/16 tests passed, 1 real data-quality bug found)", "frontend": "100% (all UI flows tested worked as expected)"},
+  "test_credentials": "mel@a2gdesigns.com / BigDaddy2016!! (superuser) - confirmed working for /login -> /dashboard -> /listings",
+  "seed_data_creation": "None - used existing production-synced MLS data.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Agent-filter fix (ListAgentMlsId exact match) is solid and verified end-to-end: Showcase (12 active/pending, all Sheila), Proven Results (129 sold, all Sheila, gold SOLD badges on cards/map popups, nav link works desktop+mobile), Property Detail pages correctly branch on isSold (SOLD badge, Sold Price label, sidebar CTA swap, Schedule Viewing button hidden for sold / present for active), Neighborhoods correctly scoped to Sheila's Active/Pending only (happy-in-the-heights shows exactly 1 listing as expected). Admin Sync MLS Listings button clicked once successfully (returned updated counts, public stats stable at 11 active/1 pending/129 sold after sync). Only open item is the lease-price bug in Proven Results described above — not related to the agent-filter fix itself, but a pre-existing data-quality gap in the new Closed-status sync path.",
+  "rca of the issue": "sync_agent_listings() builds three MLS OData queries (Active/Pending/Closed) filtered only by ListAgentMlsId + StandardStatus. Unlike neighborhoods.py's get_public_neighborhood() which explicitly filters out property_type in {'residential lease','commercial lease'} after the MLS search, the sync path applies no such filter, so Stellar MLS 'Closed' records for lease listings (which also carry a StandardStatus of Closed with a ClosePrice = monthly rent) get stored with status='sold' and close_price=rent_amount, then surfaced verbatim on /api/public/proven-results and the property detail page as if they were home sale prices."
+}

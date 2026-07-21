@@ -76,6 +76,9 @@ export const PublicSiteHeader = ({ activePage = '', contactHref = '/#contact', v
             <Link to="/showcase" className={navLinkClass(activePage === 'showcase')} data-testid="public-menu-showcase-link">
               LISTING SHOWCASE
             </Link>
+            <Link to="/proven-results" className={navLinkClass(activePage === 'proven-results')} data-testid="public-menu-proven-results-link">
+              PROVEN RESULTS
+            </Link>
             <div className="relative" onMouseEnter={openNeighborhoods} onMouseLeave={delayCloseNeighborhoods}>
               <Link to="/neighborhoods" className={`${navLinkClass(activePage === 'neighborhoods')} flex items-center gap-1`} data-testid="public-menu-neighborhoods-link">
                 NEIGHBORHOODS <ChevronDown className="w-3 h-3" />
@@ -170,6 +173,9 @@ export const PublicSiteHeader = ({ activePage = '', contactHref = '/#contact', v
             <div className="space-y-5" data-testid="public-header-mobile-menu">
               <Link to="/showcase" className="block text-white/90 hover:text-amber-400" onClick={closeMobileMenu} data-testid="public-mobile-showcase-link">
                 LISTING SHOWCASE
+              </Link>
+              <Link to="/proven-results" className="block text-white/90 hover:text-amber-400" onClick={closeMobileMenu} data-testid="public-mobile-proven-results-link">
+                PROVEN RESULTS
               </Link>
               <div>
                 <button

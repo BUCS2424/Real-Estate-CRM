@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { publicAPI } from '../lib/api';
-import { Loader2 } from 'lucide-react';
 import { PublicSiteHeader } from '../components/public/PublicSiteHeader';
 import { PublicSeoHead } from '../components/public/PublicSeoHead';
 import { MapListingsLayout } from '../components/MapListingsLayout';
-import axios from 'axios';
-
-const API_URL = (process.env.REACT_APP_BACKEND_URL || '').replace(/\/+$/, '');
 
 export const PublicListingsPage = () => {
   const [listings, setListings] = useState([]);
@@ -18,7 +13,8 @@ export const PublicListingsPage = () => {
       const allListings = [];
       const seen = new Set();
 
-      // 1. Fetch our showcase/converted listings from DB
+      // Showcase only ever shows Sheila Desautels' own live listings
+      // (Active/Pending) — never other agents' MLS results.
       try {
         const res = await publicAPI.getListings(200);
         const dbListings = Array.isArray(res?.data) ? res.data : [];
@@ -44,9 +40,9 @@ export const PublicListingsPage = () => {
               photos: (l.images || []).map(img => typeof img === 'string' ? img : img?.url).filter(Boolean),
               latitude: l.latitude || null,
               longitude: l.longitude || null,
-              status: 'Active',
+              status: l.status === 'pending' ? 'Pending' : 'Active',
               days_on_market: null,
-              listing_agent: l.owner_name || null,
+              listing_agent: l.listing_agent || 'Sheila M Desautels',
               subdivision: l.subdivision || null,
               _source: 'showcase',
               _showcase_id: l.id,
@@ -56,29 +52,6 @@ export const PublicListingsPage = () => {
         }
       } catch (e) {
         console.error('Failed to fetch showcase listings', e);
-      }
-
-      // 2. Fetch MLS listings from neighborhoods (pulls active for-sale from MLS)
-      try {
-        const neighborhoodsRes = await axios.get(`${API_URL}/api/neighborhoods/public/list`);
-        const hoods = Array.isArray(neighborhoodsRes.data) ? neighborhoodsRes.data : [];
-        
-        for (const n of hoods.slice(0, 7)) {
-          try {
-            const nRes = await axios.get(`${API_URL}/api/neighborhoods/public/${n.slug}`);
-            const items = Array.isArray(nRes.data?.listings) ? nRes.data.listings : [];
-            for (const item of items) {
-              const key = item.mls_id || item.address;
-              if (!seen.has(key)) {
-                seen.add(key);
-                item._source = 'mls';
-                allListings.push(item);
-              }
-            }
-          } catch (e) { /* skip */ }
-        }
-      } catch (e) {
-        console.error('Failed to fetch MLS listings', e);
       }
 
       setListings(allListings);
