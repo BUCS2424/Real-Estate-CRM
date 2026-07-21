@@ -792,70 +792,76 @@ async def pull_mls_images(
 
     mls_photos = []
     source_label = None
-    manual_mls_id = (body or {}).get("mls_id", "").strip() if body else ""
+    manual_mls_id = (body or {}).get("mls_id") or "" if body else ""
+    manual_mls_id = manual_mls_id.strip() if isinstance(manual_mls_id, str) else ""
 
-    # Strategy 0: listing already has mls_id stored — use it directly (fastest path)
-    stored_mls_id = listing.get("mls_id", "").strip() if listing.get("mls_id") else ""
-    lookup_id = manual_mls_id or stored_mls_id
+    try:
+        # Strategy 0: listing already has mls_id stored — use it directly (fastest path)
+        stored_mls_id = listing.get("mls_id", "").strip() if listing.get("mls_id") else ""
+        lookup_id = manual_mls_id or stored_mls_id
 
-    if lookup_id:
-        from services.mls_service import mls_service
-        await mls_service._ensure_configured()
-        if mls_service.is_configured():
-            detail = await mls_service.get_property_details(mls_id=lookup_id)
-            if not detail.get("error"):
-                mls_photos = detail.get("all_photos", detail.get("photos", []))
-                source_label = detail.get("mls_id", lookup_id)
+        if lookup_id:
+            from services.mls_service import mls_service
+            await mls_service._ensure_configured()
+            if mls_service.is_configured():
+                detail = await mls_service.get_property_details(mls_id=lookup_id)
+                if not detail.get("error"):
+                    mls_photos = detail.get("all_photos", detail.get("photos", []))
+                    source_label = detail.get("mls_id", lookup_id)
 
-    # Strategy 1 (legacy): Check the mls_listings collection by converted_to_property_id
-    if not mls_photos:
-        import ast as _ast
-        mls_listing = await db.mls_listings.find_one({"converted_to_property_id": listing_id})
-        if not mls_listing:
-            mls_listing = await db.mls_listings.find_one({"mls_id": stored_mls_id}) if stored_mls_id else None
-        if mls_listing:
-            raw = mls_listing.get("photos", [])
-            # Handle photos stored as a stringified Python list "['url1','url2',...]"
-            if isinstance(raw, str):
-                try:
-                    raw = _ast.literal_eval(raw)
-                except Exception:
-                    raw = []
-            mls_photos = [p for p in (raw if isinstance(raw, list) else []) if isinstance(p, str) and p.startswith("http")]
-            source_label = mls_listing.get("mls_id", "MLS")
+        # Strategy 1 (legacy): Check the mls_listings collection by converted_to_property_id
+        if not mls_photos:
+            import ast as _ast
+            mls_listing = await db.mls_listings.find_one({"converted_to_property_id": listing_id})
+            if not mls_listing:
+                mls_listing = await db.mls_listings.find_one({"mls_id": stored_mls_id}) if stored_mls_id else None
+            if mls_listing:
+                raw = mls_listing.get("photos", [])
+                # Handle photos stored as a stringified Python list "['url1','url2',...]"
+                if isinstance(raw, str):
+                    try:
+                        raw = _ast.literal_eval(raw)
+                    except Exception:
+                        raw = []
+                mls_photos = [p for p in (raw if isinstance(raw, list) else []) if isinstance(p, str) and p.startswith("http")]
+                source_label = mls_listing.get("mls_id", "MLS")
 
-    # Strategy 2: Match by source_lead_id -> property_lead -> mls_number
-    if not mls_photos and listing.get("source_lead_id"):
-        lead = await db.property_leads.find_one({"id": listing["source_lead_id"]})
-        if lead:
-            mls_num = lead.get("mls_number") or lead.get("mls_id")
-            if mls_num:
-                from services.mls_service import mls_service
-                await mls_service._ensure_configured()
-                if mls_service.is_configured():
-                    detail = await mls_service.get_property_details(mls_id=mls_num)
-                    if not detail.get("error"):
-                        mls_photos = detail.get("all_photos", detail.get("photos", []))
-                        source_label = mls_num
+        # Strategy 2: Match by source_lead_id -> property_lead -> mls_number
+        if not mls_photos and listing.get("source_lead_id"):
+            lead = await db.property_leads.find_one({"id": listing["source_lead_id"]})
+            if lead:
+                mls_num = lead.get("mls_number") or lead.get("mls_id")
+                if mls_num:
+                    from services.mls_service import mls_service
+                    await mls_service._ensure_configured()
+                    if mls_service.is_configured():
+                        detail = await mls_service.get_property_details(mls_id=mls_num)
+                        if not detail.get("error"):
+                            mls_photos = detail.get("all_photos", detail.get("photos", []))
+                            source_label = mls_num
 
-    # Strategy 3: Search Bridge API by address (Media returns automatically)
-    if not mls_photos and listing.get("address"):
-        from services.mls_service import mls_service
-        await mls_service._ensure_configured()
-        if mls_service.is_configured():
-            addr_search = listing["address"].split(",")[0].strip()
-            # Use get_property_details via address search to ensure we get all photos
-            search_result = await mls_service.search_properties(address=addr_search, limit=3)
-            for prop in search_result.get("properties", []):
-                prop_mls_id = prop.get("mls_id")
-                if prop_mls_id:
-                    detail = await mls_service.get_property_details(mls_id=prop_mls_id)
-                    if not detail.get("error"):
-                        all_ph = detail.get("all_photos", detail.get("photos", []))
-                        if all_ph:
-                            mls_photos = all_ph
-                            source_label = prop_mls_id
-                            break
+        # Strategy 3: Search Bridge API by address (Media returns automatically)
+        if not mls_photos and listing.get("address"):
+            from services.mls_service import mls_service
+            await mls_service._ensure_configured()
+            if mls_service.is_configured():
+                addr_search = listing["address"].split(",")[0].strip()
+                # Use get_property_details via address search to ensure we get all photos
+                search_result = await mls_service.search_properties(address=addr_search, limit=3)
+                for prop in search_result.get("properties", []):
+                    prop_mls_id = prop.get("mls_id")
+                    if prop_mls_id:
+                        detail = await mls_service.get_property_details(mls_id=prop_mls_id)
+                        if not detail.get("error"):
+                            all_ph = detail.get("all_photos", detail.get("photos", []))
+                            if all_ph:
+                                mls_photos = all_ph
+                                source_label = prop_mls_id
+                                break
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).exception(f"pull_mls_images: unexpected error for listing {listing_id}")
+        raise HTTPException(status_code=500, detail=f"MLS lookup failed unexpectedly: {str(e)}")
 
     if not mls_photos:
         raise HTTPException(
@@ -1623,6 +1629,10 @@ async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
     token   = mls_service.token
 
     agent_filter = f"ListAgentMlsId eq '{AGENT_MLS_ID}'"
+    # Exclude rentals/leases — Stellar MLS marks expired/closed leases with the
+    # same StandardStatus='Closed' as home sales, but ClosePrice on a lease is
+    # a monthly rent figure, not a sale price. Never let those into Proven Results.
+    lease_exclusion = "PropertyType ne 'Residential Lease' and PropertyType ne 'Commercial Lease'"
 
     # Sync Active, Pending AND Sold/Closed — build all statuses
     all_statuses = ["Active", "Pending", "Closed"]
@@ -1630,7 +1640,7 @@ async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
 
     mls_listings = []
     for std_status in all_statuses:
-        odata_filter = f"{agent_filter} and StandardStatus eq '{std_status}'"
+        odata_filter = f"{agent_filter} and {lease_exclusion} and StandardStatus eq '{std_status}'"
         params = {
             "access_token": token,
             "$filter":      odata_filter,
@@ -1776,6 +1786,22 @@ async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
         "listing_agent": {"$not": {"$regex": "desautels", "$options": "i"}}
     })
 
+    # Also purge any previously-synced "sold" records that are actually closed
+    # LEASES (Stellar marks expired leases as StandardStatus='Closed' too, with
+    # ClosePrice = monthly rent) — cross-check against the mls_listings staging
+    # collection which retains PropertyType from the original MLS pull.
+    lease_removed = 0
+    stale_sold = await db.properties.find(
+        {"source": "mls_auto_sync", "status": "sold", "mls_id": {"$ne": None}},
+        {"_id": 0, "id": 1, "mls_id": 1}
+    ).to_list(500)
+    LEASE_TYPES = {"residential lease", "commercial lease"}
+    for doc in stale_sold:
+        staged = await db.mls_listings.find_one({"mls_id": doc["mls_id"]}, {"_id": 0, "property_type": 1})
+        if staged and (staged.get("property_type") or "").lower() in LEASE_TYPES:
+            await db.properties.delete_one({"id": doc["id"]})
+            lease_removed += 1
+
     return {
         "message": "MLS sync complete",
         "created":       len(created),
@@ -1783,5 +1809,6 @@ async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
         "skipped":       len(skipped),
         "total_fetched": len(mls_listings),
         "removed_other_agents": cleanup_result.deleted_count,
+        "removed_lease_records": lease_removed,
         "listings":      created,
     }

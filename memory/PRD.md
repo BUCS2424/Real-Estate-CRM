@@ -2411,3 +2411,60 @@ All CRM admin pages were "showing for a sec then going blank" due to a cascade o
 - **Draw**: react-signature-canvas (canvas-based mouse/touch drawing)
 - **Type**: 3 stylized Google Fonts (Dancing Script, Great Vibes, Pacifico)
 
+
+
+## Feb 2026 — Showcase/Neighborhoods Agent-Filtering Fix + Proven Results Page
+
+**Root cause found & fixed**: The public "Listing Showcase" and Neighborhoods pages were
+pulling in listings from OTHER Stellar MLS agents (e.g. Sheila Gibson, Sheila Awad, etc.)
+because `sync_agent_listings()` used a buggy OData filter
+`contains(ListAgentFullName,'Sheila')` (any agent named "Sheila") and Neighborhoods had
+NO agent filter at all — it searched the entire MLS by zip/subdivision.
+
+**Fixes shipped**:
+- `sync_agent_listings()` and `mls_service.search_properties()` now filter strictly by
+  `ListAgentMlsId eq '<AGENT_MLS_ID>'` (Sheila's real Bridge/Stellar agent ID — env var
+  `AGENT_MLS_ID`, default `261507429`).
+- Sync now also excludes `Residential Lease`/`Commercial Lease` PropertyTypes at the
+  OData level (previously closed leases were polluting "sold" data with rent-level prices).
+- Self-healing cleanup: every "Sync MLS Listings" click now automatically purges (a) any
+  previously-synced showcase records not belonging to Sheila Desautels, and (b) any
+  stale lease records mis-tagged as sold — so a production redeploy + one sync click
+  fully repairs live data with no manual DB work needed.
+- Neighborhoods (`get_public_neighborhood`) now only returns Sheila's own Active/Pending
+  listings — never Sold, never other agents.
+- Public Showcase (`/api/public/listings`, `/api/public/properties`) restricted to
+  `source=mls_auto_sync` + status Active/Pending only (confirmed real MLS listings —
+  excludes speculative/test property-lead conversions).
+- **New "Proven Results" page** (`/proven-results`, nav link between Listing Showcase
+  and Neighborhoods): shows Sheila's sold/closed MLS listings via new
+  `GET /api/public/proven-results` endpoint. Cards + map popups show a gold "SOLD" badge.
+- Property detail page (`/property/:slug`) now detects `status==='sold'`: shows a SOLD
+  badge, "Sold Price" label using `close_price` (not stale list price), replaces
+  "Schedule a Private Viewing" with "This Home Has Sold — Looking for something similar?
+  Sheila can help.", hides the Schedule Viewing button, and hides the Payment/Mortgage
+  Calculator entirely on sold homes.
+- Hardened `POST /api/listings/{id}/pull-mls-images`: wrapped in try/except with logging
+  (was previously able to surface an opaque 500 with no detail on unexpected errors).
+- Fixed OData single-quote escaping bug in `mls_service.search_properties()` for
+  `city`, `zip_code`, `address` filters (addresses/cities containing an apostrophe
+  previously broke the Bridge API query silently).
+
+**Verified in preview** (post-fix data): 12 active/pending Showcase listings (down from
+68 polluted with other agents), 115 clean Proven Results sold listings (16 lease records
+removed), portfolio stats now accurate. Tested via `testing_agent_v4_fork`
+(iteration_20.json — 100% frontend pass, 94% backend pass, 1 HIGH bug found + fixed
+same session: lease records in Proven Results).
+
+**Known minor note (not a bug)**: one sold listing (200 Country Club Dr) shows agent
+"John Desautels, II" — this passed the exact `ListAgentMlsId` filter so it's an
+authoritative co-listing under Sheila's own agent ID in Stellar MLS, not a filtering error.
+
+**Still pending from previous fork** (production-only, unverified — see earlier P0/P1/P2
+backlog in this file): user reported "Failed to pull MLS images" error toast on the live
+production site for an unspecified listing; root cause not reproducible in preview after
+this session's escaping-bug fix + wrapped exception handling — need the specific listing
+address from user to pin down further if it recurs after redeploy. MLS photo pipeline
+itself was independently re-verified working end-to-end in preview this session (screenshot
+proof on a real MLS listing with 21 photos). Telnyx SMS, eSign E2E validation, Jacquie
+Lawson production verification, and the mobile/refactor backlog remain untouched.

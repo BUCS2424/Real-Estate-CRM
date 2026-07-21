@@ -162,9 +162,9 @@ class MLSService:
         if agent_id:
             filters.append(f"ListAgentMlsId eq '{agent_id}'")
         if city:
-            filters.append(f"City eq '{city}'")
+            filters.append(f"City eq '{city.replace(chr(39), chr(39)*2)}'")
         if zip_code:
-            filters.append(f"PostalCode eq '{zip_code}'")
+            filters.append(f"PostalCode eq '{zip_code.replace(chr(39), chr(39)*2)}'")
         if min_price:
             filters.append(f"ListPrice ge {min_price}")
         if max_price:
@@ -181,7 +181,7 @@ class MLSService:
         if status:
             filters.append(f"StandardStatus eq '{status}'")
         if address:
-            filters.append(f"contains(UnparsedAddress, '{address}')")
+            filters.append(f"contains(UnparsedAddress, '{address.replace(chr(39), chr(39)*2)}')")
         
         params = {
             "access_token": self.token,

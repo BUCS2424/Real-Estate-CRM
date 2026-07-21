@@ -279,8 +279,8 @@ export const PropertyDetailPage = () => {
               )}
             </Tabs>
 
-            {/* Mortgage Calculator */}
-            {price > 0 && price < MORTGAGE_CALCULATOR_LIMIT && (
+            {/* Mortgage Calculator — not shown on sold homes */}
+            {!isSold && price > 0 && price < MORTGAGE_CALCULATOR_LIMIT && (
               <Card className="bg-white/5 border-white/10">
                 <CardContent className="p-6">
                   <SectionTitle icon={DollarSign}>Payment Calculator</SectionTitle>
