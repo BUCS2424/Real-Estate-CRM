@@ -257,6 +257,7 @@ export const usersAPI = {
   create: (data) => api.post('/auth/register', data),
   updateRole: (id, role) => api.patch(`/users/${id}/role?role=${role}`),
   delete: (id) => api.delete(`/users/${id}`),
+  impersonate: (id) => api.post(`/users/${id}/impersonate`),
 };
 
 // Newsletter System

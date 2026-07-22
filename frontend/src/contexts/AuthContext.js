@@ -61,6 +61,29 @@ export const AuthProvider = ({ children }) => {
   const isSuperUser = () => user?.role === 'superuser';
   const isAdmin = () => hasRole(['superuser', 'admin']);
 
+  const impersonate = async (userId) => {
+    const response = await axios.post(`${API}/users/${userId}/impersonate`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const { access_token } = response.data;
+    if (!localStorage.getItem('impersonator_token')) {
+      localStorage.setItem('impersonator_token', token);
+    }
+    localStorage.setItem('token', access_token);
+    setToken(access_token);
+    return response.data.user;
+  };
+
+  const exitImpersonation = () => {
+    const original = localStorage.getItem('impersonator_token');
+    if (!original) return;
+    localStorage.setItem('token', original);
+    localStorage.removeItem('impersonator_token');
+    setToken(original);
+  };
+
+  const isImpersonating = () => !!localStorage.getItem('impersonator_token');
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -71,7 +94,10 @@ export const AuthProvider = ({ children }) => {
       logout, 
       hasRole,
       isSuperUser,
-      isAdmin 
+      isAdmin,
+      impersonate,
+      exitImpersonation,
+      isImpersonating
     }}>
       {children}
     </AuthContext.Provider>

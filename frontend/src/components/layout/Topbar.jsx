@@ -52,8 +52,8 @@ export const Topbar = ({ sidebarCollapsed, onMobileMenuToggle, mobileSidebarOpen
   return (
     <header
       data-testid="topbar"
-      className={`fixed top-0 right-0 z-30 h-16 bg-background/80 backdrop-blur-md border-b border-border transition-all duration-300
-        left-0 md:${sidebarCollapsed ? 'left-16' : 'left-64'}`}
+      className={`fixed right-0 z-30 h-16 bg-background/80 backdrop-blur-md border-b border-border transition-all duration-300
+        left-0 md:${sidebarCollapsed ? 'left-16' : 'left-64'} ${user?._impersonating ? 'top-10' : 'top-0'}`}
     >
       <div className="flex items-center justify-between h-full px-4 md:px-6">
         {/* Left: Hamburger on mobile, greeting on desktop */}

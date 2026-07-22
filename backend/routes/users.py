@@ -1,14 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
+from datetime import datetime, timezone
+import uuid
 from database import db
 from models.user import UserRole, UserResponse
-from utils.auth import get_current_user, require_role
+from utils.auth import get_current_user, require_role, create_access_token
 
 router = APIRouter()
 
 @router.get("")
 async def get_users(current_user: dict = Depends(require_role([UserRole.SUPERUSER]))):
-    users = await db.users.find({}, {"password": 0}).to_list(100)
+    users = await db.users.find({}, {"password": 0, "password_hash": 0}).to_list(100)
     result = []
     for u in users:
         if "id" not in u and "_id" in u:
@@ -17,6 +19,46 @@ async def get_users(current_user: dict = Depends(require_role([UserRole.SUPERUSE
             u.pop("_id", None)
         result.append(u)
     return result
+
+@router.post("/{user_id}/impersonate")
+async def impersonate_user(user_id: str, current_user: dict = Depends(require_role([UserRole.SUPERUSER]))):
+    """Super Admin only: generate a session token for another user so their
+    profile/settings can be configured as them. Retains full superadmin
+    permissions throughout (see get_current_user impersonation handling)."""
+    target = await db.users.find_one({"id": user_id}, {"password": 0})
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    if "id" not in target and "_id" in target:
+        target["id"] = str(target.pop("_id"))
+    else:
+        target.pop("_id", None)
+    target.pop("password_hash", None)
+
+    if target["id"] == current_user["id"]:
+        raise HTTPException(status_code=400, detail="You are already this user")
+
+    # If the current session is itself an impersonation, attribute this to the
+    # real original admin (not the currently-impersonated user) so nested
+    # impersonation always audits and exits back correctly.
+    real_admin_id = current_user.get("_impersonator_id") or current_user["id"]
+    real_admin_name = current_user.get("_impersonator_name") or current_user.get("name")
+
+    token = create_access_token({
+        "sub": target["id"],
+        "impersonator_id": real_admin_id,
+        "impersonator_name": real_admin_name,
+    })
+
+    await db.impersonation_log.insert_one({
+        "id": str(uuid.uuid4()),
+        "impersonator_id": real_admin_id,
+        "impersonator_name": real_admin_name,
+        "target_user_id": target["id"],
+        "target_name": target.get("name"),
+        "started_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+    return {"access_token": token, "user": target}
 
 @router.patch("/{user_id}/role")
 async def update_user_role(user_id: str, role: str, current_user: dict = Depends(require_role([UserRole.SUPERUSER]))):

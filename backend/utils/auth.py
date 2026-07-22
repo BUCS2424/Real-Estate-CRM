@@ -4,6 +4,7 @@ import bcrypt
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from models.user import UserRole
 
 JWT_SECRET = os.environ.get('JWT_SECRET', 'fusion-builder-secret-key-2024')
 JWT_ALGORITHM = "HS256"
@@ -68,6 +69,18 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             user.pop("_id", None)
         user.pop("password", None)
         user.pop("password_hash", None)
+
+        # Impersonation: a superuser is viewing the app as this user. Keep the
+        # target user's identity (id/name/email) for all data scoping, but grant
+        # full superadmin permissions so nothing is ever blocked while building
+        # out their profile/settings.
+        impersonator_id = payload.get("impersonator_id")
+        if impersonator_id:
+            user["role"] = UserRole.SUPERUSER
+            user["_impersonating"] = True
+            user["_impersonator_id"] = impersonator_id
+            user["_impersonator_name"] = payload.get("impersonator_name")
+
         return user
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")

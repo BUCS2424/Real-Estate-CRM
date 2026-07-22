@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { usersAPI } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { 
   Users, 
   Shield,
   UserCog,
-  Crown
+  Crown,
+  UserCheck
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -44,7 +45,9 @@ const roleColors = {
 export const AdminUsersPage = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { user: currentUser, isSuperUser } = useAuth();
+  const [impersonatingId, setImpersonatingId] = useState(null);
+  const { user: currentUser, isSuperUser, impersonate } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchUsers();
@@ -73,6 +76,19 @@ export const AdminUsersPage = () => {
       fetchUsers();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to update role');
+    }
+  };
+
+  const handleImpersonate = async (targetUser) => {
+    setImpersonatingId(targetUser.id);
+    try {
+      const impersonatedUser = await impersonate(targetUser.id);
+      toast.success(`Now viewing as ${impersonatedUser.name}`);
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to impersonate user');
+    } finally {
+      setImpersonatingId(null);
     }
   };
 
@@ -114,6 +130,7 @@ export const AdminUsersPage = () => {
                 <TableHead>Current Role</TableHead>
                 <TableHead>Change Role</TableHead>
                 <TableHead>Joined</TableHead>
+                <TableHead>Impersonate</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -162,6 +179,23 @@ export const AdminUsersPage = () => {
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {new Date(user.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      {user.id === currentUser.id ? (
+                        <span className="text-sm text-muted-foreground">-</span>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1.5"
+                          disabled={impersonatingId === user.id}
+                          onClick={() => handleImpersonate(user)}
+                          data-testid={`impersonate-btn-${user.id}`}
+                        >
+                          <UserCheck className="w-3.5 h-3.5" />
+                          {impersonatingId === user.id ? 'Switching...' : 'Impersonate'}
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 );
