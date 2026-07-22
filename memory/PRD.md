@@ -2531,6 +2531,50 @@ MLS pipeline to support multiple team agent IDs:
 - The mls_id-based self-healing cleanup (added earlier same day) still works correctly
   with multi-agent — it simply keeps whatever the current (now 2-agent) fetch returns.
 
+## User Impersonation Feature (Feb 2026)
+
+Super Admin-only "Impersonate" feature: on `/admin/users`, click "Impersonate" on any
+other user to get a session as them (their identity/data scoping for pages like
+Booking Settings, profile, etc.) while **retaining full superadmin permissions**
+throughout — nothing is ever role-blocked while impersonating. A persistent amber
+banner shows on every CRM page ("Viewing as X, impersonated by Y") with an Exit button
+that cleanly restores the original admin session.
+
+- `backend/utils/auth.py`: `get_current_user()` checks JWT claim `impersonator_id`; if
+  present, forces `role='superuser'` and attaches `_impersonating`/`_impersonator_id`/
+  `_impersonator_name` to the returned user dict.
+- `backend/routes/users.py`: new `POST /users/{user_id}/impersonate` (superuser only),
+  handles nested impersonation correctly (always attributes to the REAL original admin,
+  not a currently-impersonated user), logs to `db.impersonation_log` for audit. Also
+  fixed a security bug: `GET /users` was leaking `password_hash` in the response —
+  now excluded.
+- `frontend/src/contexts/AuthContext.js`: `impersonate()`/`exitImpersonation()`/
+  `isImpersonating()` — preserves the original admin's token under a separate
+  `impersonator_token` localStorage key so Exit always restores cleanly.
+- `frontend/src/pages/AdminUsersPage.jsx`: "Impersonate" button per user row.
+- `frontend/src/components/layout/MainLayout.jsx` + `Topbar.jsx`: persistent banner,
+  Topbar shifts down to avoid overlap.
+
+**Tested**: `testing_agent_v4_fork` iteration_21.json — 100% backend (10/10 pytest) +
+100% frontend pass. New regression tests at `backend/tests/test_impersonation.py`.
+
+**Found but explicitly deferred (user's call) — booking module is broken**: while
+investigating a user-reported broken booking link, found the Booking Settings save
+flow is fully broken end-to-end for ALL users: `PUT /booking/settings` (used by
+`BookingPage.jsx`) validates against `BookingSettingsCreate` (fields `agent_name`,
+`agent_code`, `default_duration`, etc.) but the frontend sends a completely different
+field set (`meeting_duration`, `advance_booking_days`, `booking_page_title`, etc.) —
+every save attempt 422s. The public booking link (`/book/:agentCode`) always 404s
+because `agent_code` is never generated/stored on the settings document (confirmed:
+current `booking_settings` doc has no `agent_code` field at all). This needs a full
+fix (align model to actual frontend schema, generate + persist `agent_code`, fix
+public lookup) — queued as next task, not yet started.
+
+**Also found, not yet addressed**: two duplicate "Mel (Super Admin)" user records with
+identical email — likely a non-idempotent seed bug. No "Sheila" user account exists in
+the system yet.
+
+
 **Telnyx SMS and Jacquie Lawson birthday-card automation confirmed working on
 
 ### Final correction (same day): reverted to Sheila-only, no John Desautels II data
