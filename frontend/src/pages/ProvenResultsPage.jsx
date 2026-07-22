@@ -53,7 +53,7 @@ export const ProvenResultsPage = () => {
     <div className="min-h-screen bg-[#0a1628] flex flex-col" data-testid="proven-results-page">
       <PublicSeoHead
         title="Proven Results | Hidden Haven Realty"
-        description="Sold luxury properties represented by Hidden Haven Realty — a track record of proven results in Tampa Bay real estate."
+        description="Sold luxury properties represented by Sheila Desautels — a track record of proven results in Tampa Bay real estate."
         urlPath="/proven-results"
       />
       <PublicSiteHeader activePage="proven-results" />
@@ -61,7 +61,7 @@ export const ProvenResultsPage = () => {
       <MapListingsLayout
         listings={listings}
         title="Proven Results"
-        subtitle={loading ? 'Loading sold properties...' : `${listings.length} homes sold by Hidden Haven Realty`}
+        subtitle={loading ? 'Loading sold properties...' : `${listings.length} homes sold by Sheila Desautels`}
         loading={loading}
         showFilters={true}
       />

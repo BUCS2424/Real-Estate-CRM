@@ -14,7 +14,7 @@ from utils.slug import generate_property_slug, ensure_unique_slug
 
 router = APIRouter()
 
-AGENT_MLS_ID = os.environ.get("AGENT_MLS_ID", "261507429,260013903")
+AGENT_MLS_ID = os.environ.get("AGENT_MLS_ID", "261507429")
 
 def generate_storage_folder(address: str, city: str, state: str) -> str:
     """Generate a consistent storage folder path from property address"""

@@ -16,7 +16,7 @@ import re
 
 router = APIRouter(prefix="/mls-listings", tags=["MLS Listings Management"])
 
-AGENT_MLS_ID = os.environ.get("AGENT_MLS_ID", "261507429,260013903")
+AGENT_MLS_ID = os.environ.get("AGENT_MLS_ID", "261507429")
 
 
 def _normalise_photos(listing: dict) -> dict:

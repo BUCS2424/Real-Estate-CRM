@@ -2497,6 +2497,22 @@ MLS pipeline to support multiple team agent IDs:
   with multi-agent — it simply keeps whatever the current (now 2-agent) fetch returns.
 
 **Telnyx SMS and Jacquie Lawson birthday-card automation confirmed working on
+
+### Final correction (same day): reverted to Sheila-only, no John Desautels II data
+
+User reversed the previous instruction — confirmed Sheila-only, no John Desautels, II
+data should sync anywhere. Reverted `AGENT_MLS_ID` back to `"261507429"` only (single
+ID, no comma-list) across `.env`, `properties.py`, `neighborhoods.py`, `mls_listings.py`
+defaults, and reverted Proven Results page copy back to "sold by Sheila Desautels".
+The `_agent_odata_filter()` helper in `mls_service.py` was left in place (harmless,
+correctly degrades to a single-ID filter) in case multi-agent support is needed again
+later — but is not currently active since the env var only has one ID.
+
+Verified in preview: re-ran sync — self-healing mls_id-based cleanup automatically
+purged all 69 of John's records (Proven Results back to 115, Showcase back to 8),
+confirmed via distinct `listing_agent` values showing only Sheila Desautels variants.
+This is the current, correct, final state.
+
 production by the user** — removed from the open-issues backlog.
 
 
