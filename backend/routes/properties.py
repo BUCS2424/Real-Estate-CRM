@@ -14,7 +14,7 @@ from utils.slug import generate_property_slug, ensure_unique_slug
 
 router = APIRouter()
 
-AGENT_MLS_ID = os.environ.get("AGENT_MLS_ID", "261507429")
+AGENT_MLS_ID = os.environ.get("AGENT_MLS_ID", "261507429,260013903")
 
 def generate_storage_folder(address: str, city: str, state: str) -> str:
     """Generate a consistent storage folder path from property address"""
@@ -1614,21 +1614,21 @@ async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
     if current_user["role"] not in [UserRole.SUPERUSER, UserRole.ADMIN]:
         raise HTTPException(status_code=403, detail="Admin access required")
 
-    from services.mls_service import mls_service
+    from services.mls_service import mls_service, _agent_odata_filter
     await mls_service._ensure_configured()
 
     if not mls_service.is_configured():
         raise HTTPException(status_code=400, detail="MLS API not configured. Add your Bridge API key in Settings → MLS.")
 
     # ── Fetch from Bridge API ──────────────────────────────────────────────
-    # OData filter: strictly Sheila Desautels' own MLS agent ID — no other
-    # agent (even other agents literally named "Sheila") should ever sync in.
+    # OData filter: Sheila Desautels + John Desautels, II (husband/account owner) —
+    # both are legitimate agents on this account. No other unrelated agent should sync in.
     import httpx
     ds      = mls_service.dataset
     base    = mls_service.base_url
     token   = mls_service.token
 
-    agent_filter = f"ListAgentMlsId eq '{AGENT_MLS_ID}'"
+    agent_filter = _agent_odata_filter(AGENT_MLS_ID)
     # Exclude rentals/leases — Stellar MLS marks expired/closed leases with the
     # same StandardStatus='Closed' as home sales, but ClosePrice on a lease is
     # a monthly rent figure, not a sale price. Never let those into Proven Results.

@@ -13,8 +13,21 @@ BRIDGE_API_URL = os.environ.get("BRIDGE_API_URL", "https://api.bridgedataoutput.
 BRIDGE_SERVER_TOKEN = os.environ.get("IDX_SERVER_TOKEN", "")  # Server Token for API access
 BRIDGE_DATASET = os.environ.get("BRIDGE_DATASET", "test")  # Default to test dataset
 
-# Your Agent ID for pulling your listings
+# Your Agent ID(s) for pulling your team's listings — supports a single ID or a
+# comma-separated list (e.g. "261507429,260013903" for Sheila + John Desautels, II).
 AGENT_MLS_ID = os.environ.get("AGENT_MLS_ID", "")
+
+
+def _agent_odata_filter(agent_id_str: str) -> str:
+    """Build a ListAgentMlsId OData filter that matches one or more agent IDs
+    (comma-separated), so team accounts with multiple MLS agent IDs are all
+    included."""
+    ids = [a.strip() for a in agent_id_str.split(",") if a.strip()]
+    if not ids:
+        return ""
+    if len(ids) == 1:
+        return f"ListAgentMlsId eq '{ids[0]}'"
+    return "(" + " or ".join(f"ListAgentMlsId eq '{i}'" for i in ids) + ")"
 
 
 class MLSService:
@@ -160,7 +173,9 @@ class MLSService:
         filters.append("PropertyType ne 'Residential Lease'")
         filters.append("PropertyType ne 'Commercial Lease'")
         if agent_id:
-            filters.append(f"ListAgentMlsId eq '{agent_id}'")
+            agent_flt = _agent_odata_filter(agent_id)
+            if agent_flt:
+                filters.append(agent_flt)
         if city:
             filters.append(f"City eq '{city.replace(chr(39), chr(39)*2)}'")
         if zip_code:
@@ -255,7 +270,9 @@ class MLSService:
         filters.append("PropertyType ne 'Residential Lease'")
         filters.append("PropertyType ne 'Commercial Lease'")
         if agent:
-            filters.append(f"ListAgentMlsId eq '{agent}'")
+            agent_flt = _agent_odata_filter(agent)
+            if agent_flt:
+                filters.append(agent_flt)
         if status:
             filters.append(f"StandardStatus eq '{status}'")
         

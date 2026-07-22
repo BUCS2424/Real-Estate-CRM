@@ -2477,6 +2477,29 @@ Investigated directly against the live Bridge/Stellar API and found **two real b
 Both fixes verified against the live Bridge API in preview. Not yet verified on production —
 requires redeploy + one "Sync MLS Listings" click.
 
+### Correction (same day): John Desautels, II IS a legitimate team agent
+
+User clarified John Desautels, II (MLS agent ID `260013903`, office "JOHN E DESAUTELS
+& ASSOCIATES") is Sheila's husband and the account owner — his listings should be
+INCLUDED, not excluded. Reverted the "wrong agent" assumption and extended the whole
+MLS pipeline to support multiple team agent IDs:
+- `AGENT_MLS_ID` env var now holds a comma-separated list: `"261507429,260013903"`.
+- New shared helper `mls_service._agent_odata_filter()` builds an OR'd
+  `(ListAgentMlsId eq 'X' or ListAgentMlsId eq 'Y')` filter from that list — used by
+  `search_properties()`, `get_my_listings()` (MLS Hub pull), `sync_agent_listings()`
+  (Showcase sync), and `neighborhoods.py`. All hardcoded single-ID fallbacks updated too.
+- Verified: re-ran sync in preview — Proven Results grew from 115 → **180** sold homes
+  (now correctly including John's ~65 closed sales, e.g. the "408 6th Avenue NW, Largo"
+  listing from the user's bug report), Showcase stayed clean (9 active/pending).
+- Updated Proven Results page copy from "sold by Sheila Desautels" to "sold by Hidden
+  Haven Realty" since both agents' sales now count toward it.
+- The mls_id-based self-healing cleanup (added earlier same day) still works correctly
+  with multi-agent — it simply keeps whatever the current (now 2-agent) fetch returns.
+
+**Telnyx SMS and Jacquie Lawson birthday-card automation confirmed working on
+production by the user** — removed from the open-issues backlog.
+
+
 **Verified in preview** (post-fix data): 12 active/pending Showcase listings (down from
 68 polluted with other agents), 115 clean Proven Results sold listings (16 lease records
 removed), portfolio stats now accurate. Tested via `testing_agent_v4_fork`

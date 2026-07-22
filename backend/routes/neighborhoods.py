@@ -11,7 +11,7 @@ import os
 
 router = APIRouter(prefix="/neighborhoods", tags=["Neighborhoods"])
 
-AGENT_MLS_ID = os.environ.get("AGENT_MLS_ID", "261507429")
+AGENT_MLS_ID = os.environ.get("AGENT_MLS_ID", "261507429,260013903")
 
 # Default neighborhoods with search criteria
 DEFAULT_NEIGHBORHOODS = [
