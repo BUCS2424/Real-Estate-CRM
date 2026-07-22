@@ -1777,30 +1777,20 @@ async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
     )
 
     # ── Self-healing cleanup ────────────────────────────────────────────────
-    # Remove any previously-synced showcase listings that do NOT belong to
-    # Sheila Desautels (e.g. from the old buggy filter that matched ANY agent
-    # literally named "Sheila"). Runs every sync so production data self-heals
-    # automatically once this fix is deployed — no manual migration needed.
-    cleanup_result = await db.properties.delete_many({
-        "source": "mls_auto_sync",
-        "listing_agent": {"$not": {"$regex": "desautels", "$options": "i"}}
-    })
-
-    # Also purge any previously-synced "sold" records that are actually closed
-    # LEASES (Stellar marks expired leases as StandardStatus='Closed' too, with
-    # ClosePrice = monthly rent) — cross-check against the mls_listings staging
-    # collection which retains PropertyType from the original MLS pull.
-    lease_removed = 0
-    stale_sold = await db.properties.find(
-        {"source": "mls_auto_sync", "status": "sold", "mls_id": {"$ne": None}},
-        {"_id": 0, "id": 1, "mls_id": 1}
-    ).to_list(500)
-    LEASE_TYPES = {"residential lease", "commercial lease"}
-    for doc in stale_sold:
-        staged = await db.mls_listings.find_one({"mls_id": doc["mls_id"]}, {"_id": 0, "property_type": 1})
-        if staged and (staged.get("property_type") or "").lower() in LEASE_TYPES:
-            await db.properties.delete_one({"id": doc["id"]})
-            lease_removed += 1
+    # Remove any previously-synced showcase listing whose mls_id was NOT part
+    # of THIS run's authoritative fetch (exact ListAgentMlsId + non-lease
+    # filter). This is far more robust than name-matching: it also catches
+    # co-listed records where Stellar shows a different agent's name (e.g.
+    # "John Desautels, II") under an mls_id that was never actually Sheila's,
+    # and any stale lease/other-status record — without any name guessing.
+    # Guarded so a failed/partial fetch never wipes existing good data.
+    cleanup_result = type("R", (), {"deleted_count": 0})()
+    if mls_listings:
+        fetched_mls_ids = [l.get("mls_id") for l in mls_listings if l.get("mls_id")]
+        cleanup_result = await db.properties.delete_many({
+            "source": "mls_auto_sync",
+            "mls_id": {"$nin": fetched_mls_ids}
+        })
 
     return {
         "message": "MLS sync complete",
@@ -1808,7 +1798,6 @@ async def sync_agent_listings(current_user: dict = Depends(get_current_user)):
         "updated":       len(updated),
         "skipped":       len(skipped),
         "total_fetched": len(mls_listings),
-        "removed_other_agents": cleanup_result.deleted_count,
-        "removed_lease_records": lease_removed,
+        "removed_stale_or_other_agent": cleanup_result.deleted_count,
         "listings":      created,
     }

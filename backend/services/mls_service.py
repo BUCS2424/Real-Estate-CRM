@@ -181,7 +181,11 @@ class MLSService:
         if status:
             filters.append(f"StandardStatus eq '{status}'")
         if address:
-            filters.append(f"contains(UnparsedAddress, '{address.replace(chr(39), chr(39)*2)}')")
+            # Stellar's contains() is case-sensitive and MLS addresses are always
+            # stored ALL-CAPS (UnparsedAddress); uppercase the search term so
+            # mixed/title-case addresses stored in our own DB still match.
+            safe_address = address.upper().replace(chr(39), chr(39)*2)
+            filters.append(f"contains(UnparsedAddress, '{safe_address}')")
         
         params = {
             "access_token": self.token,

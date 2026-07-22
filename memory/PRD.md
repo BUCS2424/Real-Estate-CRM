@@ -2450,6 +2450,33 @@ NO agent filter at all — it searched the entire MLS by zip/subdivision.
   `city`, `zip_code`, `address` filters (addresses/cities containing an apostrophe
   previously broke the Bridge API query silently).
 
+
+### Follow-up fix (same day): root cause of "Failed to pull MLS images" found
+
+User reported this error persisting on production for listing "408 6th Avenue NW, Largo FL".
+Investigated directly against the live Bridge/Stellar API and found **two real bugs**:
+
+1. That specific listing's true `ListAgentMlsId` is `260013903` (John Desautels, II /
+   JOHN E DESAUTELS & ASSOCIATES) — **completely different from Sheila's agent ID
+   (261507429)**. It only ever entered `properties` via the old buggy
+   `contains(ListAgentFullName,'Desautels')` sync filter and was never Sheila's listing.
+   The cleanup step in `sync_agent_listings()` was rewritten from name-substring matching
+   (which still missed this case because "John Desautels, II" contains "Desautels") to an
+   **mls_id-based check**: any `mls_auto_sync` property whose `mls_id` is NOT present in
+   the current run's authoritative (agent-ID + non-lease) fetch gets removed. This is
+   provably correct since Bridge's `ListAgentMlsId eq` filter is applied server-side.
+   Verified in preview: an extra 4 stale/wrong-agent records were caught and removed that
+   the old name-based check had missed (Showcase went from 12 → 8 genuinely-Sheila listings).
+2. **Case-sensitivity bug** in `mls_service.search_properties()`'s address filter — Bridge's
+   `contains(UnparsedAddress, ...)` is case-sensitive and Stellar always stores addresses
+   ALL-CAPS, but our own `properties.address` field is often mixed/title-case. This silently
+   broke the Strategy-3 address fallback in `pull_mls_images` for many listings (confirmed:
+   searching "2203 Glenwood" returned 0 results, "2203 GLENWOOD" returned 1). Fixed by
+   uppercasing the search term before building the filter.
+
+Both fixes verified against the live Bridge API in preview. Not yet verified on production —
+requires redeploy + one "Sync MLS Listings" click.
+
 **Verified in preview** (post-fix data): 12 active/pending Showcase listings (down from
 68 polluted with other agents), 115 clean Proven Results sold listings (16 lease records
 removed), portfolio stats now accurate. Tested via `testing_agent_v4_fork`
