@@ -626,7 +626,7 @@ const ListingDetailPage = () => {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={handlePullMLSImages}
+                        onClick={() => handlePullMLSImages()}
                         disabled={pullingMLS || uploadingImages}
                         data-testid="pull-mls-images-btn"
                       >

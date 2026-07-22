@@ -792,6 +792,7 @@ async def pull_mls_images(
 
     mls_photos = []
     source_label = None
+    mls_record_found_but_no_photos = False
     manual_mls_id = (body or {}).get("mls_id") or "" if body else ""
     manual_mls_id = manual_mls_id.strip() if isinstance(manual_mls_id, str) else ""
 
@@ -808,6 +809,8 @@ async def pull_mls_images(
                 if not detail.get("error"):
                     mls_photos = detail.get("all_photos", detail.get("photos", []))
                     source_label = detail.get("mls_id", lookup_id)
+                    if not mls_photos:
+                        mls_record_found_but_no_photos = True
 
         # Strategy 1 (legacy): Check the mls_listings collection by converted_to_property_id
         if not mls_photos:
@@ -839,6 +842,8 @@ async def pull_mls_images(
                         if not detail.get("error"):
                             mls_photos = detail.get("all_photos", detail.get("photos", []))
                             source_label = mls_num
+                            if not mls_photos:
+                                mls_record_found_but_no_photos = True
 
         # Strategy 3: Search Bridge API by address (Media returns automatically)
         if not mls_photos and listing.get("address"):
@@ -858,12 +863,21 @@ async def pull_mls_images(
                                 mls_photos = all_ph
                                 source_label = prop_mls_id
                                 break
+                            else:
+                                mls_record_found_but_no_photos = True
     except Exception as e:
         import logging
         logging.getLogger(__name__).exception(f"pull_mls_images: unexpected error for listing {listing_id}")
         raise HTTPException(status_code=500, detail=f"MLS lookup failed unexpectedly: {str(e)}")
 
     if not mls_photos:
+        if mls_record_found_but_no_photos:
+            raise HTTPException(
+                status_code=404,
+                detail="This MLS listing was found, but Stellar MLS has no photos on file for it "
+                       "(common for older closed listings whose media has since been purged). "
+                       "Please use 'Upload Images' to add photos manually."
+            )
         raise HTTPException(
             status_code=404,
             detail="No MLS listing found. Try entering the MLS # manually."

@@ -2477,6 +2477,41 @@ Investigated directly against the live Bridge/Stellar API and found **two real b
 Both fixes verified against the live Bridge API in preview. Not yet verified on production —
 requires redeploy + one "Sync MLS Listings" click.
 
+### THE ACTUAL root cause of "Failed to pull MLS images" (4th report) — FOUND
+
+After 3 rounds of legitimate-but-incomplete backend fixes (agent filtering, lease
+exclusion, case-sensitivity), traced the exact browser network activity for a real
+repro case and found the true root cause: **a classic React bug, not an MLS/backend
+issue at all.**
+
+`frontend/src/pages/ListingDetailPage.jsx` line 629 had:
+```jsx
+<Button onClick={handlePullMLSImages} ...>
+```
+Since `handlePullMLSImages(mlsId = null)` was passed directly as the `onClick` handler
+(not wrapped in an arrow function), React invoked it with the **click SyntheticEvent
+object** as the `mlsId` argument. The event object is truthy, so the code built a
+request body of `{ mls_id: <SyntheticEvent> }`. Axios then tried to `JSON.stringify()`
+that circular-reference-laden event object, which **throws synchronously before any
+HTTP request is ever sent**. The catch block saw a plain JS error with no
+`error.response`, so `detail` was empty and the generic fallback toast
+`'Failed to pull MLS images'` displayed — every single time, regardless of whether the
+MLS lookup would have succeeded or failed. Confirmed via Playwright network-route
+interception: zero requests to `pull-mls-images` were ever sent before the fix; after
+changing to `onClick={() => handlePullMLSImages()}`, the request fires correctly and
+the accurate backend message displays.
+
+This explains why the error persisted across all 3 previous "fixes" — none of them
+were reachable because the button never actually called the API. Also improved the
+backend error message itself (see earlier entry) to distinguish "record found, MLS has
+no photos on file" (common for pre-2016 closed listings whose media Stellar has since
+purged) from "record not found at all" — verified 11 of Sheila's 123 synced listings
+legitimately have zero available MLS photos and will correctly prompt for manual upload.
+
+Verified end-to-end via Playwright network capture + screenshot in preview. Needs
+redeploy to take effect on production.
+
+
 ### Correction (same day): John Desautels, II IS a legitimate team agent
 
 User clarified John Desautels, II (MLS agent ID `260013903`, office "JOHN E DESAUTELS
