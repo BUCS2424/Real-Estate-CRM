@@ -2577,6 +2577,38 @@ the system yet.
 
 **Telnyx SMS and Jacquie Lawson birthday-card automation confirmed working on
 
+## Database Backup — Real Feature Built (Feb 2026)
+
+User reported: "the database backup is not working, it needs to create the backup and
+fully download the entire database." Root cause: `/settings/admin/backup` was **100%
+mocked** — "Backup Now" was a fake `setTimeout`, backup history was hardcoded fake data
+from Jan 2025, Download/Restore buttons had no `onClick` at all, and there was zero
+backend backup functionality (confirmed: no "backup" reference anywhere in
+`backend/routes/`).
+
+Built a real feature from scratch:
+- `backend/routes/db_backup.py` (new): `POST /api/admin/backup/create` runs real
+  `mongodump` (async subprocess) against the live DB, zips the dump, stores metadata in
+  `db.db_backups`. `GET /api/admin/backup/list`, `GET /api/admin/backup/{id}/download`
+  (real FileResponse), `DELETE /api/admin/backup/{id}`. All superuser-only.
+- `frontend/src/pages/settings/admin/DatabaseBackup.jsx` rewritten to be fully
+  API-driven — no more fake data. Removed the non-functional "Restore" button and the
+  cosmetic-only "Auto Backup" scheduling toggle (neither was ever real).
+- **Tested**: `testing_agent` iteration_22.json — 100% backend (12/12 pytest) + 100%
+  frontend pass. Verified real full-DB export (46 collections, all `.bson` files
+  present including `users.bson`, `contacts.bson`, `properties.bson`).
+
+**Known follow-ups (not yet done, flagged by testing agent as minor/optional)**:
+- No confirmation dialog before deleting a backup (single click permanently deletes).
+- No retention limit — backups accumulate unbounded on disk (`/app/backend/backups`).
+- No audit-log entry for backup create/delete (app has an audit log for other actions).
+- Restore (`mongorestore`) intentionally not implemented (out of scope — user only
+  asked for create + download); binary is available in-env if requested later.
+- Backups stored on container filesystem (ephemeral in preview/redeploy) — downloaded
+  copies are the durable artifact; consider Emergent Object Storage if persistence
+  across redeploys matters.
+
+
 ### Final correction (same day): reverted to Sheila-only, no John Desautels II data
 
 User reversed the previous instruction — confirmed Sheila-only, no John Desautels, II

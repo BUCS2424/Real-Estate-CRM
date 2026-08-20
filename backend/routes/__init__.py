@@ -50,6 +50,7 @@ from .staff_chat import router as staff_chat_router
 from .esign import router as esign_router
 from .homelight import router as homelight_router
 from .voice_recorder import router as voice_router
+from .db_backup import router as db_backup_router
 
 # Include all sub-routers
 api_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
@@ -97,6 +98,7 @@ api_router.include_router(staff_chat_router, tags=["Staff Chat"])
 api_router.include_router(esign_router, prefix="/esign", tags=["eSign"])
 api_router.include_router(homelight_router, prefix="/homelight", tags=["HomeLight"])
 api_router.include_router(voice_router, prefix="/voice", tags=["Voice Recorder"])
+api_router.include_router(db_backup_router, prefix="/admin", tags=["Database Backup"])
 @api_router.get("/")
 async def root():
     return {"message": "Hidden Haven Realty CRM API", "version": "2.0.0"}

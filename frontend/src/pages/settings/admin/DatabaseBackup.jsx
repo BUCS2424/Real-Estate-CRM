@@ -1,33 +1,83 @@
-import React, { useState } from 'react';
-import { Database, Download, Upload, Clock, HardDrive, CheckCircle2, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Database, Download, Clock, HardDrive, CheckCircle2, Trash2, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
-import { Progress } from '../../../components/ui/progress';
 import { Badge } from '../../../components/ui/badge';
-import { Switch } from '../../../components/ui/switch';
-import { Label } from '../../../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
+import api from '../../../lib/api';
 import { toast } from 'sonner';
 
+const formatSize = (bytes) => {
+  if (!bytes) return '0 KB';
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
 export const DatabaseBackup = () => {
-  const [autoBackup, setAutoBackup] = useState(true);
-  const [frequency, setFrequency] = useState('daily');
+  const [backups, setBackups] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isBackingUp, setIsBackingUp] = useState(false);
+  const [downloadingId, setDownloadingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
-  const backups = [
-    { id: 1, name: 'backup_2025-01-14_12-00.sql', date: '2025-01-14 12:00 PM', size: '245 MB', status: 'completed' },
-    { id: 2, name: 'backup_2025-01-13_12-00.sql', date: '2025-01-13 12:00 PM', size: '242 MB', status: 'completed' },
-    { id: 3, name: 'backup_2025-01-12_12-00.sql', date: '2025-01-12 12:00 PM', size: '238 MB', status: 'completed' },
-    { id: 4, name: 'backup_2025-01-11_12-00.sql', date: '2025-01-11 12:00 PM', size: '235 MB', status: 'completed' },
-  ];
-
-  const handleBackupNow = () => {
-    setIsBackingUp(true);
-    setTimeout(() => {
-      setIsBackingUp(false);
-      toast.success('Backup created successfully');
-    }, 3000);
+  const fetchBackups = async () => {
+    try {
+      const res = await api.get('/admin/backup/list');
+      setBackups(res.data || []);
+    } catch (error) {
+      toast.error('Failed to load backup history');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => { fetchBackups(); }, []);
+
+  const handleBackupNow = async () => {
+    setIsBackingUp(true);
+    try {
+      await api.post('/admin/backup/create');
+      toast.success('Backup created successfully');
+      fetchBackups();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to create backup');
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
+  const handleDownload = async (backup) => {
+    setDownloadingId(backup.id);
+    try {
+      const res = await api.get(`/admin/backup/${backup.id}/download`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', backup.filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error('Failed to download backup');
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const handleDelete = async (backup) => {
+    setDeletingId(backup.id);
+    try {
+      await api.delete(`/admin/backup/${backup.id}`);
+      toast.success('Backup deleted');
+      fetchBackups();
+    } catch (error) {
+      toast.error('Failed to delete backup');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const totalSize = backups.reduce((sum, b) => sum + (b.size_bytes || 0), 0);
 
   return (
     <div className="space-y-6 animate-fade-in" data-testid="database-backup-page">
@@ -37,14 +87,14 @@ export const DatabaseBackup = () => {
             <Database className="w-6 h-6" />
             Database Backup
           </h1>
-          <p className="text-muted-foreground mt-1">Manage database backups and restoration</p>
+          <p className="text-muted-foreground mt-1">Create and download full backups of the entire database</p>
         </div>
-        <Button onClick={handleBackupNow} disabled={isBackingUp}>
+        <Button onClick={handleBackupNow} disabled={isBackingUp} data-testid="backup-now-btn">
           {isBackingUp ? (
-            <>Creating Backup...</>
+            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating Backup...</>
           ) : (
             <>
-              <Download className="w-4 h-4 mr-2" />
+              <Database className="w-4 h-4 mr-2" />
               Backup Now
             </>
           )}
@@ -60,7 +110,7 @@ export const DatabaseBackup = () => {
                 <HardDrive className="w-5 h-5 text-chart-1" />
               </div>
               <div>
-                <p className="text-2xl font-bold">2.4 GB</p>
+                <p className="text-2xl font-bold" data-testid="total-backup-size">{formatSize(totalSize)}</p>
                 <p className="text-xs text-muted-foreground">Total Backup Size</p>
               </div>
             </div>
@@ -73,7 +123,7 @@ export const DatabaseBackup = () => {
                 <Clock className="w-5 h-5 text-chart-2" />
               </div>
               <div>
-                <p className="text-2xl font-bold">4</p>
+                <p className="text-2xl font-bold" data-testid="backups-stored-count">{backups.length}</p>
                 <p className="text-xs text-muted-foreground">Backups Stored</p>
               </div>
             </div>
@@ -86,7 +136,7 @@ export const DatabaseBackup = () => {
                 <CheckCircle2 className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">Healthy</p>
+                <p className="text-2xl font-bold">{backups.length > 0 ? 'Healthy' : 'No Backups Yet'}</p>
                 <p className="text-xs text-muted-foreground">Backup Status</p>
               </div>
             </div>
@@ -94,91 +144,46 @@ export const DatabaseBackup = () => {
         </Card>
       </div>
 
-      {/* Backup Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Backup Settings</CardTitle>
-          <CardDescription>Configure automatic backup preferences</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Automatic Backup</Label>
-              <p className="text-sm text-muted-foreground">Automatically backup your database</p>
-            </div>
-            <Switch checked={autoBackup} onCheckedChange={setAutoBackup} />
-          </div>
-          
-          {autoBackup && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Backup Frequency</Label>
-                <Select value={frequency} onValueChange={setFrequency}>
-                  <SelectTrigger className="mt-2">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="hourly">Hourly</SelectItem>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Retention Period</Label>
-                <Select defaultValue="30">
-                  <SelectTrigger className="mt-2">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7">7 days</SelectItem>
-                    <SelectItem value="30">30 days</SelectItem>
-                    <SelectItem value="90">90 days</SelectItem>
-                    <SelectItem value="365">1 year</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Backup List */}
       <Card>
         <CardHeader>
           <CardTitle>Backup History</CardTitle>
-          <CardDescription>Recent database backups</CardDescription>
+          <CardDescription>Each backup is a full export of every collection in the database (mongodump), zipped for download</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {backups.map(backup => (
-              <div key={backup.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Database className="w-5 h-5 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">{backup.name}</p>
-                    <p className="text-xs text-muted-foreground">{backup.date}</p>
+          {loading ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">Loading backups...</p>
+          ) : backups.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6 text-center" data-testid="no-backups-message">No backups yet — click "Backup Now" to create one.</p>
+          ) : (
+            <div className="space-y-3" data-testid="backup-history-list">
+              {backups.map(backup => (
+                <div key={backup.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg" data-testid={`backup-row-${backup.id}`}>
+                  <div className="flex items-center gap-3">
+                    <Database className="w-5 h-5 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">{backup.filename}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(backup.created_at).toLocaleString()} &middot; {backup.collection_count} collections</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-muted-foreground">{formatSize(backup.size_bytes)}</span>
+                    <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      {backup.status}
+                    </Badge>
+                    <Button size="sm" variant="outline" disabled={downloadingId === backup.id} onClick={() => handleDownload(backup)} data-testid={`download-backup-btn-${backup.id}`}>
+                      {downloadingId === backup.id ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
+                      Download
+                    </Button>
+                    <Button size="sm" variant="ghost" disabled={deletingId === backup.id} onClick={() => handleDelete(backup)} data-testid={`delete-backup-btn-${backup.id}`}>
+                      {deletingId === backup.id ? <Loader2 className="w-4 h-4 text-destructive animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-muted-foreground">{backup.size}</span>
-                  <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-                    <CheckCircle2 className="w-3 h-3 mr-1" />
-                    {backup.status}
-                  </Badge>
-                  <Button size="sm" variant="outline">
-                    <Download className="w-4 h-4 mr-1" />
-                    Download
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    <Upload className="w-4 h-4 mr-1" />
-                    Restore
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
